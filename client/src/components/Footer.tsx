@@ -1,0 +1,59 @@
+/*
+ * Footer — 猫眼咨询官网页脚
+ */
+export default function Footer() {
+  return (
+    <footer className="bg-[#0A0A0A] border-t border-white/5 py-12">
+      <div className="container">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+          {/* Logo & tagline */}
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <svg width="28" height="18" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="18" cy="12" rx="17" ry="11" stroke="#C9A84C" strokeWidth="1" fill="none"/>
+                <circle cx="18" cy="12" r="7" stroke="#C9A84C" strokeWidth="0.8" fill="none"/>
+                <path d="M18 5 L20.5 12 L18 19 L15.5 12 Z" stroke="#C9A84C" strokeWidth="1" fill="#C9A84C" fillOpacity="0.15"/>
+              </svg>
+              <span className="text-[#C9A84C] font-['Cormorant_Garamond'] font-semibold text-base tracking-wide">
+                Mc&amp;Mamoo Brand Management Inc.
+              </span>
+            </div>
+            <p className="text-white/30 text-xs tracking-wide">
+              猫眼企业发展（上海）有限公司 · 全球新消费第一品牌管理公司
+            </p>
+          </div>
+
+          {/* Links */}
+          <div className="flex flex-wrap gap-6">
+            {[
+              { label: "关于我们", href: "#about" },
+              { label: "核心方法论", href: "#methodology" },
+              { label: "服务体系", href: "#services" },
+              { label: "标杆案例", href: "#cases" },
+              { label: "联系我们", href: "#contact" },
+            ].map((item) => (
+              <button
+                key={item.href}
+                onClick={() => document.querySelector(item.href)?.scrollIntoView({ behavior: "smooth" })}
+                className="text-white/30 text-xs hover:text-[#C9A84C] transition-colors tracking-wide"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="h-px bg-white/5 my-8" />
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-white/20 text-xs">
+            ©2024 Mc&amp;Mamoo Brand Management Inc. 猫眼企业发展（上海）有限公司 版权所有
+          </p>
+          <p className="text-white/20 text-xs font-['DM_Mono']">
+            www.mcmamoo.com
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
