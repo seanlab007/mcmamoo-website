@@ -1,6 +1,7 @@
 /*
  * About Section — 关于猫眼咨询
  * Design: 白底左右分栏，左文右数据，金色竖线点缀
+ * Theme: 品牌显贵 · 利润倍增 · 全域增长
  */
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
@@ -8,7 +9,7 @@ const FOUNDER_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i
 
 const credentials = [
   "美国暗物质资本（Dark Matter Capital）合伙人",
-  "错位竞争理论创始人 — 全球营销两大流派之一",
+  "全球顶奢品牌增长战略专家",
   "博商管理研究院企业教练",
   "混沌大学客座讲师",
   "中欧商学院特邀品牌战略专家",
@@ -17,16 +18,23 @@ const credentials = [
 ];
 
 const differentiators = [
-  { from: "提供研究报告", to: "打造爆品" },
-  { from: "传统甲乙关系", to: "事业伙伴" },
-  { from: "无法负责销量", to: "打爆天猫" },
-  { from: "短期项目指导", to: "长期战略护航" },
+  { from: "提供研究报告", to: "打造爆品，利润倍增" },
+  { from: "传统甲乙关系", to: "深度战略合伙人" },
+  { from: "无法负责销量", to: "全域增长，打爆天猫" },
+  { from: "短期项目指导", to: "品牌显贵，长期护航" },
+];
+
+const highlights = [
+  { icon: "◆", title: "品牌显贵", desc: "从大众品牌到奢侈品溢价，系统性提升品牌势能与定价权" },
+  { icon: "◆", title: "利润倍增", desc: "通过品牌溢价与渠道优化，帮助客户实现毛利率大幅提升" },
+  { icon: "◆", title: "全域增长", desc: "线上线下、公域私域、国内国际，构建全渠道增长飞轮" },
 ];
 
 export default function About() {
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
   const ref3 = useScrollReveal();
+  const ref4 = useScrollReveal();
 
   return (
     <section id="about" className="bg-[#0A0A0A] py-24 lg:py-32">
@@ -42,18 +50,34 @@ export default function About() {
           </div>
         </div>
 
+        {/* Three highlights */}
+        <div ref={ref4 as React.RefObject<HTMLDivElement>} className="reveal grid md:grid-cols-3 gap-0 mb-16 border border-white/10">
+          {highlights.map((h, i) => (
+            <div
+              key={h.title}
+              className={`p-8 ${i < 2 ? "border-r border-white/10" : ""} group hover:bg-[#C9A84C]/5 transition-all duration-300`}
+            >
+              <div className="text-[#C9A84C] text-xs mb-3 font-['DM_Mono'] tracking-widest">{h.icon} 0{i + 1}</div>
+              <h3 className="font-['Noto_Serif_SC'] text-white text-2xl font-bold mb-3 group-hover:text-[#C9A84C] transition-colors">
+                {h.title}
+              </h3>
+              <p className="text-white/50 text-sm leading-relaxed">{h.desc}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Main content grid */}
         <div className="grid lg:grid-cols-2 gap-16 items-start mb-20">
           {/* Left: Company intro */}
           <div ref={ref2 as React.RefObject<HTMLDivElement>} className="reveal">
             <p className="text-white/70 text-base leading-relaxed mb-6">
-              <strong className="text-white font-semibold">Mc&amp;Mamoo Brand Management Inc.</strong>（猫眼咨询）是一家发源于美国芝加哥、根植中国上海的国际领先战略咨询公司，由<span className="text-[#C9A84C]">暗物质资本（Dark Matter Capital）</span>投资创立。
+              <strong className="text-white font-semibold">Mc&amp;Mamoo Brand Management Inc.</strong>（猫眼咨询）是一家发源于美国芝加哥、根植中国上海的国际顶级品牌管理公司，由<span className="text-[#C9A84C]">暗物质资本（Dark Matter Capital）</span>投资创立。
             </p>
             <p className="text-white/70 text-base leading-relaxed mb-6">
-              公司团队汇聚来自麦肯锡（McKinsey）、波士顿咨询（BCG）、贝恩咨询（Bain）及德勤咨询（Deloitte）等全球顶尖咨询机构的精英人才，在中国新消费领域<span className="text-[#C9A84C] font-semibold">连续三年排名第一</span>。
+              公司团队汇聚来自麦肯锡（McKinsey）、波士顿咨询（BCG）、贝恩咨询（Bain）及德勤咨询（Deloitte）等全球顶尖机构的精英人才，专注于帮助品牌实现<span className="text-[#C9A84C] font-semibold">显贵化升级、利润倍增与全域增长</span>。
             </p>
             <p className="text-white/70 text-base leading-relaxed mb-10">
-              我们的核心竞争力在于独创的<span className="text-[#C9A84C] font-semibold">错位竞争理论</span>——这一理论与特劳特定位理论并称全球营销学两大流派，被《巴黎商业周刊》评论为21世纪中国营销学最重要的贡献之一。
+              我们深度整合<span className="text-[#C9A84C] font-semibold">500+头部KOL战略资源</span>，覆盖小红书、抖音、微博、B站等全平台，同时拥有完整的跨境出海增长体系，服务客户遍及中国、美国、法国、日本等多个国家和地区。
             </p>
 
             {/* Differentiators */}
@@ -66,7 +90,7 @@ export default function About() {
                   key={d.from}
                   className="flex items-center gap-4 py-3 border-b border-white/5 group"
                 >
-                  <span className="text-white/30 text-sm line-through w-28 flex-shrink-0">{d.from}</span>
+                  <span className="text-white/30 text-sm line-through w-32 flex-shrink-0">{d.from}</span>
                   <span className="text-[#C9A84C]/60 text-sm">→</span>
                   <span className="text-white font-semibold text-sm group-hover:text-[#C9A84C] transition-colors">{d.to}</span>
                 </div>
@@ -93,7 +117,7 @@ export default function About() {
                 <h3 className="font-['Cormorant_Garamond'] text-white text-3xl font-semibold mb-1">
                   Sean DAI
                 </h3>
-                <div className="text-[#C9A84C] text-sm mb-6 tracking-wide">代言 · 首席战略专家</div>
+                <div className="text-[#C9A84C] text-sm mb-6 tracking-wide">代言 · 首席品牌增长专家</div>
 
                 <div className="space-y-2">
                   {credentials.map((c) => (
@@ -107,7 +131,7 @@ export default function About() {
                 <div className="mt-6 pt-6 border-t border-white/10">
                   <div className="text-white/40 text-xs tracking-widest uppercase mb-2 font-['DM_Mono']">14年 · 核心战绩</div>
                   <p className="text-white/70 text-sm leading-relaxed">
-                    主导孵化 <span className="text-[#C9A84C] font-semibold">8个10亿级大单品</span>，疫情期间帮助MasterCard三年逆势增长 <span className="text-[#C9A84C] font-semibold">70亿美金</span>。
+                    主导孵化 <span className="text-[#C9A84C] font-semibold">8个10亿级大单品</span>，疫情期间帮助MasterCard三年逆势增长 <span className="text-[#C9A84C] font-semibold">70亿美金</span>，服务品牌客户遍及全球20+国家。
                   </p>
                 </div>
               </div>

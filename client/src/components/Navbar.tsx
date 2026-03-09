@@ -7,10 +7,10 @@ import { Menu, X } from "lucide-react";
 
 const navItems = [
   { label: "关于我们", href: "#about" },
-  { label: "核心方法论", href: "#methodology" },
+  { label: "KOL合作", href: "#kol" },
   { label: "服务体系", href: "#services" },
-  { label: "标杆案例", href: "#cases" },
-  { label: "团队", href: "#team" },
+  { label: "全球案例", href: "#global-cases" },
+  { label: "荣誉奖项", href: "#awards" },
   { label: "联系我们", href: "#contact" },
 ];
 

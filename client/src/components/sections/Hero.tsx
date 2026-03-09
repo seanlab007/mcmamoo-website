@@ -1,6 +1,7 @@
 /*
  * Hero Section — 猫眼咨询官网英雄区
  * Design: 全屏深色背景 + 猫眼金线图 + 大字标题 + 不对称布局
+ * Theme: 品牌显贵 · 利润提升 · 全域增长
  */
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
@@ -27,7 +28,7 @@ export default function Hero() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${HERO_BG})` }}
       />
-      {/* Gradient overlay — left side darker for text readability */}
+      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A]/95 via-[#0A0A0A]/70 to-[#0D1B2A]/20" />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/30 via-transparent to-[#0A0A0A]/80" />
 
@@ -41,7 +42,7 @@ export default function Hero() {
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
-              ◆ &nbsp; Global New Consumer Brand Management
+              ◆ &nbsp; Global Premium Brand Management · 全球顶奢品牌管理
             </div>
 
             {/* Main title */}
@@ -78,14 +79,14 @@ export default function Hero() {
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
               }`}
             >
-              洞察商业本质，陪伴战略落地
+              让品牌显贵，让利润倍增，让增长全域
             </p>
             <p
               className={`text-white/50 text-sm md:text-base tracking-wide mb-10 transition-all duration-700 delay-600 ${
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
               }`}
             >
-              Insight into the essence of business, accompany the implementation of strategy
+              Make Brands Premium · Multiply Profits · Grow Across All Channels
             </p>
 
             {/* CTAs */}
@@ -98,13 +99,13 @@ export default function Hero() {
                 onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
                 className="px-8 py-3.5 bg-[#C9A84C] text-[#0A0A0A] text-sm font-semibold tracking-widest uppercase hover:bg-[#E8D5A0] transition-all duration-300"
               >
-                预约战略咨询
+                预约品牌诊断
               </button>
               <button
                 onClick={() => document.querySelector("#cases")?.scrollIntoView({ behavior: "smooth" })}
                 className="px-8 py-3.5 border border-white/30 text-white/80 text-sm tracking-widest uppercase hover:border-[#C9A84C]/60 hover:text-[#C9A84C] transition-all duration-300"
               >
-                查看标杆案例
+                查看全球案例
               </button>
             </div>
           </div>
@@ -120,9 +121,9 @@ export default function Hero() {
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
             {[
-              { value: "8", unit: "个", label: "10亿级大单品" },
-              { value: "20", unit: "+", label: "快消品企业服务" },
-              { value: "3", unit: "年", label: "新消费领域中国第一" },
+              { value: "8", unit: "+", label: "10亿级大单品孵化" },
+              { value: "500", unit: "+", label: "头部KOL战略合作" },
+              { value: "20", unit: "+", label: "全球品牌服务" },
               { value: "70", unit: "亿", label: "MasterCard逆势增长(美元)" },
             ].map((stat) => (
               <div key={stat.label} className="py-5 px-6 text-center">
