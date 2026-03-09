@@ -3,6 +3,7 @@
  * Design: 深色皮革纹理背景 + 时间轴卡片 + 金色结果标签
  */
 import { useState } from "react";
+import { Link } from "wouter";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const CASES_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/cases-texture-dSgNBgPx3RKUh8PnxTSuRn.webp";
@@ -65,11 +66,19 @@ const cases = [
     strategy: "通过错位竞争战略，帮助法国奢利香水在中国市场实现爆发式增长，成为跨境香水品类标杆案例。",
   },
   {
+    year: "2016",
+    brand: "蟹太太大闸蟹",
+    category: "生鲜 / 品牌化",
+    result: "从0到8亿营收，全网蟹券销量连续多年第一",
+    strategy: "填补大闸蟹行业品牌化空白，签约黄晓明担任品牌代言人，打造行业唯一一线明星代言壁垒。构建500+明星网红合作矩阵，单场直播销售额最高3000万。",
+    link: "/cases/xietaitai",
+  },
+  {
     year: "2023",
     brand: "美国长盛天NAD+",
     category: "健康 / 跨境",
     result: "上市后销售500万，国内分销商单月500万订单",
-    strategy: "美国哈佛研究院合作，FDA认证，Instagram/TikTok种草，亚马逊带货，京东开店，单篇小红书带货50万。",
+    strategy: "美国哈佛研究院合作，FDA认证，Instagram/TikTok种草，亚马逊带货，京东开店，单篇小红书带货中50万。",
   },
   {
     year: "疫情期间",
@@ -154,8 +163,27 @@ export default function Cases() {
                 {cases[activeCase].strategy}
               </p>
 
+              {/* CTA: view full case if link exists */}
+              {(cases[activeCase] as any).link && (
+                <Link href={(cases[activeCase] as any).link}>
+                  <a
+                    className="inline-flex items-center gap-2 mt-4 mb-2 text-xs font-medium transition-all hover:opacity-80"
+                    style={{
+                      color: "#C9A84C",
+                      fontFamily: "'DM Mono', monospace",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    查看完整案例
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                      <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </a>
+                </Link>
+              )}
+
               {/* Navigation dots */}
-              <div className="flex gap-2 mt-8">
+              <div className="flex gap-2 mt-4">
                 {cases.map((_, i) => (
                   <button
                     key={i}
