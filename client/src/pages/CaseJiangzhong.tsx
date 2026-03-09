@@ -3,6 +3,7 @@
  * Design: 深色大地色调 · 暗绿+金色 · 健康食品品类创新
  */
 import { useEffect, useRef, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
 import RelatedCases from "@/components/RelatedCases";
 import ShareBar from "@/components/ShareBar";
@@ -65,6 +66,13 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 }
 
 export default function CaseJiangzhong() {
+  useSEO({
+    title: "江中猴姑饼干 · 养胃食品品类创新 | 猫眼咨询",
+    description: "猫眼咨询操盘江中猴姑饼干，创造养胃食品新品类，天猫养胃食品第一，年销售额超10亿。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp",
+    url: "https://www.mcmamoo.com/cases/jiangzhong",
+    type: "article",
+  });
   return (
     <div style={{ background: "#080C0A", minHeight: "100vh", color: "#F5F0E8" }}>
       {/* Nav */}

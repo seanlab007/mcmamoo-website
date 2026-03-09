@@ -3,6 +3,7 @@
  * Design: 极致奢黑+哑金 · 高端礼品茶品类重塑
  */
 import { useEffect, useRef, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
 import RelatedCases from "@/components/RelatedCases";
 import ShareBar from "@/components/ShareBar";
@@ -65,6 +66,13 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 }
 
 export default function CaseXiaoguan() {
+  useSEO({
+    title: "小罐茶 · 高端礼品茶品类重塑 | 猫眼咨询",
+    description: "猫眼咨询助力小罐茶重塑高端礼品茶品类，天猫茶叶礼品市场第一，年营收超20亿。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoguan-hero-VMo5tD5EjgTVTXUiupePuQ.webp",
+    url: "https://www.mcmamoo.com/cases/xiaoguan",
+    type: "article",
+  });
   return (
     <div style={{ background: "#080808", minHeight: "100vh", color: "#F5F0E8" }}>
       {/* Nav */}

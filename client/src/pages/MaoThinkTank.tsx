@@ -4,6 +4,7 @@
  * Typography: Playfair Display (titles) + DM Mono (labels) + Noto Serif SC (Chinese)
  */
 import { useEffect, useRef, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 
@@ -361,6 +362,13 @@ function MaoApplicationForm() {
 
 // ── Main page ─────────────────────────────────────────────────────────────────────────────────
 export default function MaoThinkTank() {
+  useSEO({
+    title: "毛智库 · 运用毛泽东思想的战略咨询机构 | 猫眼咨询",
+    description: "毛智库以毛泽东战略思想为核心，为军方提供兵棋推演与国防战略咨询，深度参与全球重大战略事务，获IMF、俄罗斯战略研究院认可。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
+    url: "https://www.mcmamoo.com/maothink",
+    type: "article",
+  });
   const [scanLine, setScanLine] = useState(0);
 
   // Animated scan line effect

@@ -3,6 +3,7 @@
  * Design: 深夜奢华 · 深蓝+金色 · 燕窝品类开创者
  */
 import { useEffect, useRef, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
 import RelatedCases from "@/components/RelatedCases";
 import ShareBar from "@/components/ShareBar";
@@ -65,6 +66,13 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 }
 
 export default function CaseXiaoxiandun() {
+  useSEO({
+    title: "小仙炖鲜炖燕窝 · 开创品类5年达20亿 | 猫眼咨询",
+    description: "猫眼咨询助力小仙炖开创鲜炖燕窝品类，5年营收突破20亿，成为天猫燕窝类目第一品牌。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoxiandun-hero-MSw4oXFtJRpVC9YWG9wg4G.webp",
+    url: "https://www.mcmamoo.com/cases/xiaoxiandun",
+    type: "article",
+  });
   return (
     <div style={{ background: "#080C14", minHeight: "100vh", color: "#F5F0E8" }}>
       {/* Nav */}

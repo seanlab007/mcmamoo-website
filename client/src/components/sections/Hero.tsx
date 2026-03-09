@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-bg-d7eizqgBbqatPTyug6Apqv.webp";
+const HERO_VIDEO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-final_5b857fd9.mp4";
 
 export default function Hero() {
   const [visible, setVisible] = useState(false);
@@ -23,11 +24,23 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex flex-col overflow-hidden">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${HERO_BG})` }}
-      />
+      {/* Background video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        poster={HERO_BG}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ filter: "brightness(0.55) saturate(1.1)" }}
+      >
+        <source src={HERO_VIDEO} type="video/mp4" />
+        {/* Fallback image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${HERO_BG})` }}
+        />
+      </video>
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A]/95 via-[#0A0A0A]/70 to-[#0D1B2A]/20" />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/30 via-transparent to-[#0A0A0A]/80" />

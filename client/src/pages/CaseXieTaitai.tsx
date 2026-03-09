@@ -4,6 +4,7 @@
  * Story: 从0到8亿营收，大闸蟹行业品牌化第一案例
  */
 import { useEffect, useRef, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
 import { InlineContactTrigger } from "@/components/WechatFloat";
 import RelatedCases from "@/components/RelatedCases";
@@ -182,6 +183,13 @@ function TimelineItem({ year, title, desc, isLast }: { year: string; title: stri
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function CaseXieTaitai() {
+  useSEO({
+    title: "蟹太太大闸蟹 · 从0到8亿营收 | 猫眼咨询标杆案例",
+    description: "猫眼咨询操盘蟹太太大闸蟹品牌，从0孵化到年营收8亿，联合500+明星网红，贾乃亮单场5700万，小杨哥单场2000万。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
+    url: "https://www.mcmamoo.com/cases/xietaitai",
+    type: "article",
+  });
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);

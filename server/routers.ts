@@ -61,6 +61,25 @@ export const appRouter = router({
       const results = await db.select().from(maoApplications).orderBy(maoApplications.createdAt);
       return results;
     }),
+
+    // Admin: update application status
+    updateApplicationStatus: publicProcedure
+      .input(
+        z.object({
+          id: z.number().int().positive(),
+          status: z.enum(["pending", "approved", "rejected", "reviewing"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database unavailable");
+        const { eq } = await import("drizzle-orm");
+        await db
+          .update(maoApplications)
+          .set({ status: input.status })
+          .where(eq(maoApplications.id, input.id));
+        return { success: true };
+      }),
   }),
 });
 
