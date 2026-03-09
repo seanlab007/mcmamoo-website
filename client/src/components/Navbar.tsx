@@ -14,6 +14,10 @@ const navItems = [
   { label: "联系我们", href: "#contact" },
 ];
 
+const specialItems = [
+  { label: "毛智库", href: "/maothink", external: true },
+];
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -73,6 +77,14 @@ export default function Navbar() {
                 {item.label}
               </button>
             ))}
+            <a
+              href="/maothink"
+              className="relative text-[#8B1A1A] hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5"
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+            >
+              <span style={{ width: 6, height: 6, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0 }} />
+              毛智库
+            </a>
             <button
               onClick={() => handleNav("#contact")}
               className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
@@ -108,6 +120,14 @@ export default function Navbar() {
               {item.label}
             </button>
           ))}
+          <a
+            href="/maothink"
+            className="text-[#8B1A1A] hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ width: 8, height: 8, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block" }} />
+            毛智库
+          </a>
           <button
             onClick={() => handleNav("#contact")}
             className="mt-4 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] text-lg hover:bg-[#C9A84C]/10 transition-all duration-300"
