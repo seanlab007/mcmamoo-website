@@ -131,7 +131,215 @@ function AchievementCard({ icon, title, desc }: { icon: string; title: string; d
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Application Form ─────────────────────────────────────────────────────────────────────────────────
+function MaoApplicationForm() {
+  const [form, setForm] = useState({ name: "", org: "", direction: "", detail: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { ref, visible } = useReveal(0.1);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.org || !form.direction) return;
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setSubmitted(true);
+    }, 1200);
+  };
+
+  return (
+    <div
+      className="py-24 px-8 md:px-20 relative overflow-hidden"
+      style={{ borderTop: "1px solid rgba(139,26,26,0.2)" }}
+    >
+      {/* Grid background */}
+      <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(139,26,26,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(139,26,26,0.04) 1px, transparent 1px)`, backgroundSize: "40px 40px", pointerEvents: "none" }} />
+
+      <div className="relative max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-16 items-start">
+          {/* Left: copy */}
+          <div
+            ref={ref}
+            style={{ opacity: visible ? 1 : 0, transform: visible ? "translateX(0)" : "translateX(-24px)", transition: "opacity 0.7s ease, transform 0.7s ease" }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div style={{ width: 32, height: 1, background: "#8B1A1A" }} />
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "#8B1A1A", letterSpacing: "0.25em" }}>CLASSIFIED APPLICATION</span>
+            </div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: "#E8D5B7", fontWeight: 900, lineHeight: 1.15, marginBottom: 20 }}>
+              战略咨询申请
+            </h2>
+            <p style={{ color: "rgba(232,213,183,0.65)", fontSize: "0.95rem", lineHeight: 1.9, marginBottom: 28 }}>
+              毛智库不接受公开委托。所有申请经内部审核后，由专属战略顾问团队在
+              <strong style={{ color: "#E8D5B7" }}>72小时内</strong>联系确认。
+            </p>
+            <div className="space-y-4">
+              {[
+                { icon: "⚔", text: "国防与军事战略咨询" },
+                { icon: "🌐", text: "地缘政治与国际关系" },
+                { icon: "📊", text: "国家级经济危机干预" },
+                { icon: "🔍", text: "战略情报与态势研判" },
+              ].map(({ icon, text }) => (
+                <div key={text} className="flex items-center gap-3">
+                  <span style={{ fontSize: "0.9rem" }}>{icon}</span>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", color: "rgba(232,213,183,0.5)", letterSpacing: "0.08em" }}>{text}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-10 pt-8" style={{ borderTop: "1px solid rgba(139,26,26,0.2)" }}>
+              <a href="tel:+8613764597723" style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", color: "#8B1A1A", letterSpacing: "0.15em", textDecoration: "none" }}>
+                ☎ +86 137-6459-7723
+              </a>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(232,213,183,0.3)", letterSpacing: "0.1em", marginTop: 6 }}>
+                工作时间 09:00–18:00 (GMT+8)
+              </div>
+            </div>
+          </div>
+
+          {/* Right: form */}
+          <div style={{ opacity: visible ? 1 : 0, transform: visible ? "translateX(0)" : "translateX(24px)", transition: "opacity 0.7s ease 0.15s, transform 0.7s ease 0.15s" }}>
+            {submitted ? (
+              <div
+                className="p-10 text-center"
+                style={{ border: "1px solid rgba(139,26,26,0.4)", background: "rgba(139,26,26,0.06)" }}
+              >
+                <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>✓</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", color: "#E8D5B7", fontSize: "1.3rem", fontWeight: 700, marginBottom: 12 }}>
+                  申请已提交
+                </div>
+                <p style={{ color: "rgba(232,213,183,0.6)", fontSize: "0.88rem", lineHeight: 1.8 }}>
+                  您的申请已进入审核队列。专属顾问团队将在 72 小时内与您联系。
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Name */}
+                <div>
+                  <label style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.62rem", color: "rgba(232,213,183,0.45)", letterSpacing: "0.15em", display: "block", marginBottom: 6 }}>
+                    FULL NAME · 姓名 <span style={{ color: "#8B1A1A" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="请输入您的姓名"
+                    style={{
+                      width: "100%", padding: "12px 16px",
+                      background: "rgba(232,213,183,0.04)",
+                      border: "1px solid rgba(139,26,26,0.3)",
+                      color: "#E8D5B7",
+                      fontFamily: "'Noto Serif SC', serif",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+                {/* Org */}
+                <div>
+                  <label style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.62rem", color: "rgba(232,213,183,0.45)", letterSpacing: "0.15em", display: "block", marginBottom: 6 }}>
+                    ORGANIZATION · 机构/单位 <span style={{ color: "#8B1A1A" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.org}
+                    onChange={e => setForm(f => ({ ...f, org: e.target.value }))}
+                    placeholder="请输入您的机构或单位名称"
+                    style={{
+                      width: "100%", padding: "12px 16px",
+                      background: "rgba(232,213,183,0.04)",
+                      border: "1px solid rgba(139,26,26,0.3)",
+                      color: "#E8D5B7",
+                      fontFamily: "'Noto Serif SC', serif",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+                {/* Direction */}
+                <div>
+                  <label style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.62rem", color: "rgba(232,213,183,0.45)", letterSpacing: "0.15em", display: "block", marginBottom: 6 }}>
+                    CONSULTATION DIRECTION · 咨询方向 <span style={{ color: "#8B1A1A" }}>*</span>
+                  </label>
+                  <select
+                    required
+                    value={form.direction}
+                    onChange={e => setForm(f => ({ ...f, direction: e.target.value }))}
+                    style={{
+                      width: "100%", padding: "12px 16px",
+                      background: "#0A0A0A",
+                      border: "1px solid rgba(139,26,26,0.3)",
+                      color: form.direction ? "#E8D5B7" : "rgba(232,213,183,0.35)",
+                      fontFamily: "'Noto Serif SC', serif",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="" disabled>请选择咨询方向</option>
+                    <option value="military">国防与军事战略</option>
+                    <option value="geopolitics">地缘政治与国际关系</option>
+                    <option value="economic">国家级经济危机干预</option>
+                    <option value="intelligence">战略情报与态势研判</option>
+                    <option value="wargame">兵棋推演</option>
+                    <option value="other">其他战略咨询</option>
+                  </select>
+                </div>
+                {/* Detail */}
+                <div>
+                  <label style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.62rem", color: "rgba(232,213,183,0.45)", letterSpacing: "0.15em", display: "block", marginBottom: 6 }}>
+                    BRIEF DESCRIPTION · 简要说明
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={form.detail}
+                    onChange={e => setForm(f => ({ ...f, detail: e.target.value }))}
+                    placeholder="请简要描述您的战略需求（可选）"
+                    style={{
+                      width: "100%", padding: "12px 16px",
+                      background: "rgba(232,213,183,0.04)",
+                      border: "1px solid rgba(139,26,26,0.3)",
+                      color: "#E8D5B7",
+                      fontFamily: "'Noto Serif SC', serif",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                      resize: "vertical",
+                    }}
+                  />
+                </div>
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: "100%", padding: "14px 24px",
+                    background: loading ? "rgba(139,26,26,0.5)" : "#8B1A1A",
+                    color: "#E8D5B7",
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.2em",
+                    border: "none",
+                    cursor: loading ? "not-allowed" : "pointer",
+                    transition: "background 0.2s",
+                  }}
+                >
+                  {loading ? "PROCESSING..." : "SUBMIT APPLICATION · 提交申请"}
+                </button>
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.58rem", color: "rgba(232,213,183,0.25)", letterSpacing: "0.08em", textAlign: "center" }}>
+                  所有申请信息严格保密 · ALL SUBMISSIONS ARE CLASSIFIED
+                </p>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────────────────────
 export default function MaoThinkTank() {
   const [scanLine, setScanLine] = useState(0);
 
@@ -474,59 +682,8 @@ export default function MaoThinkTank() {
         </div>
       </div>
 
-      {/* ── CTA ── */}
-      <div
-        className="py-24 px-8 md:px-20 text-center relative overflow-hidden"
-        style={{ borderTop: "1px solid rgba(139,26,26,0.2)" }}
-      >
-        <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(139,26,26,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(139,26,26,0.05) 1px, transparent 1px)`, backgroundSize: "40px 40px" }} />
-        <div className="relative max-w-2xl mx-auto">
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "#8B1A1A", letterSpacing: "0.25em", marginBottom: 16 }}>
-            CLASSIFIED · 机密咨询
-          </div>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.8rem, 4vw, 3rem)", color: "#E8D5B7", fontWeight: 900, marginBottom: 16 }}>
-            战略咨询，仅限受邀
-          </h2>
-          <p style={{ color: "rgba(232,213,183,0.6)", fontSize: "1rem", lineHeight: 1.8, marginBottom: 40 }}>
-            毛智库不接受公开委托。如需战略咨询，请通过猫眼咨询官方渠道提交申请，经审核后由专属顾问团队联系。
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="tel:+8613764597723"
-              style={{
-                display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-                padding: "14px 36px",
-                background: "#8B1A1A",
-                color: "#E8D5B7",
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "0.75rem",
-                letterSpacing: "0.15em",
-                textDecoration: "none",
-                transition: "opacity 0.2s",
-              }}
-            >
-              ☎ 立即联系
-            </a>
-            <Link href="/">
-              <a
-                style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  padding: "14px 36px",
-                  border: "1px solid rgba(232,213,183,0.3)",
-                  color: "rgba(232,213,183,0.7)",
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "0.75rem",
-                  letterSpacing: "0.15em",
-                  textDecoration: "none",
-                  transition: "opacity 0.2s",
-                }}
-              >
-                返回猫眼咨询
-              </a>
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* ── Application Form ── */}
+      <MaoApplicationForm />
 
       {/* ── Footer ── */}
       <div className="py-8 px-8 md:px-20 text-center" style={{ borderTop: "1px solid rgba(139,26,26,0.15)" }}>

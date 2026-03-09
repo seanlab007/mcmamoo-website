@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import RelatedCases from "@/components/RelatedCases";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp";
 
@@ -184,6 +185,9 @@ export default function CaseJiangzhong() {
         </div>
       </div>
 
+      {/* Related Cases */}
+      <RelatedCases current="jiangzhong" />
+
       {/* CTA */}
       <div className="py-16 px-8 md:px-20 text-center" style={{ borderTop: "1px solid rgba(201,168,76,0.1)" }}>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -197,7 +201,7 @@ export default function CaseJiangzhong() {
           </Link>
         </div>
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(245,240,232,0.2)", letterSpacing: "0.1em", marginTop: 24 }}>
-          © 2024 Mc&Mamoo Brand Management Inc. · 猫眼咨询 · 江中猴姑案例
+          © 2024 Mc&Mamoo Brand Management Inc. · 猫眼和询 · 江中猴姑案例
         </p>
       </div>
     </div>

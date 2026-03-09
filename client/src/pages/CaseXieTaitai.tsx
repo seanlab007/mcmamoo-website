@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { InlineContactTrigger } from "@/components/WechatFloat";
+import RelatedCases from "@/components/RelatedCases";
 
 // ── CDN image URLs ─────────────────────────────────────────────────────────────
 const IMGS = {
@@ -445,12 +446,15 @@ export default function CaseXieTaitai() {
         </div>
       </div>
 
+      {/* ── Related Cases ── */}
+      <RelatedCases current="xietaitai" />
+
       {/* ── Footer ── */}
       <div
         className="py-8 px-8 md:px-20 text-center text-xs"
         style={{ borderTop: "1px solid rgba(201,168,76,0.1)", color: "rgba(255,255,255,0.2)" }}
       >
-        © 2024 Mc&Mamoo Brand Management Inc. · 猫眼咨询 · 蟹太太案例
+        © 2024 Mc&Mamoo Brand Management Inc. · 猫眼和询 · 蟹太太案例
       </div>
     </div>
   );

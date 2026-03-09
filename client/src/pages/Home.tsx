@@ -6,6 +6,7 @@
  */
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/sections/Hero";
+import BusinessDivision from "@/components/sections/BusinessDivision";
 import About from "@/components/sections/About";
 import Methodology from "@/components/sections/Methodology";
 import KOL from "@/components/sections/KOL";
@@ -22,6 +23,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#0A0A0A]">
       <Navbar />
       <Hero />
+      <BusinessDivision />
       <About />
       <Methodology />
       <KOL />

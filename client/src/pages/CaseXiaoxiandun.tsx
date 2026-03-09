@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import RelatedCases from "@/components/RelatedCases";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoxiandun-hero-MSw4oXFtJRpVC9YWG9wg4G.webp";
 
@@ -207,6 +208,9 @@ export default function CaseXiaoxiandun() {
           </RevealBlock>
         </div>
       </div>
+
+      {/* Related Cases */}
+      <RelatedCases current="xiaoxiandun" />
 
       {/* Footer CTA */}
       <div className="py-16 px-8 md:px-20 text-center" style={{ borderTop: "1px solid rgba(201,168,76,0.1)" }}>
