@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import RelatedCases from "@/components/RelatedCases";
+import ShareBar from "@/components/ShareBar";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp";
 
@@ -183,6 +184,11 @@ export default function CaseJiangzhong() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Share bar */}
+      <div className="px-8 md:px-20 py-6" style={{ borderTop: "1px solid rgba(201,168,76,0.08)" }}>
+        <ShareBar title="江中猴姑饥饲饼干" description="养胃食品品类创新，天猫养胃食品第一" />
       </div>
 
       {/* Related Cases */}

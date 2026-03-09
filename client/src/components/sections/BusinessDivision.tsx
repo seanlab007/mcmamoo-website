@@ -1,6 +1,6 @@
 /*
  * BusinessDivision — 两大业务入口分区
- * Design: 品牌全案（金色）vs 毛智库（深红）双面对称布局
+ * Design: 品牌全案（金色粒子流）vs 毛智库（深红扫描线）双面对称布局
  * 位置：首页 Hero 下方，直接展示公司双业务定位
  */
 import { useEffect, useRef, useState } from "react";
@@ -20,6 +20,145 @@ function useReveal(threshold = 0.12) {
     return () => obs.disconnect();
   }, [threshold]);
   return { ref, visible };
+}
+
+// Gold particle canvas for Brand panel
+function GoldParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const particles: { x: number; y: number; vx: number; vy: number; r: number; alpha: number; alphaDir: number }[] = [];
+    for (let i = 0; i < 55; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        r: Math.random() * 1.5 + 0.5,
+        alpha: Math.random() * 0.5 + 0.1,
+        alphaDir: Math.random() > 0.5 ? 1 : -1,
+      });
+    }
+
+    let raf: number;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha += p.alphaDir * 0.004;
+        if (p.alpha > 0.6 || p.alpha < 0.05) p.alphaDir *= -1;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(201,168,76,${p.alpha})`;
+        ctx.fill();
+      }
+      // Draw faint connecting lines
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 80) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(201,168,76,${0.06 * (1 - dist / 80)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+  return <canvas ref={canvasRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />;
+}
+
+// Red scan line canvas for Mao panel
+function RedScanLines() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scanY = useRef(0);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    let raf: number;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Horizontal grid lines
+      ctx.strokeStyle = "rgba(139,26,26,0.06)";
+      ctx.lineWidth = 1;
+      for (let y = 0; y < canvas.height; y += 28) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      // Vertical grid lines
+      for (let x = 0; x < canvas.width; x += 28) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+
+      // Moving scan line
+      scanY.current = (scanY.current + 1.2) % canvas.height;
+      const grad = ctx.createLinearGradient(0, scanY.current - 30, 0, scanY.current + 30);
+      grad.addColorStop(0, "rgba(139,26,26,0)");
+      grad.addColorStop(0.5, "rgba(139,26,26,0.18)");
+      grad.addColorStop(1, "rgba(139,26,26,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, scanY.current - 30, canvas.width, 60);
+
+      // Bright scan line
+      ctx.beginPath();
+      ctx.moveTo(0, scanY.current);
+      ctx.lineTo(canvas.width, scanY.current);
+      ctx.strokeStyle = "rgba(139,26,26,0.35)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+  return <canvas ref={canvasRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />;
 }
 
 export default function BusinessDivision() {
@@ -68,6 +207,7 @@ export default function BusinessDivision() {
           cta={{ label: "查看品牌案例", href: "/#cases" }}
           isExternal={false}
           decorChar="◆"
+          bg={<GoldParticles />}
         />
 
         {/* Divider */}
@@ -94,6 +234,7 @@ export default function BusinessDivision() {
           cta={{ label: "了解毛智库", href: "/maothink" }}
           isExternal={true}
           decorChar="◈"
+          bg={<RedScanLines />}
         />
       </div>
     </section>
@@ -113,14 +254,15 @@ interface BizPanelProps {
   cta: { label: string; href: string };
   isExternal: boolean;
   decorChar: string;
+  bg: React.ReactNode;
 }
 
-function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, desc, metrics, cta, isExternal, decorChar }: BizPanelProps) {
+function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, desc, metrics, cta, isExternal, decorChar, bg }: BizPanelProps) {
   const [hovered, setHovered] = useState(false);
 
   const content = (
     <div
-      className="relative h-full flex flex-col justify-between p-10 md:p-14 cursor-pointer"
+      className="relative h-full flex flex-col justify-between p-10 md:p-14 cursor-pointer overflow-hidden"
       style={{
         background: hovered ? accentBg : "transparent",
         borderRight: side === "left" ? `1px solid ${borderColor}` : "none",
@@ -130,6 +272,9 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      {/* Dynamic background canvas */}
+      {bg}
+
       {/* Decorative corner char */}
       <div
         style={{
@@ -144,13 +289,14 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
           lineHeight: 1,
           transition: "opacity 0.35s ease",
           userSelect: "none",
+          zIndex: 1,
         }}
       >
         {decorChar}
       </div>
 
       {/* Top section */}
-      <div>
+      <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: accent, letterSpacing: "0.2em", marginBottom: 20, opacity: 0.8 }}>
           {tag}
         </div>
@@ -166,7 +312,7 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-3 gap-4 my-8">
+      <div className="grid grid-cols-3 gap-4 my-8" style={{ position: "relative", zIndex: 1 }}>
         {metrics.map(({ val, label }) => (
           <div key={label}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.3rem", fontWeight: 900, color: accent, marginBottom: 4 }}>
@@ -180,7 +326,7 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
       </div>
 
       {/* CTA */}
-      <div>
+      <div style={{ position: "relative", zIndex: 1 }}>
         <div
           className="inline-flex items-center gap-3"
           style={{

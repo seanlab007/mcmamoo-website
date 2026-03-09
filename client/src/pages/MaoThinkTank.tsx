@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/maothink-hero-mJvZ3PuQkyhYspYTZQbG3W.webp";
 
@@ -135,17 +136,31 @@ function AchievementCard({ icon, title, desc }: { icon: string; title: string; d
 function MaoApplicationForm() {
   const [form, setForm] = useState({ name: "", org: "", direction: "", detail: "" });
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const { ref, visible } = useReveal(0.1);
+
+  const submitMutation = trpc.mao.submitApplication.useMutation({
+    onSuccess: () => {
+      setSubmitted(true);
+      setErrorMsg("");
+    },
+    onError: (err) => {
+      setErrorMsg(err.message || "提交失败，请稍后重试");
+    },
+  });
+
+  const loading = submitMutation.isPending;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.org || !form.direction) return;
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSubmitted(true);
-    }, 1200);
+    setErrorMsg("");
+    submitMutation.mutate({
+      name: form.name,
+      organization: form.org,
+      consultType: form.direction,
+      description: form.detail || undefined,
+    });
   };
 
   return (
@@ -327,6 +342,11 @@ function MaoApplicationForm() {
                 >
                   {loading ? "PROCESSING..." : "SUBMIT APPLICATION · 提交申请"}
                 </button>
+                {errorMsg && (
+                  <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", color: "#8B1A1A", textAlign: "center", marginTop: 8 }}>
+                    {errorMsg}
+                  </p>
+                )}
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.58rem", color: "rgba(232,213,183,0.25)", letterSpacing: "0.08em", textAlign: "center" }}>
                   所有申请信息严格保密 · ALL SUBMISSIONS ARE CLASSIFIED
                 </p>

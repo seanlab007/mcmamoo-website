@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import RelatedCases from "@/components/RelatedCases";
+import ShareBar from "@/components/ShareBar";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoxiandun-hero-MSw4oXFtJRpVC9YWG9wg4G.webp";
 
@@ -207,6 +208,11 @@ export default function CaseXiaoxiandun() {
             </div>
           </RevealBlock>
         </div>
+      </div>
+
+      {/* Share bar */}
+      <div className="px-8 md:px-20 py-6" style={{ borderTop: "1px solid rgba(201,168,76,0.08)" }}>
+        <ShareBar title="小仙炖鲜炖燕窩" description="开创鲜炖燕窩品类，5年偖20亿营收" />
       </div>
 
       {/* Related Cases */}

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { InlineContactTrigger } from "@/components/WechatFloat";
 import RelatedCases from "@/components/RelatedCases";
+import ShareBar from "@/components/ShareBar";
 
 // ── CDN image URLs ─────────────────────────────────────────────────────────────
 const IMGS = {
@@ -444,6 +445,11 @@ export default function CaseXieTaitai() {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* ── Share bar ── */}
+      <div className="px-8 md:px-20 py-6" style={{ borderTop: "1px solid rgba(201,168,76,0.08)" }}>
+        <ShareBar title="蟹太太大闸蟹" description="从0做到8亿营收的品牌操盘全案" />
       </div>
 
       {/* ── Related Cases ── */}

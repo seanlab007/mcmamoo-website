@@ -12,8 +12,8 @@ import CaseXiaoguan from "./pages/CaseXiaoguan";
 import MaoThinkTank from "./pages/MaoThinkTank";
 import WechatFloat from "./components/WechatFloat";
 
-
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
