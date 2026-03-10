@@ -68,10 +68,16 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 export default function CaseJiangzhong() {
   useSEO({
     title: "江中猴姑饼干 · 养胃食品品类创新 | 猫眼咨询",
-    description: "猫眼咨询操盘江中猴姑饼干，创造养胃食品新品类，天猫养胃食品第一，年销售额超10亿。",
+    description: "猫眼咨询操盘江中猴姑饼干，创造养胃食品新品类，天猫养胃食品第一，年销售额贤10亿。猫眼咨询错位竞争理论实战案例。",
+    keywords: "江中猴姑,养胃饼干,养胃食品,猫眼咨询,品类创新,错位竞争,新消费,天猫养胃第一",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp",
     url: "https://www.mcmamoo.com/cases/jiangzhong",
     type: "article",
+    datePublished: "2024-01-01",
+    breadcrumbs: [
+      { name: "标杆案例", url: "https://www.mcmamoo.com/#cases" },
+      { name: "江中猴姑饼干 · 养胃食品品类创新", url: "https://www.mcmamoo.com/cases/jiangzhong" },
+    ],
   });
   return (
     <div style={{ background: "#080C0A", minHeight: "100vh", color: "#F5F0E8" }}>

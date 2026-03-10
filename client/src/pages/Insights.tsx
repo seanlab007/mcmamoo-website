@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { ArrowRight, Clock, Calendar } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const IMG_CHESS = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/article_chess_strategy_c84cd58e.jpg";
 
@@ -28,9 +29,19 @@ const articles = [
 ];
 
 export default function Insights() {
+  useSEO({
+    title: '战略洞察 | 猫眼咨询 Mc&Mamoo 品牌管理',
+    description: '猫眼咨询战略研究团队原创洞察，深度解析全球新消费品牌战略、错位竞争理论实战案例、商业领袖成长路径。独创错位竞争理论，连续3年中国新消费领域排名第一。',
+    keywords: '猫眼咨询,战略洞察,品牌战略,错位竞争,新消费,商业洞察,Mc&Mamoo,品牌咨询',
+    url: 'https://www.mcmamoo.com/insights',
+    type: 'website',
+    breadcrumbs: [
+      { name: '战略洞察', url: 'https://www.mcmamoo.com/insights' },
+    ],
+  });
+
   useEffect(() => {
     window.scrollTo({ top: 0 });
-    document.title = "战略洞察 | 猫眼咨询 Mc&Mamoo";
   }, []);
 
   const featured = articles.find((a) => a.featured);

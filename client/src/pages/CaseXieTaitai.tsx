@@ -185,10 +185,16 @@ function TimelineItem({ year, title, desc, isLast }: { year: string; title: stri
 export default function CaseXieTaitai() {
   useSEO({
     title: "蟹太太大闸蟹 · 从0到8亿营收 | 猫眼咨询标杆案例",
-    description: "猫眼咨询操盘蟹太太大闸蟹品牌，从0孵化到年营收8亿，联合500+明星网红，贾乃亮单场5700万，小杨哥单场2000万。",
+    description: "猫眼咨询操盘蟹太太大闸蟹品牌，从0孵化到年营日8亿，联合500+明星网红，贾乃亮单场5700万，小杨哥单场2000万。猫眼咨询错位竞争理论实战案例。",
+    keywords: "蟹太太,大闸蟹品牌,猫眼咨询,品牌案例,错位竞争,新消费,直播带货,贾乃亮,小杨哥,大闸蟹电商",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
     url: "https://www.mcmamoo.com/cases/xietaitai",
     type: "article",
+    datePublished: "2024-01-01",
+    breadcrumbs: [
+      { name: "标杆案例", url: "https://www.mcmamoo.com/#cases" },
+      { name: "蟹太太大闸蟹 · 从0到8亿营收", url: "https://www.mcmamoo.com/cases/xietaitai" },
+    ],
   });
   useEffect(() => {
     window.scrollTo(0, 0);

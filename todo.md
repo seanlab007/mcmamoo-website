@@ -34,3 +34,10 @@
 - [x] SEO 优化：meta标签/OG标签/结构化数据/sitemap.xml/robots.txt
 - [x] 整理媒体分发策略（百家号/头条号/知乎/微信公众号等平台）
 - [x] 修复微信悬浮弹窗二维码区域白色背景问题（改为深色 #0D1B2A）
+- [x] 分析 osens.cn SEO 结构并学习其方法优化猫眼咨询官网 SEO
+- [x] 实施动态页面级 meta 标签（每个页面独立 title/description/canonical/keywords）
+- [x] 添加 JSON-LD 结构化数据到各子页面（BreadcrumbList + Article + Organization + ProfessionalService）
+- [x] 内链优化（案例页/洞察页互相关联）
+- [x] 关键词密度优化（参照 osens.cn 在 description 中列举具体客户名称）
+- [x] sitemap.xml 完善（所有页面+lastmod+priority）
+- [x] index.html 增加 ProfessionalService 结构化数据 + 双引擎兼容 meta

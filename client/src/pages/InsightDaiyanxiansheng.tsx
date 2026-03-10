@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { ArrowLeft, Share2, Clock, Calendar } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const IMG_CHESS = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/article_chess_strategy_c84cd58e.jpg";
 const IMG_LUXURY = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/article_luxury_empire_73aabdc3.jpg";
@@ -23,9 +24,23 @@ const ecosystemData = [
 ];
 
 export default function InsightDaiyanxiansheng() {
+  useSEO({
+    title: '中国不止有任正非——"代言"先生与他的全球商业帝国 | 猫眼咨询战略洞察',
+    description: '一个人，七条赛道，对标世界顶级商业力量。猫眼咨询创始人代言先生构建横跨战略智库、品牌咨询、金融科技、奢侈品、体育IP、影视内容的全球商业生态，深度解析中国新一代商业领袖的战略逻辑。',
+    keywords: '代言先生,猫眼咨询,毛智库,兰德咨询,麦肯锡,全球商业帝国,战略咨询,法国奢利,暗物质保险,错位竞争,品牌战略,新消费',
+    image: IMG_CHESS,
+    url: 'https://www.mcmamoo.com/insights/daiyanxiansheng',
+    type: 'article',
+    datePublished: '2025-03-10',
+    author: '猫眼咨询战略研究团队',
+    breadcrumbs: [
+      { name: '战略洞察', url: 'https://www.mcmamoo.com/insights' },
+      { name: '中国不止有任正非——"代言"先生与他的全球商业帝国', url: 'https://www.mcmamoo.com/insights/daiyanxiansheng' },
+    ],
+  });
+
   useEffect(() => {
     window.scrollTo({ top: 0 });
-    document.title = '中国不止有任正非——"代言"先生与他的全球商业帝国 | 猫眼咨询战略洞察';
   }, []);
 
   const handleShare = () => {
