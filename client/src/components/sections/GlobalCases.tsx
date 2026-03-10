@@ -6,6 +6,12 @@
 import { useState } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
+// 案例配图
+const CASE_IMAGES: Record<string, string> = {
+  "法国奢利 LA CELLE": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/757be4949642d6ff806fc865bf927fb9_f1a702d1.jpg",
+  "胖哥食品": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
+};
+
 const globalCases = [
   {
     brand: "Mastercard",
@@ -26,6 +32,16 @@ const globalCases = [
     period: "2022",
     desc: "法国百年奢侈香水品牌进入中国市场。通过品牌显贵化定位、小红书+抖音头部KOL矩阵种草、直播带货全域转化，实现单日2万瓶的爆发式增长，成为跨境奢品品类标杆案例。",
     tags: ["品牌显贵", "跨境电商", "KOL矩阵"],
+  },
+  {
+    brand: "胖哥食品",
+    category: "食品快消 / FMCG",
+    region: "中国",
+    flag: "🇨🇳",
+    result: "品牌升级，全国百万终端网点全面覆盖",
+    period: "2020",
+    desc: "湖南胖哥食品有限责任公司，行业内唯一覆盖全品类槟榔产品的领袖企业。拥最1000多万终端网点，400多位经销商，覆盖全国主要地级市。通过“离男人更近”战略方向，以“男人的奋斗伴侣”为品牌核心定位，构建差异化进攻战略，实现品牌认知度大幅提升，在行业洗牌期中成为领先品牌。",
+    tags: ["品牌升级", "快消战略", "终端覆盖"],
   },
   {
     brand: "Deloitte 德勤",
@@ -139,8 +155,24 @@ export default function GlobalCases() {
           {filtered.map((c) => (
             <div
               key={c.brand}
-              className="p-8 border border-white/10 hover:border-[#C9A84C]/40 transition-all duration-300 group"
+              className="border border-white/10 hover:border-[#C9A84C]/40 transition-all duration-300 group overflow-hidden"
             >
+              {/* Case photo if available */}
+              {CASE_IMAGES[c.brand] && (
+                <div className="relative h-40 overflow-hidden">
+                  <img
+                    src={CASE_IMAGES[c.brand]}
+                    alt={c.brand}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0A0A0A]/80" />
+                  <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
+                    <span className="text-[#C9A84C] font-['Noto_Serif_SC'] font-bold text-lg">{c.brand}</span>
+                    <span className="text-white/60 text-xs font-['DM_Mono']">{c.period}</span>
+                  </div>
+                </div>
+              )}
+              <div className="p-8">
               {/* Top row */}
               <div className="flex items-start justify-between mb-4">
                 <div>
@@ -176,6 +208,7 @@ export default function GlobalCases() {
                     {tag}
                   </span>
                 ))}
+              </div>
               </div>
             </div>
           ))}

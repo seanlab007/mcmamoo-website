@@ -187,7 +187,7 @@ export default function BusinessDivision() {
       </div>
 
       {/* Two-panel layout */}
-      <div className="grid md:grid-cols-2" style={{ minHeight: 480 }}>
+      <div className="grid md:grid-cols-2" style={{ minHeight: "auto" }}>
 
         {/* Left — 品牌全案 */}
         <BizPanel
@@ -262,12 +262,13 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
 
   const content = (
     <div
-      className="relative h-full flex flex-col justify-between p-10 md:p-14 cursor-pointer overflow-hidden"
+      className="relative h-full flex flex-col justify-between p-8 sm:p-10 md:p-14 cursor-pointer overflow-hidden"
       style={{
         background: hovered ? accentBg : "transparent",
         borderRight: side === "left" ? `1px solid ${borderColor}` : "none",
+        borderBottom: `1px solid ${borderColor}`,
         transition: "background 0.35s ease",
-        minHeight: 480,
+        minHeight: 380,
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

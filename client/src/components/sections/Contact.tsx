@@ -66,6 +66,22 @@ export default function Contact() {
               ))}
             </div>
 
+            {/* Business card QR code */}
+            <div className="mb-8 flex items-start gap-5">
+              <div className="p-2 bg-white border border-[#C9A84C]/30 flex-shrink-0">
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png"
+                  alt="微信二维码"
+                  className="w-24 h-24 object-contain"
+                />
+              </div>
+              <div>
+                <div className="text-white/40 text-xs font-['DM_Mono'] mb-1 tracking-widest uppercase">扫码加微信</div>
+                <div className="text-white/80 text-sm font-semibold mb-1">代言 Sean DAI</div>
+                <div className="text-white/40 text-xs">首席战略专家 · 猫眼咋询</div>
+              </div>
+            </div>
+
             {/* Brand statement */}
             <div className="border-l-2 border-[#C9A84C] pl-6">
               <p className="font-['Noto_Serif_SC'] text-[#C9A84C] text-lg font-semibold leading-relaxed mb-2">

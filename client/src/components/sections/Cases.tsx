@@ -90,6 +90,14 @@ const cases = [
     result: "三年逆势增长70亿美金",
     strategy: "在全球疫情冲击下，通过战略重构与错位竞争，帮助MasterCard实现三年逆势增长70亿美金的历史性突破。",
   },
+  {
+    year: "2020",
+    brand: "湖南胖哥食品",
+    category: "食品快消 / 槛榔",
+    result: "品牌升级，全国百万终端网点全面覆盖",
+    strategy: "湖南胖哥食品是行业内唯一覆盖全品类槛榔产品的领袖企业，拥最1000多万终端网点、400多位经销商。通过“离男人更近”战略方向，以“男人的奉斗伴侣”为品牌核心定位，建立差异化进攻战略，实现品牌认知度大幅提升，在行业洗牌期成为领先品牌。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
+  },
 ];
 
 export default function Cases() {
@@ -165,6 +173,18 @@ export default function Cases() {
               <p className="text-white/70 text-base leading-relaxed flex-1">
                 {cases[activeCase].strategy}
               </p>
+
+              {/* Case image if available */}
+              {(cases[activeCase] as any).image && (
+                <div className="relative mt-4 mb-4 h-36 overflow-hidden">
+                  <img
+                    src={(cases[activeCase] as any).image}
+                    alt={cases[activeCase].brand}
+                    className="w-full h-full object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#0D1B2A]/60 to-transparent" />
+                </div>
+              )}
 
               {/* CTA: view full case if link exists */}
               {(cases[activeCase] as any).link && (

@@ -1,6 +1,6 @@
 /**
  * AdminSubscribers — 战略简报订阅者管理后台
- * 仅管理员可访问，查看所有战略简报订阅邮箱
+ * 仅管理员可访问，查看所有战略简报订阅邮箱，支持邮件群发
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -10,11 +10,35 @@ import { Link } from "wouter";
 export default function AdminSubscribers() {
   const { user, loading } = useAuth();
   const [search, setSearch] = useState("");
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailContent, setEmailContent] = useState("");
+  const [sendResult, setSendResult] = useState<{ sent: number; failed: number; message: string } | null>(null);
+  const [sending, setSending] = useState(false);
 
   const { data: subscribers, isLoading } = trpc.mao.listSubscribers.useQuery(
     undefined,
     { enabled: !!user && user.role === "admin" }
   );
+
+  const sendNewsletter = trpc.mao.sendNewsletter.useMutation({
+    onMutate: () => setSending(true),
+    onSuccess: (data) => {
+      setSending(false);
+      setSendResult({ sent: data.sent, failed: data.failed, message: data.message });
+      setEmailSubject("");
+      setEmailContent("");
+    },
+    onError: (err) => {
+      setSending(false);
+      setSendResult({ sent: 0, failed: 0, message: `发送失败：${err.message}` });
+    },
+  });
+
+  const handleSend = () => {
+    if (!emailSubject.trim() || !emailContent.trim()) return;
+    sendNewsletter.mutate({ subject: emailSubject, content: emailContent });
+  };
 
   if (loading || isLoading) {
     return (
@@ -71,8 +95,21 @@ export default function AdminSubscribers() {
             </div>
           </div>
         </div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.1em" }}>
-          {user.name} · ADMIN
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <button
+            onClick={() => { setShowSendModal(true); setSendResult(null); }}
+            style={{
+              fontFamily: "'DM Mono', monospace", fontSize: "0.6rem",
+              color: "#C9A84C", border: "1px solid rgba(201,168,76,0.5)",
+              background: "rgba(201,168,76,0.08)", padding: "8px 18px",
+              cursor: "pointer", letterSpacing: "0.12em",
+            }}
+          >
+            ✉ 发送战略简报
+          </button>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.1em" }}>
+            {user.name} · ADMIN
+          </div>
         </div>
       </div>
 
@@ -179,7 +216,6 @@ export default function AdminSubscribers() {
                 onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? "rgba(255,255,255,0.015)" : "transparent")}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  {/* Index */}
                   <span style={{
                     fontFamily: "'DM Mono', monospace",
                     fontSize: "0.55rem",
@@ -189,7 +225,6 @@ export default function AdminSubscribers() {
                   }}>
                     {String(i + 1).padStart(3, "0")}
                   </span>
-                  {/* Email */}
                   <span style={{
                     fontFamily: "'DM Mono', monospace",
                     fontSize: "0.78rem",
@@ -199,7 +234,6 @@ export default function AdminSubscribers() {
                     {sub.email}
                   </span>
                 </div>
-                {/* Date */}
                 <div style={{
                   fontFamily: "'DM Mono', monospace",
                   fontSize: "0.6rem",
@@ -221,7 +255,6 @@ export default function AdminSubscribers() {
           </div>
         )}
 
-        {/* Export hint */}
         {(subscribers?.length ?? 0) > 0 && (
           <div style={{
             marginTop: 24,
@@ -242,6 +275,153 @@ export default function AdminSubscribers() {
           </div>
         )}
       </div>
+
+      {/* Send Newsletter Modal */}
+      {showSendModal && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 100,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget && !sending) setShowSendModal(false); }}
+        >
+          <div style={{
+            background: "#111111",
+            border: "1px solid rgba(201,168,76,0.3)",
+            borderTop: "3px solid #C9A84C",
+            width: "100%", maxWidth: 640,
+            maxHeight: "90vh", overflowY: "auto",
+            padding: "36px 40px",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+              <div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "#C9A84C", letterSpacing: "0.2em", marginBottom: 6 }}>
+                  NEWSLETTER BROADCAST
+                </div>
+                <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "1.2rem", color: "#F5F0E8", fontWeight: 700 }}>
+                  发送战略简报
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(245,240,232,0.4)", marginTop: 6 }}>
+                  将发送给全部 {subscribers?.length ?? 0} 位订阅者
+                </div>
+              </div>
+              {!sending && (
+                <button
+                  onClick={() => setShowSendModal(false)}
+                  style={{
+                    background: "transparent", border: "1px solid rgba(255,255,255,0.1)",
+                    color: "rgba(245,240,232,0.5)", cursor: "pointer",
+                    fontFamily: "'DM Mono', monospace", fontSize: "0.65rem",
+                    padding: "6px 14px", letterSpacing: "0.1em",
+                  }}
+                >
+                  关闭
+                </button>
+              )}
+            </div>
+
+            {sendResult ? (
+              <div>
+                <div style={{
+                  padding: "24px",
+                  background: sendResult.failed === 0 ? "rgba(39,174,96,0.1)" : "rgba(201,168,76,0.1)",
+                  border: `1px solid ${sendResult.failed === 0 ? "rgba(39,174,96,0.3)" : "rgba(201,168,76,0.3)"}`,
+                  marginBottom: 20,
+                }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: sendResult.failed === 0 ? "#27AE60" : "#C9A84C", letterSpacing: "0.1em", marginBottom: 8 }}>
+                    {sendResult.failed === 0 ? "✓ 发送完成" : "⚠ 部分发送"}
+                  </div>
+                  <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "1rem", color: "#F5F0E8" }}>
+                    {sendResult.message}
+                  </div>
+                  {sendResult.failed > 0 && (
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(245,240,232,0.4)", marginTop: 8 }}>
+                      提示：发送失败可能是因为 SMTP 配置未设置，请在 Secrets 面板配置 SMTP_USER 和 SMTP_PASS
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setSendResult(null); setShowSendModal(false); }}
+                  style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: "0.6rem",
+                    color: "#C9A84C", border: "1px solid rgba(201,168,76,0.4)",
+                    background: "transparent", padding: "10px 24px",
+                    cursor: "pointer", letterSpacing: "0.12em",
+                  }}
+                >
+                  关闭
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 8, textTransform: "uppercase" }}>
+                    邮件主题
+                  </div>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={e => setEmailSubject(e.target.value)}
+                    placeholder="例：猫眼战略简报 · 2025年Q1全球市场洞察"
+                    disabled={sending}
+                    style={{
+                      width: "100%", boxSizing: "border-box",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "rgba(245,240,232,0.8)",
+                      fontFamily: "'DM Mono', monospace", fontSize: "0.8rem",
+                      padding: "12px 16px", outline: "none",
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 8, textTransform: "uppercase" }}>
+                    邮件内容
+                  </div>
+                  <textarea
+                    value={emailContent}
+                    onChange={e => setEmailContent(e.target.value)}
+                    placeholder="输入战略简报正文内容..."
+                    rows={10}
+                    disabled={sending}
+                    style={{
+                      width: "100%", boxSizing: "border-box",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "rgba(245,240,232,0.8)",
+                      fontFamily: "'Noto Serif SC', serif", fontSize: "0.85rem",
+                      lineHeight: 1.8, padding: "14px 16px",
+                      resize: "vertical", outline: "none",
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "rgba(245,240,232,0.3)", letterSpacing: "0.08em" }}>
+                    ⚠ 发送前请确认 SMTP 凭据已在 Secrets 面板配置
+                  </div>
+                  <button
+                    disabled={sending || !emailSubject.trim() || !emailContent.trim()}
+                    onClick={handleSend}
+                    style={{
+                      fontFamily: "'DM Mono', monospace", fontSize: "0.65rem",
+                      color: (sending || !emailSubject.trim() || !emailContent.trim()) ? "rgba(201,168,76,0.3)" : "#0A0A0A",
+                      background: (sending || !emailSubject.trim() || !emailContent.trim()) ? "transparent" : "#C9A84C",
+                      border: "1px solid rgba(201,168,76,0.4)",
+                      padding: "12px 28px",
+                      cursor: (sending || !emailSubject.trim() || !emailContent.trim()) ? "default" : "pointer",
+                      letterSpacing: "0.12em", fontWeight: 700,
+                    }}
+                  >
+                    {sending ? "发送中..." : `发送给 ${subscribers?.length ?? 0} 位订阅者`}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

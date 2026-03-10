@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 
 const WECHAT_QR_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/wechat-qr-sean_f563e2c9.png";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png";
 
 const CONTACT = {
   wechatId: "K70727072",

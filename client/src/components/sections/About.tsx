@@ -3,9 +3,32 @@
  * Design: 白底左右分栏，左文右数据，金色竖线点缀
  * Theme: 品牌显贵 · 利润倍增 · 全域增长
  */
+import { useState } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
-const FOUNDER_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/founder-portrait-bg-dp5bEng4Ly5J93ahLDAL3o.webp";
+// 创始人照片画廊
+const FOUNDER_PHOTOS = [
+  {
+    url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/b299f2e7cff5536312288493433b451d_f2fef724.jpg",
+    label: "战略家",
+  },
+  {
+    url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/91fc24c033da2339894815a01b3ff3d7_6bdbc316.jpg",
+    label: "商务",
+  },
+  {
+    url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/a76735ada2e72d271c5339a337553b98_a5176a5f.jpg",
+    label: "青岛啤酒",
+  },
+  {
+    url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/dd64d5784a2adcd4ee0da7232aff22ab_15cb7651.jpg",
+    label: "演讲",
+  },
+  {
+    url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/84427e2c90b42cb82793a200ff3dc0d6_41c1c43f.jpg",
+    label: "华糖万商",
+  },
+];
 
 const credentials = [
   "美国暗物质资本（Dark Matter Capital）合伙人",
@@ -98,47 +121,73 @@ export default function About() {
             </div>
           </div>
 
-          {/* Right: Founder card */}
+          {/* Right: Founder card with photo gallery */}
           <div ref={ref3 as React.RefObject<HTMLDivElement>} className="reveal" style={{ transitionDelay: "0.2s" }}>
-            <div
-              className="relative overflow-hidden"
-              style={{
-                backgroundImage: `url(${FOUNDER_BG})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0A0A]/40 to-[#0A0A0A]/95" />
-              <div className="relative p-8 pt-32">
-                {/* Gold top border */}
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#C9A84C]" />
-
-                <div className="section-label mb-3">创始人 / Founder</div>
-                <h3 className="font-['Cormorant_Garamond'] text-white text-3xl font-semibold mb-1">
-                  Sean DAI
-                </h3>
-                <div className="text-[#C9A84C] text-sm mb-6 tracking-wide">代言 · 首席品牌增长专家</div>
-
-                <div className="space-y-2">
-                  {credentials.map((c) => (
-                    <div key={c} className="flex items-start gap-2.5">
-                      <span className="text-[#C9A84C] mt-1 text-xs flex-shrink-0">◆</span>
-                      <span className="text-white/70 text-sm leading-relaxed">{c}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <div className="text-white/40 text-xs tracking-widest uppercase mb-2 font-['DM_Mono']">14年 · 核心战绩</div>
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    主导孵化 <span className="text-[#C9A84C] font-semibold">8个10亿级大单品</span>，疫情期间帮助MasterCard三年逆势增长 <span className="text-[#C9A84C] font-semibold">70亿美金</span>，服务品牌客户遍及全球20+国家。
-                  </p>
-                </div>
-              </div>
-            </div>
+            <FounderCard credentials={credentials} />
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function FounderCard({ credentials }: { credentials: string[] }) {
+  const [activePhoto, setActivePhoto] = useState(0);
+
+  return (
+    <div className="relative overflow-hidden border border-white/10">
+      {/* Photo area */}
+      <div className="relative h-72 overflow-hidden">
+        <img
+          src={FOUNDER_PHOTOS[activePhoto].url}
+          alt={`Sean DAI - ${FOUNDER_PHOTOS[activePhoto].label}`}
+          className="w-full h-full object-cover object-top transition-all duration-700"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0A0A]/20 to-[#0A0A0A]/90" />
+        {/* Gold top border */}
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#C9A84C]" />
+        {/* Photo thumbnails */}
+        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 px-4">
+          {FOUNDER_PHOTOS.map((photo, i) => (
+            <button
+              key={i}
+              onClick={() => setActivePhoto(i)}
+              className={`transition-all duration-300 overflow-hidden rounded-sm ${
+                activePhoto === i
+                  ? "w-12 h-8 border border-[#C9A84C] opacity-100"
+                  : "w-8 h-8 border border-white/20 opacity-60 hover:opacity-90"
+              }`}
+            >
+              <img src={photo.url} alt={photo.label} className="w-full h-full object-cover object-top" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Info area */}
+      <div className="p-8">
+        <div className="section-label mb-3">创始人 / Founder</div>
+        <h3 className="font-['Cormorant_Garamond'] text-white text-3xl font-semibold mb-1">
+          Sean DAI
+        </h3>
+        <div className="text-[#C9A84C] text-sm mb-6 tracking-wide">代言 · 首席品牌增长专家</div>
+
+        <div className="space-y-2">
+          {credentials.map((c) => (
+            <div key={c} className="flex items-start gap-2.5">
+              <span className="text-[#C9A84C] mt-1 text-xs flex-shrink-0">◆</span>
+              <span className="text-white/70 text-sm leading-relaxed">{c}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-white/10">
+          <div className="text-white/40 text-xs tracking-widest uppercase mb-2 font-['DM_Mono']">14年 · 核心战绩</div>
+          <p className="text-white/70 text-sm leading-relaxed">
+            主导孵化 <span className="text-[#C9A84C] font-semibold">8个10亿级大单品</span>，疫情期间帮助MasterCard三年逆势增长 <span className="text-[#C9A84C] font-semibold">70亿美金</span>，服务品牌客户遍及全球20+国家。
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

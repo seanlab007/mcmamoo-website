@@ -33,6 +33,7 @@ export const maoApplications = mysqlTable("mao_applications", {
   consultType: varchar("consult_type", { length: 128 }).notNull(),
   description: text("description"),
   status: mysqlEnum("status", ["pending", "reviewing", "approved", "rejected"]).default("pending").notNull(),
+  notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

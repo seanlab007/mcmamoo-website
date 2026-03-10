@@ -7,6 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { getDb } from "./db";
 import { maoApplications, briefSubscribers } from "../drizzle/schema";
 import { z } from "zod";
+import { sendBulkEmails, generateNewsletterHtml } from "./email";
 
 export const appRouter = router({
   system: systemRouter,
@@ -118,6 +119,52 @@ export const appRouter = router({
           .set({ status: input.status })
           .where(eq(maoApplications.id, input.id));
         return { success: true };
+      }),
+
+    // Admin: update application notes (protected - admin only)
+    updateApplicationNotes: protectedProcedure
+      .input(
+        z.object({
+          id: z.number().int().positive(),
+          notes: z.string().max(2000),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作" });
+        }
+        const db = await getDb();
+        if (!db) throw new Error("Database unavailable");
+        const { eq } = await import("drizzle-orm");
+        await db
+          .update(maoApplications)
+          .set({ notes: input.notes })
+          .where(eq(maoApplications.id, input.id));
+        return { success: true };
+      }),
+
+    // Admin: send newsletter to all subscribers (protected - admin only)
+    sendNewsletter: protectedProcedure
+      .input(
+        z.object({
+          subject: z.string().min(1).max(256),
+          content: z.string().min(1).max(10000),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作" });
+        }
+        const db = await getDb();
+        if (!db) throw new Error("Database unavailable");
+        const subscribers = await db.select().from(briefSubscribers);
+        if (subscribers.length === 0) {
+          return { success: true, sent: 0, failed: 0, message: "暂无订阅者" };
+        }
+        const emails = subscribers.map((s) => s.email);
+        const html = generateNewsletterHtml(input.subject, input.content);
+        const { success, failed } = await sendBulkEmails(emails, input.subject, html, input.content);
+        return { success: true, sent: success, failed, message: `已发送 ${success} 封，失败 ${failed} 封` };
       }),
   }),
 });

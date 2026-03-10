@@ -50,12 +50,13 @@ export default function Navbar() {
             onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
             className="flex items-center gap-3 group"
           >
-            {/* Cat-eye SVG logo */}
-            <svg width="36" height="24" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <ellipse cx="18" cy="12" rx="17" ry="11" stroke="#C9A84C" strokeWidth="1" fill="none"/>
-              <circle cx="18" cy="12" r="7" stroke="#C9A84C" strokeWidth="0.8" fill="none"/>
-              <path d="M18 5 L20.5 12 L18 19 L15.5 12 Z" stroke="#C9A84C" strokeWidth="1" fill="#C9A84C" fillOpacity="0.15"/>
-            </svg>
+            {/* Cat-eye logo from business card */}
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_eye_logo_1a9f9467.png"
+              alt="猫眼咋询 Logo"
+              className="h-10 w-auto object-contain"
+              style={{ filter: 'drop-shadow(0 0 6px rgba(201,168,76,0.5))' }}
+            />
             <div>
               <div className="text-[#C9A84C] font-['Cormorant_Garamond'] font-semibold text-lg leading-none tracking-wide">
                 Mc&amp;Mamoo

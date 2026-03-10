@@ -198,11 +198,23 @@ function PredictionTimeline() {
   return (
     <div ref={ref} style={{ opacity: visible ? 1 : 0, transition: "opacity 0.8s ease" }}>
       <div className="relative">
-        {/* Vertical line */}
+        {/* Vertical line — desktop: left:80, mobile: left:56 */}
         <div
+          className="hidden sm:block"
           style={{
             position: "absolute",
             left: 80,
+            top: 0,
+            bottom: 0,
+            width: 1,
+            background: "linear-gradient(to bottom, transparent, rgba(139,26,26,0.6) 10%, rgba(139,26,26,0.6) 90%, transparent)",
+          }}
+        />
+        <div
+          className="block sm:hidden"
+          style={{
+            position: "absolute",
+            left: 16,
             top: 0,
             bottom: 0,
             width: 1,
@@ -233,8 +245,9 @@ function TimelineItem({ ev, index }: { ev: typeof TIMELINE_EVENTS[0]; index: num
         paddingBottom: 32,
       }}
     >
-      {/* Year column */}
+      {/* Year column — desktop: 80px wide, mobile: 0 (shown above content) */}
       <div
+        className="hidden sm:block"
         style={{
           width: 80,
           flexShrink: 0,
@@ -249,8 +262,9 @@ function TimelineItem({ ev, index }: { ev: typeof TIMELINE_EVENTS[0]; index: num
       >
         {ev.year}
       </div>
-      {/* Dot */}
+      {/* Dot — desktop */}
       <div
+        className="hidden sm:block"
         style={{
           position: "absolute",
           left: 76,
@@ -262,14 +276,41 @@ function TimelineItem({ ev, index }: { ev: typeof TIMELINE_EVENTS[0]; index: num
           flexShrink: 0,
         }}
       />
+      {/* Dot — mobile */}
+      <div
+        className="block sm:hidden"
+        style={{
+          position: "absolute",
+          left: 12,
+          top: 20,
+          width: 9,
+          height: 9,
+          background: color,
+          transform: "rotate(45deg)",
+          flexShrink: 0,
+        }}
+      />
       {/* Content */}
-      <div style={{ paddingLeft: 28, flex: 1 }}>
-        <div className="flex items-center gap-3 flex-wrap mb-2">
+      <div className="sm:pl-7 pl-10" style={{ flex: 1 }}>
+        {/* Mobile year label */}
+        <div
+          className="block sm:hidden"
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "0.65rem",
+            color: color,
+            letterSpacing: "0.08em",
+            marginBottom: 4,
+          }}
+        >
+          {ev.year}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap mb-2">
           <span
             style={{
               fontFamily: "'Noto Serif SC', serif",
               color: "#E8D5B7",
-              fontSize: "1rem",
+              fontSize: "clamp(0.9rem, 2.5vw, 1rem)",
               fontWeight: 700,
             }}
           >
@@ -283,6 +324,7 @@ function TimelineItem({ ev, index }: { ev: typeof TIMELINE_EVENTS[0]; index: num
               border: `1px solid ${color}`,
               padding: "2px 8px",
               letterSpacing: "0.1em",
+              whiteSpace: "nowrap",
             }}
           >
             {TYPE_LABELS[ev.type]}
@@ -293,6 +335,7 @@ function TimelineItem({ ev, index }: { ev: typeof TIMELINE_EVENTS[0]; index: num
               fontSize: "0.58rem",
               color: "rgba(232,213,183,0.4)",
               letterSpacing: "0.08em",
+              whiteSpace: "nowrap",
             }}
           >
             ✓ {ev.result}
