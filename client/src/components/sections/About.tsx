@@ -11,22 +11,32 @@ const FOUNDER_PHOTOS = [
   {
     url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/b299f2e7cff5536312288493433b451d_f2fef724.jpg",
     label: "战略家",
+    badge: "",
+    position: "object-top",
   },
   {
     url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/91fc24c033da2339894815a01b3ff3d7_6bdbc316.jpg",
     label: "商务",
+    badge: "",
+    position: "object-top",
   },
   {
     url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/a76735ada2e72d271c5339a337553b98_a5176a5f.jpg",
-    label: "青岛啤酒",
+    label: "青岛啊酒",
+    badge: "",
+    position: "object-top",
   },
   {
     url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/dd64d5784a2adcd4ee0da7232aff22ab_15cb7651.jpg",
     label: "演讲",
+    badge: "",
+    position: "object-center",
   },
   {
     url: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/84427e2c90b42cb82793a200ff3dc0d6_41c1c43f.jpg",
-    label: "华糖万商",
+    label: "华糖万商大会专家",
+    badge: "2024华糖万商大会 · 智业专家分享会",
+    position: "object-top",
   },
 ];
 
@@ -133,32 +143,83 @@ export default function About() {
 
 function FounderCard({ credentials }: { credentials: string[] }) {
   const [activePhoto, setActivePhoto] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const currentPhoto = FOUNDER_PHOTOS[activePhoto];
 
   return (
+    <>
+      {/* Lightbox overlay */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 cursor-zoom-out"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={currentPhoto.url}
+              alt={`Sean DAI - ${currentPhoto.label}`}
+              className="w-full h-full object-contain max-h-[85vh]"
+            />
+            {currentPhoto.badge && (
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                <div className="bg-[#C9A84C] text-[#0A0A0A] text-xs font-semibold px-4 py-1.5 tracking-wide">
+                  {currentPhoto.badge}
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => setLightboxOpen(false)}
+              className="absolute top-2 right-2 w-8 h-8 bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-lg transition-colors"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
     <div className="relative overflow-hidden border border-white/10">
       {/* Photo area */}
-      <div className="relative h-72 overflow-hidden">
+      <div
+        className="relative h-80 overflow-hidden cursor-zoom-in group"
+        onClick={() => setLightboxOpen(true)}
+        title="点击放大"
+      >
         <img
-          src={FOUNDER_PHOTOS[activePhoto].url}
-          alt={`Sean DAI - ${FOUNDER_PHOTOS[activePhoto].label}`}
-          className="w-full h-full object-cover object-top transition-all duration-700"
+          src={currentPhoto.url}
+          alt={`Sean DAI - ${currentPhoto.label}`}
+          className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${currentPhoto.position}`}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0A0A]/20 to-[#0A0A0A]/90" />
         {/* Gold top border */}
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#C9A84C]" />
+        {/* Trust badge (for special photos) */}
+        {currentPhoto.badge && (
+          <div className="absolute top-3 left-3">
+            <div className="bg-[#C9A84C] text-[#0A0A0A] text-[0.6rem] font-bold px-2.5 py-1 tracking-wide leading-tight">
+              {currentPhoto.badge}
+            </div>
+          </div>
+        )}
+        {/* Zoom hint */}
+        <div className="absolute top-3 right-3 w-7 h-7 bg-black/40 border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 1h4M1 1v4M11 1H7M11 1v4M1 11h4M1 11V7M11 11H7M11 11V7" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
         {/* Photo thumbnails */}
         <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 px-4">
           {FOUNDER_PHOTOS.map((photo, i) => (
             <button
               key={i}
-              onClick={() => setActivePhoto(i)}
+              onClick={(e) => { e.stopPropagation(); setActivePhoto(i); }}
               className={`transition-all duration-300 overflow-hidden rounded-sm ${
                 activePhoto === i
                   ? "w-12 h-8 border border-[#C9A84C] opacity-100"
                   : "w-8 h-8 border border-white/20 opacity-60 hover:opacity-90"
               }`}
             >
-              <img src={photo.url} alt={photo.label} className="w-full h-full object-cover object-top" />
+              <img src={photo.url} alt={photo.label} className={`w-full h-full object-cover ${photo.position}`} />
             </button>
           ))}
         </div>
@@ -189,5 +250,6 @@ function FounderCard({ credentials }: { credentials: string[] }) {
         </div>
       </div>
     </div>
+    </>
   );
 }

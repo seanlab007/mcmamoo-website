@@ -7,7 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { getDb } from "./db";
 import { maoApplications, briefSubscribers } from "../drizzle/schema";
 import { z } from "zod";
-import { sendBulkEmails, generateNewsletterHtml } from "./email";
+import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfirmationHtml, generateContactAdminHtml } from "./email";
 
 export const appRouter = router({
   system: systemRouter,
@@ -20,6 +20,57 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+  }),
+
+  // Contact form submission with email notification
+  contact: router({
+    submit: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1).max(128),
+          company: z.string().min(1).max(256),
+          phone: z.string().min(1).max(64),
+          message: z.string().max(2000).optional(),
+          email: z.string().email().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const adminEmail = process.env.SMTP_USER || "";
+
+        // 1. Send confirmation email to visitor (if they provided email)
+        if (input.email) {
+          const confirmHtml = generateContactConfirmationHtml(input.name, input.company);
+          await sendEmail({
+            to: input.email,
+            subject: `感谢您的咨询申请 — 猫眼咨询`,
+            html: confirmHtml,
+            text: `尊敬的 ${input.name}，感谢您向猫眼咨询提交咨询申请。我们将在 1-2 个工作日内与您联系。`,
+          });
+        }
+
+        // 2. Send notification to admin
+        if (adminEmail) {
+          const adminHtml = generateContactAdminHtml(
+            input.name,
+            input.company,
+            input.phone,
+            input.message ?? ""
+          );
+          await sendEmail({
+            to: adminEmail,
+            subject: `猫眼咨询新咨询申请：${input.name} / ${input.company}`,
+            html: adminHtml,
+          });
+        }
+
+        // 3. Also notify via built-in notification
+        await notifyOwner({
+          title: `新咨询申请：${input.company}`,
+          content: `姓名：${input.name}\n公司：${input.company}\n电话：${input.phone}\n需求：${input.message ?? "（无）"}`,
+        });
+
+        return { success: true };
+      }),
   }),
 
   // Mao Think Tank consultation application

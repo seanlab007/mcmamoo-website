@@ -769,7 +769,7 @@ export default function MaoThinkTank() {
 
             <p style={{ fontSize: "1.1rem", lineHeight: 1.8, color: "rgba(232,213,183,0.75)", maxWidth: 600, marginBottom: 48 }}>
               运用毛泽东战略思想，为国家军事决策、地缘政治博弈与全球经济危机提供顶级战略咨询。
-              对标美国兰德公司，深度参与全球重大战略事件。
+              对标美国五角大楼兰德咨询，深度参与全球重大战略事件。
             </p>
 
             {/* Stats */}

@@ -9,6 +9,7 @@ import CaseXieTaitai from "./pages/CaseXieTaitai";
 import CaseXiaoxiandun from "./pages/CaseXiaoxiandun";
 import CaseJiangzhong from "./pages/CaseJiangzhong";
 import CaseXiaoguan from "./pages/CaseXiaoguan";
+import CasePangge from "./pages/CasePangge";
 import MaoThinkTank from "./pages/MaoThinkTank";
 import AdminMaoApplications from "./pages/AdminMaoApplications";
 import AdminSubscribers from "./pages/AdminSubscribers";
@@ -23,6 +24,7 @@ function Router() {
       <Route path={"/cases/xiaoxiandun"} component={CaseXiaoxiandun} />
       <Route path={"/cases/jiangzhong"} component={CaseJiangzhong} />
       <Route path={"/cases/xiaoguan"} component={CaseXiaoguan} />
+      <Route path={"/cases/pangge"} component={CasePangge} />
       <Route path={"/maothink"} component={MaoThinkTank} />
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />

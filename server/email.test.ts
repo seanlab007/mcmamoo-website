@@ -3,7 +3,7 @@
  * Tests the email helper functions without actually sending emails
  */
 import { describe, it, expect, vi } from "vitest";
-import { generateNewsletterHtml } from "./email";
+import { generateNewsletterHtml, generateContactConfirmationHtml, generateContactAdminHtml } from "./email";
 
 describe("generateNewsletterHtml", () => {
   it("should include the subject in the HTML output", () => {
@@ -40,5 +40,60 @@ describe("generateNewsletterHtml", () => {
     const html = generateNewsletterHtml("主题", "内容");
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("</html>");
+  });
+});
+
+describe("generateContactConfirmationHtml", () => {
+  it("should include visitor name in greeting", () => {
+    const html = generateContactConfirmationHtml("张三", "ABC公司");
+    expect(html).toContain("张三");
+  });
+
+  it("should include company name", () => {
+    const html = generateContactConfirmationHtml("张三", "ABC公司");
+    expect(html).toContain("ABC公司");
+  });
+
+  it("should include brand name", () => {
+    const html = generateContactConfirmationHtml("张三", "ABC公司");
+    expect(html).toContain("猫眼咨询");
+  });
+
+  it("should include response time promise", () => {
+    const html = generateContactConfirmationHtml("张三", "ABC公司");
+    expect(html).toContain("1-2");
+  });
+
+  it("should be valid HTML", () => {
+    const html = generateContactConfirmationHtml("张三", "ABC公司");
+    expect(html).toContain("<!DOCTYPE html>");
+    expect(html).toContain("</html>");
+  });
+});
+
+describe("generateContactAdminHtml", () => {
+  it("should include visitor name", () => {
+    const html = generateContactAdminHtml("李四", "XYZ集团", "13800138000", "需要品牌诊断");
+    expect(html).toContain("李四");
+  });
+
+  it("should include company name", () => {
+    const html = generateContactAdminHtml("李四", "XYZ集团", "13800138000", "需要品牌诊断");
+    expect(html).toContain("XYZ集团");
+  });
+
+  it("should include phone number", () => {
+    const html = generateContactAdminHtml("李四", "XYZ集团", "13800138000", "需要品牌诊断");
+    expect(html).toContain("13800138000");
+  });
+
+  it("should include message content", () => {
+    const html = generateContactAdminHtml("李四", "XYZ集团", "13800138000", "需要品牌诊断");
+    expect(html).toContain("需要品牌诊断");
+  });
+
+  it("should handle empty message gracefully", () => {
+    const html = generateContactAdminHtml("李四", "XYZ集团", "13800138000", "");
+    expect(html).toContain("（未填写）");
   });
 });
