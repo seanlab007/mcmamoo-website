@@ -98,8 +98,15 @@ export default function AdminMaoApplications() {
             </div>
           </div>
         </div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.1em" }}>
-          {user.name} · ADMIN
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <Link href="/admin/subscribers">
+            <a style={{ fontFamily: "'DM Mono', monospace", color: "rgba(201,168,76,0.5)", fontSize: "0.6rem", letterSpacing: "0.12em", textDecoration: "none", border: "1px solid rgba(201,168,76,0.2)", padding: "6px 12px" }}>
+              订阅者列表 →
+            </a>
+          </Link>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.1em" }}>
+            {user.name} · ADMIN
+          </div>
         </div>
       </div>
 

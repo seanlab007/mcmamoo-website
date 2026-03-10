@@ -2,6 +2,7 @@
  * InternationalRecognition — 首页国际机构认可横幅
  * 放置在 Hero 正下方，进门第一眼看到的核心信任背书
  * 风格：深红军事 · 哑金 · 权威震慑
+ * 新增：数字滚动动效统计栏
  */
 import { useEffect, useRef, useState } from "react";
 
@@ -31,6 +32,87 @@ const RECOGNITIONS = [
     color: "#8B1A1A",
   },
 ];
+
+const STATS = [
+  { value: 14, suffix: "+", label: "国政府咨询", color: "#C9A84C" },
+  { value: 85, suffix: "%", label: "战略预测准确率", color: "#8B1A1A" },
+  { value: 6, suffix: "年", label: "军事战略合作", color: "#C0392B" },
+  { value: 3, suffix: "大", label: "国际机构认可", color: "#6B8B4A" },
+];
+
+// Animated counter hook
+function useCounter(target: number, visible: boolean, duration = 1800) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!visible) return;
+    let start = 0;
+    const steps = 60;
+    const increment = target / steps;
+    const intervalMs = duration / steps;
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [visible, target, duration]);
+  return count;
+}
+
+function StatItem({ stat, index }: { stat: typeof STATS[0]; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const count = useCounter(stat.value, visible);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        textAlign: "center",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(16px)",
+        transition: `opacity 0.6s ease ${index * 0.12}s, transform 0.6s ease ${index * 0.12}s`,
+        flex: 1,
+        minWidth: 120,
+      }}
+    >
+      <div style={{
+        fontFamily: "'DM Mono', monospace",
+        fontSize: "clamp(2rem, 4vw, 3rem)",
+        fontWeight: 700,
+        color: stat.color,
+        lineHeight: 1,
+        letterSpacing: "-0.02em",
+      }}>
+        {count}{stat.suffix}
+      </div>
+      <div style={{
+        fontFamily: "'Noto Serif SC', serif",
+        fontSize: "0.78rem",
+        color: "rgba(245,240,232,0.5)",
+        marginTop: 8,
+        letterSpacing: "0.05em",
+      }}>
+        {stat.label}
+      </div>
+    </div>
+  );
+}
 
 function RecognitionCard({ item, index }: { item: typeof RECOGNITIONS[0]; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -242,6 +324,42 @@ export default function InternationalRecognition() {
             毛智库深度参与全球重大战略事务，获得国际顶级机构认可与合作，
             是中国极少数具备全球战略影响力的民间智库。
           </p>
+        </div>
+
+        {/* ── Animated Stats Bar ── */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-around",
+          flexWrap: "wrap",
+          gap: 24,
+          padding: "32px 40px",
+          marginBottom: 40,
+          background: "rgba(139,26,26,0.06)",
+          border: "1px solid rgba(139,26,26,0.2)",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Corner accents */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: 16, height: 16, borderTop: "2px solid #8B1A1A", borderLeft: "2px solid #8B1A1A" }} />
+          <div style={{ position: "absolute", top: 0, right: 0, width: 16, height: 16, borderTop: "2px solid #8B1A1A", borderRight: "2px solid #8B1A1A" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, width: 16, height: 16, borderBottom: "2px solid #8B1A1A", borderLeft: "2px solid #8B1A1A" }} />
+          <div style={{ position: "absolute", bottom: 0, right: 0, width: 16, height: 16, borderBottom: "2px solid #8B1A1A", borderRight: "2px solid #8B1A1A" }} />
+
+          {/* Dividers between stats */}
+          {STATS.map((stat, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 0, flex: 1, minWidth: 120 }}>
+              <StatItem stat={stat} index={i} />
+              {i < STATS.length - 1 && (
+                <div style={{
+                  width: 1,
+                  height: 48,
+                  background: "rgba(139,26,26,0.3)",
+                  marginLeft: 16,
+                  flexShrink: 0,
+                }} />
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Cards */}

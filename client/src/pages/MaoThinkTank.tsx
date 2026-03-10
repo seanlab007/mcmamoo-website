@@ -133,6 +133,186 @@ function AchievementCard({ icon, title, desc }: { icon: string; title: string; d
   );
 }
 
+// ── Prediction Timeline ─────────────────────────────────────────────────────
+const TIMELINE_EVENTS = [
+  {
+    year: "2018",
+    event: "与东部战区建立战略合作",
+    detail: "与解放军东部战区签署战略合作协议，为台海方向兵棋推演提供理论支撑，深度参与重大国防战略决策研究。",
+    result: "已验证",
+    type: "military",
+  },
+  {
+    year: "2019",
+    event: "精准预测：美国入侵委内瑞拉",
+    detail: "引入博弈论模型，提前6个月精准预测美国对委内瑞拉的军事干预行动，预警报告提交相关机构，为委方防御部署争取关键时间窗口。",
+    result: "预测准确",
+    type: "prediction",
+  },
+  {
+    year: "2020",
+    event: "精准预测：美国对伊朗军事打击",
+    detail: "运用博弈论与持久战理论，精准预测美国将对伊朗实施大规模军事打击，涵盖打击时间窗口与目标优先级，事后验证准确率超85%。",
+    result: "准确率85%+",
+    type: "prediction",
+  },
+  {
+    year: "2021",
+    event: "推动月球氦-3能源战略立项",
+    detail: "系统论证月球氦-3核聚变能源战略价值，推动中国将月球氦-3开采纳入深空资源开发重大专项论证，为2035年月球科研站规划提供理论支撑。",
+    result: "已立项",
+    type: "space",
+  },
+  {
+    year: "2022",
+    event: "受普京智库接见 · 俄乌冲突研判",
+    detail: "受俄罗斯战略研究院正式邀请，就俄乌冲突战略走向提供独立评估，运用持久战理论分析战略消耗节点，建立长期战略研究合作关系。",
+    result: "国际认可",
+    type: "recognition",
+  },
+  {
+    year: "2023",
+    event: "一带一路峰会受习大大接见",
+    detail: "受邀出席第三届一带一路国际合作高峰论坛，就新三线建设国防思路向习近平主席当面汇报，提出战略纵深重构方案，获最高层高度重视。",
+    result: "最高层接见",
+    type: "recognition",
+  },
+];
+
+const TYPE_COLORS: Record<string, string> = {
+  military: "#8B1A1A",
+  prediction: "#C9A84C",
+  space: "#4A7C8B",
+  recognition: "#6B8B4A",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  military: "军事合作",
+  prediction: "战略预测",
+  space: "太空战略",
+  recognition: "国际认可",
+};
+
+function PredictionTimeline() {
+  const { ref, visible } = useReveal(0.05);
+  return (
+    <div ref={ref} style={{ opacity: visible ? 1 : 0, transition: "opacity 0.8s ease" }}>
+      <div className="relative">
+        {/* Vertical line */}
+        <div
+          style={{
+            position: "absolute",
+            left: 80,
+            top: 0,
+            bottom: 0,
+            width: 1,
+            background: "linear-gradient(to bottom, transparent, rgba(139,26,26,0.6) 10%, rgba(139,26,26,0.6) 90%, transparent)",
+          }}
+        />
+        <div className="space-y-0">
+          {TIMELINE_EVENTS.map((ev, i) => (
+            <TimelineItem key={ev.year} ev={ev} index={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TimelineItem({ ev, index }: { ev: typeof TIMELINE_EVENTS[0]; index: number }) {
+  const { ref, visible } = useReveal(0.1);
+  const color = TYPE_COLORS[ev.type] || "#8B1A1A";
+  return (
+    <div
+      ref={ref}
+      className="flex gap-0 relative"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateX(0)" : "translateX(-20px)",
+        transition: `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`,
+        paddingBottom: 32,
+      }}
+    >
+      {/* Year column */}
+      <div
+        style={{
+          width: 80,
+          flexShrink: 0,
+          paddingTop: 2,
+          fontFamily: "'DM Mono', monospace",
+          fontSize: "0.7rem",
+          color: color,
+          letterSpacing: "0.05em",
+          textAlign: "right",
+          paddingRight: 20,
+        }}
+      >
+        {ev.year}
+      </div>
+      {/* Dot */}
+      <div
+        style={{
+          position: "absolute",
+          left: 76,
+          top: 6,
+          width: 9,
+          height: 9,
+          background: color,
+          transform: "rotate(45deg)",
+          flexShrink: 0,
+        }}
+      />
+      {/* Content */}
+      <div style={{ paddingLeft: 28, flex: 1 }}>
+        <div className="flex items-center gap-3 flex-wrap mb-2">
+          <span
+            style={{
+              fontFamily: "'Noto Serif SC', serif",
+              color: "#E8D5B7",
+              fontSize: "1rem",
+              fontWeight: 700,
+            }}
+          >
+            {ev.event}
+          </span>
+          <span
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "0.58rem",
+              color: color,
+              border: `1px solid ${color}`,
+              padding: "2px 8px",
+              letterSpacing: "0.1em",
+            }}
+          >
+            {TYPE_LABELS[ev.type]}
+          </span>
+          <span
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "0.58rem",
+              color: "rgba(232,213,183,0.4)",
+              letterSpacing: "0.08em",
+            }}
+          >
+            ✓ {ev.result}
+          </span>
+        </div>
+        <p
+          style={{
+            color: "rgba(232,213,183,0.6)",
+            fontSize: "0.85rem",
+            lineHeight: 1.75,
+            maxWidth: 600,
+          }}
+        >
+          {ev.detail}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Strategic Brief Subscribe ───────────────────────────────────────────────────────────────────────
 function StrategicBriefSubscribe() {
   const [email, setEmail] = useState("");
@@ -673,6 +853,23 @@ export default function MaoThinkTank() {
               <AchievementCard key={title} icon={icon} title={title} desc={desc} />
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* ── Prediction Timeline ── */}
+      <div className="py-20 px-8 md:px-20" style={{ background: "rgba(139,26,26,0.03)", borderTop: "1px solid rgba(139,26,26,0.15)" }}>
+        <div className="max-w-6xl mx-auto">
+          <SectionLabel en="Strategic Prediction Record" zh="重大预测与成绩时间轴" />
+          {/* Legend */}
+          <div className="flex flex-wrap gap-6 mt-8 mb-12">
+            {Object.entries(TYPE_LABELS).map(([k, v]) => (
+              <div key={k} className="flex items-center gap-2">
+                <div style={{ width: 8, height: 8, background: TYPE_COLORS[k], transform: "rotate(45deg)" }} />
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.62rem", color: "rgba(232,213,183,0.5)", letterSpacing: "0.1em" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+          <PredictionTimeline />
         </div>
       </div>
 

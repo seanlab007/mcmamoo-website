@@ -87,6 +87,17 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Admin: list all subscribers (protected - admin only)
+    listSubscribers: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可访问" });
+      }
+      const db = await getDb();
+      if (!db) return [];
+      const results = await db.select().from(briefSubscribers).orderBy(briefSubscribers.createdAt);
+      return results;
+    }),
+
     // Admin: update application status (protected - admin only)
     updateApplicationStatus: protectedProcedure
       .input(

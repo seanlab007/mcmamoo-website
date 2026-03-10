@@ -11,6 +11,7 @@ import CaseJiangzhong from "./pages/CaseJiangzhong";
 import CaseXiaoguan from "./pages/CaseXiaoguan";
 import MaoThinkTank from "./pages/MaoThinkTank";
 import AdminMaoApplications from "./pages/AdminMaoApplications";
+import AdminSubscribers from "./pages/AdminSubscribers";
 import WechatFloat from "./components/WechatFloat";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
       <Route path={"/cases/xiaoguan"} component={CaseXiaoguan} />
       <Route path={"/maothink"} component={MaoThinkTank} />
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
+      <Route path={"/admin/subscribers"} component={AdminSubscribers} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
