@@ -8,9 +8,11 @@ import { getDb } from "./db";
 import { maoApplications, briefSubscribers } from "../drizzle/schema";
 import { z } from "zod";
 import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfirmationHtml, generateContactAdminHtml } from "./email";
+import { translateRouter } from "./routers/translate";
 
 export const appRouter = router({
   system: systemRouter,
+  translate: translateRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

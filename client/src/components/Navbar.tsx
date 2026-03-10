@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const navItems = [
   { label: "关于我们", href: "#about" },
@@ -93,9 +94,10 @@ export default function Navbar() {
             >
               战略洞察
             </a>
+            <LanguageSwitcher />
             <button
               onClick={() => handleNav("#contact")}
-              className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
+              className="ml-2 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
             >
               预约咨询
             </button>
@@ -142,6 +144,9 @@ export default function Navbar() {
           >
             战略洞察
           </a>
+          <div className="mt-2">
+            <LanguageSwitcher />
+          </div>
           <button
             onClick={() => handleNav("#contact")}
             className="mt-4 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] text-lg hover:bg-[#C9A84C]/10 transition-all duration-300"
