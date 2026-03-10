@@ -16,6 +16,7 @@ const navItems = [
 
 const specialItems = [
   { label: "毛智库", href: "/maothink", external: true },
+  { label: "战略洞察", href: "/insights", external: true },
 ];
 
 export default function Navbar() {
@@ -86,6 +87,12 @@ export default function Navbar() {
               <span style={{ width: 6, height: 6, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0 }} />
               毛智库
             </a>
+            <a
+              href="/insights"
+              className="relative text-white/50 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1"
+            >
+              战略洞察
+            </a>
             <button
               onClick={() => handleNav("#contact")}
               className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
@@ -128,6 +135,12 @@ export default function Navbar() {
           >
             <span style={{ width: 8, height: 8, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block" }} />
             毛智库
+          </a>
+          <a
+            href="/insights"
+            className="text-white/60 hover:text-[#C9A84C] text-xl transition-colors duration-300"
+          >
+            战略洞察
           </a>
           <button
             onClick={() => handleNav("#contact")}

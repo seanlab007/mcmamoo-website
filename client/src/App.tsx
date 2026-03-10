@@ -11,6 +11,8 @@ import CaseJiangzhong from "./pages/CaseJiangzhong";
 import CaseXiaoguan from "./pages/CaseXiaoguan";
 import CasePangge from "./pages/CasePangge";
 import MaoThinkTank from "./pages/MaoThinkTank";
+import Insights from "./pages/Insights";
+import InsightDaiyanxiansheng from "./pages/InsightDaiyanxiansheng";
 import AdminMaoApplications from "./pages/AdminMaoApplications";
 import AdminSubscribers from "./pages/AdminSubscribers";
 import WechatFloat from "./components/WechatFloat";
@@ -26,6 +28,8 @@ function Router() {
       <Route path={"/cases/xiaoguan"} component={CaseXiaoguan} />
       <Route path={"/cases/pangge"} component={CasePangge} />
       <Route path={"/maothink"} component={MaoThinkTank} />
+      <Route path={"/insights"} component={Insights} />
+      <Route path={"/insights/daiyanxiansheng"} component={InsightDaiyanxiansheng} />
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />
       <Route path={"/404"} component={NotFound} />
