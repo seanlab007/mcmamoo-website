@@ -41,3 +41,4 @@
 - [x] 关键词密度优化（参照 osens.cn 在 description 中列举具体客户名称）
 - [x] sitemap.xml 完善（所有页面+lastmod+priority）
 - [x] index.html 增加 ProfessionalService 结构化数据 + 双引擎兼容 meta
+- [x] 所有案例页底部添加“相关案例推荐”内链区块（SEO 内链优化）
