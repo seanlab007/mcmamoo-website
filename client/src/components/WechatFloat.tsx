@@ -218,7 +218,7 @@ export default function WechatFloat() {
 
               {/* QR Code */}
               <div className="px-6 pt-5 pb-3 flex flex-col items-center">
-                <div className="p-3 mb-3" style={{ background: "white", border: "1px solid rgba(201,168,76,0.3)" }}>
+                <div className="p-3 mb-3" style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.3)" }}>
                   <img src={WECHAT_QR_URL} alt="微信二维码" className="w-44 h-44 object-contain" />
                 </div>
                 <p className="text-center text-sm mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>
