@@ -42,3 +42,4 @@
 - [x] sitemap.xml 完善（所有页面+lastmod+priority）
 - [x] index.html 增加 ProfessionalService 结构化数据 + 双引擎兼容 meta
 - [x] 所有案例页底部添加“相关案例推荐”内链区块（SEO 内链优化）
+- [x] 首页视频文字叠加动画：将“对标兰德和中心”改为“对标美国兰德咨询”
