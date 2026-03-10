@@ -12,6 +12,20 @@ const CASE_IMAGES: Record<string, string> = {
   "胖哥食品": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
 };
 
+// 案例多图展示（法国奢利官网产品图）
+const CASE_GALLERY: Record<string, string[]> = {
+  "法国奢利 LA CELLE": [
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_maison_de_celle_eae4c377.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_nuit_parisienne_b57069e8.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_parfum_amour_7d7c0f60.webp",
+  ],
+};
+
+// 案例官网链接
+const CASE_WEBSITE: Record<string, string> = {
+  "法国奢利 LA CELLE": "https://www.lacelle1802.com",
+};
+
 const globalCases = [
   {
     brand: "Mastercard",
@@ -198,8 +212,26 @@ export default function GlobalCases() {
 
               <p className="text-white/50 text-sm leading-relaxed mb-4">{c.desc}</p>
 
+              {/* Product gallery for LA CELLE */}
+              {CASE_GALLERY[c.brand] && (
+                <div className="mb-4">
+                  <div className="text-white/30 text-xs font-['DM_Mono'] mb-2 tracking-widest">— PRODUCT GALLERY</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CASE_GALLERY[c.brand].map((img, i) => (
+                      <div key={i} className="aspect-square overflow-hidden border border-white/10">
+                        <img
+                          src={img}
+                          alt={`${c.brand} product ${i + 1}`}
+                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Tags */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {c.tags.map((tag) => (
                   <span
                     key={tag}
@@ -209,6 +241,20 @@ export default function GlobalCases() {
                   </span>
                 ))}
               </div>
+
+              {/* Official website link */}
+              {CASE_WEBSITE[c.brand] && (
+                <a
+                  href={CASE_WEBSITE[c.brand]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-xs font-['DM_Mono'] text-[#C9A84C]/70 hover:text-[#C9A84C] border border-[#C9A84C]/20 hover:border-[#C9A84C]/60 px-3 py-1.5 transition-all duration-200"
+                >
+                  <span>🌐</span>
+                  <span>{CASE_WEBSITE[c.brand].replace('https://', '')}</span>
+                  <span className="text-[#C9A84C]/40">→</span>
+                </a>
+              )}
               </div>
             </div>
           ))}

@@ -53,6 +53,28 @@ export default function Footer() {
             www.mcmamoo.com
           </p>
         </div>
+
+        {/* Powered by Dark Matter Bank */}
+        <div className="mt-6 pt-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-center gap-2">
+          <span className="text-white/15 text-xs font-['DM_Mono'] tracking-widest">— POWERED BY —</span>
+          <a
+            href="https://darkmatterbank.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-2 text-white/25 hover:text-[#C9A84C]/70 transition-all duration-300"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50 group-hover:opacity-100 transition-opacity">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1"/>
+              <circle cx="12" cy="12" r="4" fill="currentColor" fillOpacity="0.3"/>
+              <path d="M2 12 Q6 6 12 12 Q18 18 22 12" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+              <path d="M2 12 Q6 18 12 12 Q18 6 22 12" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+            </svg>
+            <span className="text-xs font-['DM_Mono'] tracking-[0.15em] font-medium">
+              DARK MATTER BANK
+            </span>
+          </a>
+          <span className="text-white/10 text-xs font-['DM_Mono'] tracking-widest hidden sm:inline">— 同一家族旗下的全球金融生态</span>
+        </div>
       </div>
     </footer>
   );
