@@ -133,6 +133,73 @@ function AchievementCard({ icon, title, desc }: { icon: string; title: string; d
   );
 }
 
+// ── Strategic Brief Subscribe ───────────────────────────────────────────────────────────────────────
+function StrategicBriefSubscribe() {
+  const [email, setEmail] = useState("");
+  const [done, setDone] = useState(false);
+  const [err, setErr] = useState("");
+
+  const subscribeMutation = trpc.mao.subscribeBrief.useMutation({
+    onSuccess: () => { setDone(true); setErr(""); },
+    onError: (e: { message?: string }) => { setErr(e.message || "订阅失败，请稍后重试"); },
+  });
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) { setErr("请输入有效的邮箱地址"); return; }
+    setErr("");
+    subscribeMutation.mutate({ email });
+  };
+
+  if (done) {
+    return (
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", color: "#8B1A1A", letterSpacing: "0.1em" }}>
+        ✓ 订阅成功 · 首期简报将于下月发送
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubscribe} className="flex gap-2">
+      <input
+        type="email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        placeholder="输入邮箱地址"
+        style={{
+          flex: 1,
+          background: "rgba(232,213,183,0.05)",
+          border: "1px solid rgba(139,26,26,0.3)",
+          color: "#E8D5B7",
+          padding: "8px 12px",
+          fontFamily: "'DM Mono', monospace",
+          fontSize: "0.7rem",
+          letterSpacing: "0.05em",
+          outline: "none",
+        }}
+      />
+      <button
+        type="submit"
+        disabled={subscribeMutation.isPending}
+        style={{
+          background: "#8B1A1A",
+          color: "#E8D5B7",
+          border: "none",
+          padding: "8px 14px",
+          fontFamily: "'DM Mono', monospace",
+          fontSize: "0.65rem",
+          letterSpacing: "0.1em",
+          cursor: subscribeMutation.isPending ? "not-allowed" : "pointer",
+          opacity: subscribeMutation.isPending ? 0.6 : 1,
+        }}
+      >
+        {subscribeMutation.isPending ? "..." : "订阅"}
+      </button>
+      {err && <div style={{ color: "#8B1A1A", fontSize: "0.65rem", marginTop: 4 }}>{err}</div>}
+    </form>
+  );
+}
+
 // ── Application Form ─────────────────────────────────────────────────────────────────────────────────
 function MaoApplicationForm() {
   const [form, setForm] = useState({ name: "", org: "", direction: "", detail: "" });
@@ -210,6 +277,16 @@ function MaoApplicationForm() {
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(232,213,183,0.3)", letterSpacing: "0.1em", marginTop: 6 }}>
                 工作时间 09:00–18:00 (GMT+8)
               </div>
+            </div>
+
+            {/* Strategic Brief Subscription */}
+            <div className="mt-8 p-5" style={{ background: "rgba(139,26,26,0.08)", border: "1px solid rgba(139,26,26,0.2)" }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "#8B1A1A", letterSpacing: "0.2em", marginBottom: 8 }}>STRATEGIC BRIEF</div>
+              <div style={{ fontFamily: "'Noto Serif SC', serif", color: "#E8D5B7", fontSize: "0.95rem", fontWeight: 600, marginBottom: 6 }}>战略简报订阅</div>
+              <p style={{ color: "rgba(232,213,183,0.5)", fontSize: "0.78rem", lineHeight: 1.7, marginBottom: 12 }}>
+                每月发布全球战略态势研判，不公开发行，仅限订阅用户。
+              </p>
+              <StrategicBriefSubscribe />
             </div>
           </div>
 
@@ -475,8 +552,8 @@ export default function MaoThinkTank() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { value: 30, suffix: "+", label: "全球战略事件" },
-                { value: 15, suffix: "+", label: "国家级合作" },
+                { value: 7, suffix: "+", label: "全球重大战事参与" },
+                { value: 85, suffix: "%", label: "地缘预测准确率" },
                 { value: 50, suffix: "+", label: "兵棋推演场次" },
                 { value: 3, suffix: "项", label: "国际机构认可" },
               ].map(({ value, suffix, label }) => (
@@ -605,40 +682,46 @@ export default function MaoThinkTank() {
           <SectionLabel en="Global Engagements" zh="深度参与的全球重大事件" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
             <ConflictCard
-              year="1980–1988"
-              name="两伊战争"
-              role="战略分析与冲突推演"
-              detail="对波斯湾地区地缘战略格局进行深度分析，运用持久战理论研究不对称战争中的战略消耗规律，为后续中东战略布局提供历史参照。"
+              year="2018–至今"
+              name="东部战区战略合作"
+              role="兵棋推演与国防战略咨询"
+              detail="与解放军东部战区建立紧密战略合作关系，为台海方向重大军事战略决策提供兵棋推演支撑。运用博弈论模型构建多场景战略推演体系，深度参与重大国防战略决策研究，是国内少数具备军事战略咨询资质的民间智库。"
             />
             <ConflictCard
-              year="2003–2011"
-              name="伊拉克战争"
-              role="反介入战略研究"
-              detail="深入研究超级大国单边主义军事干预模式，分析城市游击战与非对称作战的战略逻辑，形成反介入/区域拒止战略理论框架。"
+              year="2019 精准预测"
+              name="美国入侵委内瑞拉预警"
+              role="地缘政治预测 · 博弈论应用"
+              detail="引入博弈论模型，综合分析美国对委内瑞拉的军事部署、外交施压与经济制裁信号，提前6个月精准预测美国将对委内瑞拉发动军事干预行动。预警报告提交相关机构，为委方防御部署争取关键时间窗口。"
             />
             <ConflictCard
-              year="2019–2020"
-              name="委内瑞拉经济危机"
-              role="通胀治理战略顾问"
-              detail="为委内瑞拉政府提供超级通货膨胀治理战略方案，运用战略思维重构货币政策框架，相关建议获国际货币基金组织认可与表彰。"
+              year="2020 精准预测"
+              name="美国对伊朗军事行动预警"
+              role="中东战略预测 · 博弈论推演"
+              detail="运用博弈论与持久战理论，对美伊战略博弈进行多轮推演，精准预测美国将对伊朗实施大规模军事打击行动。预测报告涵盖打击时间窗口、目标优先级与伊朗反制路径，准确率经事后验证超过85%。"
             />
             <ConflictCard
-              year="2020–2021"
-              name="津巴布韦经济重建"
-              role="国家经济战略咨询"
-              detail="协助津巴布韦制定后通胀时代经济复苏战略，整合农业、矿产、外汇储备三大核心资源，构建可持续的国家经济安全体系。"
+              year="2021–至今"
+              name="月球氦-3能源战略"
+              role="太空资源战略咨询"
+              detail="引入博弈论与资源战略理论，系统论证月球氦-3核聚变能源的战略价值，推动中国将月球氦-3开采纳入深空资源开发重大专项论证。相关战略建议为中国2035年月球科研站建设规划提供理论支撑，助力中国在太空资源战略竞争中占据先机。"
+            />
+            <ConflictCard
+              year="2023 第三届峰会"
+              name="一带一路峰会 · 习大大接见"
+              role="国家战略咨询 · 顶层接见"
+              detail="受邀出席第三届一带一路国际合作高峰论坛，就新三线建设国防思路向习近平主席当面汇报。提出以战略纵深重构为核心的新三线建设方案，将国防工业布局与一带一路战略通道深度融合，获最高层高度重视。"
             />
             <ConflictCard
               year="2022–至今"
-              name="俄乌冲突"
-              role="战略态势研判"
-              detail="受普京智库邀请，就俄乌冲突战略走向提供独立评估。运用持久战理论分析战略消耗节点，为相关方提供冲突管控与战略退出路径建议。"
+              name="俄乌冲突战略研判"
+              role="战略态势研判 · 普京智库接见"
+              detail="受普京智库——俄罗斯战略研究院正式邀请，就俄乌冲突战略走向提供独立评估。运用持久战理论分析战略消耗节点，为相关方提供冲突管控与战略退出路径建议，建立长期战略研究合作关系。"
             />
             <ConflictCard
-              year="2023–至今"
-              name="中东局势"
-              role="地区战略平衡研究"
-              detail="深度参与中东地区战略平衡研究，分析多方博弈格局，为相关国家提供地区安全架构重建与战略利益协调的顶层设计建议。"
+              year="2019–2021"
+              name="委内瑞拉·津巴布韦经济重建"
+              role="通胀治理战略顾问 · IMF表彰"
+              detail="为委内瑞拉、津巴布韦提供超级通货膨胀治理战略方案，运用毛泽东经济战思想重构货币政策框架，整合农业、矿产、外汇储备三大核心资源。相关研究成果获国际货币基金组织特别表彰，纳入发展中国家经济危机应对参考案例库。"
             />
           </div>
         </div>

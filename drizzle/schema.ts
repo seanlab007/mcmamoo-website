@@ -39,3 +39,12 @@ export const maoApplications = mysqlTable("mao_applications", {
 
 export type MaoApplication = typeof maoApplications.$inferSelect;
 export type InsertMaoApplication = typeof maoApplications.$inferInsert;
+
+// Strategic brief subscribers
+export const briefSubscribers = mysqlTable("brief_subscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BriefSubscriber = typeof briefSubscribers.$inferSelect;

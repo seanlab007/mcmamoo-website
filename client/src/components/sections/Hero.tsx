@@ -11,6 +11,29 @@ const HERO_VIDEO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i
 
 export default function Hero() {
   const [visible, setVisible] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [overlayText, setOverlayText] = useState(0);
+  const videoRef = (el: HTMLVideoElement | null) => {
+    if (!el) return;
+    el.addEventListener("timeupdate", () => {
+      const t = el.currentTime;
+      const show = t >= 14 && t <= 26;
+      setShowOverlay(show);
+      if (show) {
+        if (t < 17) setOverlayText(0);
+        else if (t < 20) setOverlayText(1);
+        else if (t < 23) setOverlayText(2);
+        else setOverlayText(3);
+      }
+    });
+  };
+
+  const OVERLAY_LINES = [
+    { en: "STRATEGIC INTELLIGENCE", zh: "运用毛泽东思想" },
+    { en: "GLOBAL BATTLEFIELD ANALYSIS", zh: "洞察全球战略格局" },
+    { en: "PREDICT · DOMINATE · WIN", zh: "预测·制胜·胜利" },
+    { en: "MAO THINK TANK", zh: "毛智库 · 对标兰德和中心" },
+  ];
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100);
@@ -26,6 +49,7 @@ export default function Hero() {
     <section className="relative min-h-screen flex flex-col overflow-hidden">
       {/* Background video */}
       <video
+        ref={videoRef}
         autoPlay
         loop
         muted
@@ -41,6 +65,47 @@ export default function Hero() {
           style={{ backgroundImage: `url(${HERO_BG})` }}
         />
       </video>
+
+      {/* Video brand text overlay — appears at 14-26s */}
+      <div
+        className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+        style={{
+          opacity: showOverlay ? 1 : 0,
+          transition: "opacity 0.8s ease",
+          background: showOverlay ? "rgba(10,10,10,0.45)" : "transparent",
+        }}
+      >
+        <div className="text-center">
+          <div
+            key={overlayText}
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "clamp(0.6rem, 1.5vw, 0.85rem)",
+              color: "rgba(139,26,26,0.9)",
+              letterSpacing: "0.4em",
+              marginBottom: 16,
+              animation: "fadeInUp 0.5s ease forwards",
+            }}
+          >
+            {OVERLAY_LINES[overlayText]?.en}
+          </div>
+          <div
+            key={`zh-${overlayText}`}
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: "clamp(2rem, 5vw, 4rem)",
+              fontWeight: 900,
+              color: "#E8D5B7",
+              letterSpacing: "0.05em",
+              textShadow: "0 0 40px rgba(139,26,26,0.5)",
+              animation: "fadeInUp 0.5s ease 0.1s forwards",
+              opacity: 0,
+            }}
+          >
+            {OVERLAY_LINES[overlayText]?.zh}
+          </div>
+        </div>
+      </div>
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A]/95 via-[#0A0A0A]/70 to-[#0D1B2A]/20" />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/30 via-transparent to-[#0A0A0A]/80" />
