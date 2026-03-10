@@ -1,235 +1,184 @@
 /**
- * TranslationContext — Dynamic LLM-powered translation system
+ * TranslationContext — Static Language Pack System
  *
- * Strategy:
- * 1. Collect all text nodes from the DOM that need translation
- * 2. Batch-send to server LLM translation endpoint
- * 3. Cache results in localStorage (keyed by lang + text hash)
- * 4. Apply translations back to DOM nodes via data attributes
+ * Uses pre-generated JSON language packs hosted on CDN.
+ * Switching languages is near-instant (cached after first load).
+ * No runtime LLM calls needed.
  *
- * This approach works without hardcoding any language strings.
+ * Supported languages: zh, en, fr, de, es, pt, it, ru, ja, ko, ar, hi, th, vi, id, ms, tr, nl
  */
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
-import { trpc } from "@/lib/trpc";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-export type LanguageCode = string;
+export type LangCode =
+  | "zh" | "en" | "fr" | "de" | "es" | "pt" | "it" | "ru"
+  | "ja" | "ko" | "ar" | "hi" | "th" | "vi" | "id" | "ms" | "tr" | "nl";
+
+// Keep LanguageCode as alias for backward compatibility
+export type LanguageCode = LangCode;
 
 export interface Language {
-  code: LanguageCode;
-  name: string;
+  code: LangCode;
+  name: string;      // Native name
   nativeName: string;
+  label: string;     // Display label
+  flag: string;      // Emoji flag
+  rtl?: boolean;
 }
 
+export const LANGUAGES: Language[] = [
+  { code: "zh", name: "中文", nativeName: "中文", label: "中文", flag: "🇨🇳" },
+  { code: "en", name: "English", nativeName: "English", label: "English", flag: "🇺🇸" },
+  { code: "fr", name: "Français", nativeName: "Français", label: "Français", flag: "🇫🇷" },
+  { code: "de", name: "Deutsch", nativeName: "Deutsch", label: "Deutsch", flag: "🇩🇪" },
+  { code: "es", name: "Español", nativeName: "Español", label: "Español", flag: "🇪🇸" },
+  { code: "pt", name: "Português", nativeName: "Português", label: "Português", flag: "🇧🇷" },
+  { code: "it", name: "Italiano", nativeName: "Italiano", label: "Italiano", flag: "🇮🇹" },
+  { code: "ru", name: "Русский", nativeName: "Русский", label: "Русский", flag: "🇷🇺" },
+  { code: "ja", name: "日本語", nativeName: "日本語", label: "日本語", flag: "🇯🇵" },
+  { code: "ko", name: "한국어", nativeName: "한국어", label: "한국어", flag: "🇰🇷" },
+  { code: "ar", name: "العربية", nativeName: "العربية", label: "العربية", flag: "🇸🇦", rtl: true },
+  { code: "hi", name: "हिन्दी", nativeName: "हिन्दी", label: "हिन्दी", flag: "🇮🇳" },
+  { code: "th", name: "ภาษาไทย", nativeName: "ภาษาไทย", label: "ภาษาไทย", flag: "🇹🇭" },
+  { code: "vi", name: "Tiếng Việt", nativeName: "Tiếng Việt", label: "Tiếng Việt", flag: "🇻🇳" },
+  { code: "id", name: "Bahasa Indonesia", nativeName: "Bahasa Indonesia", label: "Indonesia", flag: "🇮🇩" },
+  { code: "ms", name: "Bahasa Melayu", nativeName: "Bahasa Melayu", label: "Melayu", flag: "🇲🇾" },
+  { code: "tr", name: "Türkçe", nativeName: "Türkçe", label: "Türkçe", flag: "🇹🇷" },
+  { code: "nl", name: "Nederlands", nativeName: "Nederlands", label: "Nederlands", flag: "🇳🇱" },
+];
+
+// CDN URLs for each language pack
+const CDN_URLS: Record<LangCode, string> = {
+  zh: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/zh_df5b9705.json",
+  en: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/en_6b375a2c.json",
+  fr: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/fr_2ef4858a.json",
+  de: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/de_2a874477.json",
+  es: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/es_760a2d06.json",
+  pt: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/pt_94923035.json",
+  it: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/it_4e2b07a5.json",
+  ru: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/ru_53b062e8.json",
+  ja: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/ja_26e91917.json",
+  ko: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/ko_f4e53218.json",
+  ar: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/ar_cfd9b2b9.json",
+  hi: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hi_610562dc.json",
+  th: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/th_180f764c.json",
+  vi: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/vi_1edea59b.json",
+  id: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/id_5a4c8dd4.json",
+  ms: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/ms_8898e04d.json",
+  tr: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/tr_e8eca65b.json",
+  nl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/nl_9db37899.json",
+};
+
+type TranslationData = Record<string, unknown>;
+
 interface TranslationContextValue {
-  currentLang: LanguageCode;
+  currentLang: LangCode;
+  currentLanguage: Language;
   languages: Language[];
+  translations: TranslationData;
+  isLoading: boolean;
   isTranslating: boolean;
-  setLanguage: (code: LanguageCode) => void;
+  setLanguage: (code: LangCode) => void;
+  t: (key: string, fallback?: string) => string;
 }
 
 const TranslationContext = createContext<TranslationContextValue>({
   currentLang: "zh",
-  languages: [],
+  currentLanguage: LANGUAGES[0],
+  languages: LANGUAGES,
+  translations: {},
+  isLoading: false,
   isTranslating: false,
   setLanguage: () => {},
+  t: (key: string, fallback?: string) => fallback ?? key,
 });
 
-// Cache key prefix
-const CACHE_PREFIX = "mcmamoo_trans_v1_";
-// Data attribute to mark translated nodes
-const ORIGINAL_ATTR = "data-original-text";
-const LANG_ATTR = "data-translated-lang";
+// In-memory cache to avoid re-fetching
+const translationCache: Partial<Record<LangCode, TranslationData>> = {};
 
-function getCacheKey(lang: LanguageCode, text: string): string {
-  return `${CACHE_PREFIX}${lang}_${btoa(encodeURIComponent(text)).slice(0, 32)}`;
-}
-
-function getFromCache(lang: LanguageCode, text: string): string | null {
-  try {
-    return localStorage.getItem(getCacheKey(lang, text));
-  } catch {
-    return null;
+function getNestedValue(obj: TranslationData, key: string): string | undefined {
+  const parts = key.split(".");
+  let current: unknown = obj;
+  for (const part of parts) {
+    if (current == null || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[part];
   }
-}
-
-function saveToCache(lang: LanguageCode, text: string, translated: string): void {
-  try {
-    localStorage.setItem(getCacheKey(lang, text), translated);
-  } catch {
-    // localStorage full — ignore
-  }
-}
-
-/**
- * Collect all translatable text nodes from the document.
- * We target specific elements to avoid translating code, scripts, etc.
- */
-function collectTranslatableNodes(): Array<{ node: Text; original: string }> {
-  const results: Array<{ node: Text; original: string }> = [];
-  const SKIP_TAGS = new Set([
-    "SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "SVG", "MATH",
-  ]);
-  // Only translate inside main content areas
-  const roots = document.querySelectorAll(
-    "main, nav, header, footer, section, article, [data-translate]"
-  );
-
-  const walker = (root: Element) => {
-    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        const parent = node.parentElement;
-        if (!parent) return NodeFilter.FILTER_REJECT;
-        if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
-        // Skip empty or whitespace-only nodes
-        const text = node.textContent?.trim();
-        if (!text || text.length < 2) return NodeFilter.FILTER_REJECT;
-        // Skip nodes that are purely numbers/symbols
-        if (/^[\d\s+%.,·•\-–—→←↑↓★☆©®™\n]+$/.test(text)) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      },
-    });
-
-    let node: Text | null;
-    while ((node = tw.nextNode() as Text | null)) {
-      const text = node.textContent?.trim() ?? "";
-      if (text) results.push({ node, original: text });
-    }
-  };
-
-  roots.forEach((root) => walker(root as Element));
-  return results;
-}
-
-/**
- * Restore all DOM nodes to their original Chinese text
- */
-function restoreOriginalText(): void {
-  document.querySelectorAll(`[${ORIGINAL_ATTR}]`).forEach((el) => {
-    const original = el.getAttribute(ORIGINAL_ATTR);
-    if (original && el.firstChild?.nodeType === Node.TEXT_NODE) {
-      el.firstChild.textContent = original;
-    }
-    el.removeAttribute(ORIGINAL_ATTR);
-    el.removeAttribute(LANG_ATTR);
-  });
+  return typeof current === "string" ? current : undefined;
 }
 
 export function TranslationProvider({ children }: { children: React.ReactNode }) {
-  const [currentLang, setCurrentLang] = useState<LanguageCode>(() => {
+  const [currentLang, setCurrentLang] = useState<LangCode>(() => {
     try {
-      return localStorage.getItem("mcmamoo_lang") ?? "zh";
+      const saved = localStorage.getItem("mcmamoo_lang") as LangCode | null;
+      return saved && CDN_URLS[saved] ? saved : "zh";
     } catch {
       return "zh";
     }
   });
-  const [isTranslating, setIsTranslating] = useState(false);
-  const translateMutation = trpc.translate.translate.useMutation();
-  const { data: languagesData } = trpc.translate.languages.useQuery();
-  const languages: Language[] = languagesData ? [...languagesData] : [];
-  const pendingLangRef = useRef<LanguageCode | null>(null);
+  const [translations, setTranslations] = useState<TranslationData>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const applyTranslations = useCallback(
-    async (lang: LanguageCode) => {
-      if (lang === "zh") {
-        restoreOriginalText();
-        return;
-      }
-
-      setIsTranslating(true);
-      try {
-        const nodes = collectTranslatableNodes();
-        if (nodes.length === 0) return;
-
-        // Deduplicate texts
-        const uniqueTexts = Array.from(new Set(nodes.map((n) => n.original)));
-
-        // Split into cached vs. uncached
-        const cached: Record<string, string> = {};
-        const toTranslate: string[] = [];
-
-        for (const text of uniqueTexts) {
-          const hit = getFromCache(lang, text);
-          if (hit) {
-            cached[text] = hit;
-          } else {
-            toTranslate.push(text);
-          }
-        }
-
-        // Batch translate uncached texts (max 40 per request)
-        const BATCH_SIZE = 40;
-        for (let i = 0; i < toTranslate.length; i += BATCH_SIZE) {
-          const batch = toTranslate.slice(i, i + BATCH_SIZE);
-          const result = await translateMutation.mutateAsync({
-            texts: batch,
-            targetLang: lang,
-            context: "Brand strategy consulting website for Mc&Mamoo (猫眼咨询)",
-          });
-          batch.forEach((text, idx) => {
-            const translated = result.translations[idx];
-            if (translated) {
-              cached[text] = translated;
-              saveToCache(lang, text, translated);
-            }
-          });
-        }
-
-        // Apply translations to DOM
-        nodes.forEach(({ node, original }) => {
-          const translated = cached[original];
-          if (!translated || translated === original) return;
-          const parent = node.parentElement;
-          if (!parent) return;
-          // Save original text if not already saved
-          if (!parent.hasAttribute(ORIGINAL_ATTR)) {
-            parent.setAttribute(ORIGINAL_ATTR, original);
-            parent.setAttribute(LANG_ATTR, lang);
-          }
-          node.textContent = translated;
-        });
-      } catch (err) {
-        console.error("[Translation] Failed:", err);
-      } finally {
-        setIsTranslating(false);
-      }
-    },
-    [translateMutation]
-  );
-
-  const setLanguage = useCallback(
-    (code: LanguageCode) => {
-      pendingLangRef.current = code;
-      setCurrentLang(code);
-      try {
-        localStorage.setItem("mcmamoo_lang", code);
-      } catch {}
-    },
-    []
-  );
-
-  // Apply translation whenever language changes (after DOM settles)
-  useEffect(() => {
-    if (currentLang === "zh") {
-      restoreOriginalText();
+  const loadLanguage = useCallback(async (code: LangCode) => {
+    // Use cache if available
+    if (translationCache[code]) {
+      setTranslations(translationCache[code]!);
       return;
     }
-    // Small delay to let React finish rendering
-    const timer = setTimeout(() => {
-      applyTranslations(currentLang);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [currentLang, applyTranslations]);
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(CDN_URLS[code]);
+      if (!res.ok) throw new Error(`Failed to load ${code}`);
+      const data = await res.json();
+      translationCache[code] = data;
+      setTranslations(data);
+    } catch (err) {
+      console.error("Translation load error:", err);
+      // Fallback: keep current translations
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLanguage(currentLang);
+  }, [currentLang, loadLanguage]);
+
+  // Apply RTL direction for Arabic
+  useEffect(() => {
+    const lang = LANGUAGES.find((l) => l.code === currentLang);
+    document.documentElement.dir = lang?.rtl ? "rtl" : "ltr";
+    document.documentElement.lang = currentLang;
+  }, [currentLang]);
+
+  const setLanguage = useCallback((code: LangCode) => {
+    try {
+      localStorage.setItem("mcmamoo_lang", code);
+    } catch {}
+    setCurrentLang(code);
+  }, []);
+
+  const t = useCallback(
+    (key: string, fallback?: string): string => {
+      const value = getNestedValue(translations, key);
+      return value ?? fallback ?? key;
+    },
+    [translations]
+  );
+
+  const currentLanguage = LANGUAGES.find((l) => l.code === currentLang) ?? LANGUAGES[0];
 
   return (
     <TranslationContext.Provider
-      value={{ currentLang, languages, isTranslating, setLanguage }}
+      value={{
+        currentLang,
+        currentLanguage,
+        languages: LANGUAGES,
+        translations,
+        isLoading,
+        isTranslating: isLoading,
+        setLanguage,
+        t,
+      }}
     >
       {children}
     </TranslationContext.Provider>

@@ -66,16 +66,22 @@ export const translateRouter = router({
 
       const systemPrompt = `You are a professional translator specializing in business, brand strategy, and consulting content.
 You are translating content for Mc&Mamoo (猫眼咨询), a premium Chinese brand management and strategy consulting firm.
-The company's key phrases and brand identity must be preserved:
-- "猫眼咨询" → "Mc&Mamoo" (never translate the brand name itself)
-- "毛智库" → "Mao Think Tank" (in English), or appropriate equivalent in other languages
+
+NEVER translate these — keep them EXACTLY as written in ALL languages:
+- "毛智库" → ALWAYS translate to "Mao Strategic Think Tank" in non-Chinese languages (NEVER use "Mao Think Tank" or keep as Chinese characters)
+- "Sean DAI" → ALWAYS output "Sean DAI" (it is a person's name, NEVER replace with "Spokesperson" or any title)
+- "Mc&Mamoo" → always keep as "Mc&Mamoo"
+- "猫眼咨询" → keep as "Mc&Mamoo" or "猫眼咨询"
+- Brand names (小仙炖, 江中猴姑, 小罐茶, 蟹太太, 胖哥食品) → keep in original form
 - "对标美国五角大楼兰德咨询" → translate naturally to convey "benchmarked against RAND Corporation (Pentagon's think tank)"
-- Keep proper nouns, brand names (小仙炖, 江中猴姑, 小罐茶, 蟹太太, etc.) in their original form or with a brief parenthetical translation
 - Maintain a premium, authoritative, and sophisticated tone throughout
 ${context ? `Context: ${context}` : ""}
 
-CRITICAL: You must return ONLY a valid JSON object with no markdown, no code blocks, no extra text.
-The JSON must have a "translations" key containing an array of translated strings in the EXACT same order as input.`;
+CRITICAL RULES:
+1. "毛智库" must ALWAYS appear as "Mao Strategic Think Tank" in non-Chinese output
+2. "Sean DAI" must ALWAYS appear as "Sean DAI" in output, never as a job title or translated name
+3. Return ONLY a valid JSON object with no markdown, no code blocks, no extra text
+4. The JSON must have a "translations" key containing an array of translated strings in the EXACT same order as input`;
 
       const userPrompt = `Translate the following ${texts.length} text item(s) from Chinese to ${targetLangName}.
 Return ONLY a JSON object: {"translations": ["translation1", "translation2", ...]}

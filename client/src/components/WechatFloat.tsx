@@ -456,7 +456,7 @@ function InlineModalContent({ onClose }: { onClose: () => void }) {
           <div className="text-xs tracking-widest uppercase mb-1" style={{ color: "rgba(201,168,76,0.6)", fontFamily: "'DM Mono', monospace" }}>
             Contact · 联系我们
           </div>
-          <div className="font-bold text-lg text-white" style={{ fontFamily: "'Noto Serif SC', serif" }}>代言 Sean DAI</div>
+          <div className="font-bold text-lg text-white" style={{ fontFamily: "'Noto Serif SC', serif" }} data-no-translate>代言 Sean DAI</div>
           <div className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>首席品牌增长专家 · 上海 徐汇</div>
         </div>
         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center hover:opacity-70" style={{ color: "rgba(255,255,255,0.4)" }}>
