@@ -120,3 +120,29 @@ export const nodeLogs = mysqlTable("node_logs", {
 });
 export type NodeLog = typeof nodeLogs.$inferSelect;
 export type InsertNodeLog = typeof nodeLogs.$inferInsert;
+
+// ===== 猫眼咨询官网表 (merged from mcmamoo-website) =====
+
+// Mao Think Tank consultation applications
+export const maoApplications = mysqlTable("mao_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  organization: varchar("organization", { length: 256 }).notNull(),
+  consultType: varchar("consult_type", { length: 128 }).notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["pending", "reviewing", "approved", "rejected"]).default("pending").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type MaoApplication = typeof maoApplications.$inferSelect;
+export type InsertMaoApplication = typeof maoApplications.$inferInsert;
+
+// Strategic brief subscribers
+export const briefSubscribers = mysqlTable("brief_subscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BriefSubscriber = typeof briefSubscribers.$inferSelect;
+export type InsertBriefSubscriber = typeof briefSubscribers.$inferInsert;
