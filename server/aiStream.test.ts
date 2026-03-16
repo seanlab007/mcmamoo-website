@@ -33,7 +33,9 @@ describe("AI Stream Integration", () => {
     expect(text).toContain("data: ");
   }, 20000);
 
-  it("Unknown model should return 400", async () => {
+  it("Unknown model should return SSE stream with error message", async () => {
+    // With smart routing, unknown models return 200 SSE stream with error content
+    // (router tries registered nodes first, then falls back to built-in configs)
     const res = await fetch("http://localhost:3000/api/ai/chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -42,6 +44,9 @@ describe("AI Stream Integration", () => {
         messages: [{ role: "user", content: "test" }],
       }),
     });
-    expect(res.status).toBe(400);
+    // Smart routing always returns 200 SSE; error is embedded in the stream
+    expect(res.headers.get("content-type")).toContain("text/event-stream");
+    const text = await res.text();
+    expect(text).toContain("error");
   }, 5000);
 });

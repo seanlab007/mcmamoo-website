@@ -12,8 +12,9 @@ import { SystemPromptSelector } from "@/components/SystemPromptSelector";
 import { StatusIndicator } from "@/components/StatusIndicator";
 import {
   Plus, Send, Trash2, MessageSquare, Loader2,
-  PanelLeftClose, PanelLeftOpen, Sparkles, LogOut, RotateCcw,
+  PanelLeftClose, PanelLeftOpen, Sparkles, LogOut, RotateCcw, Shield,
 } from "lucide-react";
+import { Link } from "wouter";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 
@@ -34,9 +35,9 @@ function LoginScreen() {
           <Sparkles className="size-8 text-primary" />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Claude Code AI</h1>
+          <h1 className="text-2xl font-bold tracking-tight">MaoAI</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            多模型 AI 编程助手，支持 DeepSeek、智谱 GLM、Groq
+            统一 AI 控制中心 · 多节点智能路由
           </p>
         </div>
         <Button
@@ -266,7 +267,7 @@ export default function Home() {
             <div className="size-7 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
               <Sparkles className="size-3.5 text-primary" />
             </div>
-            <span className="text-sm font-semibold">Claude Code</span>
+            <span className="text-sm font-semibold">MaoAI</span>
           </div>
           <Button variant="ghost" size="icon" className="size-7" onClick={() => setSidebarOpen(false)}>
             <PanelLeftClose className="size-4" />
@@ -306,15 +307,29 @@ export default function Home() {
         </ScrollArea>
         <div className="border-t border-sidebar-border px-3 py-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground truncate max-w-[140px]">{displayName}</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-7" onClick={() => logout()}>
-                  <LogOut className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="text-xs">退出登录</TooltipContent>
-            </Tooltip>
+            <span className="text-xs text-muted-foreground truncate max-w-[110px]">{displayName}</span>
+            <div className="flex items-center gap-0.5">
+              {user?.role === "admin" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/admin/nodes">
+                      <Button variant="ghost" size="icon" className="size-7">
+                        <Shield className="size-3.5 text-primary" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="text-xs">管理员控制台</TooltipContent>
+                </Tooltip>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-7" onClick={() => logout()}>
+                    <LogOut className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">退出登录</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </aside>
@@ -353,10 +368,10 @@ export default function Home() {
                 <Sparkles className="size-8 text-primary" />
               </div>
               <div className="text-center max-w-md">
-                <h2 className="text-xl font-semibold mb-2">Claude Code AI 助手</h2>
+                <h2 className="text-xl font-semibold mb-2">MaoAI 统一控制中心</h2>
                 <p className="text-sm text-muted-foreground">
-                  支持 DeepSeek V3/R1、智谱 GLM-4、Groq Llama 3.3。<br />
-                  输入问题开始对话，支持代码生成、调试和解释。
+                  支持 DeepSeek、智谱 GLM、Groq 及自定义节点。<br />
+                  管理员可配置 Claude API、OpenManus、OpenClaw 等节点。
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2 max-w-lg w-full">

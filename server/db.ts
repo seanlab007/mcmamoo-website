@@ -1,6 +1,9 @@
 import { eq, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, conversations, messages, InsertConversation, InsertMessage } from "../drizzle/schema";
+import {
+  InsertUser, users, conversations, messages, InsertConversation, InsertMessage,
+  aiNodes, routingRules, nodeLogs, InsertAiNode, InsertRoutingRule, InsertNodeLog,
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -50,8 +53,7 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// ─── Conversations ───────────────────────────────────────────────────────────
-
+// ─── Conversations ────────────────────────────────────────────────────────────
 export async function getConversations(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -82,8 +84,7 @@ export async function deleteConversation(id: number, userId: number) {
   await db.delete(conversations).where(eq(conversations.id, id));
 }
 
-// ─── Messages ────────────────────────────────────────────────────────────────
-
+// ─── Messages ─────────────────────────────────────────────────────────────────
 export async function getMessages(conversationId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -105,4 +106,117 @@ export async function clearMessages(conversationId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(messages).where(eq(messages.conversationId, conversationId));
+}
+
+// ─── AI Nodes ─────────────────────────────────────────────────────────────────
+export async function getAiNodes(activeOnly = false) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(aiNodes).orderBy(asc(aiNodes.priority));
+  return activeOnly ? rows.filter(n => n.isActive) : rows;
+}
+
+export async function getAiNodeById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(aiNodes).where(eq(aiNodes.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function createAiNode(data: Omit<InsertAiNode, 'id'>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(aiNodes).values(data);
+  const id = (result as any).insertId as number;
+  const rows = await db.select().from(aiNodes).where(eq(aiNodes.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function updateAiNode(id: number, data: Partial<InsertAiNode>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(aiNodes).set(data).where(eq(aiNodes.id, id));
+}
+
+export async function deleteAiNode(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(aiNodes).where(eq(aiNodes.id, id));
+}
+
+export async function updateNodePingStatus(id: number, isOnline: boolean, latencyMs?: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(aiNodes).set({
+    isOnline,
+    lastPingAt: new Date(),
+    lastPingMs: latencyMs ?? null,
+  }).where(eq(aiNodes.id, id));
+}
+
+// ─── Routing Rules ────────────────────────────────────────────────────────────
+export async function getRoutingRules() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(routingRules).orderBy(asc(routingRules.id));
+}
+
+export async function getDefaultRoutingRule() {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(routingRules)
+    .where(eq(routingRules.isDefault, true)).limit(1);
+  return rows[0];
+}
+
+export async function createRoutingRule(data: Omit<InsertRoutingRule, 'id'>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(routingRules).values(data);
+  const id = (result as any).insertId as number;
+  const rows = await db.select().from(routingRules).where(eq(routingRules.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function updateRoutingRule(id: number, data: Partial<InsertRoutingRule>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(routingRules).set(data).where(eq(routingRules.id, id));
+}
+
+export async function deleteRoutingRule(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(routingRules).where(eq(routingRules.id, id));
+}
+
+// ─── Node Logs ────────────────────────────────────────────────────────────────
+export async function createNodeLog(data: Omit<InsertNodeLog, 'id'>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(nodeLogs).values(data);
+}
+
+export async function getNodeLogs(limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(nodeLogs).orderBy(desc(nodeLogs.createdAt)).limit(limit);
+}
+
+export async function getNodeStats(nodeId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const logs = await db.select().from(nodeLogs)
+    .where(eq(nodeLogs.nodeId, nodeId))
+    .orderBy(desc(nodeLogs.createdAt))
+    .limit(1000);
+  const total = logs.length;
+  const success = logs.filter(l => l.status === 'success').length;
+  const avgLatency = logs.filter(l => l.latencyMs).reduce((s, l) => s + (l.latencyMs || 0), 0) / (logs.filter(l => l.latencyMs).length || 1);
+  return {
+    total,
+    success,
+    successRate: total > 0 ? (success / total * 100).toFixed(1) : '0',
+    avgLatency: Math.round(avgLatency),
+  };
 }
