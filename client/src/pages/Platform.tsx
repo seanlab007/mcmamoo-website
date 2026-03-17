@@ -10,7 +10,8 @@ import {
   Sparkles, Wand2, Library, Zap, Globe, Loader2,
   BarChart3, Star, Search, BookOpen, Hash, Clock,
   CheckCircle2, AlertCircle, Eye, Edit3, ArrowLeft,
-  Copy, Check, Download, RefreshCw, Trash2, Calendar, Bell
+  Copy, Check, Download, RefreshCw, Trash2, Calendar, Bell,
+  Twitter, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -434,6 +435,42 @@ function LibraryTab() {
                     onClick={() => { navigator.clipboard.writeText(copy.content); toast.success("已复制"); }}
                     className="h-7 w-7 p-0 text-zinc-500 hover:text-white hover:bg-zinc-800">
                     <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                  {/* X (Twitter) 一键发布 */}
+                  {(copy.platform === "X (Twitter)" || copy.platform?.includes("Twitter") || copy.platform?.includes("X")) && (
+                    <Button size="sm" variant="ghost"
+                      onClick={() => {
+                        // 截断到 280 字符，添加 la-celle1802.com 链接
+                        const raw = copy.content || "";
+                        const url = "https://la-celle1802.com";
+                        const maxLen = 280 - url.length - 2;
+                        const tweet = (raw.length > maxLen ? raw.slice(0, maxLen - 1) + "…" : raw) + "\n" + url;
+                        const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(tweet)}`;
+                        window.open(xUrl, "_blank", "width=600,height=500");
+                        toast.success("已打开 X 发布窗口");
+                      }}
+                      title="发布到 X (Twitter)"
+                      className="h-7 w-7 p-0 text-zinc-500 hover:text-sky-400 hover:bg-sky-500/10">
+                      <Twitter className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                  {/* 发送到所有平台（通用分享） */}
+                  <Button size="sm" variant="ghost"
+                    onClick={() => {
+                      const text = copy.content || "";
+                      const url = "https://la-celle1802.com";
+                      if (navigator.share) {
+                        navigator.share({ text, url, title: copy.title || "LA CELLE PARIS 1802" })
+                          .then(() => toast.success("已分享"))
+                          .catch(() => {});
+                      } else {
+                        navigator.clipboard.writeText(text + "\n" + url);
+                        toast.success("已复制（含链接）");
+                      }
+                    }}
+                    title="分享"
+                    className="h-7 w-7 p-0 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10">
+                    <Send className="w-3.5 h-3.5" />
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate({ id: copy.id })}
                     className="h-7 w-7 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10">

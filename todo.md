@@ -67,3 +67,11 @@
 - [ ] 内容日历（排期管理）
 - [ ] 多平台分发逻辑（一键生成多平台版本）
 - [ ] 推送更新到 GitHub mcmamoo-website
+
+## Cloudflare Pages 部署 & X.com 自动发布
+
+- [ ] 配置 Cloudflare Pages 自动部署（连接 GitHub 仓库）
+- [ ] 添加 wrangler.toml 和构建配置文件
+- [ ] 集成 X.com (Twitter) API v2 发布接口（后端路由）
+- [ ] 在文案库添加「发布到 X」按钮（前端 UI）
+- [ ] 存储 X OAuth Token 到数据库
