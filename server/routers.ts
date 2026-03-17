@@ -10,7 +10,9 @@ import {
   getAiNodes, getAiNodeById, createAiNode, updateAiNode, deleteAiNode, updateNodePingStatus,
   getRoutingRules, createRoutingRule, updateRoutingRule, deleteRoutingRule,
   getNodeLogs, getNodeStats,
+  getContentCopies, createContentCopy, deleteContentCopy, updateContentCopyStatus,
 } from "./db";
+import { invokeLLM } from "./_core/llm";
 
 // ─── Admin Guard ──────────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -181,11 +183,159 @@ export const appRouter = router({
     delete: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => { await deleteRoutingRule(input.id); return { success: true }; }),
   }),
 
-  // ─── Admin: Logs ─────────────────────────────────────────────────────────────
+  // ─── Admin: Logs ───────────────────────────────────────────────────────────────────────────
   logs: router({
     list: adminProcedure
       .input(z.object({ limit: z.number().optional() }))
       .query(async ({ input }) => getNodeLogs(input.limit ?? 100)),
+  }),
+
+  // ─── Platform: 猜眼内容平台 ───────────────────────────────────────────────────────────────────
+  platform: router({
+    // 获取文案库
+    listCopies: adminProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ input }) => getContentCopies(undefined, input.limit ?? 100)),
+
+    // 删除文案
+    deleteCopy: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await deleteContentCopy(input.id); return { success: true }; }),
+
+    // 更新文案状态
+    updateCopyStatus: adminProcedure
+      .input(z.object({ id: z.number(), status: z.enum(["draft", "approved", "published"]) }))
+      .mutation(async ({ input }) => { await updateContentCopyStatus(input.id, input.status); return { success: true }; }),
+
+    // AI 文案生成（流式）— 返回完整文案并保存到库
+    generateCopy: adminProcedure
+      .input(z.object({
+        brand: z.string().min(1),
+        platform: z.string().min(1),
+        contentType: z.string().min(1),
+        style: z.string().min(1),
+        keywords: z.array(z.string()).optional(),
+        language: z.enum(["zh", "en", "fr"]).optional(),
+        save: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const lang = input.language || "zh";
+        const kwStr = input.keywords?.join("、") || "";
+
+        const systemPrompt = lang === "fr"
+          ? `Tu es un expert en marketing de luxe pour la maison de parfum LA CELLE PARIS 1802. Tu crées des contenus marketing élégants, émotionnels et persuasifs pour les réseaux sociaux.`
+          : lang === "en"
+          ? `You are a luxury fragrance marketing expert for LA CELLE PARIS 1802, a prestigious French perfume house founded in 1802. Create compelling, elegant, and emotionally resonant marketing content for social media.`
+          : `你是法国奈尊香水世家 LA CELLE PARIS 1802 的高级市场营销专家。请为该品牌创作具有法式奈尊气质、情感共鸣和带货转化力的社交媒体营销内容。品牌创立于1802年，拥有拿破仑皇帝的皆室认可。`;
+
+        const userPrompt = lang === "fr"
+          ? `Crée un contenu ${input.contentType} pour ${input.platform} sur la marque "${input.brand}" avec le style "${input.style}"${kwStr ? `. Mots-clés: ${kwStr}` : ""}.
+
+Structure requise:
+1. Titre accrocheur (2-3 options)
+2. Corps du texte (300-500 mots)
+3. Hashtags pertinents (10-15)
+4. Call-to-action
+5. Note sur le meilleur moment de publication`
+          : lang === "en"
+          ? `Create a ${input.contentType} for ${input.platform} about "${input.brand}" in "${input.style}" style${kwStr ? `. Keywords: ${kwStr}` : ""}.
+
+Required structure:
+1. Catchy title (2-3 options)
+2. Main body (300-500 words)
+3. Relevant hashtags (10-15)
+4. Call-to-action
+5. Best posting time suggestion`
+          : `为「${input.brand}」创作一篇${input.platform}平台的${input.contentType}，风格为「${input.style}」${kwStr ? `，关键词：${kwStr}` : ""}.
+
+请按以下结构输出：
+1. 爆款标题（2-3个选项）
+2. 正文内容（300-500字，包含情感开头、产品介绍、使用场景、封尾号召）
+3. 话题标签（10-15个）
+4. 引流行动号召（CTA）
+5. 最佳发布时间建议`;
+
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+        });
+
+        const rawContent = response.choices[0]?.message?.content;
+        const content = typeof rawContent === "string" ? rawContent : (Array.isArray(rawContent) ? rawContent.map((c: any) => c.text || "").join("") : "");
+
+        // 如果需要保存到文案库
+        let saved = null;
+        if (input.save !== false) {
+          saved = await createContentCopy({
+            userId: ctx.user.id,
+            brand: input.brand,
+            platform: input.platform,
+            contentType: input.contentType,
+            style: input.style,
+            keywords: JSON.stringify(input.keywords || []),
+            content,
+            status: "draft",
+          });
+        }
+
+        return { content, saved };
+      }),
+
+    // 批量生成 la-celle1802.com 推广文案
+    batchGenerate: adminProcedure
+      .input(z.object({
+        platforms: z.array(z.string()).min(1),
+        language: z.enum(["zh", "en", "fr", "all"]).optional(),
+      }))
+      .mutation(async ({ ctx }) => {
+        const tasks = [
+          { brand: "LA CELLE PARIS 1802", platform: "小红书", contentType: "图文笔记", style: "情绪共鸣", keywords: ["法式奈尊", "皇室香水", "1802", "历史传承"], language: "zh" },
+          { brand: "LA CELLE PARIS 1802", platform: "小红书", contentType: "种草长文", style: "场景化描写", keywords: ["巴黎奈尊", "价唃香水", "香水测评"], language: "zh" },
+          { brand: "LA CELLE PARIS 1802", platform: "Instagram", contentType: "Caption", style: "Luxury Storytelling", keywords: ["French perfume", "heritage", "Napoleon", "luxury"], language: "en" },
+          { brand: "LA CELLE PARIS 1802", platform: "Instagram", contentType: "Story Script", style: "Behind the Scenes", keywords: ["Grasse", "artisan", "fragrance", "1802"], language: "en" },
+          { brand: "LA CELLE PARIS 1802", platform: "X (Twitter)", contentType: "Thread", style: "Historical Facts", keywords: ["Napoleon", "Josephine", "Paris 1802", "luxury perfume"], language: "en" },
+          { brand: "LA CELLE PARIS 1802", platform: "微信朋友圈", contentType: "种草文", style: "高端礼品推荐", keywords: ["法式香水", "高端礼品", "奈尊局"], language: "zh" },
+        ];
+
+        const results = [];
+        for (const task of tasks) {
+          try {
+            const lang = task.language as "zh" | "en" | "fr";
+            const kwStr = task.keywords.join("、");
+            const systemPrompt = lang === "en"
+              ? `You are a luxury fragrance marketing expert for LA CELLE PARIS 1802. Website: la-celle1802.com`
+              : `你是 LA CELLE PARIS 1802 的高级市场营销专家。官网: la-celle1802.com`;
+            const userPrompt = lang === "en"
+              ? `Create a ${task.contentType} for ${task.platform} about "${task.brand}" in "${task.style}" style. Keywords: ${kwStr}. Include website la-celle1802.com naturally.`
+              : `为「${task.brand}」创作${task.platform}平台${task.contentType}，风格：${task.style}，关键词：${kwStr}。请自然地嵌入官网 la-celle1802.com。`;
+
+            const response = await invokeLLM({
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+              ],
+            });
+            const rawContent2 = response.choices[0]?.message?.content;
+            const content = typeof rawContent2 === "string" ? rawContent2 : (Array.isArray(rawContent2) ? rawContent2.map((c: any) => c.text || "").join("") : "");
+            const saved = await createContentCopy({
+              userId: ctx.user.id,
+              brand: task.brand,
+              platform: task.platform,
+              contentType: task.contentType,
+              style: task.style,
+              keywords: JSON.stringify(task.keywords),
+              content,
+              status: "draft",
+            });
+            results.push({ platform: task.platform, contentType: task.contentType, id: saved?.id, success: true });
+          } catch (e) {
+            results.push({ platform: task.platform, contentType: task.contentType, success: false, error: String(e) });
+          }
+        }
+        return { results, total: results.length, success: results.filter(r => r.success).length };
+      }),
   }),
 });
 

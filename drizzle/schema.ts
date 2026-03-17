@@ -146,3 +146,23 @@ export const briefSubscribers = mysqlTable("brief_subscribers", {
 });
 export type BriefSubscriber = typeof briefSubscribers.$inferSelect;
 export type InsertBriefSubscriber = typeof briefSubscribers.$inferInsert;
+
+// ─── Content Copies — 猜眼内容平台文案库 ─────────────────────────────────────
+export const contentCopies = mysqlTable("content_copies", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  brand: varchar("brand", { length: 255 }).notNull(),
+  platform: varchar("platform", { length: 100 }).notNull(),
+  contentType: varchar("contentType", { length: 100 }).notNull(),
+  style: varchar("style", { length: 100 }).notNull(),
+  keywords: text("keywords"),
+  title: varchar("title", { length: 500 }),
+  content: text("content").notNull(),
+  tags: text("tags"),
+  status: mysqlEnum("copyStatus", ["draft", "approved", "published"]).default("draft"),
+  scheduledAt: timestamp("scheduledAt"),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ContentCopy = typeof contentCopies.$inferSelect;
+export type InsertContentCopy = typeof contentCopies.$inferInsert;

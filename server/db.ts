@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users, conversations, messages, InsertConversation, InsertMessage,
   aiNodes, routingRules, nodeLogs, InsertAiNode, InsertRoutingRule, InsertNodeLog,
+  contentCopies, InsertContentCopy,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -219,4 +220,33 @@ export async function getNodeStats(nodeId: number) {
     successRate: total > 0 ? (success / total * 100).toFixed(1) : '0',
     avgLatency: Math.round(avgLatency),
   };
+}
+
+// ─── Content Copies — 猫眼内容平台文案库 ──────────────────────────────────────
+export async function getContentCopies(userId?: number, limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  const query = db.select().from(contentCopies).orderBy(desc(contentCopies.createdAt)).limit(limit);
+  return query;
+}
+
+export async function createContentCopy(data: Omit<InsertContentCopy, 'id'>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(contentCopies).values(data);
+  const id = (result as any).insertId as number;
+  const rows = await db.select().from(contentCopies).where(eq(contentCopies.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function deleteContentCopy(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(contentCopies).where(eq(contentCopies.id, id));
+}
+
+export async function updateContentCopyStatus(id: number, status: "draft" | "approved" | "published") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(contentCopies).set({ status }).where(eq(contentCopies.id, id));
 }

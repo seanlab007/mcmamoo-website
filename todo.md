@@ -55,3 +55,15 @@
 - [ ] Token 用量统计图表（管理员仪表盘）
 - [ ] 节点在线率趋势图
 - [ ] MaoAI 猫咪 Logo SVG 设计
+
+## 猫眼自动化内容平台升级（la-celle1802.com 推广）
+
+- [ ] 将猫眼平台集成为 /platform 路由页面（重写 Platform.tsx）
+- [ ] UI 美观优化：深色奢华主题、金色点缀、玻璃拟态卡片
+- [ ] 后端：AI 文案生成 tRPC 路由（platform.generateCopy）
+- [ ] 后端：文案库 CRUD（platform.saveCopy/listCopies/deleteCopy）
+- [ ] 批量生成 la-celle1802.com 推广文案（小红书/Instagram/X/微信）
+- [ ] 文案库管理页面（保存、分类、导出 Markdown）
+- [ ] 内容日历（排期管理）
+- [ ] 多平台分发逻辑（一键生成多平台版本）
+- [ ] 推送更新到 GitHub mcmamoo-website
