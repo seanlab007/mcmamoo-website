@@ -336,7 +336,106 @@ Required structure:
         }
         return { results, total: results.length, success: results.filter(r => r.success).length };
       }),
+     // 定时发布：设置发布时间
+    scheduleCopy: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        scheduledAt: z.number().nullable(), // UTC timestamp ms, null = clear
+      }))
+      .mutation(async ({ input }) => {
+        const { eq } = await import("drizzle-orm");
+        const { getDb } = await import("./db");
+        const { contentCopies } = await import("../drizzle/schema");
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        await db.update(contentCopies)
+          .set({ scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : null, status: input.scheduledAt ? "approved" : "draft" })
+          .where(eq(contentCopies.id, input.id));
+        return { ok: true };
+      }),
+    // 获取待发布文案（scheduledAt 已设置）
+    getScheduled: adminProcedure
+      .query(async () => {
+        const { getDb } = await import("./db");
+        const { contentCopies } = await import("../drizzle/schema");
+        const { isNotNull, asc } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) return [];
+        return db.select().from(contentCopies)
+          .where(isNotNull(contentCopies.scheduledAt))
+          .orderBy(asc(contentCopies.scheduledAt))
+          .limit(50);
+      }),
+  }),
+  // ─── Mao 和询表单 & 订阅路由 ───────────────────────────────────────────────────
+  mao: router({
+    // 公开：提交和询申请
+    submitApplication: publicProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        organization: z.string().min(1),
+        consultType: z.string().min(1),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { maoApplications } = await import("../drizzle/schema");
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        await db.insert(maoApplications).values({
+          name: input.name,
+          organization: input.organization,
+          consultType: input.consultType,
+          description: input.description,
+        });
+        return { success: true };
+      }),
+    // 公开：订阅战略简报
+    subscribeBrief: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { briefSubscribers } = await import("../drizzle/schema");
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        await db.insert(briefSubscribers).values({ email: input.email }).onDuplicateKeyUpdate({ set: { email: input.email } });
+        return { success: true };
+      }),
+    // 管理员：获取和询列表
+    listApplications: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可访问" });
+        const { getDb } = await import("./db");
+        const { maoApplications } = await import("../drizzle/schema");
+        const { desc } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) return [];
+        return db.select().from(maoApplications).orderBy(desc(maoApplications.createdAt)).limit(100);
+      }),
+    // 管理员：获取订阅者列表
+    listSubscribers: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可访问" });
+        const { getDb } = await import("./db");
+        const { briefSubscribers } = await import("../drizzle/schema");
+        const { desc } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) return [];
+        return db.select().from(briefSubscribers).orderBy(desc(briefSubscribers.createdAt)).limit(500);
+      }),
+    // 管理员：更新和询状态
+    updateApplicationStatus: protectedProcedure
+      .input(z.object({ id: z.number(), status: z.enum(["pending", "reviewing", "approved", "rejected"]) }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作" });
+        const { getDb } = await import("./db");
+        const { maoApplications } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        await db.update(maoApplications).set({ status: input.status }).where(eq(maoApplications.id, input.id));
+        return { success: true };
+      }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

@@ -10,7 +10,7 @@ import {
   Sparkles, Wand2, Library, Zap, Globe, Loader2,
   BarChart3, Star, Search, BookOpen, Hash, Clock,
   CheckCircle2, AlertCircle, Eye, Edit3, ArrowLeft,
-  Copy, Check, Download, RefreshCw, Trash2
+  Copy, Check, Download, RefreshCw, Trash2, Calendar, Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +59,7 @@ const STATUS_LABELS: Record<string, string> = {
   draft: "草稿", approved: "已审核", published: "已发布",
 };
 
-type Tab = "generate" | "library" | "batch";
+type Tab = "generate" | "library" | "batch" | "schedule";
 
 // ─── 主组件 ───────────────────────────────────────────────────────────────────
 export default function Platform() {
@@ -111,6 +111,7 @@ export default function Platform() {
               { id: "generate" as Tab, icon: Wand2, label: "文案生成" },
               { id: "library" as Tab, icon: Library, label: "文案库" },
               { id: "batch" as Tab, icon: Zap, label: "批量生成" },
+              { id: "schedule" as Tab, icon: Calendar, label: "发布日历" },
             ] as const).map(({ id, icon: Icon, label }) => (
               <button
                 key={id}
@@ -138,6 +139,7 @@ export default function Platform() {
         {tab === "generate" && <GenerateTab />}
         {tab === "library" && <LibraryTab />}
         {tab === "batch" && <BatchTab />}
+        {tab === "schedule" && <ScheduleTab />}
       </div>
     </div>
   );
@@ -544,6 +546,193 @@ function BatchTab() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── 发布日历 Tab ──────────────────────────────────────────────────────────────
+function ScheduleTab() {
+  const utils = trpc.useUtils();
+  const { data: copies } = trpc.platform.listCopies.useQuery({});
+  const { data: scheduled, isLoading } = trpc.platform.getScheduled.useQuery();
+  const scheduleMutation = trpc.platform.scheduleCopy.useMutation({
+    onSuccess: () => {
+      toast.success("已加入发布日历");
+      utils.platform.listCopies.invalidate();
+      utils.platform.getScheduled.invalidate();
+    },
+    onError: (err) => toast.error("设置失败: " + err.message),
+  });
+
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [selectedCopyId, setSelectedCopyId] = useState<number | null>(null);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("10:00");
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const monthNames = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+
+  const scheduledByDay: Record<string, typeof scheduled> = {};
+  (scheduled || []).forEach(c => {
+    if (c.scheduledAt) {
+      const d = new Date(c.scheduledAt).toISOString().slice(0, 10);
+      if (!scheduledByDay[d]) scheduledByDay[d] = [];
+      scheduledByDay[d]!.push(c);
+    }
+  });
+
+  const handleSchedule = () => {
+    if (!selectedCopyId || !scheduleDate) return toast.error("请选择文案和日期");
+    const dt = new Date(`${scheduleDate}T${scheduleTime}:00`);
+    scheduleMutation.mutate({ id: selectedCopyId, scheduledAt: dt.getTime() });
+    setSelectedCopyId(null);
+    setScheduleDate("");
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 左侧：日历 */}
+      <div className="lg:col-span-2 bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-amber-500" />发布日历
+          </h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); }}
+              className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 flex items-center justify-center text-sm"
+            >&lt;</button>
+            <span className="text-sm text-zinc-300 w-20 text-center">{viewYear}年 {monthNames[viewMonth]}</span>
+            <button
+              onClick={() => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); }}
+              className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 flex items-center justify-center text-sm"
+            >&gt;</button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {["日","一","二","三","四","五","六"].map(d => (
+            <div key={d} className="text-center text-xs text-zinc-600 py-1">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayItems = scheduledByDay[dateStr] || [];
+            const isToday = dateStr === today.toISOString().slice(0, 10);
+            return (
+              <div key={day} onClick={() => setScheduleDate(dateStr)}
+                className={`min-h-[52px] rounded-lg p-1.5 cursor-pointer transition-all border ${
+                  scheduleDate === dateStr ? "border-amber-500/60 bg-amber-500/10" :
+                  isToday ? "border-blue-500/40 bg-blue-500/5" :
+                  dayItems.length > 0 ? "border-green-500/30 bg-green-500/5" :
+                  "border-zinc-800/40 hover:border-zinc-700 hover:bg-zinc-800/30"
+                }`}>
+                <div className={`text-xs font-medium mb-1 ${
+                  isToday ? "text-blue-400" : scheduleDate === dateStr ? "text-amber-400" : "text-zinc-400"
+                }`}>{day}</div>
+                {dayItems.slice(0, 2).map((item, idx) => (
+                  <div key={idx} className="text-[9px] text-green-400 bg-green-500/10 rounded px-1 truncate mb-0.5">
+                    {new Date(item.scheduledAt!).toLocaleTimeString('zh', { hour: '2-digit', minute: '2-digit' })} {item.platform}
+                  </div>
+                ))}
+                {dayItems.length > 2 && <div className="text-[9px] text-zinc-500">+{dayItems.length - 2}更多</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 右侧：调度设置 + 待发布列表 */}
+      <div className="space-y-4">
+        {/* 调度设置卡片 */}
+        <div className="bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <Bell className="w-4 h-4 text-purple-400" />设置发布时间
+          </h3>
+          <div>
+            <label className="text-xs text-zinc-500 mb-1.5 block">选择文案</label>
+            <select value={selectedCopyId || ""} onChange={e => setSelectedCopyId(Number(e.target.value) || null)}
+              className="w-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded-lg px-3 h-9 outline-none">
+              <option value="">— 选择文案 —</option>
+              {(copies || []).map(c => (
+                <option key={c.id} value={c.id}>{c.platform} · {c.contentType} [{c.status}]</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-zinc-500 mb-1.5 block">发布日期</label>
+            <Input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
+              className="bg-zinc-800 border-zinc-700 text-zinc-300 text-xs h-9" />
+          </div>
+          <div>
+            <label className="text-xs text-zinc-500 mb-1.5 block">发布时间</label>
+            <Input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)}
+              className="bg-zinc-800 border-zinc-700 text-zinc-300 text-xs h-9" />
+          </div>
+          <Button onClick={handleSchedule}
+            disabled={scheduleMutation.isPending || !selectedCopyId || !scheduleDate}
+            className="w-full h-9 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs">
+            {scheduleMutation.isPending
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <><Calendar className="w-3.5 h-3.5 mr-1.5" />加入发布日历</>}
+          </Button>
+        </div>
+
+        {/* 待发布列表 */}
+        <div className="bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-blue-400" />待发布队列
+            <Badge className="bg-blue-500/15 text-blue-400 border-blue-500/30 text-xs px-1.5 py-0">
+              {(scheduled || []).length}
+            </Badge>
+          </h3>
+          {isLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
+            </div>
+          ) : (scheduled || []).length === 0 ? (
+            <div className="text-center py-6">
+              <Calendar className="w-8 h-8 text-zinc-700 mx-auto mb-2" />
+              <p className="text-zinc-500 text-xs">暂无已调度文案</p>
+              <p className="text-zinc-600 text-xs mt-1">点击左侧日历选择日期后设置</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(scheduled || []).map(c => (
+                <div key={c.id} className="flex items-start gap-2 p-2.5 bg-zinc-800/40 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs text-zinc-300 font-medium">{c.platform}</span>
+                      <span className="text-zinc-600 text-xs">·</span>
+                      <span className="text-xs text-zinc-500">{c.contentType}</span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Clock className="w-3 h-3 text-amber-400" />
+                      <span className="text-xs text-amber-400">
+                        {c.scheduledAt ? new Date(c.scheduledAt).toLocaleString('zh', {
+                          month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        }) : ''}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => scheduleMutation.mutate({ id: c.id, scheduledAt: null })}
+                    className="text-zinc-600 hover:text-red-400 transition-colors mt-0.5"
+                    title="取消调度"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
