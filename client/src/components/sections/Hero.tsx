@@ -32,7 +32,7 @@ export default function Hero() {
     { en: "STRATEGIC INTELLIGENCE", zh: "运用毛泽东思想" },
     { en: "GLOBAL BATTLEFIELD ANALYSIS", zh: "洞察全球战略格局" },
     { en: "PREDICT · DOMINATE · WIN", zh: "预测·制胜·胜利" },
-    { en: "MAO THINK TANK", zh: "毛智库 · 对标兰德和中心" },
+    { en: "MAO THINK TANK", zh: "毛智库 · 对标美国五角大楼兰德咨询" },
   ];
 
   useEffect(() => {
