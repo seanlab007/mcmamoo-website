@@ -166,3 +166,61 @@ export async function adminUpdateApplicationNotes(id: number, notes: string) {
 export async function adminListSubscribers() {
   return sbAdmin("/brief_subscribers?order=created_at.desc&select=*");
 }
+
+// ─── Whale Pictures ──────────────────────────────────────────────────────────
+
+export interface WhaleInquiry {
+  name: string;
+  contact: string;
+  service?: string;
+  budget?: string;
+  deadline?: string;
+  message?: string;
+}
+
+export interface WhaleModelApplication {
+  name: string;
+  contact: string;
+  nationality?: string;
+  age?: number;
+  height?: number;
+  instagram?: string;
+  experience?: string;
+}
+
+/** Submit a Whale Pictures project inquiry */
+export async function submitWhaleInquiry(data: WhaleInquiry) {
+  return sbAdmin("/whale_inquiries", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { Prefer: "return=minimal" },
+  });
+}
+
+/** Submit a model application */
+export async function submitWhaleModelApplication(data: WhaleModelApplication) {
+  return sbAdmin("/whale_model_applications", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { Prefer: "return=minimal" },
+  });
+}
+
+/** Admin: list all whale inquiries */
+export async function adminListWhaleInquiries() {
+  return sbAdmin("/whale_inquiries?order=created_at.desc&select=*");
+}
+
+/** Admin: list all whale model applications */
+export async function adminListWhaleModelApplications() {
+  return sbAdmin("/whale_model_applications?order=created_at.desc&select=*");
+}
+
+/** Admin: update whale inquiry status */
+export async function adminUpdateWhaleInquiryStatus(id: number, status: string) {
+  return sbAdmin(`/whale_inquiries?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, updated_at: new Date().toISOString() }),
+    headers: { Prefer: "return=minimal" },
+  });
+}
