@@ -1,5 +1,5 @@
 /*
- * Home Page — 猫眼咨询官网首页
+ * Home Page — 猫眼增长引擎官网首页
  * Design: 暗夜金融极简主义 — 深黑底色 + 猫眼金点缀
  * Theme: 品牌显贵 · 利润倍增 · 全域增长
  * Sections: Hero → InternationalRecognition → BusinessDivision → About → Methodology → KOL → Services → Cases → GlobalCases → Awards → Team → Contact → Footer

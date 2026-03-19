@@ -67,9 +67,9 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 
 export default function CaseJiangzhong() {
   useSEO({
-    title: "江中猴姑饼干 · 养胃食品品类创新 | 猫眼咨询",
-    description: "猫眼咨询操盘江中猴姑饼干，创造养胃食品新品类，天猫养胃食品第一，年销售额贤10亿。猫眼咨询错位竞争理论实战案例。",
-    keywords: "江中猴姑,养胃饼干,养胃食品,猫眼咨询,品类创新,错位竞争,新消费,天猫养胃第一",
+    title: "江中猴姑饼干 · 养胃食品品类创新 | 猫眼增长引擎",
+    description: "猫眼增长引擎操盘江中猴姑饼干，创造养胃食品新品类，天猫养胃食品第一，年销售额贤10亿。猫眼增长引擎错位竞争理论实战案例。",
+    keywords: "江中猴姑,养胃饼干,养胃食品,猫眼增长引擎,品类创新,错位竞争,新消费,天猫养胃第一",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp",
     url: "https://www.mcmamoo.com/cases/jiangzhong",
     type: "article",
@@ -136,11 +136,11 @@ export default function CaseJiangzhong() {
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
                 2013年，中国有超过<strong style={{ color: "#C9A84C" }}>1.2亿慢性胃病患者</strong>，
                 他们长期面临一个痛点：市面上没有专门针对养胃需求的日常零食。
-                猫眼咨询发现了这个被忽视的巨大市场空白。
+                猫眼增长引擎发现了这个被忽视的巨大市场空白。
               </p>
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
                 战略核心：<strong style={{ color: "#F5F0E8" }}>错位OTC领域，跨界进入快消品</strong>。
-                江中集团拥有猴头菇胃药的研发背书，猫眼咨询建议将这一医药级成分
+                江中集团拥有猴头菇胃药的研发背书，猫眼增长引擎建议将这一医药级成分
                 转化为日常消费品，以饼干这一高频消费品类为载体，
                 与奥利奥等快消品巨头在完全不同的维度竞争。
               </p>
@@ -178,7 +178,7 @@ export default function CaseJiangzhong() {
           <SectionHeader en="Growth Timeline" zh="增长时间轴" />
           <div className="space-y-0">
             {[
-              { year: "2013 Q1", event: "猫眼咨询提出猴姑饼干战略方案", detail: "洞察慢性胃病患者养胃需求，提出「功能性饼干」品类创新方向，确定错位竞争核心战略。" },
+              { year: "2013 Q1", event: "猫眼增长引擎提出猴姑饼干战略方案", detail: "洞察慢性胃病患者养胃需求，提出「功能性饼干」品类创新方向，确定错位竞争核心战略。" },
               { year: "2013 Q3", event: "产品研发与包装设计完成", detail: "将猴头菇提取物融入饼干配方，设计高端健康感包装，定价锚定功能性食品价格带。" },
               { year: "2013 Q4", event: "央视广告投放，全国上市", detail: "大规模央视广告投放，配合明星代言，快速建立「猴姑饼干=养胃」的品类认知。" },
               { year: "2014", event: "上市第一年销售额破17亿元", detail: "成为中国快消品史上增速最快的新品之一，超越众多传统饼干品牌，成为功能性食品标杆案例。" },

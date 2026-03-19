@@ -44,9 +44,9 @@ export const appRouter = router({
           const confirmHtml = generateContactConfirmationHtml(input.name, input.company);
           await sendEmail({
             to: input.email,
-            subject: `感谢您的咨询申请 — 猫眼咨询`,
+            subject: `感谢您的咨询申请 — 猫眼增长引擎`,
             html: confirmHtml,
-            text: `尊敬的 ${input.name}，感谢您向猫眼咨询提交咨询申请。我们将在 1-2 个工作日内与您联系。`,
+            text: `尊敬的 ${input.name}，感谢您向猫眼增长引擎提交咨询申请。我们将在 1-2 个工作日内与您联系。`,
           });
         }
 
@@ -60,7 +60,7 @@ export const appRouter = router({
           );
           await sendEmail({
             to: adminEmail,
-            subject: `猫眼咨询新咨询申请：${input.name} / ${input.company}`,
+            subject: `猫眼增长引擎新咨询申请：${input.name} / ${input.company}`,
             html: adminHtml,
           });
         }

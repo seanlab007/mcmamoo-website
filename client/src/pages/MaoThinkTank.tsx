@@ -663,9 +663,9 @@ function MaoApplicationForm() {
 // ── Main page ─────────────────────────────────────────────────────────────────────────────────
 export default function MaoThinkTank() {
   useSEO({
-    title: "毛智库 · 运用毛泽东思想的战略咨询机构 | 猫眼咨询",
-    description: "毛智库以毛泽东战略思想为核心，为军方提供兵棋推演与国防战略咨询，深度参与全球重大战略事务，获IMF、俄罗斯战略研究院认可。猫眼咨询旗下战略智库，对标美国五角大楼兰德咨询。",
-    keywords: "毛智库,毛泽东战略思想,战略咨询,兵棋推演,国防战略,猫眼咨询,兰德公司,地缘政治,宏观战略",
+    title: "毛智库 · 运用毛泽东思想的战略咨询机构 | 猫眼增长引擎",
+    description: "毛智库以毛泽东战略思想为核心，为军方提供兵棋推演与国防战略咨询，深度参与全球重大战略事务，获IMF、俄罗斯战略研究院认可。猫眼增长引擎旗下战略智库，对标美国五角大楼兰德咨询。",
+    keywords: "毛智库,毛泽东战略思想,战略咨询,兵棋推演,国防战略,猫眼增长引擎,兰德公司,地缘政治,宏观战略",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
     url: "https://www.mcmamoo.com/maothink",
     type: "article",
@@ -693,7 +693,7 @@ export default function MaoThinkTank() {
           <a className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div style={{ width: 6, height: 6, background: "#8B1A1A", transform: "rotate(45deg)" }} />
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", color: "rgba(232,213,183,0.6)", letterSpacing: "0.15em" }}>
-              ← 返回猫眼咨询
+              ← 返回猫眼增长引擎
             </span>
           </a>
         </Link>

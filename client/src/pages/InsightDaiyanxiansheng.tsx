@@ -15,7 +15,7 @@ const IMG_GLOBAL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i
 
 const ecosystemData = [
   { sector: "战略智库", brand: "毛智库", benchmark: "美国兰德公司", value: "地缘政治与宏观战略研判" },
-  { sector: "战略咨询", brand: "猫眼咨询 Mc&Mamoo", benchmark: "麦肯锡", value: "品牌战略落地与全球资源配置" },
+  { sector: "战略咨询", brand: "猫眼增长引擎 Mc&Mamoo", benchmark: "麦肯锡", value: "品牌战略落地与全球资源配置" },
   { sector: "金融科技", brand: "暗物质保险", benchmark: "Lemonade", value: "区块链微粒化风险对冲" },
   { sector: "消费品牌", brand: "法国奢利香水", benchmark: "祖马龙 Jo Malone", value: "东方美学嗅觉艺术" },
   { sector: "体育文化", brand: "黑领带拳击赛", benchmark: "顶级拳击赛事", value: "精英生活方式体育IP" },
@@ -25,14 +25,14 @@ const ecosystemData = [
 
 export default function InsightDaiyanxiansheng() {
   useSEO({
-    title: '中国不止有任正非——"代言"先生与他的全球商业帝国 | 猫眼咨询战略洞察',
-    description: '一个人，七条赛道，对标世界顶级商业力量。猫眼咨询创始人代言先生构建横跨战略智库、品牌咨询、金融科技、奢侈品、体育IP、影视内容的全球商业生态，深度解析中国新一代商业领袖的战略逻辑。',
-    keywords: '代言先生,猫眼咨询,毛智库,兰德咨询,麦肯锡,全球商业帝国,战略咨询,法国奢利,暗物质保险,错位竞争,品牌战略,新消费',
+    title: '中国不止有任正非——"代言"先生与他的全球商业帝国 | 猫眼增长引擎战略洞察',
+    description: '一个人，七条赛道，对标世界顶级商业力量。猫眼增长引擎创始人代言先生构建横跨战略智库、品牌咨询、金融科技、奢侈品、体育IP、影视内容的全球商业生态，深度解析中国新一代商业领袖的战略逻辑。',
+    keywords: '代言先生,猫眼增长引擎,毛智库,兰德咨询,麦肯锡,全球商业帝国,战略咨询,法国奢利,暗物质保险,错位竞争,品牌战略,新消费',
     image: IMG_CHESS,
     url: 'https://www.mcmamoo.com/insights/daiyanxiansheng',
     type: 'article',
     datePublished: '2025-03-10',
-    author: '猫眼咨询战略研究团队',
+    author: '猫眼增长引擎战略研究团队',
     breadcrumbs: [
       { name: '战略洞察', url: 'https://www.mcmamoo.com/insights' },
       { name: '中国不止有任正非——"代言"先生与他的全球商业帝国', url: 'https://www.mcmamoo.com/insights/daiyanxiansheng' },
@@ -118,7 +118,7 @@ export default function InsightDaiyanxiansheng() {
               <Clock size={13} />
               约 8 分钟阅读
             </span>
-            <span>猫眼咨询战略研究团队</span>
+            <span>猫眼增长引擎战略研究团队</span>
             <button
               onClick={handleShare}
               className="ml-auto flex items-center gap-2 text-white/40 hover:text-[#C9A84C] transition-colors"
@@ -195,14 +195,14 @@ export default function InsightDaiyanxiansheng() {
         <section className="mb-16">
           <h2 className="font-['Noto_Serif_SC'] text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
             <span className="text-[#C9A84C] font-['DM_Mono'] text-base font-normal opacity-60">03</span>
-            猫眼咨询：中国的"麦肯锡"
+            猫眼增长引擎：中国的"麦肯锡"
           </h2>
           <div className="space-y-5 text-white/70 leading-8 text-base font-['Noto_Sans_SC']">
             <p>
               麦肯锡（McKinsey &amp; Company）成立于1926年，近百年来始终是全球战略咨询的最高标杆，服务于全球500强企业中的绝大多数。
             </p>
             <p>
-              代言先生创立的<strong className="text-white font-semibold">猫眼咨询（Mc&amp;Mamoo）</strong>，则是对标麦肯锡的全球战略咨询力量。与麦肯锡不同的是，猫眼咨询深耕于本土化实践与全球资源配置的结合——它不仅仅是提供精美PPT的顾问，更是帮助企业打通从战略到落地"任督二脉"的行动伙伴。
+              代言先生创立的<strong className="text-white font-semibold">猫眼增长引擎（Mc&amp;Mamoo）</strong>，则是对标麦肯锡的全球战略咨询力量。与麦肯锡不同的是，猫眼增长引擎深耕于本土化实践与全球资源配置的结合——它不仅仅是提供精美PPT的顾问，更是帮助企业打通从战略到落地"任督二脉"的行动伙伴。
             </p>
             <p>
               其旗下子公司Mc&amp;Mamoo Inc.更是被<strong className="text-white font-semibold">美国化妆品和香水协会（CTFA）</strong>评为"全美美妆行业细分领域第一的精品战略咨询公司"，在垂直领域展现了绝对的统治力。这一荣誉，是国际商业社会对中国战略咨询能力最有力的背书。
@@ -405,13 +405,13 @@ export default function InsightDaiyanxiansheng() {
           <p className="font-['Noto_Serif_SC'] text-xl text-white/80 leading-relaxed italic mb-4">
             "中国不止有任正非。在这片古老而充满活力的土地上，还有更多像代言先生这样的商业文明缔造者，正在用他们的方式，书写属于中国的全球商业传奇。"
           </p>
-          <div className="text-white/30 text-sm font-['DM_Mono']">— 猫眼咨询战略研究团队</div>
+          <div className="text-white/30 text-sm font-['DM_Mono']">— 猫眼增长引擎战略研究团队</div>
         </div>
 
         {/* Article Footer */}
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="text-white/30 text-sm font-['DM_Mono'] space-y-1">
-            <div>本文由猫眼咨询（Mc&amp;Mamoo）战略研究团队整理发布</div>
+            <div>本文由猫眼增长引擎（Mc&amp;Mamoo）战略研究团队整理发布</div>
             <div>
               官网：
               <a href="https://www.mcmamoo.com" className="text-[#C9A84C]/60 hover:text-[#C9A84C] transition-colors">

@@ -26,7 +26,7 @@ interface SEOProps {
   author?: string;
 }
 
-const SITE_NAME = "猫眼咨询 · Mc&Mamoo Brand Management";
+const SITE_NAME = "猫眼增长引擎 · Mc&Mamoo Brand Management";
 const SITE_URL = "https://www.mcmamoo.com";
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_eye_logo_1a9f9467.png";
 
@@ -141,7 +141,7 @@ export function useSEO({
         "dateModified": dateModified || datePublished || new Date().toISOString(),
         "author": {
           "@type": "Person",
-          "name": author || "猫眼咨询战略研究团队",
+          "name": author || "猫眼增长引擎战略研究团队",
         },
         "publisher": {
           "@type": "Organization",
@@ -157,7 +157,7 @@ export function useSEO({
     }
 
     return () => {
-      document.title = "猫眼咨询 · Mc&Mamoo Brand Management Inc. | 全球新消费第一品牌管理公司";
+      document.title = "猫眼增长引擎 · Mc&Mamoo Brand Management Inc. | 全球新消费第一品牌管理公司";
     };
   }, [title, description, keywords, image, url, type, breadcrumbs, datePublished, dateModified, author]);
 }

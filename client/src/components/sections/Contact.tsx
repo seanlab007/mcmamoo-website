@@ -104,7 +104,7 @@ export default function Contact() {
                 <div>
                   <div className="text-[#C9A84C]/60 text-[0.6rem] font-['DM_Mono'] tracking-[0.2em] uppercase mb-2">SCAN TO ADD WECHAT</div>
                   <div className="text-white font-['Noto_Serif_SC'] text-base font-bold mb-1" data-no-translate>Sean DAI</div>
-                  <div className="text-white/50 text-xs mb-2">首席战略专家 · 猫眼咨询</div>
+                  <div className="text-white/50 text-xs mb-2">首席战略专家 · 猫眼增长引擎</div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-px bg-[#C9A84C]/50" />
                     <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">MCMAMOO.COM</span>

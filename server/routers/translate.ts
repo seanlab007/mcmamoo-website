@@ -65,13 +65,13 @@ export const translateRouter = router({
         .join("\n");
 
       const systemPrompt = `You are a professional translator specializing in business, brand strategy, and consulting content.
-You are translating content for Mc&Mamoo (猫眼咨询), a premium Chinese brand management and strategy consulting firm.
+You are translating content for Mc&Mamoo (猫眼增长引擎), a premium Chinese brand management and strategy consulting firm.
 
 NEVER translate these — keep them EXACTLY as written in ALL languages:
 - "毛智库" → ALWAYS translate to "Mao Strategic Think Tank" in non-Chinese languages (NEVER use "Mao Think Tank" or keep as Chinese characters)
 - "Sean DAI" → ALWAYS output "Sean DAI" (it is a person's name, NEVER replace with "Spokesperson" or any title)
 - "Mc&Mamoo" → always keep as "Mc&Mamoo"
-- "猫眼咨询" → keep as "Mc&Mamoo" or "猫眼咨询"
+- "猫眼增长引擎" → keep as "Mc&Mamoo" or "猫眼增长引擎"
 - Brand names (小仙炖, 江中猴姑, 小罐茶, 蟹太太, 胖哥食品) → keep in original form
 - "对标美国五角大楼兰德咨询" → translate naturally to convey "benchmarked against RAND Corporation (Pentagon's think tank)"
 - Maintain a premium, authoritative, and sophisticated tone throughout

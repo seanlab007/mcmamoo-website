@@ -22,7 +22,7 @@ const articles = [
       "一个人，七条赛道，对标世界顶级商业力量。当任正非在科技上甘岭死守阵地，另一位中国商业文明的缔造者，正在全球版图上悄然布局一场更宏大的生态革命。",
     date: "2025年",
     readTime: "约 8 分钟",
-    author: "猫眼咨询战略研究团队",
+    author: "猫眼增长引擎战略研究团队",
     image: IMG_CHESS,
     featured: true,
   },
@@ -30,9 +30,9 @@ const articles = [
 
 export default function Insights() {
   useSEO({
-    title: '战略洞察 | 猫眼咨询 Mc&Mamoo 品牌管理',
-    description: '猫眼咨询战略研究团队原创洞察，深度解析全球新消费品牌战略、错位竞争理论实战案例、商业领袖成长路径。独创错位竞争理论，连续3年中国新消费领域排名第一。',
-    keywords: '猫眼咨询,战略洞察,品牌战略,错位竞争,新消费,商业洞察,Mc&Mamoo,品牌咨询',
+    title: '战略洞察 | 猫眼增长引擎 Mc&Mamoo 品牌管理',
+    description: '猫眼增长引擎战略研究团队原创洞察，深度解析全球新消费品牌战略、错位竞争理论实战案例、商业领袖成长路径。独创错位竞争理论，连续3年中国新消费领域排名第一。',
+    keywords: '猫眼增长引擎,战略洞察,品牌战略,错位竞争,新消费,商业洞察,Mc&Mamoo,品牌咨询',
     url: 'https://www.mcmamoo.com/insights',
     type: 'website',
     breadcrumbs: [
@@ -72,7 +72,7 @@ export default function Insights() {
             战略洞察
           </h1>
           <p className="text-white/40 text-lg max-w-xl">
-            猫眼咨询战略研究团队深度解析全球商业格局、品牌战略与产业趋势。
+            猫眼增长引擎战略研究团队深度解析全球商业格局、品牌战略与产业趋势。
           </p>
         </div>
       </div>
@@ -177,7 +177,7 @@ export default function Insights() {
             更多洞察即将发布
           </div>
           <p className="text-white/30 text-sm">
-            猫眼咨询战略研究团队持续输出全球商业格局深度分析，敬请期待。
+            猫眼增长引擎战略研究团队持续输出全球商业格局深度分析，敬请期待。
           </p>
         </div>
       </div>

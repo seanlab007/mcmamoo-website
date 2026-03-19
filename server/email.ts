@@ -32,7 +32,7 @@ export interface SendEmailOptions {
 export async function sendEmail(opts: SendEmailOptions): Promise<boolean> {
   try {
     const transporter = getTransporter();
-    const fromName = process.env.SMTP_FROM_NAME || "猫眼咨询";
+    const fromName = process.env.SMTP_FROM_NAME || "猫眼增长引擎";
     const fromEmail = process.env.SMTP_USER || "";
 
     await transporter.sendMail({
@@ -88,7 +88,7 @@ export function generateContactConfirmationHtml(name: string, company: string): 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>感谢您的咨询申请 — 猫眼咨询</title>
+  <title>感谢您的咨询申请 — 猫眼增长引擎</title>
   <style>
     body { margin: 0; padding: 0; background: #0A0A0A; font-family: 'Helvetica Neue', Arial, sans-serif; }
     .wrapper { max-width: 600px; margin: 0 auto; background: #111111; }
@@ -111,13 +111,13 @@ export function generateContactConfirmationHtml(name: string, company: string): 
 <body>
   <div class="wrapper">
     <div class="header">
-      <div class="logo-text">猫眼咨询</div>
+      <div class="logo-text">猫眼增长引擎</div>
       <div class="logo-sub">MC&MAMOO BRAND MANAGEMENT</div>
     </div>
     <div class="body">
       <div class="greeting">尊敬的 ${name}，</div>
       <div class="content">
-        <p>感谢您向猫眼咨询提交品牌战略咨询申请。我们已收到您的信息，我们的首席战略专家团队将在 <span class="highlight">1-2个工作日内</span> 与您联系。</p>
+        <p>感谢您向猫眼增长引擎提交品牌战略咨询申请。我们已收到您的信息，我们的首席战略专家团队将在 <span class="highlight">1-2个工作日内</span> 与您联系。</p>
         <div class="box">
           <div class="box-label">您的申请信息</div>
           <div class="box-value">姓名：${name}</div>
@@ -130,7 +130,7 @@ export function generateContactConfirmationHtml(name: string, company: string): 
     </div>
     <div class="footer">
       <div class="footer-text">
-        猫眼咨询 Mc&Mamoo Brand Management Inc.<br/>
+        猫眼增长引擎 Mc&Mamoo Brand Management Inc.<br/>
         上海 · 品牌显贵 · 利润倍增 · 全域增长<br/>
         联系电话：+86 137 6459 7723
       </div>
@@ -150,7 +150,7 @@ export function generateContactAdminHtml(name: string, company: string, phone: s
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>新咨询申请 — 猫眼咨询后台</title>
+  <title>新咨询申请 — 猫眼增长引擎后台</title>
   <style>
     body { margin: 0; padding: 0; background: #0A0A0A; font-family: 'Helvetica Neue', Arial, sans-serif; }
     .wrapper { max-width: 600px; margin: 0 auto; background: #111111; }
@@ -208,7 +208,7 @@ export function generateNewsletterHtml(subject: string, content: string): string
 <body>
   <div class="wrapper">
     <div class="header">
-      <div class="logo-text">猫眼咨询</div>
+      <div class="logo-text">猫眼增长引擎</div>
       <div class="logo-sub">MC&MAMOO BRAND MANAGEMENT</div>
     </div>
     <div class="body">
@@ -219,9 +219,9 @@ export function generateNewsletterHtml(subject: string, content: string): string
     </div>
     <div class="footer">
       <div class="footer-text">
-        您收到此邮件是因为您订阅了猫眼咨询战略简报。<br/>
+        您收到此邮件是因为您订阅了猫眼增长引擎战略简报。<br/>
         如需退订，请回复此邮件并注明"退订"。<br/>
-        © 2025 猫眼咨询 Mc&Mamoo Brand Management Inc. 保留所有权利。
+        © 2025 猫眼增长引擎 Mc&Mamoo Brand Management Inc. 保留所有权利。
       </div>
     </div>
   </div>

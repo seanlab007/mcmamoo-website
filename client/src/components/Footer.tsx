@@ -1,5 +1,5 @@
 /*
- * Footer — 猫眼咨询官网页脚
+ * Footer — 猫眼增长引擎官网页脚
  */
 export default function Footer() {
   return (
