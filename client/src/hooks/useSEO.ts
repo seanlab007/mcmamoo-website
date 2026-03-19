@@ -34,7 +34,7 @@ export function useSEO({ title, description, image, url, type = "website" }: SEO
     setMeta("og:title", title, "property");
     setMeta("og:description", description, "property");
     setMeta("og:type", type, "property");
-    setMeta("og:site_name", "猫眼咨询 · Mc&Mamoo Brand Management", "property");
+    setMeta("og:site_name", "猫眼增长引擎 · Mc&Mamoo Brand Management", "property");
     if (url) setMeta("og:url", url, "property");
     if (image) setMeta("og:image", image, "property");
 
@@ -45,7 +45,7 @@ export function useSEO({ title, description, image, url, type = "website" }: SEO
     if (image) setMeta("twitter:image", image);
 
     return () => {
-      document.title = "猫眼咨询 · Mc&Mamoo Brand Management Inc.";
+      document.title = "猫眼增长引擎 · Mc&Mamoo Brand Management Inc.";
     };
   }, [title, description, image, url, type]);
 }

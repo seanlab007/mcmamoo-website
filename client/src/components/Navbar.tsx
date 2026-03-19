@@ -1,5 +1,5 @@
 /*
- * Navbar — 猫眼咨询官网导航
+ * Navbar — 猫眼增长引擎官网导航
  * Design: 透明渐变 → 深色固定导航，金色 hover 线条
  */
 import { useState, useEffect } from "react";

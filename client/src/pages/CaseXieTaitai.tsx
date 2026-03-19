@@ -184,8 +184,8 @@ function TimelineItem({ year, title, desc, isLast }: { year: string; title: stri
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function CaseXieTaitai() {
   useSEO({
-    title: "蟹太太大闸蟹 · 从0到8亿营收 | 猫眼咨询标杆案例",
-    description: "猫眼咨询操盘蟹太太大闸蟹品牌，从0孵化到年营收8亿，联合500+明星网红，贾乃亮单场5700万，小杨哥单场2000万。",
+    title: "蟹太太大闸蟹 · 从0到8亿营收 | 猫眼增长引擎标杆案例",
+    description: "猫眼增长引擎操盘蟹太太大闸蟹品牌，从0孵化到年营收8亿，联合500+明星网红，贾乃亮单场5700万，小杨哥单场2000万。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
     url: "https://www.mcmamoo.com/cases/xietaitai",
     type: "article",
@@ -269,7 +269,7 @@ export default function CaseXieTaitai() {
                 彼时大闸蟹市场品牌化程度极低，消费者对品牌认知几乎为零。
               </p>
               <p className="text-base leading-relaxed mb-6" style={{ color: "rgba(255,255,255,0.7)" }}>
-                猫眼咨询介入后，提出"错位竞争"核心战略：在竞争对手还在打价格战时，
+                猫眼增长引擎介入后，提出"错位竞争"核心战略：在竞争对手还在打价格战时，
                 率先以一线明星代言人构建品牌壁垒，填补行业品牌化空白。
               </p>
               <p className="text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
@@ -303,7 +303,7 @@ export default function CaseXieTaitai() {
         <div className="max-w-6xl mx-auto">
           <SectionHeader en="Star Power" zh="明星网红都爱吃的大闸蟹" />
           <p className="text-base leading-relaxed mb-8 max-w-3xl" style={{ color: "rgba(255,255,255,0.65)" }}>
-            通过猫眼咨询构建的全渠道明星矩阵，蟹太太汇聚了黄晓明、刘嘉玲、王宝强、
+            通过猫眼增长引擎构建的全渠道明星矩阵，蟹太太汇聚了黄晓明、刘嘉玲、王宝强、
             汤镇业、郑浩南、胡可、温碧霞、黄奕等数十位一线明星，以及爱尔兰总理、
             新西兰总理等国际政要的自发推荐，形成强大的品牌背书体系。
           </p>
@@ -353,12 +353,12 @@ export default function CaseXieTaitai() {
       {/* ── Strategy timeline ── */}
       <div className="py-12" style={{ background: "rgba(201,168,76,0.03)", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
         <div className="px-8 md:px-20 max-w-4xl mx-auto">
-          <SectionHeader en="Strategic Journey" zh="猫眼咨询操盘历程" />
+          <SectionHeader en="Strategic Journey" zh="猫眼增长引擎操盘历程" />
           <div>
             <TimelineItem
               year="2016"
               title="品牌0到1 — 赛道切入"
-              desc="猫眼咨询完成市场调研，发现大闸蟹行业品牌化空白，制定差异化竞争战略，协助苏州西风阁完成品牌定位与视觉体系搭建。"
+              desc="猫眼增长引擎完成市场调研，发现大闸蟹行业品牌化空白，制定差异化竞争战略，协助苏州西风阁完成品牌定位与视觉体系搭建。"
             />
             <TimelineItem
               year="2018"
@@ -417,7 +417,7 @@ export default function CaseXieTaitai() {
               className="text-xs tracking-widest uppercase mb-4"
               style={{ color: "rgba(201,168,76,0.5)", fontFamily: "'DM Mono', monospace" }}
             >
-              猫眼咨询核心贡献
+              猫眼增长引擎核心贡献
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               {[

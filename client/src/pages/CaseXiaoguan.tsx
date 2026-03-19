@@ -67,8 +67,8 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 
 export default function CaseXiaoguan() {
   useSEO({
-    title: "小罐茶 · 高端礼品茶品类重塑 | 猫眼咨询",
-    description: "猫眼咨询助力小罐茶重塑高端礼品茶品类，天猫茶叶礼品市场第一，年营收超20亿。",
+    title: "小罐茶 · 高端礼品茶品类重塑 | 猫眼增长引擎",
+    description: "猫眼增长引擎助力小罐茶重塑高端礼品茶品类，天猫茶叶礼品市场第一，年营收超20亿。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoguan-hero-VMo5tD5EjgTVTXUiupePuQ.webp",
     url: "https://www.mcmamoo.com/cases/xiaoguan",
     type: "article",
@@ -130,7 +130,7 @@ export default function CaseXiaoguan() {
             <RevealBlock>
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
                 中国茶叶市场长期存在一个悖论：茶叶是中国最古老的奢侈品，
-                却没有一个真正意义上的高端茶叶品牌。猫眼咨询洞察到这一矛盾，
+                却没有一个真正意义上的高端茶叶品牌。猫眼增长引擎洞察到这一矛盾，
                 提出了<strong style={{ color: "#C9A84C" }}>「场景重构 + 品相创新」</strong>的核心战略。
               </p>
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>

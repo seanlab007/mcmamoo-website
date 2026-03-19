@@ -1,5 +1,5 @@
 /*
- * Hero Section — 猫眼咨询官网英雄区
+ * Hero Section — 猫眼增长引擎官网英雄区
  * Design: 全屏深色背景 + 猫眼金线图 + 大字标题 + 不对称布局
  * Theme: 品牌显贵 · 利润提升 · 全域增长
  */
@@ -146,7 +146,7 @@ export default function Hero() {
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-px w-12 bg-[#C9A84C]" />
                 <span className="font-['Noto_Serif_SC'] text-white/80 text-lg md:text-xl tracking-widest">
-                  猫眼咨询
+                  猫眼增长引擎
                 </span>
               </div>
             </div>
