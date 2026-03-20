@@ -1,25 +1,59 @@
 import { useState } from "react";
-import { Shield, Sparkles, User, ArrowRight, Bot, Cpu, Network } from "lucide-react";
+import { Shield, Sparkles, User, ArrowRight, Bot, Cpu, Network, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getLoginUrl } from "@/const";
 
 /**
  * MaoAI 独立登录页
- * - 普通用户：直接登录使用 AI 聊天
- * - 管理员：登录后跳转到管理员控制台
+ * - 普通用户：Manus OAuth 登录
+ * - 管理员：Supabase 邮箱+密码直接登录
  */
 export default function MaoAILogin() {
   const [hoveredCard, setHoveredCard] = useState<"user" | "admin" | null>(null);
 
+  // Admin email login state
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
   const handleUserLogin = () => {
-    // Store intended destination before redirect
     sessionStorage.setItem("maoai_login_dest", "/maoai");
     window.location.href = getLoginUrl();
   };
 
-  const handleAdminLogin = () => {
-    sessionStorage.setItem("maoai_login_dest", "/admin/nodes");
-    window.location.href = getLoginUrl();
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setIsLoading(true);
+
+    try {
+      const resp = await fetch("/api/auth/email-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: adminEmail, password: adminPassword }),
+        credentials: "include",
+      });
+
+      const data = await resp.json() as {
+        success?: boolean;
+        role?: string;
+        redirectTo?: string;
+        error?: string;
+      };
+
+      if (data.success) {
+        window.location.href = data.redirectTo ?? "/admin/nodes";
+      } else {
+        setLoginError(data.error ?? "邮箱或密码错误");
+      }
+    } catch {
+      setLoginError("网络错误，请稍后重试");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -64,7 +98,7 @@ export default function MaoAILogin() {
             选择登录方式
           </h1>
           <p className="text-white/40 text-lg max-w-md mx-auto">
-            普通用户直接开始 AI 对话，管理员可配置节点和路由策略
+            普通用户直接开始 AI 对话，管理员输入账号密码进入控制台
           </p>
         </div>
 
@@ -89,7 +123,6 @@ export default function MaoAILogin() {
               <p className="text-white/50 text-sm mb-6 flex-1">
                 登录后直接使用 AI 聊天功能，支持 DeepSeek、智谱 GLM、Groq 等多模型切换
               </p>
-              {/* Features */}
               <ul className="space-y-2 mb-8">
                 {["AI 多模型对话", "会话历史保存", "代码高亮渲染", "系统提示预设"].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm text-white/40">
@@ -108,43 +141,95 @@ export default function MaoAILogin() {
             </div>
           </div>
 
-          {/* Admin card */}
+          {/* Admin card - email+password form */}
           <div
-            className={`relative rounded-2xl border p-8 cursor-pointer transition-all duration-300 ${
+            className={`relative rounded-2xl border p-8 transition-all duration-300 ${
               hoveredCard === "admin"
                 ? "border-blue-500/50 bg-blue-500/5 shadow-lg shadow-blue-500/10"
-                : "border-white/10 bg-white/3 hover:border-white/20"
+                : "border-white/10 bg-white/3"
             }`}
             onMouseEnter={() => setHoveredCard("admin")}
             onMouseLeave={() => setHoveredCard(null)}
-            onClick={handleAdminLogin}
           >
             <div className="flex flex-col h-full">
-              <div className="size-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-6">
+              <div className="size-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-5">
                 <Shield className="size-7 text-blue-400" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">管理员</h2>
-              <p className="text-white/50 text-sm mb-6 flex-1">
-                登录后进入控制台，管理 AI 节点、配置路由策略、查看调用日志和系统监控
+              <h2 className="text-xl font-bold text-white mb-1">管理员登录</h2>
+              <p className="text-white/50 text-sm mb-5">
+                输入管理员账号密码，进入节点控制台
               </p>
-              {/* Features */}
-              <ul className="space-y-2 mb-8">
-                {["AI 节点管理", "智能路由配置", "调用日志监控", "多机分工协作"].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-white/40">
-                    <Cpu className="size-3.5 text-blue-400/60 flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                variant="outline"
-                className="w-full border-blue-500/40 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/60 bg-transparent font-semibold"
-                size="lg"
-              >
-                管理员登录
-                <Shield className="size-4 ml-2" />
-              </Button>
+
+              {/* Login form */}
+              <form onSubmit={handleAdminLogin} className="flex flex-col gap-3 flex-1">
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="管理员邮箱"
+                    value={adminEmail}
+                    onChange={e => setAdminEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    className="bg-white/5 border-white/15 text-white placeholder:text-white/30 focus:border-blue-500/60 focus:ring-blue-500/20"
+                  />
+                </div>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="密码"
+                    value={adminPassword}
+                    onChange={e => setAdminPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    className="bg-white/5 border-white/15 text-white placeholder:text-white/30 focus:border-blue-500/60 focus:ring-blue-500/20 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+
+                {loginError && (
+                  <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                    {loginError}
+                  </p>
+                )}
+
+                <div className="mt-auto pt-2">
+                  <ul className="space-y-1.5 mb-4">
+                    {["AI 节点管理", "智能路由配置", "调用日志监控", "多机分工协作"].map(f => (
+                      <li key={f} className="flex items-center gap-2 text-xs text-white/35">
+                        <Cpu className="size-3 text-blue-400/50 flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    variant="outline"
+                    className="w-full border-blue-500/40 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/60 bg-transparent font-semibold"
+                    size="lg"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="size-4 mr-2 animate-spin" />
+                        登录中...
+                      </>
+                    ) : (
+                      <>
+                        进入控制台
+                        <Shield className="size-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
             </div>
+
             {/* Admin badge */}
             <div className="absolute top-4 right-4 bg-blue-500/20 border border-blue-500/30 rounded-full px-2.5 py-0.5">
               <span className="text-blue-400 text-xs font-medium">仅限授权</span>
