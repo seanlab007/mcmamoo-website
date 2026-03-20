@@ -1,11 +1,115 @@
 import type { Express, Request, Response } from "express";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY ?? "";
+
+function getApiKey() {
+  return SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
+}
+
+/**
+ * 使用 Supabase REST API (PostgREST) 查询用户
+ * 避免直接 PostgreSQL 连接（pooler 在 Railway 环境中不可用）
+ */
+async function getUserByOpenId(openId: string): Promise<Record<string, unknown> | null> {
+  const key = getApiKey();
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error("[SupabaseREST] getUserByOpenId error:", resp.status, err);
+    return null;
+  }
+  const rows = await resp.json() as Record<string, unknown>[];
+  return rows.length > 0 ? rows[0] : null;
+}
+
+/**
+ * 查询邮箱对应的用户（处理 PENDING_FIRST_LOGIN 情况）
+ */
+async function getUserByEmail(email: string): Promise<Record<string, unknown> | null> {
+  const key = getApiKey();
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  if (!resp.ok) return null;
+  const rows = await resp.json() as Record<string, unknown>[];
+  return rows.length > 0 ? rows[0] : null;
+}
+
+/**
+ * 更新用户的 openId（处理 PENDING_FIRST_LOGIN → 实际 openId）
+ */
+async function updateUserOpenId(id: number, openId: string, lastSignedIn: string): Promise<void> {
+  const key = getApiKey();
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?id=eq.${id}`,
+    {
+      method: "PATCH",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ openId, lastSignedIn }),
+    }
+  );
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error("[SupabaseREST] updateUserOpenId error:", resp.status, err);
+  }
+}
+
+/**
+ * 使用 Supabase REST API upsert 用户
+ */
+async function upsertUser(user: {
+  openId: string;
+  email: string;
+  name: string;
+  loginMethod: string;
+  role: string;
+  lastSignedIn: string;
+}): Promise<void> {
+  const key = getApiKey();
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/users`,
+    {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(user),
+    }
+  );
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error("[SupabaseREST] upsertUser error:", resp.status, err);
+    throw new Error(`Failed to upsert user: ${resp.status} ${err}`);
+  }
+}
 
 /**
  * Supabase 邮箱+密码登录路由
@@ -56,29 +160,54 @@ export function registerSupabaseAuthRoutes(app: Express) {
 
       // 2. 用 Supabase user.id 作为 openId
       const openId = `supabase:${authData.user.id}`;
-      const userEmail = authData.user.email;
+      const userEmail = authData.user.email ?? email;
+      const now = new Date().toISOString();
 
-      // 3. 检查是否是 owner（第一个管理员）
-      const existingUser = await db.getUserByOpenId(openId);
+      // 3. 先查询 openId，再查询 email（处理 PENDING_FIRST_LOGIN 情况）
+      let existingUser = await getUserByOpenId(openId);
       let role: "admin" | "user" = "user";
 
       if (!existingUser) {
-        // 新用户：检查邮箱是否是 owner 邮箱
-        const ownerEmail = process.env.OWNER_EMAIL ?? "benedictashford20@gmail.com";
-        if (userEmail === ownerEmail) {
-          role = "admin";
+        // 尝试通过 email 查找（可能是 PENDING_FIRST_LOGIN 状态）
+        const userByEmail = await getUserByEmail(userEmail);
+
+        if (userByEmail) {
+          // 找到了邮箱对应的用户，更新 openId
+          const userId = userByEmail.id as number;
+          await updateUserOpenId(userId, openId, now);
+          role = (userByEmail.role as "admin" | "user") ?? "user";
+          existingUser = { ...userByEmail, openId };
+        } else {
+          // 全新用户
+          const ownerEmail = process.env.OWNER_EMAIL ?? "benedictashford20@gmail.com";
+          if (userEmail === ownerEmail) {
+            role = "admin";
+          }
+          await upsertUser({
+            openId,
+            email: userEmail,
+            name: userEmail.split("@")[0],
+            loginMethod: "email",
+            lastSignedIn: now,
+            role,
+          });
         }
-        // upsert 到 MaoAI users 表
-        await db.upsertUser({
-          openId,
-          email: userEmail,
-          name: userEmail.split("@")[0],
-          loginMethod: "email",
-          lastSignedIn: new Date(),
-          role,
-        });
       } else {
-        role = existingUser.role as "admin" | "user";
+        role = (existingUser.role as "admin" | "user") ?? "user";
+        // 更新 lastSignedIn
+        const key = getApiKey();
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
+          {
+            method: "PATCH",
+            headers: {
+              apikey: key,
+              Authorization: `Bearer ${key}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ lastSignedIn: now }),
+          }
+        );
       }
 
       // 4. 创建 MaoAI session token
