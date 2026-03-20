@@ -181,14 +181,14 @@ function FounderCard({ credentials }: { credentials: string[] }) {
     <div className="relative overflow-hidden border border-white/10">
       {/* Photo area */}
       <div
-        className="relative h-[480px] overflow-hidden cursor-zoom-in group"
+        className="relative h-80 overflow-hidden cursor-zoom-in group"
         onClick={() => setLightboxOpen(true)}
         title="点击放大"
       >
         <img
           src={currentPhoto.url}
           alt={`Sean DAI - ${currentPhoto.label}`}
-          className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 object-center`}
+          className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${currentPhoto.position}`}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0A0A]/20 to-[#0A0A0A]/90" />
         {/* Gold top border */}
@@ -228,7 +228,7 @@ function FounderCard({ credentials }: { credentials: string[] }) {
       {/* Info area */}
       <div className="p-8">
         <div className="section-label mb-3">创始人 / Founder</div>
-        <h3 className="font-['Cormorant_Garamond'] text-white text-3xl font-semibold mb-1" data-no-translate>
+        <h3 className="font-['Cormorant_Garamond'] text-white text-3xl font-semibold mb-1">
           Sean DAI
         </h3>
         <div className="text-[#C9A84C] text-sm mb-6 tracking-wide">代言 · 首席品牌增长专家</div>

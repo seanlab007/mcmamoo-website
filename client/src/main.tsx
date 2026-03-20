@@ -6,7 +6,6 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
-import { TranslationProvider } from "./contexts/TranslationContext";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -38,11 +37,22 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+// 直接请求 api.mcmamoo.com，避免 Cloudflare Pages 无法代理 POST 请求的问题
+const TRPC_URL = import.meta.env.VITE_TRPC_URL || "https://api.mcmamoo.com/api/trpc";
+
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: TRPC_URL,
       transformer: superjson,
+      headers() {
+        // 使用 localStorage 中的 session token 作为 Authorization header
+        // 这样可以绕过跨域 Cookie 限制
+        const token = typeof window !== 'undefined'
+          ? localStorage.getItem('maoai_session_token')
+          : null;
+        return token ? { Authorization: `Bearer ${token}` } : {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),
@@ -56,9 +66,7 @@ const trpcClient = trpc.createClient({
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
-      <TranslationProvider>
-        <App />
-      </TranslationProvider>
+      <App />
     </QueryClientProvider>
   </trpc.Provider>
 );

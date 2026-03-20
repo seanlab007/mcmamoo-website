@@ -1,11 +1,11 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "0911e575-17ce-4836-bcb0-dfbe66b40d80",
-  "prevId": "0cc07069-6200-4e6c-bd0a-9d8265022bcf",
+  "id": "8896f7b6-0f3c-4d51-b633-5b4eae5e55c3",
+  "prevId": "f26a0cb2-1c5e-456f-a53f-c17216d1eba9",
   "tables": {
-    "mao_applications": {
-      "name": "mao_applications",
+    "conversations": {
+      "name": "conversations",
       "columns": {
         "id": {
           "name": "id",
@@ -14,41 +14,35 @@
           "notNull": true,
           "autoincrement": true
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(128)",
+        "userId": {
+          "name": "userId",
+          "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "organization": {
-          "name": "organization",
-          "type": "varchar(256)",
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'新对话'"
         },
-        "consult_type": {
-          "name": "consult_type",
-          "type": "varchar(128)",
+        "model": {
+          "name": "model",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'deepseek-chat'"
         },
-        "description": {
-          "name": "description",
+        "systemPrompt": {
+          "name": "systemPrompt",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "enum('pending','reviewing','approved','rejected')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'pending'"
         },
         "createdAt": {
           "name": "createdAt",
@@ -71,8 +65,68 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "mao_applications_id": {
-          "name": "mao_applications_id",
+        "conversations_id": {
+          "name": "conversations_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "messages": {
+      "name": "messages",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "conversationId": {
+          "name": "conversationId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "enum('user','assistant','system')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "model": {
+          "name": "model",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "messages_id": {
+          "name": "messages_id",
           "columns": [
             "id"
           ]

@@ -1,52 +1,77 @@
+# MaoAI — 统一 AI 控制中心 TODO
 
-- [x] 扩充毛智库成绩：东部战区合作/预测美国入侵委内瑞拉伊朗/月球氦三/习大大接见/新三线建设
-- [x] 毛智库页面添加战略简报订阅入口
-- [x] 首页视频加入品牌文字叠加动画
-- [x] 管理后台加入登录保护（protectedProcedure + 管理员角色校验）
+## ✅ 已完成（基础聊天）
+- [x] 设计 conversations / messages 数据库表
+- [x] 推送数据库迁移
+- [x] 后端：会话列表 CRUD（创建、获取、删除）
+- [x] 后端：消息历史持久化
+- [x] 后端：多模型 AI 流式代理路由（DeepSeek / 智谱 / Groq）
+- [x] 后端：服务状态检测端点
+- [x] 后端：系统提示预设管理
+- [x] 深色主题全局样式（index.css）
+- [x] 主布局：左侧会话列表 + 右侧聊天区
+- [x] 聊天消息组件（Markdown 渲染 + 代码高亮）
+- [x] 流式输出打字机效果
+- [x] 多模型切换下拉选择器
+- [x] 系统提示预设选择器
+- [x] 实时状态监控指示器
+- [x] 会话管理（新建、切换、删除、清空）
+- [x] 配置 DeepSeek / 智谱 / Groq API Key
+- [x] Vitest 单元测试（10 tests passing）
 
-- [x] 毛智库页面添加重大预测可视化时间轴
-- [x] 首页国际认可模块数字滚动动效
-- [x] 管理后台增加订阅者列表
+## ✅ 已完成（MaoAI 升级）
+- [x] 品牌名称改为 MaoAI（侧边栏、登录页、欢迎页）
+- [x] 更新登录页文案（统一 AI 控制中心 · 多节点智能路由）
+- [x] 管理员入口（侧边栏盾牌图标，仅 admin 角色可见）
+- [x] 新增 ai_nodes 表（节点注册：名称、类型、URL、状态、API Key）
+- [x] 新增 routing_rules 表（路由策略：模式、负载均衡、节点列表）
+- [x] 新增 node_logs 表（调用日志：节点、耗时、状态、token 用量）
+- [x] 推送数据库迁移
+- [x] 节点 CRUD tRPC 路由（nodes.list/create/update/delete/ping）
+- [x] 路由规则 tRPC 路由（routing.list/create/update/delete/setDefault）
+- [x] 调用日志 tRPC 路由（logs.list/byNode/stats）
+- [x] 智能路由引擎（selectNode：付费/免费/手动/优先级/轮询/最低延迟）
+- [x] 故障转移机制（节点失败自动切换内置模型）
+- [x] 节点自动注册 API（POST /api/ai/node/register）
+- [x] 调用日志自动记录（延迟、状态、token 用量）
+- [x] 管理员控制台 - 节点管理页面（/admin/nodes）
+- [x] 管理员控制台 - 路由策略页面（/admin/routing）
+- [x] 管理员控制台 - 调用日志页面（/admin/logs）
+- [x] 注册管理员路由到 App.tsx
+- [x] NODE_REGISTRATION_TOKEN 配置
+- [x] 节点接入文档（NODE_INTEGRATION.md）
 
-- [x] 创始人照片更新（红军装主照＋其他照片画廊）
-- [x] 猫眼logo更换为金色眼睛图标
-- [x] 联系页二维码更换为名片二维码
-- [x] 法国奢利案例更换为与法国人合影照片
-- [x] 新增湖南胖哥食品案例
-- [x] 订阅者列表添加邮件群发功能（Nodemailer+QQ邮箱）
-- [x] 申请详情弹窗（备注和跟进记录）
-- [x] 移动端适配优化（毛智库时间轴和双业务入口）
+## 🔧 待完成（配置与接入）
+- [ ] 将账户升级为管理员（数据库执行：UPDATE users SET role='admin' WHERE ...）
+- [ ] 添加 Claude API 节点（需要 Anthropic API Key）
+- [ ] 配置 OpenManus 云端节点 URL
+- [ ] 配置 OpenClaw 本地节点 URL
+- [ ] 配置 WorkBuddy 节点 URL
+- [ ] 绑定自定义域名 mcmamoo.com（在 Settings > Domains 中配置）
 
-- [x] 毛智库标语改为"对标美国五角大楼兰德咨询"
-- [x] 二维码区域样式重新设计（更好看）
-- [x] 穿越周期图加说明文字（华糖万商大会专家邀请信任背书）
-- [x] 第四张照片（车内）调整显示全身
-- [x] 创始人照片画廊灯箱效果（点击放大）
-- [x] 胖哥食品专属案例页 /cases/pangge
-- [x] 联系表单提交后自动发送确认邮件给访客+抄送管理员
+## 🚀 后续迭代
+- [ ] 节点定时心跳检测（自动更新在线状态）
+- [ ] 任务队列（多节点并行处理长任务）
+- [ ] Token 用量统计图表（管理员仪表盘）
+- [ ] 节点在线率趋势图
+- [ ] MaoAI 猫咪 Logo SVG 设计
 
-- [x] 法国奢利案例页添加官网链接 www.lacelle1802.com 和图片展示
-- [x] 网站底部添加 Powered by Dark Matter Bank 标识（链接到暗物质銀行网站）
+## 猫眼自动化内容平台升级（la-celle1802.com 推广）
 
-- [x] 官网新增"战略洞察"文章板块（列表页 + 详情页）
-- [x] 发布《中国不止有任正非》文章到官网
-- [x] 导航栏和首页添加战略洞察入口
-- [x] SEO 优化：meta标签/OG标签/结构化数据/sitemap.xml/robots.txt
-- [x] 整理媒体分发策略（百家号/头条号/知乎/微信公众号等平台）
-- [x] 修复微信悬浮弹窗二维码区域白色背景问题（改为深色 #0D1B2A）
-- [x] 分析 osens.cn SEO 结构并学习其方法优化猫眼咨询官网 SEO
-- [x] 实施动态页面级 meta 标签（每个页面独立 title/description/canonical/keywords）
-- [x] 添加 JSON-LD 结构化数据到各子页面（BreadcrumbList + Article + Organization + ProfessionalService）
-- [x] 内链优化（案例页/洞察页互相关联）
-- [x] 关键词密度优化（参照 osens.cn 在 description 中列举具体客户名称）
-- [x] sitemap.xml 完善（所有页面+lastmod+priority）
-- [x] index.html 增加 ProfessionalService 结构化数据 + 双引擎兼容 meta
-- [x] 所有案例页底部添加“相关案例推荐”内链区块（SEO 内链优化）
-- [x] 首页视频文字叠加动画：将“对标兰德和中心”改为“对标美国兰德咨询”
-- [x] 全站统一：所有“对标兰德和中心”/“对标美国兰德咨询”改为“对标美国五角大楼兰德咨询”
-- [x] 实现18国语言自动翻译功能（动态翻译，不硬编码）— LLM驱动+localStorage缓存
-- [x] 修复翻译：毛智库 → Mao Strategic Think Tank（静态语言包内已正确翻译）
-- [x] 修复翻译：Sean DAI 名字不被翻译（data-no-translate 保护 + 静态包内保留）
-- [x] 修复代言人照片：显示全身图（object-position 调整）
-- [x] 翻译规则：毛智库 → "Mao Strategic Think Tank"（静态包内已正确）
-- [x] 翻译系统重构：静态语言包（CDN）+ 即时切换，全部18种语言预生成
+- [ ] 将猫眼平台集成为 /platform 路由页面（重写 Platform.tsx）
+- [ ] UI 美观优化：深色奢华主题、金色点缀、玻璃拟态卡片
+- [ ] 后端：AI 文案生成 tRPC 路由（platform.generateCopy）
+- [ ] 后端：文案库 CRUD（platform.saveCopy/listCopies/deleteCopy）
+- [ ] 批量生成 la-celle1802.com 推广文案（小红书/Instagram/X/微信）
+- [ ] 文案库管理页面（保存、分类、导出 Markdown）
+- [ ] 内容日历（排期管理）
+- [ ] 多平台分发逻辑（一键生成多平台版本）
+- [ ] 推送更新到 GitHub mcmamoo-website
+
+## Cloudflare Pages 部署 & X.com 自动发布
+
+- [ ] 配置 Cloudflare Pages 自动部署（连接 GitHub 仓库）
+- [ ] 添加 wrangler.toml 和构建配置文件
+- [ ] 集成 X.com (Twitter) API v2 发布接口（后端路由）
+- [ ] 在文案库添加「发布到 X」按钮（前端 UI）
+- [ ] 存储 X OAuth Token 到数据库

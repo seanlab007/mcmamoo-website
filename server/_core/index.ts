@@ -1,12 +1,15 @@
 import "dotenv/config";
+import cors from "cors";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
+import { registerSupabaseAuthRoutes } from "./supabaseAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import aiStreamRouter from "../aiStream";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,11 +33,32 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // CORS: allow requests from Cloudflare Pages and custom domain
+  app.use(cors({
+    origin: [
+      "https://mcmamoo-website.pages.dev",
+      "https://www.mcmamoo.com",
+      "https://mcmamoo.com",
+      "https://api.mcmamoo.com",
+      /\.mcmamoo-website\.pages\.dev$/,
+      /\.mcmamoo\.com$/,
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  }));
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Supabase email+password login
+  registerSupabaseAuthRoutes(app);
+  // AI Stream API
+  app.use("/api/ai", aiStreamRouter);
   // tRPC API
   app.use(
     "/api/trpc",

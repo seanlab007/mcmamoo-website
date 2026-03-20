@@ -4,7 +4,6 @@
  */
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import LanguageSwitcher from "./LanguageSwitcher";
 
 const navItems = [
   { label: "关于我们", href: "#about" },
@@ -17,7 +16,7 @@ const navItems = [
 
 const specialItems = [
   { label: "毛智库", href: "/maothink", external: true },
-  { label: "战略洞察", href: "/insights", external: true },
+  { label: "运营平台", href: "/platform", external: true },
 ];
 
 export default function Navbar() {
@@ -70,34 +69,51 @@ export default function Navbar() {
           </a>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
             {navItems.map((item) => (
               <button
                 key={item.href}
                 onClick={() => handleNav(item.href)}
-                className="relative text-white/70 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 hover-gold-line py-1"
+                className="relative text-white/70 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 hover-gold-line py-1 whitespace-nowrap"
               >
                 {item.label}
               </button>
             ))}
             <a
               href="/maothink"
-              className="relative text-[#8B1A1A] hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5"
+              className="relative text-[#8B1A1A] hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
               <span style={{ width: 6, height: 6, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0 }} />
               毛智库
             </a>
             <a
-              href="/insights"
-              className="relative text-white/50 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1"
+              href="/platform"
+              className="relative text-[#40d090]/80 hover:text-[#40d090] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
-              战略洞察
+              <span style={{ width: 6, height: 6, background: "#40d090", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #40d090" }} />
+              运营平台
             </a>
-            <LanguageSwitcher />
+            <a
+              href="/openclaw"
+              className="relative text-[#e05a30]/80 hover:text-[#e05a30] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+            >
+              <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>🦞</span>
+              小龙虾 AI
+            </a>
+            <a
+              href="/maoai/login"
+              className="relative text-[#C9A84C] hover:text-[#E8D5A0] text-sm tracking-wide transition-all duration-300 py-1 px-3 border border-[#C9A84C]/40 hover:border-[#C9A84C]/80 hover:bg-[#C9A84C]/10 flex items-center gap-1.5 whitespace-nowrap"
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+            >
+              <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px #C9A84C", flexShrink: 0 }} />
+              MaoAI
+            </a>
             <button
               onClick={() => handleNav("#contact")}
-              className="ml-2 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
+              className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
             >
               预约咨询
             </button>
@@ -139,14 +155,29 @@ export default function Navbar() {
             毛智库
           </a>
           <a
-            href="/insights"
-            className="text-white/60 hover:text-[#C9A84C] text-xl transition-colors duration-300"
+            href="/platform"
+            className="text-[#40d090]/80 hover:text-[#40d090] text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
           >
-            战略洞察
+            <span style={{ width: 8, height: 8, background: "#40d090", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #40d090" }} />
+            运营平台
           </a>
-          <div className="mt-2">
-            <LanguageSwitcher />
-          </div>
+          <a
+            href="/openclaw"
+            className="text-[#e05a30]/80 hover:text-[#e05a30] text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>🦞</span>
+            小龙虾 AI
+          </a>
+          <a
+            href="/maoai/login"
+            className="text-[#C9A84C] hover:text-[#E8D5A0] text-xl transition-colors duration-300 flex items-center gap-2 px-4 py-2 border border-[#C9A84C]/40 hover:bg-[#C9A84C]/10"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #C9A84C" }} />
+            MaoAI 统一控制中心
+          </a>
           <button
             onClick={() => handleNav("#contact")}
             className="mt-4 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] text-lg hover:bg-[#C9A84C]/10 transition-all duration-300"

@@ -1,0 +1,1 @@
+ALTER TABLE `routing_rules` MODIFY COLUMN `nodeIds` text NOT NULL;

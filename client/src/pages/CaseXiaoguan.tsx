@@ -68,16 +68,10 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 export default function CaseXiaoguan() {
   useSEO({
     title: "小罐茶 · 高端礼品茶品类重塑 | 猫眼增长引擎",
-    description: "猫眼增长引擎助力小罐茶重塑高端礼品茶品类，天猫茶叶礼品市场第一，年营日贤20亿。猫眼增长引擎错位竞争理论实战案例。",
-    keywords: "小罐茶,高端茶叶,礼品茶,猫眼增长引擎,品类重塑,错位竞争,新消费,天猫茶叶第一",
+    description: "猫眼增长引擎助力小罐茶重塑高端礼品茶品类，天猫茶叶礼品市场第一，年营收超20亿。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoguan-hero-VMo5tD5EjgTVTXUiupePuQ.webp",
     url: "https://www.mcmamoo.com/cases/xiaoguan",
     type: "article",
-    datePublished: "2024-01-01",
-    breadcrumbs: [
-      { name: "标杆案例", url: "https://www.mcmamoo.com/#cases" },
-      { name: "小罐茶 · 高端礼品茶品类重塑", url: "https://www.mcmamoo.com/cases/xiaoguan" },
-    ],
   });
   return (
     <div style={{ background: "#080808", minHeight: "100vh", color: "#F5F0E8" }}>

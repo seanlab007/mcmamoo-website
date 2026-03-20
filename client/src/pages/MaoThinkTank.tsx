@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
-import { trpc } from "@/lib/trpc";
+import { subscribeBrief, submitMaoApplication } from "@/lib/supabase";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/maothink-hero-mJvZ3PuQkyhYspYTZQbG3W.webp";
 
@@ -362,16 +362,22 @@ function StrategicBriefSubscribe() {
   const [done, setDone] = useState(false);
   const [err, setErr] = useState("");
 
-  const subscribeMutation = trpc.mao.subscribeBrief.useMutation({
-    onSuccess: () => { setDone(true); setErr(""); },
-    onError: (e: { message?: string }) => { setErr(e.message || "订阅失败，请稍后重试"); },
-  });
+  const [subPending, setSubPending] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes("@")) { setErr("请输入有效的邮箱地址"); return; }
+    if (!email || !email.includes("@")) { setErr("请输入有效的邮笱地址"); return; }
     setErr("");
-    subscribeMutation.mutate({ email });
+    setSubPending(true);
+    try {
+      await subscribeBrief(email);
+      setDone(true);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      setErr(msg.includes("duplicate") ? "该邮笱已订阅" : "订阅失败，请稍后重试");
+    } finally {
+      setSubPending(false);
+    }
   };
 
   if (done) {
@@ -403,7 +409,7 @@ function StrategicBriefSubscribe() {
       />
       <button
         type="submit"
-        disabled={subscribeMutation.isPending}
+        disabled={subPending}
         style={{
           background: "#8B1A1A",
           color: "#E8D5B7",
@@ -412,11 +418,11 @@ function StrategicBriefSubscribe() {
           fontFamily: "'DM Mono', monospace",
           fontSize: "0.65rem",
           letterSpacing: "0.1em",
-          cursor: subscribeMutation.isPending ? "not-allowed" : "pointer",
-          opacity: subscribeMutation.isPending ? 0.6 : 1,
+          cursor: subPending ? "not-allowed" : "pointer",
+          opacity: subPending ? 0.6 : 1,
         }}
       >
-        {subscribeMutation.isPending ? "..." : "订阅"}
+        {subPending ? "..." : "订阅"}
       </button>
       {err && <div style={{ color: "#8B1A1A", fontSize: "0.65rem", marginTop: 4 }}>{err}</div>}
     </form>
@@ -430,28 +436,27 @@ function MaoApplicationForm() {
   const [errorMsg, setErrorMsg] = useState("");
   const { ref, visible } = useReveal(0.1);
 
-  const submitMutation = trpc.mao.submitApplication.useMutation({
-    onSuccess: () => {
-      setSubmitted(true);
-      setErrorMsg("");
-    },
-    onError: (err) => {
-      setErrorMsg(err.message || "提交失败，请稍后重试");
-    },
-  });
+  const [loading, setLoading] = useState(false);
 
-  const loading = submitMutation.isPending;
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.org || !form.direction) return;
     setErrorMsg("");
-    submitMutation.mutate({
-      name: form.name,
-      organization: form.org,
-      consultType: form.direction,
-      description: form.detail || undefined,
-    });
+    setLoading(true);
+    try {
+      await submitMaoApplication({
+        name: form.name,
+        organization: form.org,
+        consult_type: form.direction,
+        description: form.detail || undefined,
+      });
+      setSubmitted(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      setErrorMsg(msg || "提交失败，请稍后重试");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -664,14 +669,10 @@ function MaoApplicationForm() {
 export default function MaoThinkTank() {
   useSEO({
     title: "毛智库 · 运用毛泽东思想的战略咨询机构 | 猫眼增长引擎",
-    description: "毛智库以毛泽东战略思想为核心，为军方提供兵棋推演与国防战略咨询，深度参与全球重大战略事务，获IMF、俄罗斯战略研究院认可。猫眼增长引擎旗下战略智库，对标美国五角大楼兰德咨询。",
-    keywords: "毛智库,毛泽东战略思想,战略咨询,兵棋推演,国防战略,猫眼增长引擎,兰德公司,地缘政治,宏观战略",
+    description: "毛智库以毛泽东战略思想为核心，为军方提供兵棋推演与国防战略咨询，深度参与全球重大战略事务，获IMF、俄罗斯战略研究院认可。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
     url: "https://www.mcmamoo.com/maothink",
     type: "article",
-    breadcrumbs: [
-      { name: "毛智库", url: "https://www.mcmamoo.com/maothink" },
-    ],
   });
   const [scanLine, setScanLine] = useState(0);
 

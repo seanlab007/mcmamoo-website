@@ -1,1 +1,0 @@
-ALTER TABLE `mao_applications` ADD `notes` text;

@@ -126,15 +126,7 @@ function BattleCard({ num, title, desc }: { num: string; title: string; desc: st
 export default function CasePangge() {
   useSEO({
     title: "湖南胖哥食品 — 品牌战略升级案例 | 猫眼增长引擎",
-    description: "猫眼增长引擎助力湖南胖哥食品完成品牌战略升级，打响四大战役，成为槟榔行业洗牌期领先品牌。100万+终端网点，400+经销商，覆盖全国主要地级市。猫眼增长引擎错位竞争理论实战案例。",
-    keywords: "胖哥食品,槟榔品牌,猫眼增长引擎,品牌升级,错位竞争,新消费,槟榔行业,湖南食品",
-    url: "https://www.mcmamoo.com/cases/pangge",
-    type: "article",
-    datePublished: "2024-01-01",
-    breadcrumbs: [
-      { name: "标杆案例", url: "https://www.mcmamoo.com/#cases" },
-      { name: "湖南胖哥食品 — 品牌战略升级案例", url: "https://www.mcmamoo.com/cases/pangge" },
-    ],
+    description: "猫眼增长引擎助力湖南胖哥食品完成品牌战略升级，打响四大战役，成为槟榔行业洗牌期领先品牌。100万+终端网点，400+经销商，覆盖全国主要地级市。",
   });
 
   return (

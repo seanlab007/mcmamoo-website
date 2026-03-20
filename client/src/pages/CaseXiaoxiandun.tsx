@@ -67,17 +67,11 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 
 export default function CaseXiaoxiandun() {
   useSEO({
-    title: "小仙烖鲜烖燕窝 · 开创品类5年达20亿 | 猫眼增长引擎",
-    description: "猫眼增长引擎助力小仙烖开创鲜烖燕窝品类，5年营日突硂20亿，成为天猫燕窝类目第一品牌。猫眼增长引擎错位竞争理论实战案例。",
-    keywords: "小仙烖,鲜烖燕窝,燕窝品牌,猫眼增长引擎,品类开创,错位竞争,新消费,天猫燕窝第一品牌",
+    title: "小仙炖鲜炖燕窝 · 开创品类5年达20亿 | 猫眼增长引擎",
+    description: "猫眼增长引擎助力小仙炖开创鲜炖燕窝品类，5年营收突破20亿，成为天猫燕窝类目第一品牌。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoxiandun-hero-MSw4oXFtJRpVC9YWG9wg4G.webp",
     url: "https://www.mcmamoo.com/cases/xiaoxiandun",
     type: "article",
-    datePublished: "2024-01-01",
-    breadcrumbs: [
-      { name: "标杆案例", url: "https://www.mcmamoo.com/#cases" },
-      { name: "小仙烖鲜烖燕窝 · 开创品类5年达20亿", url: "https://www.mcmamoo.com/cases/xiaoxiandun" },
-    ],
   });
   return (
     <div style={{ background: "#080C14", minHeight: "100vh", color: "#F5F0E8" }}>

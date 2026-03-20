@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Phone, Globe, Mail, MapPin, Loader2, CheckCircle2 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { submitContact } from "@/lib/supabase";
 import { toast } from "sonner";
 
 const CONTACT_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/contact-bg-8krYjvmedEVGPfhYr9X7Co.webp";
@@ -17,25 +17,26 @@ export default function Contact() {
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
 
-  const submitMutation = trpc.contact.submit.useMutation({
-    onSuccess: () => {
+  const [isPending, setIsPending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsPending(true);
+    try {
+      await submitContact({
+        name: form.name,
+        company: form.company,
+        phone: form.phone,
+        message: form.message || undefined,
+        email: form.email || undefined,
+      });
       setSubmitted(true);
-    },
-    onError: (err) => {
+    } catch (err) {
       console.error("[Contact] Submit error:", err);
       toast.error("提交失败，请稍后重试或直接拨打联系电话");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    submitMutation.mutate({
-      name: form.name,
-      company: form.company,
-      phone: form.phone,
-      message: form.message || undefined,
-      email: form.email || undefined,
-    });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -103,7 +104,7 @@ export default function Contact() {
                 {/* Info */}
                 <div>
                   <div className="text-[#C9A84C]/60 text-[0.6rem] font-['DM_Mono'] tracking-[0.2em] uppercase mb-2">SCAN TO ADD WECHAT</div>
-                  <div className="text-white font-['Noto_Serif_SC'] text-base font-bold mb-1" data-no-translate>Sean DAI</div>
+                  <div className="text-white font-['Noto_Serif_SC'] text-base font-bold mb-1">Sean DAI</div>
                   <div className="text-white/50 text-xs mb-2">首席战略专家 · 猫眼增长引擎</div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-px bg-[#C9A84C]/50" />
@@ -181,10 +182,10 @@ export default function Contact() {
                 </div>
                 <button
                   type="submit"
-                  disabled={submitMutation.isPending}
+                  disabled={isPending}
                   className="w-full py-4 bg-[#C9A84C] text-[#0A0A0A] font-semibold text-sm tracking-widest uppercase hover:bg-[#E8D5A0] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {submitMutation.isPending ? (
+                  {isPending ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
                       提交中...

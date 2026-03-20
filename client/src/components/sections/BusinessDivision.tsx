@@ -225,7 +225,7 @@ export default function BusinessDivision() {
           tag="Strategic Think Tank · 战略智库"
           title="毛智库"
           subtitle="Mao Strategic Think Tank"
-          desc="运用毛泽东战略思想体系，为国家机构、军方及国际组织提供兵棋推演、地缘战略咨询与重大决策支持。对标美国五角大楼兰德咨询。"
+          desc="运用毛泽东战略思想体系，为国家机构、军方及国际组织提供兵棋推演、地缘战略咨询与重大决策支持。对标美国兰德公司。"
           metrics={[
             { val: "受邀", label: "普京智库接见" },
             { val: "IMF", label: "国际货币基金组织认可" },
