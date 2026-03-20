@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { MODEL_CONFIGS } from "./routers";
-import { getAiNodes, getRoutingRules, createNodeLog } from "./db";
+import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog } from "./db";
 
 const aiStreamRouter = Router();
 
@@ -21,7 +21,7 @@ async function selectNode(preferPaid?: boolean) {
         const free = candidates.filter(n => !n.isPaid);
         if (free.length > 0) candidates = free;
       } else if (defaultRule.mode === "manual" && defaultRule.nodeIds) {
-        const ids = defaultRule.nodeIds.split(",").map((s: string) => parseInt(s.trim())).filter(Boolean);
+        const ids = (defaultRule.nodeIds as string).split(",").map((s: string) => parseInt(s.trim())).filter(Boolean);
         const ordered = ids.map(id => candidates.find(n => n.id === id)).filter(Boolean) as typeof candidates;
         if (ordered.length > 0) candidates = ordered;
       }
@@ -30,21 +30,21 @@ async function selectNode(preferPaid?: boolean) {
       } else if (defaultRule.loadBalance === "least_latency") {
         const withLatency = candidates.filter(n => n.lastPingMs);
         if (withLatency.length > 0) {
-          return withLatency.reduce((a, b) => (a.lastPingMs || 9999) < (b.lastPingMs || 9999) ? a : b);
+          return withLatency.reduce((a, b) => ((a.lastPingMs as number) || 9999) < ((b.lastPingMs as number) || 9999) ? a : b);
         }
       }
     }
-    return candidates.sort((a, b) => a.priority - b.priority)[0];
+    return candidates.sort((a, b) => (a.priority as number) - (b.priority as number))[0];
   } catch { return null; }
 }
 
 async function streamFromNode(
-  node: { id: number; baseUrl: string; apiKey: string | null; modelId: string | null },
+  node: { id: number; baseUrl: unknown; apiKey: unknown; modelId: unknown },
   messages: any[],
   res: Response,
   model?: string
 ): Promise<{ success: boolean }> {
-  const effectiveModel = node.modelId || model || "gpt-3.5-turbo";
+  const effectiveModel = (node.modelId as string) || model || "gpt-3.5-turbo";
   const start = Date.now();
   try {
     const response = await fetch(`${node.baseUrl}/chat/completions`, {
@@ -159,26 +159,178 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   }
 });
 
-// ─── Node Self-Registration (for OpenManus / OpenClaw / WorkBuddy) ────────────
+// ─── Node Self-Registration ───────────────────────────────────────────────────
+// POST /api/ai/node/register
+// WorkBuddy / OpenClaw 本地服务启动时调用此接口注册自身
+//
+// Request body:
+//   token    string  必填，与 Railway 环境变量 NODE_REGISTRATION_TOKEN 一致
+//   name     string  必填，节点显示名称，如 "WorkBuddy-MacBook"
+//   baseUrl  string  必填，本地 OpenAI 兼容接口地址，如 "http://127.0.0.1:11434/v1"
+//   type     string  可选，节点类型: workbuddy | openclaw | openmanus | custom（默认 custom）
+//   modelId  string  可选，默认使用的模型名，如 "qwen2.5:7b"
+//   priority number  可选，路由优先级，数字越小越优先（默认 200）
+//
+// Response:
+//   { success: true, nodeId: number, action: "created" | "updated" }
+//
 aiStreamRouter.post("/node/register", async (req: Request, res: Response) => {
-  const { token, name, baseUrl, type, modelId } = req.body;
+  const { token, name, baseUrl, type, modelId, priority } = req.body;
+
+  // Token 鉴权
   const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
-  if (!expectedToken || token !== expectedToken) {
+  if (!expectedToken) {
+    res.status(503).json({ error: "NODE_REGISTRATION_TOKEN not configured on server" });
+    return;
+  }
+  if (!token || token !== expectedToken) {
     res.status(401).json({ error: "Invalid registration token" });
     return;
   }
+
+  // 参数校验
+  if (!name || typeof name !== "string" || name.trim().length === 0) {
+    res.status(400).json({ error: "Missing required field: name" });
+    return;
+  }
+  if (!baseUrl || typeof baseUrl !== "string") {
+    res.status(400).json({ error: "Missing required field: baseUrl" });
+    return;
+  }
+
+  const nodeType = (["workbuddy", "openclaw", "openmanus", "openai_compat", "custom"].includes(type)) ? type : "custom";
+  const nodePriority = typeof priority === "number" ? priority : 200;
+
   try {
-    const { createAiNode } = await import("./db");
-    const node = await createAiNode({
-      name, type: type || "custom", baseUrl, apiKey: "", modelId: modelId || "",
-      isPaid: false, isLocal: true, priority: 200, isActive: true, isOnline: true,
-      description: `Auto-registered: ${new Date().toISOString()}`,
-    });
-    res.json({ success: true, nodeId: node?.id });
+    // 检查是否已有同名节点（upsert 逻辑）
+    const existing = await getAiNodes();
+    const found = existing.find(n => n.name === name.trim());
+
+    if (found) {
+      // 更新已有节点：刷新 baseUrl、modelId、isOnline=true、lastPingAt
+      await updateAiNode(found.id as number, {
+        baseUrl: baseUrl.trim(),
+        modelId: modelId || (found.modelId as string) || "",
+        isOnline: true,
+        isActive: true,
+        priority: nodePriority,
+        description: `Auto-registered: ${new Date().toISOString()}`,
+      });
+      console.log(`[Node Register] Updated node "${name}" (id=${found.id})`);
+      res.json({ success: true, nodeId: found.id, action: "updated" });
+    } else {
+      // 创建新节点
+      const node = await createAiNode({
+        name: name.trim(),
+        type: nodeType,
+        baseUrl: baseUrl.trim(),
+        apiKey: "",
+        modelId: modelId || "",
+        isPaid: false,
+        isLocal: true,
+        priority: nodePriority,
+        isActive: true,
+        isOnline: true,
+        description: `Auto-registered: ${new Date().toISOString()}`,
+      });
+      console.log(`[Node Register] Created node "${name}" (id=${(node as any)?.id})`);
+      res.json({ success: true, nodeId: (node as any)?.id, action: "created" });
+    }
+  } catch (err: any) {
+    console.error("[Node Register] Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Node Heartbeat ───────────────────────────────────────────────────────────
+// POST /api/ai/node/heartbeat
+// 本地节点每 30 秒调用一次，保持在线状态
+// 若超过 90 秒未收到心跳，节点自动标记为离线
+//
+// Request body:
+//   token   string  必填，与 NODE_REGISTRATION_TOKEN 一致
+//   nodeId  number  必填，注册时返回的 nodeId
+//
+// Response:
+//   { success: true, timestamp: string }
+//
+aiStreamRouter.post("/node/heartbeat", async (req: Request, res: Response) => {
+  const { token, nodeId } = req.body;
+
+  // Token 鉴权
+  const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
+  if (!expectedToken || token !== expectedToken) {
+    res.status(401).json({ error: "Invalid token" });
+    return;
+  }
+
+  if (!nodeId || typeof nodeId !== "number") {
+    res.status(400).json({ error: "Missing required field: nodeId" });
+    return;
+  }
+
+  try {
+    const node = await getAiNodeById(nodeId);
+    if (!node) {
+      res.status(404).json({ error: `Node ${nodeId} not found` });
+      return;
+    }
+
+    // 更新心跳时间和在线状态
+    await updateNodePingStatus(nodeId, true, undefined);
+    res.json({ success: true, timestamp: new Date().toISOString() });
+  } catch (err: any) {
+    console.error("[Node Heartbeat] Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Node Deregister ──────────────────────────────────────────────────────────
+// POST /api/ai/node/deregister
+// 本地节点正常关闭时调用，主动标记为离线
+//
+// Request body:
+//   token   string  必填
+//   nodeId  number  必填
+//
+aiStreamRouter.post("/node/deregister", async (req: Request, res: Response) => {
+  const { token, nodeId } = req.body;
+
+  const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
+  if (!expectedToken || token !== expectedToken) {
+    res.status(401).json({ error: "Invalid token" });
+    return;
+  }
+
+  try {
+    await updateNodePingStatus(nodeId, false, undefined);
+    console.log(`[Node Deregister] Node ${nodeId} marked offline`);
+    res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ─── Auto-offline: mark nodes offline if no heartbeat for 90s ────────────────
+// 每 60 秒检查一次，将超过 90 秒没有心跳的本地节点标记为离线
+setInterval(async () => {
+  try {
+    const nodes = await getAiNodes();
+    const now = Date.now();
+    const OFFLINE_THRESHOLD_MS = 90 * 1000; // 90 seconds
+
+    for (const node of nodes) {
+      if (!node.isLocal || !node.isOnline) continue;
+      if (!node.lastPingAt) continue;
+
+      const lastPing = new Date(node.lastPingAt as string).getTime();
+      if (now - lastPing > OFFLINE_THRESHOLD_MS) {
+        await updateNodePingStatus(node.id as number, false, undefined);
+        console.log(`[Auto-offline] Node "${node.name}" (id=${node.id}) marked offline (no heartbeat for ${Math.round((now - lastPing) / 1000)}s)`);
+      }
+    }
+  } catch { /* ignore */ }
+}, 60 * 1000);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
