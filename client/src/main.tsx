@@ -45,6 +45,14 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: TRPC_URL,
       transformer: superjson,
+      headers() {
+        // 使用 localStorage 中的 session token 作为 Authorization header
+        // 这样可以绕过跨域 Cookie 限制
+        const token = typeof window !== 'undefined'
+          ? localStorage.getItem('maoai_session_token')
+          : null;
+        return token ? { Authorization: `Bearer ${token}` } : {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

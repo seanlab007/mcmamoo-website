@@ -44,10 +44,15 @@ export default function MaoAILogin() {
         success?: boolean;
         role?: string;
         redirectTo?: string;
+        sessionToken?: string;
         error?: string;
       };
 
       if (data.success) {
+        // 将 sessionToken 存入 localStorage，用于跨域 tRPC 请求的 Authorization header
+        if (data.sessionToken) {
+          localStorage.setItem('maoai_session_token', data.sessionToken);
+        }
         window.location.href = data.redirectTo ?? "/admin/nodes";
       } else {
         setLoginError(data.error ?? "邮箱或密码错误");

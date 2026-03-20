@@ -257,10 +257,16 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Regular authentication flow
+    // Support both Cookie and Authorization Bearer header (for cross-origin scenarios)
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
-    const session = await this.verifySession(sessionCookie);
+
+    // Check Authorization header as fallback
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+
+    const tokenToVerify = sessionCookie || bearerToken;
+    const session = await this.verifySession(tokenToVerify);
 
     if (!session) {
       throw ForbiddenError("Invalid session cookie");

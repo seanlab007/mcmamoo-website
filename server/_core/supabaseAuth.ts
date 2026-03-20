@@ -219,11 +219,12 @@ export function registerSupabaseAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // 5. 返回登录结果
+      // 5. 返回登录结果（同时返回 sessionToken 供跨域场景使用）
       res.json({
         success: true,
         role,
         redirectTo: role === "admin" ? "/admin/nodes" : "/maoai",
+        sessionToken,  // 供前端存入 localStorage，用于跨域 Authorization header
       });
     } catch (error) {
       console.error("[SupabaseAuth] Email login failed:", error);
