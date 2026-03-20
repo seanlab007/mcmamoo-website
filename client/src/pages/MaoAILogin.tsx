@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { getLoginUrl } from "@/const";
 
 // Railway 后端 URL（直接调用，绕过 Cloudflare Pages 代理限制）
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://mcmamoo-website-production.up.railway.app";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://api.mcmamoo.com";
 
 /**
  * MaoAI 独立登录页
