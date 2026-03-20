@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getLoginUrl } from "@/const";
 
+// Railway 后端 URL（直接调用，绕过 Cloudflare Pages 代理限制）
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://mcmamoo-website-production.up.railway.app";
+
 /**
  * MaoAI 独立登录页
  * - 普通用户：Manus OAuth 登录
@@ -30,7 +33,7 @@ export default function MaoAILogin() {
     setIsLoading(true);
 
     try {
-      const resp = await fetch("/api/auth/email-login", {
+      const resp = await fetch(`${BACKEND_URL}/api/auth/email-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: adminEmail, password: adminPassword }),
