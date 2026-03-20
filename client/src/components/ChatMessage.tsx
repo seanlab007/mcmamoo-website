@@ -92,13 +92,13 @@ export function ChatMessage({ role, content, model, isStreaming, createdAt }: Ch
                   rehypePlugins={[rehypeHighlight]}
                   components={{
                     code: CodeBlock as any,
-                    pre: ({ children }) => <>{children}</>,
-                    a: ({ href, children }) => (
+                    pre: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+                    a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
                       <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-3 hover:opacity-80">
                         {children}
                       </a>
                     ),
-                    table: ({ children }) => (
+                    table: ({ children }: { children?: React.ReactNode }) => (
                       <div className="overflow-x-auto my-2">
                         <table className="prose-chat-table w-full border-collapse text-sm">{children}</table>
                       </div>
