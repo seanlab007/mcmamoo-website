@@ -37,10 +37,13 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+// 直接请求 api.mcmamoo.com，避免 Cloudflare Pages 无法代理 POST 请求的问题
+const TRPC_URL = import.meta.env.VITE_TRPC_URL || "https://api.mcmamoo.com/api/trpc";
+
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: TRPC_URL,
       transformer: superjson,
       fetch(input, init) {
         return globalThis.fetch(input, {
