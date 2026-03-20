@@ -1,5 +1,6 @@
-import { eq, desc, asc } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { eq, desc, asc, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
   InsertUser, users, conversations, messages, InsertConversation, InsertMessage,
   aiNodes, routingRules, nodeLogs, InsertAiNode, InsertRoutingRule, InsertNodeLog,
@@ -12,7 +13,8 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const client = postgres(process.env.DATABASE_URL, { prepare: false });
+      _db = drizzle(client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -43,7 +45,9 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     else if (user.openId === ENV.ownerOpenId) { values.role = 'admin'; updateSet.role = 'admin'; }
     if (!values.lastSignedIn) values.lastSignedIn = new Date();
     if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+    // PostgreSQL upsert syntax
+    await db.insert(users).values(values)
+      .onConflictDoUpdate({ target: users.openId, set: updateSet });
   } catch (error) { console.error("[Database] Failed to upsert user:", error); throw error; }
 }
 
@@ -66,16 +70,14 @@ export async function getConversations(userId: number) {
 export async function createConversation(data: Omit<InsertConversation, 'id'>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(conversations).values(data);
-  const id = (result as any).insertId as number;
-  const rows = await db.select().from(conversations).where(eq(conversations.id, id)).limit(1);
+  const rows = await db.insert(conversations).values(data).returning();
   return rows[0];
 }
 
 export async function updateConversation(id: number, userId: number, data: Partial<Pick<InsertConversation, 'title' | 'model' | 'systemPrompt'>>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(conversations).set(data).where(eq(conversations.id, id));
+  await db.update(conversations).set({ ...data, updatedAt: new Date() }).where(eq(conversations.id, id));
 }
 
 export async function deleteConversation(id: number, userId: number) {
@@ -97,9 +99,7 @@ export async function getMessages(conversationId: number) {
 export async function createMessage(data: Omit<InsertMessage, 'id'>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(messages).values(data);
-  const id = (result as any).insertId as number;
-  const rows = await db.select().from(messages).where(eq(messages.id, id)).limit(1);
+  const rows = await db.insert(messages).values(data).returning();
   return rows[0];
 }
 
@@ -127,16 +127,14 @@ export async function getAiNodeById(id: number) {
 export async function createAiNode(data: Omit<InsertAiNode, 'id'>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(aiNodes).values(data);
-  const id = (result as any).insertId as number;
-  const rows = await db.select().from(aiNodes).where(eq(aiNodes.id, id)).limit(1);
+  const rows = await db.insert(aiNodes).values(data).returning();
   return rows[0];
 }
 
 export async function updateAiNode(id: number, data: Partial<InsertAiNode>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(aiNodes).set(data).where(eq(aiNodes.id, id));
+  await db.update(aiNodes).set({ ...data, updatedAt: new Date() }).where(eq(aiNodes.id, id));
 }
 
 export async function deleteAiNode(id: number) {
@@ -173,16 +171,14 @@ export async function getDefaultRoutingRule() {
 export async function createRoutingRule(data: Omit<InsertRoutingRule, 'id'>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(routingRules).values(data);
-  const id = (result as any).insertId as number;
-  const rows = await db.select().from(routingRules).where(eq(routingRules.id, id)).limit(1);
+  const rows = await db.insert(routingRules).values(data).returning();
   return rows[0];
 }
 
 export async function updateRoutingRule(id: number, data: Partial<InsertRoutingRule>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(routingRules).set(data).where(eq(routingRules.id, id));
+  await db.update(routingRules).set({ ...data, updatedAt: new Date() }).where(eq(routingRules.id, id));
 }
 
 export async function deleteRoutingRule(id: number) {
@@ -222,20 +218,17 @@ export async function getNodeStats(nodeId: number) {
   };
 }
 
-// ─── Content Copies — 猫眼内容平台文案库 ──────────────────────────────────────
+// ─── Content Copies ───────────────────────────────────────────────────────────
 export async function getContentCopies(userId?: number, limit = 100) {
   const db = await getDb();
   if (!db) return [];
-  const query = db.select().from(contentCopies).orderBy(desc(contentCopies.createdAt)).limit(limit);
-  return query;
+  return db.select().from(contentCopies).orderBy(desc(contentCopies.createdAt)).limit(limit);
 }
 
 export async function createContentCopy(data: Omit<InsertContentCopy, 'id'>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const [result] = await db.insert(contentCopies).values(data);
-  const id = (result as any).insertId as number;
-  const rows = await db.select().from(contentCopies).where(eq(contentCopies.id, id)).limit(1);
+  const rows = await db.insert(contentCopies).values(data).returning();
   return rows[0];
 }
 
