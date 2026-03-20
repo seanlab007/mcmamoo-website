@@ -1,18 +1,38 @@
 import { Router, Request, Response } from "express";
 import { MODEL_CONFIGS } from "./routers";
 import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog } from "./db";
+import { sdk } from "./_core/sdk";
 
 const aiStreamRouter = Router();
 
+// ─── Admin Auth Helper ────────────────────────────────────────────────────────
+// Returns the user if authenticated AND role === "admin", else null
+async function getAdminUser(req: Request): Promise<{ id: number; role: string; email: string } | null> {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (user && user.role === "admin") return user;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Smart Router ─────────────────────────────────────────────────────────────
-async function selectNode(preferPaid?: boolean) {
+// onlyLocal: true = only local nodes; false = only cloud nodes; undefined = all
+async function selectNode(preferPaid?: boolean, onlyLocal?: boolean, onlyCloud?: boolean) {
   try {
     const nodes = await getAiNodes(true);
     if (!nodes || nodes.length === 0) return null;
     const rules = await getRoutingRules();
     const defaultRule = rules.find(r => r.isDefault && r.isActive) || rules.find(r => r.isActive);
-    let candidates = nodes.filter(n => n.isOnline !== false);
+    let candidates = nodes.filter(n => n.isOnline !== false && n.isActive !== false);
     if (candidates.length === 0) candidates = nodes;
+
+    // Filter by local/cloud
+    if (onlyLocal) candidates = candidates.filter(n => n.isLocal);
+    if (onlyCloud) candidates = candidates.filter(n => !n.isLocal);
+    if (candidates.length === 0) return null;
+
     if (defaultRule) {
       if (defaultRule.mode === "paid" || preferPaid === true) {
         const paid = candidates.filter(n => n.isPaid);
@@ -39,13 +59,27 @@ async function selectNode(preferPaid?: boolean) {
 }
 
 async function streamFromNode(
-  node: { id: number; baseUrl: unknown; apiKey: unknown; modelId: unknown },
+  node: { id: number; name: unknown; baseUrl: unknown; apiKey: unknown; modelId: unknown; isLocal?: unknown },
   messages: any[],
   res: Response,
-  model?: string
+  model?: string,
+  sendNodeInfo?: boolean
 ): Promise<{ success: boolean }> {
   const effectiveModel = (node.modelId as string) || model || "gpt-3.5-turbo";
   const start = Date.now();
+
+  // Send node info event so frontend knows which node is being used
+  if (sendNodeInfo) {
+    res.write(`data: ${JSON.stringify({
+      nodeInfo: {
+        id: node.id,
+        name: node.name,
+        model: effectiveModel,
+        isLocal: !!node.isLocal,
+      }
+    })}\n\n`);
+  }
+
   try {
     const response = await fetch(`${node.baseUrl}/chat/completions`, {
       method: "POST",
@@ -93,30 +127,63 @@ async function streamFromNode(
 }
 
 // ─── Main Chat Stream ─────────────────────────────────────────────────────────
+// model: cloud model ID (e.g. "deepseek-chat") or "local:<nodeId>" for local node
+// useLocal: true = admin-only, force local node routing
 aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
-  const { model = "deepseek-chat", messages, systemPrompt, preferPaid } = req.body;
+  const { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId } = req.body;
+
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
-  // 1. Smart routing via registered nodes
-  try {
-    const node = await selectNode(preferPaid);
-    if (node) {
-      const allMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
-      const result = await streamFromNode(node, allMessages, res, model);
-      if (result.success) { res.end(); return; }
-      res.write(`data: ${JSON.stringify({ info: "节点故障，切换到内置模型..." })}\n\n`);
-    }
-  } catch { /* fallback */ }
+  const allMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
 
-  // 2. Fallback: built-in model configs
+  // ── Local node routing (admin only) ──────────────────────────────────────
+  if (useLocal || (typeof model === "string" && model.startsWith("local:"))) {
+    const admin = await getAdminUser(req);
+    if (!admin) {
+      res.write(`data: ${JSON.stringify({ error: "本地节点仅限管理员使用" })}\n\n`);
+      res.end(); return;
+    }
+
+    // Specific node requested?
+    let targetNode: any = null;
+    if (requestedNodeId) {
+      targetNode = await getAiNodeById(Number(requestedNodeId));
+    } else if (typeof model === "string" && model.startsWith("local:")) {
+      const id = parseInt(model.slice(6));
+      if (!isNaN(id)) targetNode = await getAiNodeById(id);
+    }
+    if (!targetNode) {
+      targetNode = await selectNode(preferPaid, true, false);
+    }
+
+    if (!targetNode) {
+      res.write(`data: ${JSON.stringify({ error: "没有可用的本地节点，请先注册本地节点" })}\n\n`);
+      res.end(); return;
+    }
+
+    const result = await streamFromNode(targetNode, allMessages, res, undefined, true);
+    if (!result.success) {
+      res.write(`data: ${JSON.stringify({ error: `本地节点 "${targetNode.name}" 调用失败` })}\n\n`);
+    }
+    res.end(); return;
+  }
+
+  // ── Cloud model routing ───────────────────────────────────────────────────
+  // Send model info so frontend knows what's being used
   const cfg = MODEL_CONFIGS[model];
+  if (cfg) {
+    res.write(`data: ${JSON.stringify({
+      nodeInfo: { id: null, name: cfg.name, model: cfg.model, isLocal: false, badge: cfg.badge }
+    })}\n\n`);
+  }
+
   if (!cfg) { res.write(`data: ${JSON.stringify({ error: `Unknown model: ${model}` })}\n\n`); res.end(); return; }
   if (!cfg.apiKey) { res.write(`data: ${JSON.stringify({ error: `API key not configured for model: ${model}` })}\n\n`); res.end(); return; }
-  const allMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
+
   try {
     const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
@@ -159,55 +226,171 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   }
 });
 
+// ─── OpenAI Compatible API ────────────────────────────────────────────────────
+// POST /api/ai/v1/chat/completions
+// WorkBuddy / OpenClaw 可以把 MaoAI 当作 OpenAI 兼容接口使用
+// 需要在 Authorization 头中携带 MaoAI session token: "Bearer <maoai_session_token>"
+//
+// 支持 stream: true 和 stream: false
+// 管理员可以通过 model 字段指定本地节点：
+//   - 云端模型: "deepseek-chat", "glm-4-flash" 等
+//   - 本地节点: "local:<nodeId>" 如 "local:1"
+//
+aiStreamRouter.post("/v1/chat/completions", async (req: Request, res: Response) => {
+  const { model = "deepseek-chat", messages, stream = false, max_tokens = 4096, system } = req.body;
+
+  // Build message list (support system field shortcut)
+  const allMessages = system
+    ? [{ role: "system", content: system }, ...(messages || [])]
+    : (messages || []);
+
+  const isLocal = typeof model === "string" && model.startsWith("local:");
+  const isStream = stream === true;
+
+  // Local node requires admin
+  if (isLocal) {
+    const admin = await getAdminUser(req);
+    if (!admin) {
+      res.status(403).json({ error: { message: "Local nodes are restricted to admin users", type: "auth_error" } });
+      return;
+    }
+  }
+
+  // Resolve node/model config
+  let targetNode: any = null;
+  let cloudCfg: typeof MODEL_CONFIGS[string] | null = null;
+
+  if (isLocal) {
+    const id = parseInt(model.slice(6));
+    if (!isNaN(id)) targetNode = await getAiNodeById(id);
+    if (!targetNode) targetNode = await selectNode(undefined, true, false);
+    if (!targetNode) {
+      res.status(503).json({ error: { message: "No local node available", type: "service_unavailable" } });
+      return;
+    }
+  } else {
+    cloudCfg = MODEL_CONFIGS[model] || MODEL_CONFIGS["deepseek-chat"];
+    if (!cloudCfg?.apiKey) {
+      res.status(503).json({ error: { message: `Model "${model}" not configured`, type: "service_unavailable" } });
+      return;
+    }
+  }
+
+  const backendUrl = targetNode ? `${targetNode.baseUrl}/chat/completions` : `${cloudCfg!.baseUrl}/chat/completions`;
+  const backendKey = targetNode ? (targetNode.apiKey || "") : cloudCfg!.apiKey;
+  const backendModel = targetNode ? ((targetNode.modelId as string) || "gpt-3.5-turbo") : cloudCfg!.model;
+
+  const start = Date.now();
+
+  try {
+    const upstream = await fetch(backendUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(backendKey ? { Authorization: `Bearer ${backendKey}` } : {}),
+      },
+      body: JSON.stringify({ model: backendModel, messages: allMessages, stream: isStream, max_tokens }),
+    });
+
+    if (!upstream.ok) {
+      const errText = await upstream.text();
+      res.status(upstream.status).json({ error: { message: errText, type: "upstream_error" } });
+      return;
+    }
+
+    if (isStream) {
+      // Proxy SSE stream directly (standard OpenAI format)
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+      res.flushHeaders();
+
+      const reader = upstream.body?.getReader();
+      if (!reader) { res.end(); return; }
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(decoder.decode(value, { stream: true }));
+      }
+      res.end();
+    } else {
+      // Non-stream: return JSON directly
+      const data = await upstream.json();
+      res.json(data);
+    }
+
+    if (targetNode) {
+      await createNodeLog({ nodeId: targetNode.id, model: backendModel, status: "success", latencyMs: Date.now() - start });
+    }
+  } catch (err: any) {
+    console.error("[OpenAI Compat] Error:", err);
+    if (targetNode) {
+      await createNodeLog({ nodeId: targetNode.id, model: backendModel, status: "error", latencyMs: Date.now() - start, errorMessage: err.message });
+    }
+    res.status(500).json({ error: { message: err.message, type: "internal_error" } });
+  }
+});
+
+// ─── List available models (OpenAI compatible) ────────────────────────────────
+// GET /api/ai/v1/models
+aiStreamRouter.get("/v1/models", async (req: Request, res: Response) => {
+  const admin = await getAdminUser(req);
+  const cloudModels = Object.entries(MODEL_CONFIGS).map(([id, cfg]) => ({
+    id,
+    object: "model",
+    created: 1700000000,
+    owned_by: "maoai",
+    display_name: cfg.name,
+    badge: cfg.badge,
+    is_local: false,
+  }));
+
+  let localModels: any[] = [];
+  if (admin) {
+    try {
+      const nodes = await getAiNodes();
+      localModels = nodes
+        .filter(n => n.isLocal && n.isOnline)
+        .map(n => ({
+          id: `local:${n.id}`,
+          object: "model",
+          created: 1700000000,
+          owned_by: "local",
+          display_name: n.name,
+          badge: "🖥️",
+          is_local: true,
+          node_id: n.id,
+          base_url: n.baseUrl,
+          model_id: n.modelId,
+          last_ping_at: n.lastPingAt,
+        }));
+    } catch { /* ignore */ }
+  }
+
+  res.json({
+    object: "list",
+    data: [...cloudModels, ...localModels],
+  });
+});
+
 // ─── Node Self-Registration ───────────────────────────────────────────────────
-// POST /api/ai/node/register
-// WorkBuddy / OpenClaw 本地服务启动时调用此接口注册自身
-//
-// Request body:
-//   token    string  必填，与 Railway 环境变量 NODE_REGISTRATION_TOKEN 一致
-//   name     string  必填，节点显示名称，如 "WorkBuddy-MacBook"
-//   baseUrl  string  必填，本地 OpenAI 兼容接口地址，如 "http://127.0.0.1:11434/v1"
-//   type     string  可选，节点类型: workbuddy | openclaw | openmanus | custom（默认 custom）
-//   modelId  string  可选，默认使用的模型名，如 "qwen2.5:7b"
-//   priority number  可选，路由优先级，数字越小越优先（默认 200）
-//
-// Response:
-//   { success: true, nodeId: number, action: "created" | "updated" }
-//
 aiStreamRouter.post("/node/register", async (req: Request, res: Response) => {
   const { token, name, baseUrl, type, modelId, priority } = req.body;
-
-  // Token 鉴权
   const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
-  if (!expectedToken) {
-    res.status(503).json({ error: "NODE_REGISTRATION_TOKEN not configured on server" });
-    return;
-  }
-  if (!token || token !== expectedToken) {
-    res.status(401).json({ error: "Invalid registration token" });
-    return;
-  }
-
-  // 参数校验
-  if (!name || typeof name !== "string" || name.trim().length === 0) {
-    res.status(400).json({ error: "Missing required field: name" });
-    return;
-  }
-  if (!baseUrl || typeof baseUrl !== "string") {
-    res.status(400).json({ error: "Missing required field: baseUrl" });
-    return;
-  }
+  if (!expectedToken) { res.status(503).json({ error: "NODE_REGISTRATION_TOKEN not configured on server" }); return; }
+  if (!token || token !== expectedToken) { res.status(401).json({ error: "Invalid registration token" }); return; }
+  if (!name || typeof name !== "string" || name.trim().length === 0) { res.status(400).json({ error: "Missing required field: name" }); return; }
+  if (!baseUrl || typeof baseUrl !== "string") { res.status(400).json({ error: "Missing required field: baseUrl" }); return; }
 
   const nodeType = (["workbuddy", "openclaw", "openmanus", "openai_compat", "custom"].includes(type)) ? type : "custom";
   const nodePriority = typeof priority === "number" ? priority : 200;
 
   try {
-    // 检查是否已有同名节点（upsert 逻辑）
     const existing = await getAiNodes();
     const found = existing.find(n => n.name === name.trim());
-
     if (found) {
-      // 更新已有节点：刷新 baseUrl、modelId、isOnline=true、lastPingAt
       await updateAiNode(found.id as number, {
         baseUrl: baseUrl.trim(),
         modelId: modelId || (found.modelId as string) || "",
@@ -219,7 +402,6 @@ aiStreamRouter.post("/node/register", async (req: Request, res: Response) => {
       console.log(`[Node Register] Updated node "${name}" (id=${found.id})`);
       res.json({ success: true, nodeId: found.id, action: "updated" });
     } else {
-      // 创建新节点
       const node = await createAiNode({
         name: name.trim(),
         type: nodeType,
@@ -243,65 +425,26 @@ aiStreamRouter.post("/node/register", async (req: Request, res: Response) => {
 });
 
 // ─── Node Heartbeat ───────────────────────────────────────────────────────────
-// POST /api/ai/node/heartbeat
-// 本地节点每 30 秒调用一次，保持在线状态
-// 若超过 90 秒未收到心跳，节点自动标记为离线
-//
-// Request body:
-//   token   string  必填，与 NODE_REGISTRATION_TOKEN 一致
-//   nodeId  number  必填，注册时返回的 nodeId
-//
-// Response:
-//   { success: true, timestamp: string }
-//
 aiStreamRouter.post("/node/heartbeat", async (req: Request, res: Response) => {
   const { token, nodeId } = req.body;
-
-  // Token 鉴权
   const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
-  if (!expectedToken || token !== expectedToken) {
-    res.status(401).json({ error: "Invalid token" });
-    return;
-  }
-
-  if (!nodeId || typeof nodeId !== "number") {
-    res.status(400).json({ error: "Missing required field: nodeId" });
-    return;
-  }
-
+  if (!expectedToken || token !== expectedToken) { res.status(401).json({ error: "Invalid token" }); return; }
+  if (!nodeId || typeof nodeId !== "number") { res.status(400).json({ error: "Missing required field: nodeId" }); return; }
   try {
     const node = await getAiNodeById(nodeId);
-    if (!node) {
-      res.status(404).json({ error: `Node ${nodeId} not found` });
-      return;
-    }
-
-    // 更新心跳时间和在线状态
+    if (!node) { res.status(404).json({ error: `Node ${nodeId} not found` }); return; }
     await updateNodePingStatus(nodeId, true, undefined);
     res.json({ success: true, timestamp: new Date().toISOString() });
   } catch (err: any) {
-    console.error("[Node Heartbeat] Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 // ─── Node Deregister ──────────────────────────────────────────────────────────
-// POST /api/ai/node/deregister
-// 本地节点正常关闭时调用，主动标记为离线
-//
-// Request body:
-//   token   string  必填
-//   nodeId  number  必填
-//
 aiStreamRouter.post("/node/deregister", async (req: Request, res: Response) => {
   const { token, nodeId } = req.body;
-
   const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
-  if (!expectedToken || token !== expectedToken) {
-    res.status(401).json({ error: "Invalid token" });
-    return;
-  }
-
+  if (!expectedToken || token !== expectedToken) { res.status(401).json({ error: "Invalid token" }); return; }
   try {
     await updateNodePingStatus(nodeId, false, undefined);
     console.log(`[Node Deregister] Node ${nodeId} marked offline`);
@@ -312,21 +455,18 @@ aiStreamRouter.post("/node/deregister", async (req: Request, res: Response) => {
 });
 
 // ─── Auto-offline: mark nodes offline if no heartbeat for 90s ────────────────
-// 每 60 秒检查一次，将超过 90 秒没有心跳的本地节点标记为离线
 setInterval(async () => {
   try {
     const nodes = await getAiNodes();
     const now = Date.now();
-    const OFFLINE_THRESHOLD_MS = 90 * 1000; // 90 seconds
-
+    const OFFLINE_THRESHOLD_MS = 90 * 1000;
     for (const node of nodes) {
       if (!node.isLocal || !node.isOnline) continue;
       if (!node.lastPingAt) continue;
-
       const lastPing = new Date(node.lastPingAt as string).getTime();
       if (now - lastPing > OFFLINE_THRESHOLD_MS) {
         await updateNodePingStatus(node.id as number, false, undefined);
-        console.log(`[Auto-offline] Node "${node.name}" (id=${node.id}) marked offline (no heartbeat for ${Math.round((now - lastPing) / 1000)}s)`);
+        console.log(`[Auto-offline] Node "${node.name}" (id=${node.id}) marked offline`);
       }
     }
   } catch { /* ignore */ }

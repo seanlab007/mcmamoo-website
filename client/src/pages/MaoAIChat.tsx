@@ -1,48 +1,135 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Loader2, Send, Bot, User, ChevronDown, Zap, Brain, Cpu, LogOut } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Streamdown } from "streamdown";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://api.mcmamoo.com";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type Message = {
   role: "user" | "assistant";
   content: string;
+  nodeInfo?: ActiveNodeInfo;
 };
 
-type ModelConfig = {
+type ActiveNodeInfo = {
+  id: number | null;
+  name: string;
+  model: string;
+  isLocal: boolean;
+  badge?: string;
+};
+
+type CloudModel = {
   id: string;
   name: string;
   badge: string;
   description: string;
+  isLocal: false;
 };
 
-const MODELS: ModelConfig[] = [
-  { id: "deepseek-chat", name: "DeepSeek V3", badge: "🔵", description: "强大的通用模型，速度快" },
-  { id: "deepseek-reasoner", name: "DeepSeek R1", badge: "🧠", description: "深度推理，适合复杂问题" },
-  { id: "glm-4-flash", name: "GLM-4 Flash", badge: "⚡", description: "智谱极速模型，免费额度多" },
-  { id: "glm-4-plus", name: "GLM-4 Plus", badge: "🟣", description: "智谱旗舰模型，能力强" },
-  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", badge: "⚡", description: "Groq 超快推理，英文优秀" },
+type LocalNode = {
+  id: string;       // "local:<nodeId>"
+  nodeId: number;
+  name: string;
+  badge: string;
+  description: string;
+  modelId: string;
+  isLocal: true;
+  isOnline: boolean;
+};
+
+type ModelOption = CloudModel | LocalNode;
+
+// ─── Cloud models (always available) ─────────────────────────────────────────
+
+const CLOUD_MODELS: CloudModel[] = [
+  { id: "deepseek-chat",              name: "DeepSeek V3",    badge: "🔵", description: "通用对话·写作·分析",   isLocal: false },
+  { id: "deepseek-reasoner",          name: "DeepSeek R1",    badge: "🧠", description: "深度推理·复杂逻辑",   isLocal: false },
+  { id: "glm-4-flash",                name: "GLM-4 Flash",    badge: "⚡", description: "智谱极速·免费额度多", isLocal: false },
+  { id: "glm-4-plus",                 name: "GLM-4 Plus",     badge: "🟣", description: "智谱旗舰·能力强",     isLocal: false },
+  { id: "llama-3.3-70b-versatile",    name: "Llama 3.3 70B",  badge: "🦙", description: "Groq 超快·英文优秀",  isLocal: false },
 ];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem("maoai_session_token");
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) h["Authorization"] = `Bearer ${token}`;
+  return h;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MaoAIChat() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const isAdmin = (user as any)?.role === "admin";
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("deepseek-chat");
-  const [showModelPicker, setShowModelPicker] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
+  const [activeNodeInfo, setActiveNodeInfo] = useState<ActiveNodeInfo | null>(null);
+
+  // Model/node picker
+  const [selectedId, setSelectedId] = useState<string>("deepseek-chat");
+  const [showPicker, setShowPicker] = useState(false);
+  const [localNodes, setLocalNodes] = useState<LocalNode[]>([]);
+  const [loadingNodes, setLoadingNodes] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
-
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
 
+  // Fetch local nodes (admin only)
+  const fetchLocalNodes = useCallback(async () => {
+    if (!isAdmin) return;
+    setLoadingNodes(true);
+    try {
+      const resp = await fetch(`${BACKEND_URL}/api/ai/v1/models`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const locals: LocalNode[] = (data.data || [])
+          .filter((m: any) => m.is_local)
+          .map((m: any) => ({
+            id: m.id,
+            nodeId: m.node_id,
+            name: m.display_name,
+            badge: "🖥️",
+            description: `${m.model_id || "本地模型"} · ${m.is_online !== false ? "在线" : "离线"}`,
+            modelId: m.model_id || "",
+            isLocal: true,
+            isOnline: m.is_online !== false,
+          }));
+        setLocalNodes(locals);
+      }
+    } catch { /* ignore */ }
+    setLoadingNodes(false);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin) fetchLocalNodes();
+  }, [isAdmin, fetchLocalNodes]);
+
+  // All options: cloud + local (admin only)
+  const allOptions: ModelOption[] = [
+    ...CLOUD_MODELS,
+    ...(isAdmin ? localNodes : []),
+  ];
+
+  const currentOption = allOptions.find(m => m.id === selectedId) || CLOUD_MODELS[0];
+
+  // ── Send message ────────────────────────────────────────────────────────────
   const sendMessage = async (content: string) => {
     if (!content.trim() || isStreaming) return;
 
@@ -52,33 +139,38 @@ export default function MaoAIChat() {
     setInput("");
     setIsStreaming(true);
     setStreamingContent("");
+    setActiveNodeInfo(null);
 
     abortRef.current = new AbortController();
 
-    try {
-      const token = localStorage.getItem("maoai_session_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+    const isLocal = currentOption.isLocal;
+    const bodyPayload: Record<string, any> = {
+      messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+    };
 
+    if (isLocal) {
+      bodyPayload.useLocal = true;
+      bodyPayload.nodeId = (currentOption as LocalNode).nodeId;
+    } else {
+      bodyPayload.model = selectedId;
+    }
+
+    try {
       const resp = await fetch(`${BACKEND_URL}/api/ai/chat/stream`, {
         method: "POST",
-        headers,
+        headers: getAuthHeaders(),
         credentials: "include",
         signal: abortRef.current.signal,
-        body: JSON.stringify({
-          model: selectedModel,
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-        }),
+        body: JSON.stringify(bodyPayload),
       });
 
-      if (!resp.ok || !resp.body) {
-        throw new Error(`HTTP ${resp.status}`);
-      }
+      if (!resp.ok || !resp.body) throw new Error(`HTTP ${resp.status}`);
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
       let fullContent = "";
+      let capturedNodeInfo: ActiveNodeInfo | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -86,27 +178,33 @@ export default function MaoAIChat() {
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";
+
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed || trimmed === "data: [DONE]") continue;
           if (trimmed.startsWith("data: ")) {
             try {
               const chunk = JSON.parse(trimmed.slice(6));
-              if (chunk.content) {
+              if (chunk.nodeInfo) {
+                capturedNodeInfo = chunk.nodeInfo as ActiveNodeInfo;
+                setActiveNodeInfo(capturedNodeInfo);
+              } else if (chunk.content) {
                 fullContent += chunk.content;
                 setStreamingContent(fullContent);
               } else if (chunk.error) {
                 fullContent += `\n\n⚠️ 错误: ${chunk.error}`;
                 setStreamingContent(fullContent);
-              } else if (chunk.info) {
-                // node switching info, ignore
               }
             } catch { /* skip */ }
           }
         }
       }
 
-      setMessages(prev => [...prev, { role: "assistant", content: fullContent || "（无响应）" }]);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: fullContent || "（无响应）",
+        nodeInfo: capturedNodeInfo || undefined,
+      }]);
     } catch (err: any) {
       if (err.name !== "AbortError") {
         setMessages(prev => [...prev, { role: "assistant", content: `⚠️ 请求失败: ${err.message}` }]);
@@ -119,16 +217,12 @@ export default function MaoAIChat() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
-  const stopStreaming = () => {
-    abortRef.current?.abort();
-  };
+  const stopStreaming = () => abortRef.current?.abort();
 
+  // ── Loading state ───────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
@@ -137,11 +231,15 @@ export default function MaoAIChat() {
     );
   }
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex flex-col" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* Header */}
+
+      {/* ── Header ── */}
       <header className="border-b border-[#C9A84C]/20 bg-[#0A0A0A]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+
+          {/* Brand */}
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center">
               <Bot size={16} className="text-[#C9A84C]" />
@@ -155,39 +253,121 @@ export default function MaoAIChat() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Model Picker */}
+
+            {/* Model / Node Picker */}
             <div className="relative">
               <button
-                onClick={() => setShowModelPicker(!showModelPicker)}
+                onClick={() => setShowPicker(!showPicker)}
                 className="flex items-center gap-2 px-3 py-1.5 border border-[#C9A84C]/30 text-[#C9A84C]/80 text-xs hover:border-[#C9A84C]/60 hover:text-[#C9A84C] transition-all"
                 style={{ fontFamily: "'DM Mono', monospace" }}
               >
-                <span>{currentModel.badge}</span>
-                <span>{currentModel.name}</span>
+                {/* Source badge */}
+                {currentOption.isLocal ? (
+                  <Monitor size={11} className="text-emerald-400" />
+                ) : (
+                  <Cloud size={11} className="text-sky-400" />
+                )}
+                <span>{currentOption.badge}</span>
+                <span className="max-w-[100px] truncate">{currentOption.name}</span>
                 <ChevronDown size={12} />
               </button>
-              {showModelPicker && (
-                <div className="absolute right-0 top-full mt-1 w-64 bg-[#111] border border-[#C9A84C]/20 shadow-xl z-20">
-                  {MODELS.map(m => (
+
+              {showPicker && (
+                <div className="absolute right-0 top-full mt-1 w-72 bg-[#111] border border-[#C9A84C]/20 shadow-2xl z-20">
+
+                  {/* Cloud section */}
+                  <div className="px-3 py-2 border-b border-white/5">
+                    <div className="flex items-center gap-1.5 text-sky-400/70 text-[10px] font-semibold tracking-widest uppercase">
+                      <Cloud size={10} />
+                      <span>云端模型</span>
+                    </div>
+                  </div>
+                  {CLOUD_MODELS.map(m => (
                     <button
                       key={m.id}
-                      onClick={() => { setSelectedModel(m.id); setShowModelPicker(false); }}
-                      className={`w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${m.id === selectedModel ? "bg-[#C9A84C]/10" : ""}`}
+                      onClick={() => { setSelectedId(m.id); setShowPicker(false); }}
+                      className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${m.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}
                     >
-                      <span className="text-base mt-0.5">{m.badge}</span>
-                      <div>
+                      <span className="text-sm mt-0.5 shrink-0">{m.badge}</span>
+                      <div className="min-w-0">
                         <div className="text-white/90 text-xs font-medium" style={{ fontFamily: "'DM Mono', monospace" }}>{m.name}</div>
-                        <div className="text-white/40 text-xs mt-0.5">{m.description}</div>
+                        <div className="text-white/35 text-[11px] mt-0.5 truncate">{m.description}</div>
                       </div>
+                      {m.id === selectedId && <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-[#C9A84C] mt-1.5" />}
                     </button>
                   ))}
+
+                  {/* Local section (admin only) */}
+                  {isAdmin && (
+                    <>
+                      <div className="px-3 py-2 border-t border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-emerald-400/70 text-[10px] font-semibold tracking-widest uppercase">
+                          <Monitor size={10} />
+                          <span>本地节点</span>
+                          <span className="text-white/20 normal-case font-normal">· 仅管理员</span>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); fetchLocalNodes(); }}
+                          className="text-white/30 hover:text-white/60 transition-colors p-0.5"
+                          title="刷新本地节点"
+                        >
+                          <RefreshCw size={10} className={loadingNodes ? "animate-spin" : ""} />
+                        </button>
+                      </div>
+
+                      {loadingNodes && (
+                        <div className="px-4 py-3 text-white/30 text-xs flex items-center gap-2">
+                          <Loader2 size={12} className="animate-spin" />
+                          <span>正在获取本地节点...</span>
+                        </div>
+                      )}
+
+                      {!loadingNodes && localNodes.length === 0 && (
+                        <div className="px-4 py-3 text-white/25 text-xs">
+                          暂无在线本地节点
+                          <div className="text-white/15 text-[11px] mt-0.5">需要先通过内网穿透注册</div>
+                        </div>
+                      )}
+
+                      {localNodes.map(n => (
+                        <button
+                          key={n.id}
+                          onClick={() => { if (n.isOnline) { setSelectedId(n.id); setShowPicker(false); } }}
+                          disabled={!n.isOnline}
+                          className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-colors
+                            ${n.isOnline ? "hover:bg-emerald-400/5 cursor-pointer" : "opacity-40 cursor-not-allowed"}
+                            ${n.id === selectedId ? "bg-emerald-400/10" : ""}
+                          `}
+                        >
+                          <span className="text-sm mt-0.5 shrink-0">{n.badge}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-white/90 text-xs font-medium" style={{ fontFamily: "'DM Mono', monospace" }}>{n.name}</span>
+                              {n.isOnline
+                                ? <Wifi size={9} className="text-emerald-400 shrink-0" />
+                                : <WifiOff size={9} className="text-red-400/60 shrink-0" />
+                              }
+                            </div>
+                            <div className="text-white/35 text-[11px] mt-0.5 truncate">{n.description}</div>
+                          </div>
+                          {n.id === selectedId && <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5" />}
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
 
+            {/* User info + logout */}
             {isAuthenticated && (
               <div className="flex items-center gap-2">
-                <span className="text-white/40 text-xs hidden sm:block">{user?.email}</span>
+                {isAdmin && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/60 font-mono">
+                    ADMIN
+                  </span>
+                )}
+                <span className="text-white/40 text-xs hidden sm:block">{(user as any)?.email}</span>
                 <button
                   onClick={() => logout()}
                   className="text-white/30 hover:text-[#C9A84C] transition-colors p-1"
@@ -201,9 +381,11 @@ export default function MaoAIChat() {
         </div>
       </header>
 
-      {/* Messages */}
+      {/* ── Messages ── */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+          {/* Welcome screen */}
           {messages.length === 0 && !isStreaming && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-16 h-16 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center mb-6">
@@ -212,7 +394,21 @@ export default function MaoAIChat() {
               <h2 className="text-white/60 text-lg mb-2" style={{ fontFamily: "'Noto Serif SC', serif" }}>
                 你好，我是 MaoAI
               </h2>
-              <p className="text-white/30 text-sm mb-8">当前模型：{currentModel.badge} {currentModel.name}</p>
+              {/* Current model indicator */}
+              <div className="flex items-center gap-2 mb-8">
+                {currentOption.isLocal
+                  ? <Monitor size={12} className="text-emerald-400" />
+                  : <Cloud size={12} className="text-sky-400" />
+                }
+                <span className="text-white/30 text-sm">
+                  当前：
+                  <span className={currentOption.isLocal ? "text-emerald-400/70" : "text-sky-400/70"}>
+                    {currentOption.isLocal ? "本地节点" : "云端"}
+                  </span>
+                  {" · "}
+                  <span className="text-white/50">{currentOption.badge} {currentOption.name}</span>
+                </span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
                 {["帮我写一份市场分析报告", "解释一下量子计算的原理", "用 Python 写一个爬虫", "给我推荐几本商业书籍"].map(prompt => (
                   <button
@@ -227,6 +423,7 @@ export default function MaoAIChat() {
             </div>
           )}
 
+          {/* Message list */}
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
@@ -234,18 +431,31 @@ export default function MaoAIChat() {
                   <Bot size={14} className="text-[#C9A84C]" />
                 </div>
               )}
-              <div className={`max-w-[80%] rounded px-4 py-3 text-sm ${
-                msg.role === "user"
-                  ? "bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-white/90"
-                  : "bg-white/5 border border-white/10 text-white/85"
-              }`}>
-                {msg.role === "assistant" ? (
-                  <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
-                    <Streamdown>{msg.content}</Streamdown>
+              <div className="max-w-[80%] flex flex-col gap-1">
+                {/* Node attribution tag (assistant messages only) */}
+                {msg.role === "assistant" && msg.nodeInfo && (
+                  <div className={`flex items-center gap-1.5 text-[10px] ${msg.nodeInfo.isLocal ? "text-emerald-400/50" : "text-sky-400/50"}`}>
+                    {msg.nodeInfo.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
+                    <span>{msg.nodeInfo.isLocal ? "本地节点" : "云端"}</span>
+                    <span className="text-white/20">·</span>
+                    <span>{msg.nodeInfo.name}</span>
+                    <span className="text-white/20">·</span>
+                    <span className="font-mono">{msg.nodeInfo.model}</span>
                   </div>
-                ) : (
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
                 )}
+                <div className={`rounded px-4 py-3 text-sm ${
+                  msg.role === "user"
+                    ? "bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-white/90"
+                    : "bg-white/5 border border-white/10 text-white/85"
+                }`}>
+                  {msg.role === "assistant" ? (
+                    <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
+                      <Streamdown>{msg.content}</Streamdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  )}
+                </div>
               </div>
               {msg.role === "user" && (
                 <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-1">
@@ -255,23 +465,37 @@ export default function MaoAIChat() {
             </div>
           ))}
 
-          {/* Streaming indicator */}
+          {/* Streaming bubble */}
           {isStreaming && (
             <div className="flex gap-4 justify-start">
               <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center shrink-0 mt-1">
                 <Bot size={14} className="text-[#C9A84C]" />
               </div>
-              <div className="max-w-[80%] bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">
-                {streamingContent ? (
-                  <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
-                    <Streamdown>{streamingContent}</Streamdown>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-white/40">
-                    <Loader2 size={14} className="animate-spin" />
-                    <span>思考中...</span>
+              <div className="max-w-[80%] flex flex-col gap-1">
+                {/* Live node indicator */}
+                {activeNodeInfo && (
+                  <div className={`flex items-center gap-1.5 text-[10px] ${activeNodeInfo.isLocal ? "text-emerald-400/60" : "text-sky-400/60"}`}>
+                    {activeNodeInfo.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
+                    <span className="animate-pulse">●</span>
+                    <span>{activeNodeInfo.isLocal ? "本地节点" : "云端"}</span>
+                    <span className="text-white/20">·</span>
+                    <span>{activeNodeInfo.name}</span>
+                    <span className="text-white/20">·</span>
+                    <span className="font-mono">{activeNodeInfo.model}</span>
                   </div>
                 )}
+                <div className="bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">
+                  {streamingContent ? (
+                    <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
+                      <Streamdown>{streamingContent}</Streamdown>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-white/40">
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>思考中...</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -280,25 +504,41 @@ export default function MaoAIChat() {
         </div>
       </div>
 
-      {/* Input */}
-      <div className="border-t border-white/10 bg-[#0A0A0A]/95 backdrop-blur-sm sticky bottom-0">
+      {/* ── Input bar ── */}
+      <div className="border-t border-white/5 bg-[#0A0A0A]/95 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 py-4">
+          {/* Current source indicator */}
+          <div className={`flex items-center gap-1.5 text-[10px] mb-2 ${currentOption.isLocal ? "text-emerald-400/40" : "text-sky-400/40"}`}>
+            {currentOption.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
+            <span>{currentOption.isLocal ? "本地节点" : "云端"}</span>
+            <span className="text-white/15">·</span>
+            <span>{currentOption.badge} {currentOption.name}</span>
+            {currentOption.isLocal && !(currentOption as LocalNode).isOnline && (
+              <span className="text-red-400/60 ml-1">· 离线</span>
+            )}
+          </div>
+
           <div className="flex gap-3 items-end">
             <textarea
               ref={textareaRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`向 ${currentModel.name} 提问... (Enter 发送，Shift+Enter 换行)`}
-              rows={1}
+              placeholder={isStreaming ? "AI 正在回复中..." : "输入消息，Enter 发送，Shift+Enter 换行"}
               disabled={isStreaming}
-              className="flex-1 bg-white/5 border border-white/10 text-white/90 placeholder-white/25 text-sm px-4 py-3 resize-none focus:outline-none focus:border-[#C9A84C]/40 transition-colors max-h-32 disabled:opacity-50"
-              style={{ minHeight: "48px" }}
+              rows={1}
+              className="flex-1 bg-white/5 border border-white/10 text-white/85 text-sm px-4 py-3 resize-none focus:outline-none focus:border-[#C9A84C]/40 placeholder-white/20 disabled:opacity-50"
+              style={{ minHeight: "44px", maxHeight: "200px" }}
+              onInput={e => {
+                const t = e.target as HTMLTextAreaElement;
+                t.style.height = "auto";
+                t.style.height = Math.min(t.scrollHeight, 200) + "px";
+              }}
             />
             {isStreaming ? (
               <button
                 onClick={stopStreaming}
-                className="px-4 py-3 bg-red-500/20 border border-red-500/30 text-red-400 text-sm hover:bg-red-500/30 transition-all shrink-0"
+                className="px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs hover:bg-red-500/20 transition-all shrink-0"
               >
                 停止
               </button>
@@ -306,24 +546,18 @@ export default function MaoAIChat() {
               <button
                 onClick={() => sendMessage(input)}
                 disabled={!input.trim()}
-                className="px-4 py-3 bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/20 hover:border-[#C9A84C]/60 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                className="px-4 py-3 bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
               >
                 <Send size={16} />
               </button>
             )}
           </div>
-          <div className="flex items-center justify-between mt-2 px-1">
-            <span className="text-white/20 text-xs">
-              {currentModel.badge} {currentModel.name} · {currentModel.description}
-            </span>
-            <span className="text-white/20 text-xs">{messages.length > 0 ? `${messages.length} 条消息` : ""}</span>
-          </div>
         </div>
       </div>
 
-      {/* Click outside to close model picker */}
-      {showModelPicker && (
-        <div className="fixed inset-0 z-10" onClick={() => setShowModelPicker(false)} />
+      {/* Close picker on outside click */}
+      {showPicker && (
+        <div className="fixed inset-0 z-10" onClick={() => setShowPicker(false)} />
       )}
     </div>
   );
