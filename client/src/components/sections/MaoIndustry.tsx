@@ -1,7 +1,10 @@
-/**
+/*
  * MaoIndustry Section — 猫眼工业 Mao Industry
- * 月球氦3能源 · 托卡马克装置 · 军工制造 · 代言万年钟
+ * 月球氦㎳能源 · 托卡马克装置 · 军工制造 · 代言万年钟
  */
+"use client";
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
 
 const INDUSTRY_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao-industry-bg-5fKD5GfBWeFuC7bBKnwxHN.webp";
@@ -33,6 +36,23 @@ const domains = [
 ];
 
 export default function MaoIndustry() {
+  const [formData, setFormData] = useState({ name: "", company: "", email: "", phone: "", intent: "investment", message: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const createReservation = trpc.millenniumClock.createReservation.useMutation({
+    onSuccess: () => { setSubmitted(true); setSubmitting(false); },
+    onError: (err) => { setSubmitError(err.message || "提交失败，请稍后重试"); setSubmitting(false); },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setSubmitError("");
+    createReservation.mutate(formData);
+  };
+
   return (
     <section id="mao-industry" className="relative w-full overflow-hidden bg-[#020408]">
       {/* ── 星际背景区 ── */}
@@ -280,6 +300,82 @@ export default function MaoIndustry() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 战略合作申请表单 ── */}
+      <div className="border-t border-white/5 bg-[#030609] py-16">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center gap-4 mb-3">
+              <span className="w-8 h-px bg-[#4FC3F7]" />
+              <h3 className="text-white text-xl font-bold tracking-wide">战略合作申请</h3>
+            </div>
+            <p className="text-white/30 text-xs font-mono tracking-widest uppercase mb-8 ml-12">STRATEGIC PARTNERSHIP APPLICATION</p>
+
+            {submitted ? (
+              <div className="border border-[#4FC3F7]/20 bg-[#4FC3F7]/5 p-8 text-center">
+                <div className="text-[#4FC3F7] text-3xl mb-4">✓</div>
+                <div className="text-white font-bold text-lg mb-2">申请已收到</div>
+                <div className="text-white/50 text-sm">我们将在 48 小时内与您取得联系，评估合作可行性。</div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white/30 text-xs font-mono tracking-widest uppercase mb-2">姓名 *</label>
+                    <input required value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                      className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20"
+                      placeholder="您的姓名" />
+                  </div>
+                  <div>
+                    <label className="block text-white/30 text-xs font-mono tracking-widest uppercase mb-2">机构 *</label>
+                    <input required value={formData.company} onChange={e => setFormData(p => ({ ...p, company: e.target.value }))}
+                      className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20"
+                      placeholder="公司/机构名称" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white/30 text-xs font-mono tracking-widest uppercase mb-2">邮箱 *</label>
+                    <input required type="email" value={formData.email} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                      className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20"
+                      placeholder="business@company.com" />
+                  </div>
+                  <div>
+                    <label className="block text-white/30 text-xs font-mono tracking-widest uppercase mb-2">联系电话</label>
+                    <input value={formData.phone} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
+                      className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20"
+                      placeholder="+86 138 0000 0000" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-white/30 text-xs font-mono tracking-widest uppercase mb-2">合作方向 *</label>
+                  <select required value={formData.intent} onChange={e => setFormData(p => ({ ...p, intent: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50">
+                    <option value="investment">战略投资合作</option>
+                    <option value="helium3">氦-3能源项目合作</option>
+                    <option value="tokamak">托卡马克装置共同研发</option>
+                    <option value="defense">军工领域合作</option>
+                    <option value="other">其他合作</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-white/30 text-xs font-mono tracking-widest uppercase mb-2">合作设想</label>
+                  <textarea rows={3} value={formData.message} onChange={e => setFormData(p => ({ ...p, message: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20 resize-none"
+                    placeholder="请简述您的合作设想和资源背景..." />
+                </div>
+                <button type="submit" disabled={submitting}
+                  className="w-full py-4 bg-[#4FC3F7] text-black font-bold tracking-widest uppercase text-sm hover:bg-[#81D4FA] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {submitting ? "提交中..." : "提交战略合作申请 →"}
+                </button>
+                {submitError && (
+                  <p className="text-red-400 text-xs text-center font-mono bg-red-400/10 border border-red-400/20 px-4 py-2">{submitError}</p>
+                )}
+              </form>
+            )}
           </div>
         </div>
       </div>
