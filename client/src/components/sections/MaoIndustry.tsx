@@ -34,7 +34,7 @@ const domains = [
 
 export default function MaoIndustry() {
   return (
-    <section className="relative w-full overflow-hidden bg-[#020408]">
+    <section id="mao-industry" className="relative w-full overflow-hidden bg-[#020408]">
       {/* ── 星际背景区 ── */}
       <div className="relative w-full" style={{ minHeight: "560px" }}>
         <img
@@ -74,8 +74,27 @@ export default function MaoIndustry() {
             猫眼工业以超长期主义重构工业文明边界。
           </p>
 
+          {/* 合作咨询按钮 */}
+          <div className="flex flex-wrap items-center gap-4 mt-8">
+            <a
+              href="#contact"
+              onClick={(e) => { e.preventDefault(); document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#C9A84C] text-black text-sm font-bold tracking-widest uppercase hover:bg-[#E8D5A0] transition-colors duration-300"
+            >
+              <span>合作咨询</span>
+              <span style={{ fontSize: "0.8rem" }}>→</span>
+            </a>
+            <a
+              href="/millennium-clock"
+              className="inline-flex items-center gap-2 px-6 py-3 border border-[#4FC3F7]/40 text-[#4FC3F7] text-sm font-mono tracking-widest uppercase hover:bg-[#4FC3F7]/10 hover:border-[#4FC3F7]/80 transition-all duration-300"
+            >
+              <span>万年钟详情</span>
+              <span style={{ fontSize: "0.8rem" }}>→</span>
+            </a>
+          </div>
+
           {/* 数据徽章 */}
-          <div className="flex flex-wrap gap-4 mt-8">
+          <div className="flex flex-wrap gap-4 mt-6">
             {[
               { val: "1.5亿°C", label: "等离子体温度目标" },
               { val: "He-3", label: "月球清洁核燃料" },
@@ -200,6 +219,15 @@ export default function MaoIndustry() {
               在一万年的刻度里不过是一瞬。真正的文明建设者，思考的是物种延续、
               星际迁徙与能源永续。
             </p>
+
+            {/* 万年钟详情页链接 */}
+            <a
+              href="/millennium-clock"
+              className="inline-flex items-center gap-2 mb-6 text-[#4FC3F7]/70 hover:text-[#4FC3F7] text-sm font-mono tracking-wider transition-colors duration-300 group"
+            >
+              <span className="w-4 h-px bg-[#4FC3F7]/50 group-hover:w-6 transition-all duration-300" />
+              查看万年钟完整故事 →
+            </a>
 
             {/* 参数卡片 */}
             <div className="grid grid-cols-2 gap-3">
