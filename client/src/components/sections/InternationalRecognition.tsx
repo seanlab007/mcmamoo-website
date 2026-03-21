@@ -1,8 +1,7 @@
-/**
- * InternationalRecognition — 首页国际机构认可横幅
- * 放置在 Hero 正下方，进门第一眼看到的核心信任背书
- * 风格：深红军事 · 哑金 · 权威震慑
- * 新增：数字滚动动效统计栏 + i18n 双语支持
+/*
+ * InternationalRecognition — International Institutional Recognition Banner
+ * Style: Deep Red Military · Matte Gold · Authoritative
+ * i18n: full bilingual support
  */
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,38 +9,44 @@ import { useTranslation } from "react-i18next";
 const RECOGNITIONS = [
   {
     abbr: "IMF",
-    name: "国际货币基金组织",
+    nameZh: "国际货币基金组织",
     nameEn: "International Monetary Fund",
-    desc: "因在委内瑞拉、津巴布韦通货膨胀治理中提供创新性战略方案，获IMF特别表彰，相关研究成果纳入发展中国家经济危机应对参考案例库。",
-    descEn: "For providing innovative strategic solutions in managing hyperinflation in Venezuela and Zimbabwe, received special commendation from the IMF. Related research outcomes were incorporated into the reference case library for developing countries' economic crisis response.",
+    descZh: "因在委内瑞拉、津巴布韦通货膨胀治理中提供创新性战略方案，获IMF特别表彰，相关研究成果纳入发展中国家经济危机应对参考案例库。",
+    descEn: "Received special IMF commendation for providing innovative strategic solutions in Venezuela and Zimbabwe inflation governance. Research findings incorporated into the IMF's reference case library for developing-nation economic crisis response.",
     badge: "AWARDED",
     color: "#C9A84C",
   },
   {
     abbr: "RISS",
-    name: "俄罗斯战略研究院",
+    nameZh: "俄罗斯战略研究院",
     nameEn: "Russian Institute for Strategic Studies",
-    desc: "受普京智库——俄罗斯战略研究院正式接见，就欧亚地区战略格局进行深度交流，建立长期战略研究合作关系。",
-    descEn: "Officially received by Putin's think tank — the Russian Institute for Strategic Studies — for in-depth exchanges on the Eurasian strategic landscape, establishing a long-term strategic research partnership.",
+    descZh: "受普京智库——俄罗斯战略研究院正式接见，就欧亚地区战略格局进行深度交流，建立长期战略研究合作关系。",
+    descEn: "Formally received by Putin's think tank — the Russian Institute for Strategic Studies — for in-depth exchanges on Eurasian strategic dynamics, establishing a long-term strategic research partnership.",
     badge: "PARTNER",
     color: "#C0392B",
   },
   {
     abbr: "PLA",
-    name: "中国人民解放军",
+    nameZh: "中国人民解放军",
     nameEn: "People's Liberation Army",
-    desc: "为我国军方提供兵棋推演与国防战略咨询服务，深度参与重大军事战略决策研究，是国内少数具备军事战略咨询资质的民间智库。",
-    descEn: "Providing wargaming and national defense strategy consulting services to China's military, deeply involved in major military strategic decision-making research. One of the few non-governmental think tanks in China with military strategy consulting credentials.",
+    descZh: "为我国军方提供兵棋推演与国防战略咨询服务，深度参与重大军事战略决策研究，是国内少数具备军事战略咨询资质的民间智库。",
+    descEn: "Provides war-gaming and national defense strategy consulting services to the PLA, deeply involved in major military strategic decision-making research — one of the few civilian think tanks in China qualified for military strategy consulting.",
     badge: "CERTIFIED",
     color: "#8B1A1A",
   },
 ];
 
-const STATS = [
-  { value: 14, suffix: "+", label: "国政府咨询", labelEn: "Govt. Consultations", color: "#C9A84C" },
-  { value: 85, suffix: "%", label: "战略预测准确率", labelEn: "Forecast Accuracy", color: "#8B1A1A" },
-  { value: 6, suffix: "+", label: "军事战略合作", labelEn: "Yrs Military Coop.", color: "#C0392B" },
-  { value: 3, suffix: "+", label: "国际机构认可", labelEn: "Intl. Recognitions", color: "#6B8B4A" },
+const STATS_ZH = [
+  { value: 14, suffix: "+", label: "国政府咨询", color: "#C9A84C" },
+  { value: 85, suffix: "%", label: "战略预测准确率", color: "#8B1A1A" },
+  { value: 6, suffix: "年", label: "军事战略合作", color: "#C0392B" },
+  { value: 3, suffix: "大", label: "国际机构认可", color: "#6B8B4A" },
+];
+const STATS_EN = [
+  { value: 14, suffix: "+", label: "Governments Advised", color: "#C9A84C" },
+  { value: 85, suffix: "%", label: "Strategic Forecast Accuracy", color: "#8B1A1A" },
+  { value: 6, suffix: "yr", label: "Military Strategy Cooperation", color: "#C0392B" },
+  { value: 3, suffix: "", label: "Int'l Institutional Endorsements", color: "#6B8B4A" },
 ];
 
 // Animated counter hook
@@ -67,7 +72,7 @@ function useCounter(target: number, visible: boolean, duration = 1800) {
   return count;
 }
 
-function StatItem({ stat, index, isEn }: { stat: typeof STATS[0]; index: number; isEn: boolean }) {
+function StatItem({ stat, index }: { stat: typeof STATS_ZH[0]; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const count = useCounter(stat.value, visible);
@@ -112,7 +117,7 @@ function StatItem({ stat, index, isEn }: { stat: typeof STATS[0]; index: number;
         marginTop: 8,
         letterSpacing: "0.05em",
       }}>
-        {isEn ? stat.labelEn : stat.label}
+        {stat.label}
       </div>
     </div>
   );
@@ -150,13 +155,10 @@ function RecognitionCard({ item, index, isEn }: { item: typeof RECOGNITIONS[0]; 
         minWidth: 0,
       }}
     >
-      {/* Background glow */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, height: 1,
         background: `linear-gradient(90deg, transparent, ${item.color}88, transparent)`,
       }} />
-
-      {/* Scan line animation */}
       <div style={{
         position: "absolute", top: 0, left: "-100%", width: "60%", height: "100%",
         background: `linear-gradient(90deg, transparent, ${item.color}08, transparent)`,
@@ -164,7 +166,6 @@ function RecognitionCard({ item, index, isEn }: { item: typeof RECOGNITIONS[0]; 
         animationDelay: `${index * 1.2}s`,
       }} />
 
-      {/* Header row */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
         <div>
           <h3 style={{
@@ -174,7 +175,7 @@ function RecognitionCard({ item, index, isEn }: { item: typeof RECOGNITIONS[0]; 
             fontWeight: 700,
             margin: 0,
             lineHeight: 1.3,
-          }}>{isEn ? item.nameEn : item.name}</h3>
+          }}>{isEn ? item.nameEn : item.nameZh}</h3>
           <p style={{
             fontFamily: "'DM Mono', monospace",
             fontSize: "0.6rem",
@@ -208,19 +209,16 @@ function RecognitionCard({ item, index, isEn }: { item: typeof RECOGNITIONS[0]; 
         </div>
       </div>
 
-      {/* Divider */}
       <div style={{ height: 1, background: `linear-gradient(90deg, ${item.color}44, transparent)`, marginBottom: 16 }} />
 
-      {/* Description */}
       <p style={{
         fontFamily: "'Noto Serif SC', serif",
         fontSize: "clamp(0.78rem, 1.2vw, 0.88rem)",
         color: "rgba(245,240,232,0.72)",
         lineHeight: 1.85,
         margin: 0,
-      }}>{isEn ? item.descEn : item.desc}</p>
+      }}>{isEn ? item.descEn : item.descZh}</p>
 
-      {/* Corner accent */}
       <div style={{
         position: "absolute", bottom: 0, right: 0,
         width: 40, height: 40,
@@ -235,6 +233,8 @@ function RecognitionCard({ item, index, isEn }: { item: typeof RECOGNITIONS[0]; 
 export default function InternationalRecognition() {
   const { i18n } = useTranslation();
   const isEn = i18n.language !== 'zh';
+  const STATS = isEn ? STATS_EN : STATS_ZH;
+
   const titleRef = useRef<HTMLDivElement>(null);
   const [titleVisible, setTitleVisible] = useState(false);
 
@@ -256,7 +256,6 @@ export default function InternationalRecognition() {
       position: "relative",
       overflow: "hidden",
     }}>
-      {/* Tactical grid background */}
       <div style={{
         position: "absolute", inset: 0, opacity: 0.04,
         backgroundImage: `
@@ -266,8 +265,6 @@ export default function InternationalRecognition() {
         backgroundSize: "60px 60px",
         pointerEvents: "none",
       }} />
-
-      {/* Red glow top */}
       <div style={{
         position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)",
         width: "60%", height: 1,
@@ -275,8 +272,6 @@ export default function InternationalRecognition() {
       }} />
 
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 clamp(20px, 5vw, 80px)" }}>
-
-        {/* Section header */}
         <div
           ref={titleRef}
           style={{
@@ -286,7 +281,6 @@ export default function InternationalRecognition() {
             marginBottom: 48,
           }}
         >
-          {/* Eyebrow */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <div style={{ width: 40, height: 1, background: "#8B1A1A" }} />
             <span style={{
@@ -295,10 +289,9 @@ export default function InternationalRecognition() {
               color: "#8B1A1A",
               letterSpacing: "0.25em",
               textTransform: "uppercase",
-            }}>INTERNATIONAL RECOGNITION · MAO THINK TANK</span>
+            }}>INTERNATIONAL RECOGNITION · {isEn ? "MAO THINK TANK" : "毛智库"}</span>
           </div>
 
-          {/* Title */}
           <div style={{ display: "flex", alignItems: "baseline", gap: 24, flexWrap: "wrap" }}>
             <h2 style={{
               fontFamily: "'Noto Serif SC', serif",
@@ -318,7 +311,6 @@ export default function InternationalRecognition() {
             }}>GLOBALLY ENDORSED STRATEGIC THINK TANK</span>
           </div>
 
-          {/* Subtitle */}
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: "clamp(0.85rem, 1.5vw, 1rem)",
@@ -328,12 +320,12 @@ export default function InternationalRecognition() {
             lineHeight: 1.8,
           }}>
             {isEn
-              ? "Mao Think Tank deeply engages in major global strategic affairs, earning recognition and partnerships from the world's top institutions — one of the few non-governmental think tanks in China with global strategic influence."
+              ? "Mao Think Tank is deeply engaged in major global strategic affairs, recognized and partnered by the world's top institutions — one of the very few civilian think tanks in China with genuine global strategic influence."
               : "毛智库深度参与全球重大战略事务，获得国际顶级机构认可与合作，是中国极少数具备全球战略影响力的民间智库。"}
           </p>
         </div>
 
-        {/* ── Animated Stats Bar ── */}
+        {/* Animated Stats Bar */}
         <div style={{
           display: "flex",
           justifyContent: "space-around",
@@ -346,16 +338,14 @@ export default function InternationalRecognition() {
           position: "relative",
           overflow: "hidden",
         }}>
-          {/* Corner accents */}
           <div style={{ position: "absolute", top: 0, left: 0, width: 16, height: 16, borderTop: "2px solid #8B1A1A", borderLeft: "2px solid #8B1A1A" }} />
           <div style={{ position: "absolute", top: 0, right: 0, width: 16, height: 16, borderTop: "2px solid #8B1A1A", borderRight: "2px solid #8B1A1A" }} />
           <div style={{ position: "absolute", bottom: 0, left: 0, width: 16, height: 16, borderBottom: "2px solid #8B1A1A", borderLeft: "2px solid #8B1A1A" }} />
           <div style={{ position: "absolute", bottom: 0, right: 0, width: 16, height: 16, borderBottom: "2px solid #8B1A1A", borderRight: "2px solid #8B1A1A" }} />
 
-          {/* Dividers between stats */}
           {STATS.map((stat, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 0, flex: 1, minWidth: 120 }}>
-              <StatItem stat={stat} index={i} isEn={isEn} />
+              <StatItem stat={stat} index={i} />
               {i < STATS.length - 1 && (
                 <div style={{
                   width: 1,
@@ -370,11 +360,7 @@ export default function InternationalRecognition() {
         </div>
 
         {/* Cards */}
-        <div style={{
-          display: "flex",
-          gap: 20,
-          flexWrap: "wrap",
-        }}>
+        <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
           {RECOGNITIONS.map((item, i) => (
             <RecognitionCard key={item.abbr} item={item} index={i} isEn={isEn} />
           ))}

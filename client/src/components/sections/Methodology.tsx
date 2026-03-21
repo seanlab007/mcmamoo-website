@@ -1,6 +1,5 @@
 /*
- * Methodology Section -- Brand Prestige & Profit Multiplication
- * Design: dark background + four pillars + results showcase
+ * Methodology Section — Brand Prestige & Profit Multiplication
  * i18n: full bilingual support
  */
 import { useState } from "react";
@@ -10,65 +9,17 @@ import { useTranslation } from "react-i18next";
 const METHODOLOGY_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/methodology-bg-iADjg24sG3B8CAK3kDs55r.webp";
 
 const PILLARS_ZH = [
-  {
-    num: "01",
-    title: "品牌显贵",
-    subtitle: "Brand Prestige",
-    desc: "让品牌从卖货升级为被仰望。通过精准的品牌人格塑造、视觉语言升级和高端场景渗透，让消费者主动为品牌溢价买单。",
-    highlight: "溢价率平均提升 3-8倍",
-  },
-  {
-    num: "02",
-    title: "利润倍增",
-    subtitle: "Profit Multiplication",
-    desc: "不靠烧钱买流量，靠品牌力驱动自然增长。优化产品结构、渠道利润分配和复购体系，让每一分营销投入产生最大回报。",
-    highlight: "客户平均利润率提升 200%+",
-  },
-  {
-    num: "03",
-    title: "全域增长",
-    subtitle: "Omni-Channel Growth",
-    desc: "打通线上线下、公域私域、国内国外的全链路增长体系。从流量到留量，从单次购买到终身价值，构建可持续的增长飞轮。",
-    highlight: "全域 GMV 平均增长 5-10倍",
-  },
-  {
-    num: "04",
-    title: "趋势领先",
-    subtitle: "Trend Leadership",
-    desc: "在竞争对手还在追赶昨天的热点时，我们已经帮品牌布局明天的赛道。基于10倍变量预判，让品牌永远比市场快半步。",
-    highlight: "提前 6-18 个月锁定增长红利",
-  },
+  { num: "01", title: "品牌显贵", subtitle: "Brand Prestige", desc: "让品牌从卖货升级为被仰望。通过精准的品牌人格塑造、视觉语言升级和高端场景渗透，让消费者主动为品牌溢价买单。", highlight: "溢价率平均提升 3-8倍" },
+  { num: "02", title: "利润倍增", subtitle: "Profit Multiplication", desc: "不靠烧钱买流量，靠品牌力驱动自然增长。优化产品结构、渠道利润分配和复购体系，让每一分营销投入产生最大回报。", highlight: "客户平均利润率提升 200%+" },
+  { num: "03", title: "全域增长", subtitle: "Omni-Channel Growth", desc: "打通线上线下、公域私域、国内国外的全链路增长体系。从流量到留量，从单次购买到终身价值，构建可持续的增长飞轮。", highlight: "全域 GMV 平均增长 5-10倍" },
+  { num: "04", title: "趋势领先", subtitle: "Trend Leadership", desc: "在竞争对手还在追赶昨天的热点时，我们已经帮品牌布局明天的赛道。基于10倍变量预判，让品牌永远比市场快半步。", highlight: "提前 6-18 个月锁定增长红利" },
 ];
 
 const PILLARS_EN = [
-  {
-    num: "01",
-    title: "Brand Prestige",
-    subtitle: "Brand Prestige",
-    desc: "Elevate brands from selling products to being revered. Through precise brand persona crafting, visual language upgrades, and premium scene penetration, make consumers willingly pay a brand premium.",
-    highlight: "Average premium rate increase: 3–8x",
-  },
-  {
-    num: "02",
-    title: "Profit Multiplication",
-    subtitle: "Profit Multiplication",
-    desc: "Drive organic growth through brand power, not paid traffic. Optimize product structure, channel profit distribution, and repurchase systems to maximize returns on every marketing dollar.",
-    highlight: "Average client profit margin increase: 200%+",
-  },
-  {
-    num: "03",
-    title: "Omni-Channel Growth",
-    subtitle: "Omni-Channel Growth",
-    desc: "Connect online and offline, public and private domains, domestic and international channels into a full-chain growth system. From traffic to retention, from single purchase to lifetime value.",
-    highlight: "Average omni-channel GMV growth: 5–10x",
-  },
-  {
-    num: "04",
-    title: "Trend Leadership",
-    subtitle: "Trend Leadership",
-    desc: "While competitors chase yesterday's trends, we've already positioned brands on tomorrow's tracks. Based on 10x variable forecasting, brands stay perpetually half a step ahead of the market.",
-    highlight: "Lock in growth dividends 6–18 months early",
-  },
+  { num: "01", title: "Brand Prestige", subtitle: "Brand Prestige", desc: "Elevate your brand from selling products to being revered. Through precise brand persona crafting, visual language upgrades, and premium scenario infiltration, make consumers willingly pay a premium.", highlight: "Average premium rate up 3–8×" },
+  { num: "02", title: "Profit Multiplication", subtitle: "Profit Multiplication", desc: "Drive organic growth through brand power, not ad spend. Optimize product mix, channel profit distribution, and repurchase systems to maximize return on every marketing dollar.", highlight: "Average client profit margin up 200%+" },
+  { num: "03", title: "Omni-Channel Growth", subtitle: "Omni-Channel Growth", desc: "Connect online and offline, public and private domains, domestic and international — building a full-chain growth system from traffic acquisition to lifetime customer value.", highlight: "Average omni-channel GMV up 5–10×" },
+  { num: "04", title: "Trend Leadership", subtitle: "Trend Leadership", desc: "While competitors chase yesterday's trends, we've already positioned your brand for tomorrow's track. Based on 10× variable forecasting, keep your brand perpetually half a step ahead of the market.", highlight: "Lock in growth dividends 6–18 months early" },
 ];
 
 const RESULTS_ZH = [
@@ -79,10 +30,10 @@ const RESULTS_ZH = [
 ];
 
 const RESULTS_EN = [
-  { brand: "Xiaoxiandun Bird's Nest", result: "¥0 to ¥2B in 5 years", metric: "Tmall Bird's Nest Category #1" },
-  { brand: "LA CELLE (France)", result: "20,000 bottles in one day", metric: "Premium Fragrance Dark Horse" },
-  { brand: "Jiangzhong Monkey Mushroom", result: "10x revenue in 3 years", metric: "Stomach Health Category #1" },
-  { brand: "NAD+ (USA)", result: "500K+ sales per article", metric: "Anti-Aging Brand Premium King" },
+  { brand: "XiaoXianDun Bird's Nest", result: "0 to ¥2B in 5 years", metric: "#1 Bird's Nest on Tmall" },
+  { brand: "LA CELLE (France)", result: "20,000 bottles in one day", metric: "Dark horse in premium fragrance" },
+  { brand: "Jiangzhong Monkey Mushroom Porridge", result: "10× revenue in 3 years", metric: "Absolute #1 in stomach-care category" },
+  { brand: "Changshengtian NAD+ (USA)", result: "500K+ sales from one post", metric: "Premium king in anti-aging track" },
 ];
 
 const THINKERS_ZH = [
@@ -96,8 +47,8 @@ const THINKERS_ZH = [
 ];
 
 const THINKERS_EN = [
-  { name: "Mao Zedong", theory: "Masthead Theory" },
-  { name: "Charles Darwin", theory: "Evolution Theory" },
+  { name: "Mao Zedong", theory: "Mast Theory" },
+  { name: "Charles Darwin", theory: "Theory of Evolution" },
   { name: "Albert Einstein", theory: "First Principles" },
   { name: "L.V. Bertalanffy", theory: "Systems Theory" },
   { name: "Jack Trout", theory: "Positioning Theory" },
@@ -120,11 +71,7 @@ export default function Methodology() {
 
   return (
     <section id="methodology" className="relative py-24 lg:py-32 overflow-hidden">
-      {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${METHODOLOGY_BG})` }}
-      />
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${METHODOLOGY_BG})` }} />
       <div className="absolute inset-0 bg-[#0D1B2A]/92" />
 
       <div className="relative z-10 container">
@@ -132,14 +79,14 @@ export default function Methodology() {
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="section-label mb-4">02 — Core Methodology</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
-            {isEn ? "Mc&Mamoo Methodology" : "猫眼方法论"}
+            {isEn ? "Mao Eye Methodology" : "猫眼方法论"}
           </h2>
           <p className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl italic mb-4">
-            {isEn ? "Make brands prestigious. Multiply profits. Grow everywhere." : "让品牌显贵，让利润倍增，让增长全域"}
+            {isEn ? "Make Brands Premium · Multiply Profits · Grow Across All Channels" : "让品牌显贵，让利润倍增，让增长全域"}
           </p>
           <p className="text-white/50 max-w-2xl text-base leading-relaxed">
             {isEn
-              ? <>We don't do positioning. We don't talk concepts. We focus on one thing: <span className="text-white font-medium">making your brand sell at higher prices, earn more, and grow faster.</span></>
+              ? <>We don't do positioning theory or abstract concepts. We focus on one thing: <span className="text-white font-medium">making your brand sell at a higher price, earn more, and grow faster.</span></>
               : <>我们不做定位，不讲概念。我们只关注一件事：<span className="text-white font-medium">让您的品牌卖得更贵、赚得更多、长得更快。</span></>
             }
           </p>
@@ -163,30 +110,18 @@ export default function Methodology() {
                 ].join(" ")}
               >
                 <div className="flex items-start gap-4">
-                  <div
-                    className="font-['DM_Mono'] text-2xl font-bold flex-shrink-0 transition-colors"
-                    style={{ color: activePillar === i ? "#C9A84C" : "rgba(255,255,255,0.15)" }}
-                  >
+                  <div className="font-['DM_Mono'] text-2xl font-bold flex-shrink-0 transition-colors" style={{ color: activePillar === i ? "#C9A84C" : "rgba(255,255,255,0.15)" }}>
                     {p.num}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-baseline gap-2 mb-1">
-                      <h3
-                        className="font-['Noto_Serif_SC'] text-xl font-bold transition-colors"
-                        style={{ color: activePillar === i ? "#C9A84C" : "white" }}
-                      >
+                      <h3 className="font-['Noto_Serif_SC'] text-xl font-bold transition-colors" style={{ color: activePillar === i ? "#C9A84C" : "white" }}>
                         {p.title}
                       </h3>
                       <span className="text-white/30 text-xs font-['DM_Mono']">{p.subtitle}</span>
                     </div>
                     <p className="text-white/50 text-sm leading-relaxed mb-4">{p.desc}</p>
-                    <div
-                      className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 border"
-                      style={{
-                        borderColor: activePillar === i ? "#C9A84C" : "rgba(255,255,255,0.1)",
-                        color: activePillar === i ? "#C9A84C" : "rgba(255,255,255,0.3)",
-                      }}
-                    >
+                    <div className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 border" style={{ borderColor: activePillar === i ? "#C9A84C" : "rgba(255,255,255,0.1)", color: activePillar === i ? "#C9A84C" : "rgba(255,255,255,0.3)" }}>
                       <span>&#9654;</span>
                       <span>{p.highlight}</span>
                     </div>
@@ -220,19 +155,8 @@ export default function Methodology() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {THINKERS.map((t) => (
-              <div
-                key={t.name}
-                className={[
-                  "p-4 border text-center group transition-all hover:border-[#C9A84C]/50",
-                  t.name === "Sean DAI" ? "border-[#C9A84C] bg-[#C9A84C]/10" : "border-white/10",
-                ].join(" ")}
-              >
-                <div className={[
-                  "font-semibold text-sm mb-1 transition-colors",
-                  t.name === "Sean DAI" ? "text-[#C9A84C]" : "text-white group-hover:text-[#C9A84C]",
-                ].join(" ")}>
-                  {t.name}
-                </div>
+              <div key={t.name} className={["p-4 border text-center group transition-all hover:border-[#C9A84C]/50", t.name === "Sean DAI" ? "border-[#C9A84C] bg-[#C9A84C]/10" : "border-white/10"].join(" ")}>
+                <div className={["font-semibold text-sm mb-1 transition-colors", t.name === "Sean DAI" ? "text-[#C9A84C]" : "text-white group-hover:text-[#C9A84C]"].join(" ")}>{t.name}</div>
                 <div className="text-white/40 text-xs">{t.theory}</div>
               </div>
             ))}

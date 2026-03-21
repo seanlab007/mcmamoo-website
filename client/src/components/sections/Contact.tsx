@@ -1,7 +1,5 @@
 /*
  * Contact Section — Contact Us
- * Design: minimal black background + gold vertical line + contact info
- * Feature: form submission sends confirmation email to visitor + CC admin
  * i18n: full bilingual support
  */
 import { useState } from "react";
@@ -42,37 +40,37 @@ export default function Contact() {
     }
   };
 
-  const contactItems = isEn ? [
-    { icon: Phone, label: "Phone", value: "+86 137 6459 7723" },
-    { icon: Mail, label: "Email", value: "sean@mcmamoo.com" },
-    { icon: Globe, label: "Website", value: "www.mcmamoo.com" },
-    { icon: MapPin, label: "Location", value: "Shanghai, China" },
-  ] : [
-    { icon: Phone, label: "联系电话", value: "+86 137 6459 7723" },
-    { icon: Mail, label: "电子邮箱", value: "sean@mcmamoo.com" },
-    { icon: Globe, label: "官方网站", value: "www.mcmamoo.com" },
-    { icon: MapPin, label: "公司地址", value: "上海" },
-  ];
+  const contactItems = isEn
+    ? [
+        { icon: Phone, label: "Phone", value: "+86 137 6459 7723" },
+        { icon: Mail, label: "Email", value: "sean@mcmamoo.com" },
+        { icon: Globe, label: "Website", value: "www.mcmamoo.com" },
+        { icon: MapPin, label: "Location", value: "Shanghai, China" },
+      ]
+    : [
+        { icon: Phone, label: "联系电话", value: "+86 137 6459 7723" },
+        { icon: Mail, label: "电子邮箱", value: "sean@mcmamoo.com" },
+        { icon: Globe, label: "官方网站", value: "www.mcmamoo.com" },
+        { icon: MapPin, label: "公司地址", value: "上海" },
+      ];
 
-  const formFields = isEn ? [
-    { key: "name", label: "Your Name *", placeholder: "Enter your name" },
-    { key: "company", label: "Company *", placeholder: "Enter your company name" },
-    { key: "phone", label: "Phone *", placeholder: "Enter your phone number" },
-    { key: "email", label: "Email (Optional)", placeholder: "Receive a confirmation email", required: false },
-  ] : [
-    { key: "name", label: "您的姓名 *", placeholder: "请输入姓名" },
-    { key: "company", label: "公司名称 *", placeholder: "请输入公司名称" },
-    { key: "phone", label: "联系电话 *", placeholder: "请输入手机号码" },
-    { key: "email", label: "电子邮箱（选填）", placeholder: "填写后将收到确认邮件", required: false },
-  ];
+  const formFields = isEn
+    ? [
+        { key: "name", label: "Your Name *", placeholder: "Enter your name" },
+        { key: "company", label: "Company Name *", placeholder: "Enter your company name" },
+        { key: "phone", label: "Phone Number *", placeholder: "Enter your phone number" },
+        { key: "email", label: "Email (Optional)", placeholder: "You will receive a confirmation email", required: false },
+      ]
+    : [
+        { key: "name", label: "您的姓名 *", placeholder: "请输入姓名" },
+        { key: "company", label: "公司名称 *", placeholder: "请输入公司名称" },
+        { key: "phone", label: "联系电话 *", placeholder: "请输入手机号码" },
+        { key: "email", label: "电子邮箱（选填）", placeholder: "填写后将收到确认邮件", required: false },
+      ];
 
   return (
     <section id="contact" className="relative py-24 lg:py-32 overflow-hidden">
-      {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${CONTACT_BG})` }}
-      />
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${CONTACT_BG})` }} />
       <div className="absolute inset-0 bg-[#0A0A0A]/96" />
 
       <div className="relative z-10 container">
@@ -84,7 +82,7 @@ export default function Contact() {
           </h2>
           <p className="text-white/50 max-w-xl text-base leading-relaxed">
             {isEn
-              ? "If you are looking for a partner who can truly help you build blockbuster products and achieve strategic breakthroughs, we'd love to hear from you."
+              ? "If you are looking for a partner who can truly help you build explosive products and achieve strategic breakthroughs, we welcome your inquiry."
               : "如果您正在寻找一家能够真正帮助您打造爆品、实现战略破局的合作伙伴，欢迎与我们联系。"}
           </p>
         </div>
@@ -113,7 +111,6 @@ export default function Contact() {
             {/* Business card QR code */}
             <div className="mb-8">
               <div className="inline-flex items-center gap-6 p-5 border border-[#C9A84C]/25 bg-[#C9A84C]/5 hover:border-[#C9A84C]/50 transition-all duration-300">
-                {/* QR code with gold frame */}
                 <div className="relative flex-shrink-0">
                   <div className="absolute -inset-1 border border-[#C9A84C]/40" />
                   <div className="absolute -inset-2 border border-[#C9A84C]/15" />
@@ -125,13 +122,10 @@ export default function Contact() {
                     />
                   </div>
                 </div>
-                {/* Info */}
                 <div>
                   <div className="text-[#C9A84C]/60 text-[0.6rem] font-['DM_Mono'] tracking-[0.2em] uppercase mb-2">SCAN TO ADD WECHAT</div>
                   <div className="text-white font-['Noto_Serif_SC'] text-base font-bold mb-1">Sean DAI</div>
-                  <div className="text-white/50 text-xs mb-2">
-                    {isEn ? "Chief Strategy Expert · Mc&Mamoo Growth Engine" : "首席战略专家 · 猫眼增长引擎"}
-                  </div>
+                  <div className="text-white/50 text-xs mb-2">{isEn ? "Chief Strategy Expert · Mc&Mamoo Growth Engine" : "首席战略专家 · 猫眼增长引擎"}</div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-px bg-[#C9A84C]/50" />
                     <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">MCMAMOO.COM</span>
@@ -146,7 +140,7 @@ export default function Contact() {
                 {isEn ? "Insight into Business Essence, Accompanying Strategic Execution" : "洞察商业本质，陪伴战略落地"}
               </p>
               <p className="text-white/40 text-sm">
-                {isEn ? "The World's #1 New Consumer Brand Management Company" : "全球新消费第一品牌管理公司"}
+                {isEn ? "Global #1 New Consumer Brand Management Company" : "全球新消费第一品牌管理公司"}
               </p>
             </div>
           </div>
@@ -165,7 +159,7 @@ export default function Contact() {
                 </h3>
                 <p className="text-white/60 text-sm mb-3">
                   {isEn
-                    ? "We will contact you within 1-2 business days. We look forward to exploring brand growth opportunities with you."
+                    ? "We will contact you within 1-2 business days. We look forward to exploring brand growth possibilities with you."
                     : "我们将在1-2个工作日内与您联系，期待与您共同探索品牌增长的可能性。"}
                 </p>
                 {form.email && (

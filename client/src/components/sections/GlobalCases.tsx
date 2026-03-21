@@ -1,21 +1,25 @@
 /*
  * GlobalCases Section — Global Brand Cases
- * Design: dark background + international brand LOGO display + case cards
  * i18n: full bilingual support
  */
 import { useState } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useTranslation } from "react-i18next";
 
-// Case images
 const CASE_IMAGES: Record<string, string> = {
   "法国奢利 LA CELLE": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/757be4949642d6ff806fc865bf927fb9_f1a702d1.jpg",
+  "LA CELLE (France)": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/757be4949642d6ff806fc865bf927fb9_f1a702d1.jpg",
   "胖哥食品": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
+  "Pangge Foods": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
 };
 
-// Product gallery
 const CASE_GALLERY: Record<string, string[]> = {
   "法国奢利 LA CELLE": [
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_maison_de_celle_eae4c377.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_nuit_parisienne_b57069e8.webp",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_parfum_amour_7d7c0f60.webp",
+  ],
+  "LA CELLE (France)": [
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_maison_de_celle_eae4c377.webp",
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_nuit_parisienne_b57069e8.webp",
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lacelle_parfum_amour_7d7c0f60.webp",
@@ -24,247 +28,50 @@ const CASE_GALLERY: Record<string, string[]> = {
 
 const CASE_WEBSITE: Record<string, string> = {
   "法国奢利 LA CELLE": "https://www.lacelle1802.com",
+  "LA CELLE (France)": "https://www.lacelle1802.com",
 };
 
-const globalCasesZh = [
-  {
-    brand: "Mastercard",
-    brandKey: "Mastercard",
-    category: "全球支付 / Global Payment",
-    region: "美国",
-    regionEn: "USA",
-    flag: "🇺🇸",
-    result: "三年逆势增长70亿美金",
-    period: "2019–2022",
-    desc: "疫情冲击全球经济，Mastercard面临线下支付场景大幅萎缩的挑战。通过战略重构，深度布局数字支付与无接触支付赛道，同步强化品牌溢价体系，实现三年逆势增长70亿美金的历史性突破。",
-    tags: ["品牌溢价", "数字化转型", "全球增长"],
-  },
-  {
-    brand: "法国奢利 LA CELLE",
-    brandKey: "法国奢利 LA CELLE",
-    category: "奢侈香水 / Luxury Perfume",
-    region: "法国",
-    regionEn: "France",
-    flag: "🇫🇷",
-    result: "单日售出2万瓶，跨境品类标杆",
-    period: "2022",
-    desc: "法国百年奢侈香水品牌进入中国市场。通过品牌显贵化定位、小红书+抖音头部KOL矩阵种草、直播带货全域转化，实现单日2万瓶的爆发式增长，成为跨境奢品品类标杆案例。",
-    tags: ["品牌显贵", "跨境电商", "KOL矩阵"],
-  },
-  {
-    brand: "胖哥食品",
-    brandKey: "胖哥食品",
-    category: "食品快消 / FMCG",
-    region: "中国",
-    regionEn: "China",
-    flag: "🇨🇳",
-    result: "品牌升级，全国百万终端网点全面覆盖",
-    period: "2020",
-    desc: "湖南胖哥食品有限责任公司，行业内唯一覆盖全品类槟榔产品的领袖企业。拥最1000多万终端网点，400多位经销商，覆盖全国主要地级市。通过离男人更近战略方向，以男人的奋斗伴侣为品牌核心定位，构建差异化进攻战略，实现品牌认知度大幅提升，在行业洗牌期中成为领先品牌。",
-    tags: ["品牌升级", "快消战略", "终端覆盖"],
-  },
-  {
-    brand: "Deloitte 德勤",
-    brandKey: "Deloitte 德勤",
-    category: "专业服务 / Professional Services",
-    region: "全球",
-    regionEn: "Global",
-    flag: "🌐",
-    result: "品牌战略研究合作",
-    period: "2018–2020",
-    desc: "与德勤咨询联合开展中国新消费品牌战略研究，为多个快消品企业提供品牌升级与数字化转型的联合解决方案，研究成果被多家头部企业采纳。",
-    tags: ["战略研究", "品牌升级", "数字化"],
-  },
-  {
-    brand: "特劳特咨询",
-    brandKey: "特劳特咨询",
-    category: "战略咨询 / Strategy Consulting",
-    region: "美国",
-    regionEn: "USA",
-    flag: "🇺🇸",
-    result: "全球营销两大流派并列",
-    period: "2015–至今",
-    desc: "猫眼增长引擎创始人Sean DAI独创的全域增长品牌管理体系，与特劳特定位理论并称全球营销学两大流派，在中国新消费领域形成差异化竞争优势，被多所商学院收录为教学案例。",
-    tags: ["理论创新", "营销流派", "学术认可"],
-  },
-  {
-    brand: "青岛啤酒",
-    brandKey: "青岛啤酒",
-    category: "快消品 / FMCG",
-    region: "中国",
-    regionEn: "China",
-    flag: "🇨🇳",
-    result: "夜猫子系列单周增长16倍，伦敦国际奖金奖",
-    period: "2018",
-    desc: "为青岛啤酒打造夜猫子IP，通过情感连接Z世代用户，广告片播放量破2亿，微博话题阅读量破1亿、讨论量超125万，荣获伦敦国际广告节华文金奖，成为中国啤酒品牌年轻化经典案例。",
-    tags: ["品牌年轻化", "IP打造", "国际大奖"],
-  },
-  {
-    brand: "小仙炖",
-    brandKey: "小仙炖",
-    category: "新消费 / New Consumer",
-    region: "中国",
-    regionEn: "China",
-    flag: "🇨🇳",
-    result: "5年20亿营收，天猫品类第一",
-    period: "2014–2019",
-    desc: "洞察鲜炖燕窝消费升级趋势，通过品类创新+场景错位+明星背书+小红书内容营销，将小仙炖打造为鲜炖燕窝品类代名词，实现天猫品类第一，5年累计营收超20亿元。",
-    tags: ["品类创新", "内容营销", "天猫第一"],
-  },
-  {
-    brand: "李渡酒",
-    brandKey: "李渡酒",
-    category: "白酒 / Baijiu",
-    region: "中国",
-    regionEn: "China",
-    flag: "🇨🇳",
-    result: "港股白酒第一股，市值58.6亿港元",
-    period: "2019–2022",
-    desc: "在白酒红海市场，通过全域增长战略重构品牌定位，聚焦高端文化白酒赛道，成功登陆港股，成为港股白酒第一股，市值达58.6亿港元，实现品牌显贵化与资本化双重突破。",
-    tags: ["品牌显贵", "资本化", "港股上市"],
-  },
-  {
-    brand: "美国长盛天 NAD+",
-    brandKey: "美国长盛天 NAD+",
-    category: "健康科技 / Health Tech",
-    region: "美国",
-    regionEn: "USA",
-    flag: "🇺🇸",
-    result: "上市后销售500万，单月订单500万",
-    period: "2023",
-    desc: "美国哈佛研究院合作，FDA认证背书，通过Instagram/TikTok全球种草、亚马逊跨境带货、京东国内开店的全域增长矩阵，实现上市即爆发，国内分销商单月500万订单。",
-    tags: ["全域增长", "跨境出海", "健康科技"],
-  },
+const globalCases_zh = [
+  { brand: "Mastercard", category: "全球支付 / Global Payment", region: "美国", flag: "🇺🇸", result: "三年逆势增长70亿美金", period: "2019–2022", desc: "疫情冲击全球经济，Mastercard面临线下支付场景大幅萎缩的挑战。通过战略重构，深度布局数字支付与无接触支付赛道，同步强化品牌溢价体系，实现三年逆势增长70亿美金的历史性突破。", tags: ["品牌溢价", "数字化转型", "全球增长"] },
+  { brand: "法国奢利 LA CELLE", category: "奢侈香水 / Luxury Perfume", region: "法国", flag: "🇫🇷", result: "单日售出2万瓶，跨境品类标杆", period: "2022", desc: "法国百年奢侈香水品牌进入中国市场。通过品牌显贵化定位、小红书+抖音头部KOL矩阵种草、直播带货全域转化，实现单日2万瓶的爆发式增长，成为跨境奢品品类标杆案例。", tags: ["品牌显贵", "跨境电商", "KOL矩阵"] },
+  { brand: "胖哥食品", category: "食品快消 / FMCG", region: "中国", flag: "🇨🇳", result: "品牌升级，全国百万终端网点全面覆盖", period: "2020", desc: "湖南胖哥食品有限责任公司，行业内唯一覆盖全品类槟榔产品的领袖企业。拥最1000多万终端网点，400多位经销商，覆盖全国主要地级市。通过'离男人更近'战略方向，以'男人的奋斗伴侣'为品牌核心定位，构建差异化进攻战略，实现品牌认知度大幅提升，在行业洗牌期中成为领先品牌。", tags: ["品牌升级", "快消战略", "终端覆盖"] },
+  { brand: "Deloitte 德勤", category: "专业服务 / Professional Services", region: "全球", flag: "🌐", result: "品牌战略研究合作", period: "2018–2020", desc: "与德勤咨询联合开展中国新消费品牌战略研究，为多个快消品企业提供品牌升级与数字化转型的联合解决方案，研究成果被多家头部企业采纳。", tags: ["战略研究", "品牌升级", "数字化"] },
+  { brand: "特劳特咨询", category: "战略咨询 / Strategy Consulting", region: "美国", flag: "🇺🇸", result: "全球营销两大流派并列", period: "2015–至今", desc: "猫眼增长引擎创始人Sean DAI独创的全域增长品牌管理体系，与特劳特定位理论并称全球营销学两大流派，在中国新消费领域形成差异化竞争优势，被多所商学院收录为教学案例。", tags: ["理论创新", "营销流派", "学术认可"] },
+  { brand: "青岛啤酒", category: "快消品 / FMCG", region: "中国", flag: "🇨🇳", result: "夜猫子系列单周增长16倍，伦敦国际奖金奖", period: "2018", desc: "为青岛啤酒打造夜猫子IP，通过情感连接Z世代用户，广告片播放量破2亿，微博话题阅读量破1亿、讨论量超125万，荣获伦敦国际广告节华文金奖，成为中国啤酒品牌年轻化经典案例。", tags: ["品牌年轻化", "IP打造", "国际大奖"] },
+  { brand: "小仙炖", category: "新消费 / New Consumer", region: "中国", flag: "🇨🇳", result: "5年20亿营收，天猫品类第一", period: "2014–2019", desc: "洞察鲜炖燕窝消费升级趋势，通过品类创新+场景错位+明星背书+小红书内容营销，将小仙炖打造为鲜炖燕窝品类代名词，实现天猫品类第一，5年累计营收超20亿元。", tags: ["品类创新", "内容营销", "天猫第一"] },
+  { brand: "李渡酒", category: "白酒 / Baijiu", region: "中国", flag: "🇨🇳", result: "港股白酒第一股，市值58.6亿港元", period: "2019–2022", desc: "在白酒红海市场，通过全域增长战略重构品牌定位，聚焦高端文化白酒赛道，成功登陆港股，成为港股白酒第一股，市值达58.6亿港元，实现品牌显贵化与资本化双重突破。", tags: ["品牌显贵", "资本化", "港股上市"] },
+  { brand: "美国长盛天 NAD+", category: "健康科技 / Health Tech", region: "美国", flag: "🇺🇸", result: "上市后销售500万，单月订单500万", period: "2023", desc: "美国哈佛研究院合作，FDA认证背书，通过Instagram/TikTok全球种草、亚马逊跨境带货、京东国内开店的全域增长矩阵，实现上市即爆发，国内分销商单月500万订单。", tags: ["全域增长", "跨境出海", "健康科技"] },
 ];
 
-const globalCasesEn = [
-  {
-    brand: "Mastercard",
-    brandKey: "Mastercard",
-    category: "Global Payment",
-    region: "USA",
-    regionEn: "USA",
-    flag: "🇺🇸",
-    result: "Counter-cyclical growth of $7B over three years",
-    period: "2019–2022",
-    desc: "As the pandemic devastated the global economy, Mastercard faced the challenge of a sharp decline in in-person payment scenarios. Through strategic restructuring, deeply positioning in digital and contactless payment tracks while reinforcing brand premium systems, achieved a historic counter-cyclical growth of $7B over three years.",
-    tags: ["Brand Premium", "Digital Transformation", "Global Growth"],
-  },
-  {
-    brand: "LA CELLE (France)",
-    brandKey: "法国奢利 LA CELLE",
-    category: "Luxury Perfume",
-    region: "France",
-    regionEn: "France",
-    flag: "🇫🇷",
-    result: "20,000 bottles sold in one day; cross-border category benchmark",
-    period: "2022",
-    desc: "A century-old French luxury perfume brand entering the Chinese market. Through prestige brand positioning, Xiaohongshu + Douyin top KOL matrix seeding, and full-channel livestream conversion, achieved explosive growth of 20,000 bottles in a single day, becoming a benchmark case in the cross-border luxury category.",
-    tags: ["Brand Prestige", "Cross-Border E-Commerce", "KOL Matrix"],
-  },
-  {
-    brand: "Pangge Foods",
-    brandKey: "胖哥食品",
-    category: "FMCG",
-    region: "China",
-    regionEn: "China",
-    flag: "🇨🇳",
-    result: "Brand upgrade; full coverage of 1M+ national retail points",
-    period: "2020",
-    desc: "Hunan Pangge Foods Co., Ltd., the only company in the industry covering the full range of betel nut products. With 10M+ retail points and 400+ distributors covering major cities nationwide. Through the Closer to Men strategic direction and Men's Battle Companion core positioning, built a differentiated offensive strategy, significantly boosting brand awareness to become the leading brand during industry consolidation.",
-    tags: ["Brand Upgrade", "FMCG Strategy", "Terminal Coverage"],
-  },
-  {
-    brand: "Deloitte",
-    brandKey: "Deloitte 德勤",
-    category: "Professional Services",
-    region: "Global",
-    regionEn: "Global",
-    flag: "🌐",
-    result: "Joint brand strategy research partnership",
-    period: "2018–2020",
-    desc: "Jointly conducted China new consumer brand strategy research with Deloitte Consulting, providing combined brand upgrade and digital transformation solutions for multiple FMCG companies. Research outcomes were adopted by several leading enterprises.",
-    tags: ["Strategy Research", "Brand Upgrade", "Digital Transformation"],
-  },
-  {
-    brand: "Trout & Partners",
-    brandKey: "特劳特咨询",
-    category: "Strategy Consulting",
-    region: "USA",
-    regionEn: "USA",
-    flag: "🇺🇸",
-    result: "Recognized as one of two global marketing schools of thought",
-    period: "2015–Present",
-    desc: "The omni-channel growth brand management system created by Mc&Mamoo founder Sean DAI is recognized alongside Trout's Positioning Theory as one of the two major schools of global marketing. It has formed a differentiated competitive advantage in China's new consumer sector and has been included as a teaching case by multiple business schools.",
-    tags: ["Theoretical Innovation", "Marketing School", "Academic Recognition"],
-  },
-  {
-    brand: "Tsingtao Beer",
-    brandKey: "青岛啤酒",
-    category: "FMCG",
-    region: "China",
-    regionEn: "China",
-    flag: "🇨🇳",
-    result: "Night Owl series: 16x growth in one week; London International Awards Gold",
-    period: "2018",
-    desc: "Created the Night Owl IP for Tsingtao Beer, emotionally connecting with Gen Z users. Ad views exceeded 200M, Weibo topic reads exceeded 100M, discussions surpassed 1.25M. Won the London International Advertising Festival Chinese Gold Award, becoming a classic case of Chinese beer brand rejuvenation.",
-    tags: ["Brand Rejuvenation", "IP Creation", "International Award"],
-  },
-  {
-    brand: "Xiaoxiandun",
-    brandKey: "小仙炖",
-    category: "New Consumer",
-    region: "China",
-    regionEn: "China",
-    flag: "🇨🇳",
-    result: "¥2B revenue in 5 years; Tmall Category #1",
-    period: "2014–2019",
-    desc: "Identified the consumer upgrade trend for fresh-stewed bird's nest. Through category innovation + scene dislocation + celebrity endorsement + Xiaohongshu content marketing, established Xiaoxiandun as the synonym for fresh-stewed bird's nest, achieving Tmall category #1 with cumulative revenue exceeding ¥2B over 5 years.",
-    tags: ["Category Innovation", "Content Marketing", "Tmall #1"],
-  },
-  {
-    brand: "Lidu Liquor",
-    brandKey: "李渡酒",
-    category: "Baijiu",
-    region: "China",
-    regionEn: "China",
-    flag: "🇨🇳",
-    result: "First baijiu stock on HKEX; HK$5.86B market cap",
-    period: "2019–2022",
-    desc: "In the red-ocean baijiu market, restructured brand positioning through omni-channel growth strategy, focusing on the premium cultural baijiu track. Successfully listed on Hong Kong Stock Exchange as the first baijiu stock, with a market cap of HK$5.86B, achieving dual breakthroughs in brand prestige and capitalization.",
-    tags: ["Brand Prestige", "Capitalization", "HKEX IPO"],
-  },
-  {
-    brand: "NAD+ (USA)",
-    brandKey: "美国长盛天 NAD+",
-    category: "Health Tech",
-    region: "USA",
-    regionEn: "USA",
-    flag: "🇺🇸",
-    result: "¥5M sales at launch; ¥5M/month distributor orders",
-    period: "2023",
-    desc: "Harvard Research Institute partnership, FDA certified. Through Instagram/TikTok global seeding, Amazon cross-border commerce, and JD.com domestic store — an omni-channel growth matrix — achieved explosive sales at launch with domestic distributors placing ¥5M/month orders.",
-    tags: ["Omni-Channel Growth", "Cross-Border Expansion", "Health Tech"],
-  },
+const globalCases_en = [
+  { brand: "Mastercard", category: "Global Payment", region: "USA", flag: "🇺🇸", result: "Counter-cyclical growth of $7B over three years", period: "2019–2022", desc: "As the pandemic disrupted the global economy, Mastercard faced a massive contraction in in-person payment scenarios. Through strategic restructuring, deep positioning in digital and contactless payments, and simultaneous strengthening of brand premium systems, achieved a historic counter-cyclical growth of $7 billion over three years.", tags: ["Brand Premium", "Digital Transformation", "Global Growth"] },
+  { brand: "LA CELLE (France)", category: "Luxury Perfume", region: "France", flag: "🇫🇷", result: "20,000 bottles sold in one day — cross-border benchmark", period: "2022", desc: "A century-old French luxury perfume brand entering the Chinese market. Through prestige brand positioning, Xiaohongshu + Douyin top KOL matrix seeding, and omni-channel livestream conversion, achieved explosive growth of 20,000 bottles in a single day, becoming a benchmark case in cross-border luxury goods.", tags: ["Brand Prestige", "Cross-border E-commerce", "KOL Matrix"] },
+  { brand: "Pangge Foods", category: "FMCG", region: "China", flag: "🇨🇳", result: "Brand upgrade, full coverage of 1M+ national retail outlets", period: "2020", desc: "Hunan Pangge Foods, the only company in the industry covering all betel nut product categories, with 10M+ retail outlets and 400+ distributors nationwide. Through the 'Closer to Men' strategic direction and 'Men's Battle Companion' brand positioning, built a differentiated offensive strategy, significantly boosting brand awareness to become the leading brand during industry consolidation.", tags: ["Brand Upgrade", "FMCG Strategy", "Retail Coverage"] },
+  { brand: "Deloitte", category: "Professional Services", region: "Global", flag: "🌐", result: "Brand strategy research partnership", period: "2018–2020", desc: "Jointly conducted China new consumer brand strategy research with Deloitte Consulting, providing joint solutions for brand upgrade and digital transformation to multiple FMCG enterprises. Research findings were adopted by multiple leading enterprises.", tags: ["Strategic Research", "Brand Upgrade", "Digitalization"] },
+  { brand: "Trout & Partners", category: "Strategy Consulting", region: "USA", flag: "🇺🇸", result: "Recognized as one of two global marketing schools of thought", period: "2015–Present", desc: "The Omni-Channel Growth Brand Management System independently created by Mc&Mamoo Growth Engine founder Sean DAI is recognized alongside Trout's Positioning Theory as one of the two major global marketing schools of thought, forming a differentiated competitive advantage in China's new consumer sector, adopted as teaching cases by multiple business schools.", tags: ["Theoretical Innovation", "Marketing School", "Academic Recognition"] },
+  { brand: "Tsingtao Beer", category: "FMCG", region: "China", flag: "🇨🇳", result: "Night Owl series 16× growth in one week, London International Gold Award", period: "2018", desc: "Built the Night Owl IP for Tsingtao Beer, emotionally connecting with Gen Z users. Ad film views exceeded 200M, Weibo topic reads surpassed 100M with 1.25M+ discussions, winning the London International Advertising Festival Chinese Gold Award — a classic case of Chinese beer brand rejuvenation.", tags: ["Brand Rejuvenation", "IP Building", "International Award"] },
+  { brand: "XiaoXianDun", category: "New Consumer", region: "China", flag: "🇨🇳", result: "¥2B revenue in 5 years, #1 on Tmall", period: "2014–2019", desc: "Identified the fresh-stewed bird's nest consumption upgrade trend. Through category innovation + scene dislocation + celebrity endorsement + Xiaohongshu content marketing, built XiaoXianDun as the synonym for fresh-stewed bird's nest, achieving Tmall category #1 with cumulative revenue exceeding ¥2B over 5 years.", tags: ["Category Innovation", "Content Marketing", "Tmall #1"] },
+  { brand: "Liduo Baijiu", category: "Baijiu", region: "China", flag: "🇨🇳", result: "First baijiu stock on HK Exchange, market cap HK$5.86B", period: "2019–2022", desc: "In the red-ocean baijiu market, restructured brand positioning through omni-channel growth strategy, focusing on the premium cultural baijiu track. Successfully listed on Hong Kong Stock Exchange as the first baijiu stock with a market cap of HK$5.86B, achieving dual breakthroughs in brand prestige and capitalization.", tags: ["Brand Prestige", "Capitalization", "HK IPO"] },
+  { brand: "Changshengtian NAD+ (USA)", category: "Health Tech", region: "USA", flag: "🇺🇸", result: "¥5M post-launch sales, ¥5M distributor monthly orders", period: "2023", desc: "Harvard Research Institute partnership, FDA certification endorsement. Through Instagram/TikTok global seeding, Amazon cross-border commerce, and JD.com domestic store — an omni-channel growth matrix — achieved explosive launch results with domestic distributors placing ¥5M monthly orders.", tags: ["Omni-channel Growth", "Cross-border", "Health Tech"] },
 ];
+
+const regions_zh = ["全部", "中国", "美国", "法国", "全球"];
+const regions_en = ["All", "China", "USA", "France", "Global"];
 
 export default function GlobalCases() {
   const { i18n } = useTranslation();
   const isEn = i18n.language !== 'zh';
-  const [activeRegion, setActiveRegion] = useState("all");
+  const [activeRegion, setActiveRegion] = useState(isEn ? "All" : "全部");
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
 
-  const globalCases = isEn ? globalCasesEn : globalCasesZh;
+  const globalCases = isEn ? globalCases_en : globalCases_zh;
+  const regions = isEn ? regions_en : regions_zh;
+  const allLabel = isEn ? "All" : "全部";
 
-  const regionsZh = ["全部", "中国", "美国", "法国", "全球"];
-  const regionsEn = ["All", "China", "USA", "France", "Global"];
-  const regions = isEn ? regionsEn : regionsZh;
-  const regionKeys = ["all", "China", "USA", "France", "Global"];
-
-  const filtered = activeRegion === "all"
+  const filtered = activeRegion === allLabel
     ? globalCases
-    : globalCases.filter(c => c.regionEn === activeRegion);
+    : globalCases.filter(c => c.region === activeRegion);
 
   return (
     <section id="global-cases" className="bg-[#0A0A0A] py-24 lg:py-32">
@@ -280,21 +87,17 @@ export default function GlobalCases() {
           </div>
           <p className="text-white/50 max-w-2xl text-base leading-relaxed">
             {isEn
-              ? "Serving clients across China, USA, France, and more. Partner brands span global top payment institutions, luxury brands, FMCG giants, and new consumer unicorns."
+              ? "Services spanning China, the USA, France, and beyond — partner brands include global top payment institutions, luxury brands, FMCG giants, and new consumer unicorns."
               : "服务覆盖中国、美国、法国等多个国家，合作品牌涵盖全球顶级支付机构、奢侈品牌、快消巨头及新消费独角兽。"}
           </p>
 
           {/* Region filter */}
           <div className="flex gap-3 mt-8 flex-wrap">
-            {regions.map((r, idx) => (
+            {regions.map((r) => (
               <button
                 key={r}
-                onClick={() => setActiveRegion(regionKeys[idx])}
-                className={`px-4 py-1.5 text-xs tracking-widest font-['DM_Mono'] transition-all duration-200 ${
-                  activeRegion === regionKeys[idx]
-                    ? "bg-[#C9A84C] text-[#0A0A0A] font-semibold"
-                    : "border border-white/20 text-white/40 hover:border-[#C9A84C]/40 hover:text-[#C9A84C]"
-                }`}
+                onClick={() => setActiveRegion(r)}
+                className={`px-4 py-1.5 text-xs tracking-widest font-['DM_Mono'] transition-all duration-200 ${activeRegion === r ? "bg-[#C9A84C] text-[#0A0A0A] font-semibold" : "border border-white/20 text-white/40 hover:border-[#C9A84C]/40 hover:text-[#C9A84C]"}`}
               >
                 {r}
               </button>
@@ -305,18 +108,10 @@ export default function GlobalCases() {
         {/* Cases grid */}
         <div ref={ref2 as React.RefObject<HTMLDivElement>} className="reveal grid md:grid-cols-2 lg:grid-cols-2 gap-4">
           {filtered.map((c) => (
-            <div
-              key={c.brand}
-              className="border border-white/10 hover:border-[#C9A84C]/40 transition-all duration-300 group overflow-hidden"
-            >
-              {/* Case photo if available */}
-              {CASE_IMAGES[c.brandKey] && (
+            <div key={c.brand} className="border border-white/10 hover:border-[#C9A84C]/40 transition-all duration-300 group overflow-hidden">
+              {CASE_IMAGES[c.brand] && (
                 <div className="relative h-40 overflow-hidden">
-                  <img
-                    src={CASE_IMAGES[c.brandKey]}
-                    alt={c.brand}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
+                  <img src={CASE_IMAGES[c.brand]} alt={c.brand} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0A0A0A]/80" />
                   <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
                     <span className="text-[#C9A84C] font-['Noto_Serif_SC'] font-bold text-lg">{c.brand}</span>
@@ -325,74 +120,53 @@ export default function GlobalCases() {
                 </div>
               )}
               <div className="p-8">
-              {/* Top row */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl">{c.flag}</span>
-                    <h3 className="font-['Noto_Serif_SC'] text-white text-xl font-bold group-hover:text-[#C9A84C] transition-colors">
-                      {c.brand}
-                    </h3>
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">{c.flag}</span>
+                      <h3 className="font-['Noto_Serif_SC'] text-white text-xl font-bold group-hover:text-[#C9A84C] transition-colors">{c.brand}</h3>
+                    </div>
+                    <div className="text-white/30 text-xs font-['DM_Mono']">{c.category}</div>
                   </div>
-                  <div className="text-white/30 text-xs font-['DM_Mono']">{c.category}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-white/20 text-xs font-['DM_Mono']">{c.period}</div>
-                  <div className="text-xs px-2 py-0.5 border border-white/10 text-white/30 mt-1">{isEn ? c.regionEn : c.region}</div>
-                </div>
-              </div>
-
-              {/* Result badge */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#C9A84C]/10 border border-[#C9A84C]/30 mb-4">
-                <span className="text-[#C9A84C] text-xs">▶</span>
-                <span className="text-[#C9A84C] font-semibold text-sm">{c.result}</span>
-              </div>
-
-              <p className="text-white/50 text-sm leading-relaxed mb-4">{c.desc}</p>
-
-              {/* Product gallery for LA CELLE */}
-              {CASE_GALLERY[c.brandKey] && (
-                <div className="mb-4">
-                  <div className="text-white/30 text-xs font-['DM_Mono'] mb-2 tracking-widest">— PRODUCT GALLERY</div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {CASE_GALLERY[c.brandKey].map((img, i) => (
-                      <div key={i} className="aspect-square overflow-hidden border border-white/10">
-                        <img
-                          src={img}
-                          alt={`${c.brand} product ${i + 1}`}
-                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                        />
-                      </div>
-                    ))}
+                  <div className="text-right">
+                    <div className="text-white/20 text-xs font-['DM_Mono']">{c.period}</div>
+                    <div className="text-xs px-2 py-0.5 border border-white/10 text-white/30 mt-1">{c.region}</div>
                   </div>
                 </div>
-              )}
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {c.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-0.5 text-xs border border-white/10 text-white/30 group-hover:border-[#C9A84C]/20 group-hover:text-[#C9A84C]/50 transition-all"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-[#C9A84C]/10 border border-[#C9A84C]/30 mb-4">
+                  <span className="text-[#C9A84C] text-xs">▶</span>
+                  <span className="text-[#C9A84C] font-semibold text-sm">{c.result}</span>
+                </div>
 
-              {/* Official website link */}
-              {CASE_WEBSITE[c.brandKey] && (
-                <a
-                  href={CASE_WEBSITE[c.brandKey]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-xs font-['DM_Mono'] text-[#C9A84C]/70 hover:text-[#C9A84C] border border-[#C9A84C]/20 hover:border-[#C9A84C]/60 px-3 py-1.5 transition-all duration-200"
-                >
-                  <span>🌐</span>
-                  <span>{CASE_WEBSITE[c.brandKey].replace('https://', '')}</span>
-                  <span className="text-[#C9A84C]/40">→</span>
-                </a>
-              )}
+                <p className="text-white/50 text-sm leading-relaxed mb-4">{c.desc}</p>
+
+                {CASE_GALLERY[c.brand] && (
+                  <div className="mb-4">
+                    <div className="text-white/30 text-xs font-['DM_Mono'] mb-2 tracking-widest">— PRODUCT GALLERY</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {CASE_GALLERY[c.brand].map((img, i) => (
+                        <div key={i} className="aspect-square overflow-hidden border border-white/10">
+                          <img src={img} alt={`${c.brand} product ${i + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {c.tags.map((tag) => (
+                    <span key={tag} className="px-2 py-0.5 text-xs border border-white/10 text-white/30 group-hover:border-[#C9A84C]/20 group-hover:text-[#C9A84C]/50 transition-all">{tag}</span>
+                  ))}
+                </div>
+
+                {CASE_WEBSITE[c.brand] && (
+                  <a href={CASE_WEBSITE[c.brand]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs font-['DM_Mono'] text-[#C9A84C]/70 hover:text-[#C9A84C] border border-[#C9A84C]/20 hover:border-[#C9A84C]/60 px-3 py-1.5 transition-all duration-200">
+                    <span>🌐</span>
+                    <span>{CASE_WEBSITE[c.brand].replace('https://', '')}</span>
+                    <span className="text-[#C9A84C]/40">→</span>
+                  </a>
+                )}
               </div>
             </div>
           ))}

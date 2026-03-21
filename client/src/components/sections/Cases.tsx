@@ -1,6 +1,5 @@
 /*
  * Cases Section — Landmark Cases
- * Design: dark leather texture background + timeline cards + gold result labels
  * i18n: full bilingual support
  */
 import { useState } from "react";
@@ -10,190 +9,34 @@ import { useTranslation } from "react-i18next";
 
 const CASES_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/cases-texture-dSgNBgPx3RKUh8PnxTSuRn.webp";
 
-const casesZh = [
-  {
-    year: "2013",
-    brand: "江中猴姑饼干",
-    category: "大健康 / 食品",
-    result: "上市第一年销售额砄17亿元",
-    strategy: "从用户体验出发，洞察慢性胃病客户有养胃需求，错位OTC领域，依托胃药研发优势，借助饼干进入消费品，跨界与奥利奥等快消品巨头竞争，错位切割市场份额。",
-    link: "/cases/jiangzhong",
-  },
-  {
-    year: "2014",
-    brand: "小仙炖鲜炖燕窝",
-    category: "滋补 / 新消费",
-    result: "5年20亿在线营收，天猫品类第一",
-    strategy: "洞察鲜炖燕窝需求，品类错位+场景错位，依托微商优势布局天猫，小仙炖=鲜炖燕窝品类，结合陈数入股和小红书营销，锁定价格体系。",
-    link: "/cases/xiaoxiandun",
-  },
-  {
-    year: "2015",
-    brand: "张裕解百纳",
-    category: "酒类 / 全球化",
-    result: "全球20亿大单品",
-    strategy: "砍掉低端品相，依托百年张裕品牌资产，聚焦全球中产，以米其林主厨推荐进入全球市场，切割中低市场份额。",
-  },
-  {
-    year: "2015",
-    brand: "小罐茶",
-    category: "茶叶 / 高端礼品",
-    result: "重新定义中国高端茶礼，2亿营收",
-    strategy: "聚焦送礼场景，辐射原点人群，用小罐品相进行品类创新，聚合八大产地，大师作构建壁垒。",
-    link: "/cases/xiaoguan",
-  },
-  {
-    year: "2018",
-    brand: "青岛啤酒夜猫子系列",
-    category: "啤酒 / 年轻化",
-    result: "单周增长16倍，伦敦国际奖华文金奖",
-    strategy: "打造夜猫子IP，通过情感连接用户，用内容创造价值。广告片播放量破亿，微博话题阅读量破1亿、讨论量超125万。",
-  },
-  {
-    year: "2019",
-    brand: "李渡酒",
-    category: "白酒 / 港股上市",
-    result: "2022年港股白酒第一股，市值58.6亿港元",
-    strategy: "通过错位竞争战略，在白酒红海市场找到独特定位，成功上市港股，成为港股白酒第一股。",
-  },
-  {
-    year: "2019",
-    brand: "益盛药业汉参",
-    category: "参类 / 国礼",
-    result: "2019年营收破10亿",
-    strategy: "品牌=品类，汉参=中国人参，采用汉朝文化符号构建品牌资产，区隔韩国正官庄，占领国礼最高场景维度。",
-  },
-  {
-    year: "2022",
-    brand: "法国奢利LA CELLE香水",
-    category: "香水 / 跨境",
-    result: "单日售出2万瓶",
-    strategy: "通过错位竞争战略，帮助法国奢利香水在中国市场实现爆发式增长，成为跨境香水品类标杆案例。",
-  },
-  {
-    year: "2016",
-    brand: "蟹太太大闸蟹",
-    category: "生鲜 / 品牌化",
-    result: "从0到8亿营收，全网蟹券销量连续多年第一",
-    strategy: "填补大闸蟹行业品牌化空白，签约黄晓明担任品牌代言人，打造行业唯一一线明星代言壁垒。构建500+明星网红合作矩阵，单场直播销售额最高3000万。",
-    link: "/cases/xietaitai",
-  },
-  {
-    year: "2023",
-    brand: "美国长盛天NAD+",
-    category: "健康 / 跨境",
-    result: "上市后销售500万，国内分销商单月500万订单",
-    strategy: "美国哈佛研究院合作，FDA认证，Instagram/TikTok种草，亚马逊带货，京东开店，单篇小红书带货中50万。",
-  },
-  {
-    year: "疫情期间",
-    brand: "MasterCard",
-    category: "支付 / 全球",
-    result: "三年逆势增长70亿美金",
-    strategy: "在全球疫情冲击下，通过战略重构与错位竞争，帮助MasterCard实现三年逆势增长70亿美金的历史性突破。",
-  },
-  {
-    year: "2020",
-    brand: "湖南胖哥食品",
-    category: "食品快消 / 槛榔",
-    result: "品牌升级，全国百万终端网点全面覆盖",
-    strategy: '湖南胖哥食品是行业内唯一覆盖全品类槛榔产品的领袖企业，拥最1000多万终端网点、400多位经销商。通过「离男人更近」战略方向，以「男人的奋斗伴侣」为品牌核心定位，建立差异化进攻战略，实现品牌认知度大幅提升，在行业洗牌期成为领先品牌。',
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
-    link: "/cases/pangge",
-  },
+const cases_zh = [
+  { year: "2013", brand: "江中猴姑饼干", category: "大健康 / 食品", result: "上市第一年销售额砄17亿元", strategy: "从用户体验出发，洞察慢性胃病客户有养胃需求，错位OTC领域，依托胃药研发优势，借助饼干进入消费品，跨界与奥利奥等快消品巨头竞争，错位切割市场份额。", link: "/cases/jiangzhong" },
+  { year: "2014", brand: "小仙炖鲜炖燕窝", category: "滋补 / 新消费", result: "5年20亿在线营收，天猫品类第一", strategy: "洞察鲜炖燕窝需求，品类错位+场景错位，依托微商优势布局天猫，小仙炖=鲜炖燕窝品类，结合陈数入股和小红书营销，锁定价格体系。", link: "/cases/xiaoxiandun" },
+  { year: "2015", brand: "张裕解百纳", category: "酒类 / 全球化", result: "全球20亿大单品", strategy: "砍掉低端品相，依托百年张裕品牌资产，聚焦全球中产，以米其林主厨推荐进入全球市场，切割中低市场份额。" },
+  { year: "2015", brand: "小罐茶", category: "茶叶 / 高端礼品", result: "重新定义中国高端茶礼，2亿营收", strategy: "聚焦送礼场景，辐射原点人群，用小罐品相进行品类创新，聚合八大产地，大师作构建壁垒。", link: "/cases/xiaoguan" },
+  { year: "2018", brand: "青岛啤酒夜猫子系列", category: "啤酒 / 年轻化", result: "单周增长16倍，伦敦国际奖华文金奖", strategy: "打造夜猫子IP，通过情感连接用户，用内容创造价值。广告片播放量破亿，微博话题阅读量破1亿、讨论量超125万。" },
+  { year: "2019", brand: "李渡酒", category: "白酒 / 港股上市", result: "2022年港股白酒第一股，市值58.6亿港元", strategy: "通过错位竞争战略，在白酒红海市场找到独特定位，成功上市港股，成为港股白酒第一股。" },
+  { year: "2019", brand: "益盛药业汉参", category: "参类 / 国礼", result: "2019年营收破10亿", strategy: "品牌=品类，汉参=中国人参，采用汉朝文化符号构建品牌资产，区隔韩国正官庄，占领国礼最高场景维度。" },
+  { year: "2022", brand: "法国奢利LA CELLE香水", category: "香水 / 跨境", result: "单日售出2万瓶", strategy: "通过错位竞争战略，帮助法国奢利香水在中国市场实现爆发式增长，成为跨境香水品类标杆案例。" },
+  { year: "2016", brand: "蟹太太大闸蟹", category: "生鲜 / 品牌化", result: "从0到8亿营收，全网蟹券销量连续多年第一", strategy: "填补大闸蟹行业品牌化空白，签约黄晓明担任品牌代言人，打造行业唯一一线明星代言壁垒。构建500+明星网红合作矩阵，单场直播销售额最高3000万。", link: "/cases/xietaitai" },
+  { year: "2023", brand: "美国长盛天NAD+", category: "健康 / 跨境", result: "上市后销售500万，国内分销商单月500万订单", strategy: "美国哈佛研究院合作，FDA认证，Instagram/TikTok种草，亚马逊带货，京东开店，单篇小红书带货中50万。" },
+  { year: "疫情期间", brand: "MasterCard", category: "支付 / 全球", result: "三年逆势增长70亿美金", strategy: "在全球疫情冲击下，通过战略重构与错位竞争，帮助MasterCard实现三年逆势增长70亿美金的历史性突破。" },
+  { year: "2020", brand: "湖南胖哥食品", category: "食品快消 / 槛榔", result: "品牌升级，全国百万终端网点全面覆盖", strategy: "湖南胖哥食品是行业内唯一覆盖全品类槛榔产品的领袖企业，拥最1000多万终端网点、400多位经销商。通过'离男人更近'战略方向，以'男人的奉斗伴侣'为品牌核心定位，建立差异化进攻战略，实现品牌认知度大幅提升，在行业洗牌期成为领先品牌。", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg", link: "/cases/pangge" },
 ];
 
-const casesEn = [
-  {
-    year: "2013",
-    brand: "Jiangzhong Monkey Mushroom Biscuit",
-    category: "Health / Food",
-    result: "¥1.7B revenue in first year",
-    strategy: "Starting from user experience, identified stomach care needs among chronic gastritis patients. Disrupted the OTC sector by leveraging pharmaceutical R&D advantages to enter consumer goods via biscuits, competing against FMCG giants like Oreo through category dislocation.",
-    link: "/cases/jiangzhong",
-  },
-  {
-    year: "2014",
-    brand: "Xiaoxiandun Fresh Bird's Nest",
-    category: "Health / New Consumer",
-    result: "¥2B online revenue in 5 years, Tmall Category #1",
-    strategy: "Identified demand for fresh-stewed bird's nest. Category + scene dislocation, leveraging WeChat commerce advantages to build Tmall presence. Xiaoxiandun = fresh bird's nest category. Combined celebrity investment and Xiaohongshu marketing to lock in pricing.",
-    link: "/cases/xiaoxiandun",
-  },
-  {
-    year: "2015",
-    brand: "Changyu Cabernet",
-    category: "Wine / Global",
-    result: "¥2B global blockbuster product",
-    strategy: "Eliminated low-end SKUs, leveraged century-old Changyu brand equity, focused on global middle class, entered global markets through Michelin chef endorsements, capturing mid-to-low market share.",
-  },
-  {
-    year: "2015",
-    brand: "Xiaoguan Tea",
-    category: "Tea / Premium Gift",
-    result: "Redefined China's premium tea gifting; ¥200M revenue",
-    strategy: "Focused on gifting scenarios, radiating to origin audience. Used mini-can packaging for category innovation, aggregating eight production regions, building a master craftsman barrier.",
-    link: "/cases/xiaoguan",
-  },
-  {
-    year: "2018",
-    brand: "Tsingtao Night Owl Series",
-    category: "Beer / Youth",
-    result: "16x growth in one week; London International Chinese Gold Award",
-    strategy: "Created the Night Owl IP to emotionally connect with users and generate content value. Ad views exceeded 100M, Weibo topic reads exceeded 100M, discussions surpassed 1.25M.",
-  },
-  {
-    year: "2019",
-    brand: "Lidu Liquor",
-    category: "Baijiu / HK IPO",
-    result: "First baijiu stock on HKEX in 2022; HK$5.86B market cap",
-    strategy: "Through dislocation competition strategy, found a unique positioning in the red-ocean baijiu market, successfully listed on Hong Kong Stock Exchange as the first baijiu stock.",
-  },
-  {
-    year: "2019",
-    brand: "Yisheng Pharma Hancan",
-    category: "Ginseng / National Gift",
-    result: "Revenue exceeded ¥1B in 2019",
-    strategy: "Brand = Category. Hancan = Chinese Ginseng. Used Han Dynasty cultural symbols to build brand equity, differentiating from Korea's Cheong Kwan Jang, occupying the highest national gift scenario.",
-  },
-  {
-    year: "2022",
-    brand: "LA CELLE Perfume (France)",
-    category: "Fragrance / Cross-Border",
-    result: "20,000 bottles sold in a single day",
-    strategy: "Through dislocation competition strategy, helped LA CELLE achieve explosive growth in the Chinese market, becoming a benchmark case in the cross-border fragrance category.",
-  },
-  {
-    year: "2016",
-    brand: "Mrs. Crab Hairy Crab",
-    category: "Fresh / Brand Building",
-    result: "¥0 to ¥800M revenue; #1 crab voucher sales for multiple years",
-    strategy: "Filled the branding gap in the hairy crab industry. Signed Huang Xiaoming as brand ambassador, creating an industry-unique A-list celebrity barrier. Built a 500+ celebrity & influencer matrix; single livestream peak sales of ¥30M.",
-    link: "/cases/xietaitai",
-  },
-  {
-    year: "2023",
-    brand: "NAD+ (USA)",
-    category: "Health / Cross-Border",
-    result: "¥5M sales at launch; distributor ¥5M/month orders",
-    strategy: "Harvard Research Institute partnership, FDA certified. Seeded via Instagram/TikTok, Amazon commerce, JD.com store. Single Xiaohongshu article drove ¥500K in sales.",
-  },
-  {
-    year: "During COVID",
-    brand: "MasterCard",
-    category: "Payments / Global",
-    result: "Counter-cyclical growth of $7B over three years",
-    strategy: "Amid the global pandemic shock, through strategic restructuring and dislocation competition, helped MasterCard achieve a historic counter-cyclical growth of $7B over three years.",
-  },
-  {
-    year: "2020",
-    brand: "Hunan Pangge Foods",
-    category: "FMCG / Betel Nut",
-    result: "Brand upgrade; full coverage of 1M+ national retail points",
-    strategy: "Hunan Pangge is the only company in the industry covering the full betel nut product range, with 10M+ retail points and 400+ distributors. Through the Closer to Men strategic direction and the Men's Battle Companion core positioning, established a differentiated offensive strategy, significantly boosting brand awareness to become the leading brand during industry consolidation.",
-    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
-    link: "/cases/pangge",
-  },
+const cases_en = [
+  { year: "2013", brand: "Jiangzhong Monkey Mushroom Biscuit", category: "Health / Food", result: "¥1.7B revenue in launch year", strategy: "Starting from user experience, identified stomach-care demand among chronic gastric patients. Entered consumer goods via biscuits, leveraging pharmaceutical R&D advantages to compete with FMCG giants like Oreo through category dislocation.", link: "/cases/jiangzhong" },
+  { year: "2014", brand: "XiaoXianDun Fresh Bird's Nest", category: "Nutrition / New Consumer", result: "¥2B online revenue in 5 years, #1 on Tmall", strategy: "Identified fresh-stewed bird's nest demand. Category + scene dislocation strategy, leveraged WeChat commerce to dominate Tmall. XiaoXianDun = fresh bird's nest category. Combined celebrity investment and Xiaohongshu marketing to lock in pricing.", link: "/cases/xiaoxiandun" },
+  { year: "2015", brand: "Changyu Cabernet Sauvignon", category: "Wine / Global", result: "¥2B global hero product", strategy: "Eliminated low-end SKUs. Leveraged century-old Changyu brand equity, focused on global middle class, entered global markets via Michelin chef endorsement to capture mid-to-low market share." },
+  { year: "2015", brand: "Xiaoguan Tea", category: "Tea / Premium Gift", result: "Redefined China premium tea gifting, ¥200M revenue", strategy: "Focused on gifting scenarios, radiated origin audience, innovated the category with mini-can packaging, aggregated eight major origins, built moat through Master Craftsman positioning.", link: "/cases/xiaoguan" },
+  { year: "2018", brand: "Tsingtao Night Owl Series", category: "Beer / Youth", result: "16× growth in one week, London International Chinese Golden Award", strategy: "Built Night Owl IP to emotionally connect with users and create value through content. Ad film views exceeded 100M; Weibo topic reads surpassed 100M with 1.25M+ discussions." },
+  { year: "2019", brand: "Liduo Baijiu", category: "Baijiu / HK IPO", result: "First baijiu stock on HK Exchange in 2022, market cap HK$5.86B", strategy: "Through dislocation competition strategy, found a unique positioning in the red-ocean baijiu market, successfully listed on Hong Kong Stock Exchange as the first baijiu stock." },
+  { year: "2019", brand: "Yisheng Pharma Han Ginseng", category: "Ginseng / National Gift", result: "Revenue exceeded ¥1B in 2019", strategy: "Brand = Category: Han Ginseng = Chinese Ginseng. Used Han Dynasty cultural symbols to build brand equity, differentiated from Korean Cheong Kwan Jang, captured the top national gift scenario." },
+  { year: "2022", brand: "LA CELLE Perfume (France)", category: "Fragrance / Cross-border", result: "20,000 bottles sold in one day", strategy: "Through dislocation competition strategy, helped LA CELLE achieve explosive growth in the Chinese market, becoming a benchmark case in the cross-border fragrance category." },
+  { year: "2016", brand: "Xie Taitai Hairy Crab", category: "Fresh / Brand Building", result: "0 to ¥800M revenue, #1 crab voucher sales nationwide for consecutive years", strategy: "Filled the brand gap in the hairy crab industry, signed Huang Xiaoming as brand ambassador, creating the industry's only A-list celebrity endorsement moat. Built 500+ celebrity & influencer matrix; single livestream peak sales reached ¥30M.", link: "/cases/xietaitai" },
+  { year: "2023", brand: "Changshengtian NAD+ (USA)", category: "Health / Cross-border", result: "¥5M post-launch sales; distributor ¥5M monthly orders", strategy: "Harvard Research Institute partnership, FDA certified, Instagram/TikTok seeding, Amazon commerce, JD.com store, single Xiaohongshu post drove ¥500K in sales." },
+  { year: "During COVID", brand: "MasterCard", category: "Payments / Global", result: "Counter-cyclical growth of $7B over three years", strategy: "Amid global pandemic disruption, through strategic restructuring and dislocation competition, helped MasterCard achieve a historic counter-cyclical growth of $7 billion over three years." },
+  { year: "2020", brand: "Hunan Pangge Foods", category: "FMCG / Betel Nut", result: "Brand upgrade, full coverage of 1M+ national retail outlets", strategy: "Hunan Pangge is the only company in the industry covering all betel nut product categories, with 10M+ retail outlets and 400+ distributors. Through the 'Closer to Men' strategic direction and 'Men's Battle Companion' brand positioning, established a differentiated offensive strategy, significantly boosting brand awareness to become the leading brand during industry consolidation.", image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg", link: "/cases/pangge" },
 ];
 
 export default function Cases() {
@@ -203,15 +46,11 @@ export default function Cases() {
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
 
-  const cases = isEn ? casesEn : casesZh;
+  const cases = isEn ? cases_en : cases_zh;
 
   return (
     <section id="cases" className="relative py-24 lg:py-32 overflow-hidden">
-      {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${CASES_BG})` }}
-      />
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${CASES_BG})` }} />
       <div className="absolute inset-0 bg-[#0D1B2A]/92" />
 
       <div className="relative z-10 container">
@@ -222,9 +61,7 @@ export default function Cases() {
             {isEn ? "Landmark Cases" : "标杆案例"}
           </h2>
           <p className="text-white/50 max-w-xl text-base">
-            {isEn
-              ? "14 years. 8 blockbuster products each exceeding ¥1B. Strategic breakthroughs for 20+ FMCG companies."
-              : "14年，8个10亿级大单品，20+快消品企业战略破局"}
+            {isEn ? "14 years · 8 billion-RMB hero products · Strategic breakthroughs for 20+ FMCG enterprises" : "14年，8个10亿级大单品，20+快消品企业战略破局"}
           </p>
         </div>
 
@@ -236,21 +73,13 @@ export default function Cases() {
               <button
                 key={c.brand}
                 onClick={() => setActiveCase(i)}
-                className={`w-full text-left p-5 border-b border-white/10 transition-all duration-200 group ${
-                  activeCase === i
-                    ? "bg-[#C9A84C]/10 border-l-2 border-l-[#C9A84C]"
-                    : "hover:bg-white/5 border-l-2 border-l-transparent"
-                }`}
+                className={`w-full text-left p-5 border-b border-white/10 transition-all duration-200 group ${activeCase === i ? "bg-[#C9A84C]/10 border-l-2 border-l-[#C9A84C]" : "hover:bg-white/5 border-l-2 border-l-transparent"}`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`font-['DM_Mono'] text-xs ${activeCase === i ? "text-[#C9A84C]" : "text-white/30"}`}>
-                    {c.year}
-                  </span>
+                  <span className={`font-['DM_Mono'] text-xs ${activeCase === i ? "text-[#C9A84C]" : "text-white/30"}`}>{c.year}</span>
                   <span className="text-white/20 text-xs">{c.category}</span>
                 </div>
-                <div className={`font-semibold text-sm ${activeCase === i ? "text-[#C9A84C]" : "text-white/80 group-hover:text-white"} transition-colors`}>
-                  {c.brand}
-                </div>
+                <div className={`font-semibold text-sm ${activeCase === i ? "text-[#C9A84C]" : "text-white/80 group-hover:text-white"} transition-colors`}>{c.brand}</div>
               </button>
             ))}
           </div>
@@ -259,11 +88,8 @@ export default function Cases() {
           <div className="lg:col-span-3 p-8 lg:p-10">
             <div className="h-full flex flex-col">
               <div className="section-label mb-2">{cases[activeCase].year} · {cases[activeCase].category}</div>
-              <h3 className="font-['Noto_Serif_SC'] text-white text-3xl font-bold mb-4">
-                {cases[activeCase].brand}
-              </h3>
+              <h3 className="font-['Noto_Serif_SC'] text-white text-3xl font-bold mb-4">{cases[activeCase].brand}</h3>
 
-              {/* Result badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#C9A84C]/15 border border-[#C9A84C]/40 mb-6 self-start">
                 <span className="text-[#C9A84C] text-xs">▶</span>
                 <span className="text-[#C9A84C] font-semibold text-sm">{cases[activeCase].result}</span>
@@ -272,53 +98,27 @@ export default function Cases() {
               <div className="text-white/40 text-xs tracking-widest uppercase mb-3 font-['DM_Mono']">
                 {isEn ? "Dislocation Competition Strategy" : "错位竞争策略"}
               </div>
-              <p className="text-white/70 text-base leading-relaxed flex-1">
-                {cases[activeCase].strategy}
-              </p>
+              <p className="text-white/70 text-base leading-relaxed flex-1">{cases[activeCase].strategy}</p>
 
-              {/* Case image if available */}
               {(cases[activeCase] as any).image && (
                 <div className="relative mt-4 mb-4 h-36 overflow-hidden">
-                  <img
-                    src={(cases[activeCase] as any).image}
-                    alt={cases[activeCase].brand}
-                    className="w-full h-full object-cover object-center"
-                  />
+                  <img src={(cases[activeCase] as any).image} alt={cases[activeCase].brand} className="w-full h-full object-cover object-center" />
                   <div className="absolute inset-0 bg-gradient-to-r from-[#0D1B2A]/60 to-transparent" />
                 </div>
               )}
 
-              {/* CTA: view full case if link exists */}
               {(cases[activeCase] as any).link && (
                 <Link href={(cases[activeCase] as any).link}>
-                  <a
-                    className="inline-flex items-center gap-2 mt-4 mb-2 text-xs font-medium transition-all hover:opacity-80"
-                    style={{
-                      color: "#C9A84C",
-                      fontFamily: "'DM Mono', monospace",
-                      letterSpacing: "0.05em",
-                    }}
-                  >
+                  <a className="inline-flex items-center gap-2 mt-4 mb-2 text-xs font-medium transition-all hover:opacity-80" style={{ color: "#C9A84C", fontFamily: "'DM Mono', monospace", letterSpacing: "0.05em" }}>
                     {isEn ? "View Full Case" : "查看完整案例"}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
-                      <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </a>
                 </Link>
               )}
 
-              {/* Navigation dots */}
               <div className="flex gap-2 mt-4">
                 {cases.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveCase(i)}
-                    className={`transition-all duration-300 ${
-                      activeCase === i
-                        ? "w-6 h-1.5 bg-[#C9A84C]"
-                        : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
-                    }`}
-                  />
+                  <button key={i} onClick={() => setActiveCase(i)} className={`transition-all duration-300 ${activeCase === i ? "w-6 h-1.5 bg-[#C9A84C]" : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"}`} />
                 ))}
               </div>
             </div>
