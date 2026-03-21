@@ -1,0 +1,11 @@
+{
+  "nav": {"home":"ホーム","about":"私たちについて","services":"サービス","cases":"事例","team":"チーム","contact":"お問い合わせ","maoIndustry":"猫眼工業","maoIndustryHome":"工業部門","millenniumClock":"万年時計","cooperation":"提携相談"},
+  "hero": {"badge":"ブランド成長エンジン","title":"猫眼増長引擎","subtitle":"ブランド利益を倍増させる","description":"中国トップのブランド成長コンサルティング機関として、消費者ブランドの飛躍的成長を支援します。","cta":"パートナーシップ開始","ctaSecondary":"詳細を見る"},
+  "about": {"title":"私たちについて","subtitle":"猫眼増長引擎","description":"猫眼増長引擎は中国をリードするブランド成長コンサルティング機関です。データ駆動と創造性を核心として、ブランドの持続的な高速成長を実現します。","mission":"ミッション","missionText":"価値あるブランドをより多くの人に届ける","vision":"ビジョン","visionText":"中国で最も信頼されるブランド成長パートナーになる","values":"バリュー","valuesText":"誠実・革新・共栄"},
+  "services": {"title":"コアサービス","subtitle":"全領域成長ソリューション","brand":"ブランド戦略","brandDesc":"ブランドポジショニングからビジュアルシステムまで、差別化されたブランド資産を構築","digital":"デジタルマーケティング","digitalDesc":"全プラットフォーム統合マーケティングでターゲットユーザーに精確にリーチ","kol":"KOLマーケティング","kolDesc":"トップインフルエンサーマトリックスによるコンテンツ拡散と転換の一体化","growth":"成長コンサルティング","growthDesc":"データ駆動の成長戦略でGMVの継続的突破を実現"},
+  "maoIndustry": {"title":"猫眼工業","subtitle":"Mao Industry","description":"月面エネルギーから軍事製造まで、人類文明の次の支点を構築する未来志向の産業技術。","helium3":"月面ヘリウム3エネルギー","helium3Desc":"月面He-3資源の探査・抽出技術を主導し、地球にクリーンな核融合エネルギーを提供","tokamak":"トカマク装置R&D","tokamakDesc":"次世代磁気閉じ込め核融合装置を独自開発し、商業核融合のコア技術を突破","military":"防衛製造","militaryDesc":"高精度防衛部品製造とシステム統合で国防近代化建設に貢献","partners":"戦略パートナー","cooperationTitle":"戦略提携申請","cooperationDesc":"猫眼工業との戦略提携にご興味をお持ちの方は、以下の情報をご記入ください。48時間以内にご連絡いたします。"},
+  "millenniumClock": {"title":"万年時計","subtitle":"1万年に1目盛り","description":"思想家Sean DAIが発明した、人類に超長期的思考を促す時間装置。","inventor":"発明者","inventorName":"Sean DAI","reserve":"見学予約 / 購入問い合わせ","reserveDesc":"情報をご記入いただければご連絡いたします"},
+  "contact": {"title":"お問い合わせ","subtitle":"ブランド成長の旅を始めましょう","name":"お名前","email":"メール","company":"会社名","message":"メッセージ","submit":"送信","phone":"電話","address":"住所"},
+  "footer": {"rights":"全著作権所有","privacy":"プライバシーポリシー","terms":"利用規約"},
+  "common": {"learnMore":"詳細を見る","contactUs":"お問い合わせ","viewAll":"すべて見る","back":"戻る","submit":"送信","cancel":"キャンセル","loading":"読み込み中...","success":"送信成功","error":"送信失敗、再試行してください"}
+}

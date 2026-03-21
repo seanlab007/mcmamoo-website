@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "about": "Tentang Kami",
+    "services": "Layanan",
+    "cases": "Kasus",
+    "team": "Tim",
+    "contact": "Kontak",
+    "maoIndustry": "Mao Industri",
+    "maoIndustryHome": "Beranda Industri",
+    "millenniumClock": "Jam Milenium",
+    "cooperation": "Kemitraan"
+  },
+  "hero": {
+    "badge": "Mesin Pertumbuhan Merek",
+    "title": "Mc&Mamoo",
+    "subtitle": "Lipat gandakan keuntungan merek Anda",
+    "description": "Konsultan pertumbuhan merek terkemuka di Tiongkok, berdedikasi membantu merek konsumen mencapai pertumbuhan revolusioner.",
+    "cta": "Mulai Kemitraan",
+    "ctaSecondary": "Pelajari Lebih Lanjut"
+  },
+  "about": {
+    "title": "Tentang Kami",
+    "subtitle": "Mc&Mamoo",
+    "description": "Mc&Mamoo adalah konsultan pertumbuhan merek terkemuka di Tiongkok dengan lebih dari 10 tahun keahlian mendalam di merek konsumen.",
+    "mission": "Misi",
+    "missionText": "Membuat setiap merek berharga terlihat oleh lebih banyak orang",
+    "vision": "Visi",
+    "visionText": "Menjadi mitra pertumbuhan merek paling tepercaya di Tiongkok",
+    "values": "Nilai",
+    "valuesText": "Integritas, Inovasi, Kesuksesan Bersama"
+  },
+  "services": {
+    "title": "Layanan Utama",
+    "subtitle": "Solusi Pertumbuhan Menyeluruh",
+    "brand": "Strategi Merek",
+    "brandDesc": "Dari pemosisian merek hingga sistem visual, membangun aset merek yang terdiferensiasi",
+    "digital": "Pemasaran Digital",
+    "digitalDesc": "Pemasaran terintegrasi omnichannel untuk menjangkau audiens target secara tepat",
+    "kol": "Pemasaran KOL",
+    "kolDesc": "Matriks influencer teratas dengan penyemaian konten dan konversi terintegrasi",
+    "growth": "Konsultasi Pertumbuhan",
+    "growthDesc": "Strategi pertumbuhan berbasis data untuk terobosan GMV yang berkelanjutan"
+  },
+  "maoIndustry": {
+    "title": "Mao Industri",
+    "subtitle": "Divisi Teknologi Industri",
+    "description": "Portofolio teknologi industri berorientasi masa depan — dari energi bulan hingga manufaktur pertahanan.",
+    "helium3": "Energi Helium-3 Bulan",
+    "helium3Desc": "Memimpin eksplorasi dan ekstraksi sumber daya He-3 bulan untuk menyediakan energi fusi bersih bagi Bumi",
+    "tokamak": "R&D Perangkat Tokamak",
+    "tokamakDesc": "Pengembangan mandiri perangkat fusi pengurungan magnetik generasi berikutnya",
+    "military": "Manufaktur Pertahanan",
+    "militaryDesc": "Manufaktur komponen pertahanan presisi tinggi dan integrasi sistem",
+    "partners": "Mitra Strategis",
+    "cooperationTitle": "Permohonan Kemitraan Strategis",
+    "cooperationDesc": "Jika Anda tertarik dengan kerja sama strategis dengan Mao Industri, silakan isi informasi berikut."
+  },
+  "millenniumClock": {
+    "title": "Jam Milenium",
+    "subtitle": "Satu detik setiap 10.000 tahun",
+    "description": "Ditemukan oleh pemikir Sean DAI, alat waktu yang dirancang untuk mengingatkan umat manusia untuk berpikir dalam skala ultra-panjang.",
+    "inventor": "Penemu",
+    "inventorName": "Sean DAI",
+    "reserve": "Reservasi / Pertanyaan Pembelian",
+    "reserveDesc": "Isi informasi Anda dan kami akan menghubungi Anda"
+  },
+  "contact": {
+    "title": "Hubungi Kami",
+    "subtitle": "Mulailah perjalanan pertumbuhan merek Anda",
+    "name": "Nama",
+    "email": "Email",
+    "company": "Perusahaan",
+    "message": "Pesan",
+    "submit": "Kirim",
+    "phone": "Telepon",
+    "address": "Alamat"
+  },
+  "footer": {
+    "rights": "Hak Cipta Dilindungi",
+    "privacy": "Kebijakan Privasi",
+    "terms": "Syarat Layanan"
+  },
+  "common": {
+    "learnMore": "Pelajari Lebih Lanjut",
+    "contactUs": "Hubungi Kami",
+    "viewAll": "Lihat Semua",
+    "back": "Kembali",
+    "submit": "Kirim",
+    "cancel": "Batal",
+    "loading": "Memuat...",
+    "success": "Berhasil dikirim",
+    "error": "Pengiriman gagal, coba lagi"
+  }
+}

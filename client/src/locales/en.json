@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "services": "Services",
+    "cases": "Cases",
+    "team": "Team",
+    "contact": "Contact",
+    "maoIndustry": "Mao Industry",
+    "maoIndustryHome": "Industry Home",
+    "millenniumClock": "Millennium Clock",
+    "cooperation": "Partnership"
+  },
+  "hero": {
+    "badge": "Brand Growth Engine",
+    "title": "Mc&Mamoo",
+    "subtitle": "Multiply Your Brand Profits",
+    "description": "China's premier brand growth consultancy, dedicated to helping consumer brands achieve breakthrough growth from zero to one.",
+    "cta": "Start Partnership",
+    "ctaSecondary": "Learn More"
+  },
+  "about": {
+    "title": "About Us",
+    "subtitle": "Mc&Mamoo Brand Management",
+    "description": "Mc&Mamoo is China's leading brand growth consultancy with over 10 years of deep expertise in consumer brands. Driven by data and empowered by creativity, we help brands achieve sustainable high-speed growth.",
+    "mission": "Mission",
+    "missionText": "Make every valuable brand seen by more people",
+    "vision": "Vision",
+    "visionText": "Become China's most trusted brand growth partner",
+    "values": "Values",
+    "valuesText": "Integrity, Innovation, Mutual Success"
+  },
+  "services": {
+    "title": "Core Services",
+    "subtitle": "Full-Domain Growth Solutions",
+    "brand": "Brand Strategy",
+    "brandDesc": "From brand positioning to visual systems, building differentiated brand assets",
+    "digital": "Digital Marketing",
+    "digitalDesc": "Integrated omni-channel marketing to precisely reach target audiences",
+    "kol": "KOL Marketing",
+    "kolDesc": "Top influencer matrix with integrated content seeding and conversion",
+    "growth": "Growth Consulting",
+    "growthDesc": "Data-driven growth strategies for continuous GMV breakthroughs"
+  },
+  "maoIndustry": {
+    "title": "Mao Industry",
+    "subtitle": "Industrial Technology Division",
+    "description": "A future-oriented industrial technology portfolio — from lunar energy to defense manufacturing, building the next fulcrum of human civilization.",
+    "helium3": "Lunar Helium-3 Energy",
+    "helium3Desc": "Leading lunar He-3 resource exploration and extraction technology to provide clean fusion energy for Earth",
+    "tokamak": "Tokamak Device R&D",
+    "tokamakDesc": "Independently developing next-generation magnetic confinement fusion devices to crack core commercial fusion technology",
+    "military": "Defense Manufacturing",
+    "militaryDesc": "High-precision defense components manufacturing and system integration for national defense modernization",
+    "partners": "Strategic Partners",
+    "cooperationTitle": "Strategic Partnership Application",
+    "cooperationDesc": "If you are interested in strategic cooperation with Mao Industry, please fill in the following information and we will contact you within 48 hours."
+  },
+  "millenniumClock": {
+    "title": "The Millennium Clock",
+    "subtitle": "One tick every 10,000 years",
+    "description": "Invented by thinker Sean DAI, a timepiece designed to remind humanity to think on ultra-long timescales.",
+    "inventor": "Inventor",
+    "inventorName": "Sean DAI",
+    "reserve": "Reserve / Purchase Inquiry",
+    "reserveDesc": "Please fill in your information and we will contact you"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Begin Your Brand Growth Journey",
+    "name": "Name",
+    "email": "Email",
+    "company": "Company",
+    "message": "Message",
+    "submit": "Submit",
+    "phone": "Phone",
+    "address": "Address"
+  },
+  "footer": {
+    "rights": "All Rights Reserved",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "common": {
+    "learnMore": "Learn More",
+    "contactUs": "Contact Us",
+    "viewAll": "View All",
+    "back": "Back",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "success": "Submitted Successfully",
+    "error": "Submission failed, please try again"
+  }
+}

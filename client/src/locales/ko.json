@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "홈",
+    "about": "소개",
+    "services": "서비스",
+    "cases": "사례",
+    "team": "팀",
+    "contact": "문의",
+    "maoIndustry": "마오 인더스트리",
+    "maoIndustryHome": "산업 홈",
+    "millenniumClock": "밀레니엄 시계",
+    "cooperation": "파트너십"
+  },
+  "hero": {
+    "badge": "브랜드 성장 엔진",
+    "title": "Mc&Mamoo",
+    "subtitle": "브랜드 수익 배가",
+    "description": "중국 최고의 브랜드 성장 컨설팅 기관으로, 소비자 브랜드의 획기적인 성장을 지원합니다.",
+    "cta": "파트너십 시작",
+    "ctaSecondary": "자세히 보기"
+  },
+  "about": {
+    "title": "소개",
+    "subtitle": "Mc&Mamoo",
+    "description": "Mc&Mamoo는 중국 선도적인 브랜드 성장 컨설팅 기관으로 10년 이상의 소비자 브랜드 전문성을 보유하고 있습니다.",
+    "mission": "미션",
+    "missionText": "가치 있는 브랜드를 더 많은 사람들에게 알리다",
+    "vision": "비전",
+    "visionText": "중국에서 가장 신뢰받는 브랜드 성장 파트너가 되다",
+    "values": "가치관",
+    "valuesText": "성실·혁신·상생"
+  },
+  "services": {
+    "title": "핵심 서비스",
+    "subtitle": "전방위 성장 솔루션",
+    "brand": "브랜드 전략",
+    "brandDesc": "브랜드 포지셔닝부터 비주얼 시스템까지 차별화된 브랜드 자산 구축",
+    "digital": "디지털 마케팅",
+    "digitalDesc": "전 플랫폼 통합 마케팅으로 타겟 사용자에게 정확히 도달",
+    "kol": "KOL 마케팅",
+    "kolDesc": "탑 인플루언서 매트릭스로 콘텐츠 확산과 전환 일체화",
+    "growth": "성장 컨설팅",
+    "growthDesc": "데이터 기반 성장 전략으로 GMV 지속 돌파"
+  },
+  "maoIndustry": {
+    "title": "마오 인더스트리",
+    "subtitle": "Mao Industry",
+    "description": "달 에너지부터 방산 제조까지, 인류 문명의 다음 지렛대를 구축하는 미래 지향적 산업 기술.",
+    "helium3": "달 헬륨-3 에너지",
+    "helium3Desc": "달 He-3 자원 탐사 및 추출 기술 주도로 지구에 청정 핵융합 에너지 제공",
+    "tokamak": "토카막 장치 R&D",
+    "tokamakDesc": "차세대 자기 밀폐 핵융합 장치 독자 개발로 상업 핵융합 핵심 기술 돌파",
+    "military": "방산 제조",
+    "militaryDesc": "고정밀 방산 부품 제조 및 시스템 통합으로 국방 현대화 건설 지원",
+    "partners": "전략 파트너",
+    "cooperationTitle": "전략 파트너십 신청",
+    "cooperationDesc": "마오 인더스트리와의 전략적 협력에 관심이 있으시면 아래 정보를 작성해 주세요. 48시간 내에 연락드리겠습니다."
+  },
+  "millenniumClock": {
+    "title": "밀레니엄 시계",
+    "subtitle": "1만 년에 한 눈금",
+    "description": "사상가 Sean DAI가 발명한, 인류에게 초장기적 사고를 촉구하는 시간 장치.",
+    "inventor": "발명자",
+    "inventorName": "Sean DAI",
+    "reserve": "방문 예약 / 구매 문의",
+    "reserveDesc": "정보를 입력하시면 연락드리겠습니다"
+  },
+  "contact": {
+    "title": "문의하기",
+    "subtitle": "브랜드 성장 여정을 시작하세요",
+    "name": "이름",
+    "email": "이메일",
+    "company": "회사",
+    "message": "메시지",
+    "submit": "제출",
+    "phone": "전화",
+    "address": "주소"
+  },
+  "footer": {
+    "rights": "모든 권리 보유",
+    "privacy": "개인정보처리방침",
+    "terms": "이용약관"
+  },
+  "common": {
+    "learnMore": "자세히 보기",
+    "contactUs": "문의하기",
+    "viewAll": "전체 보기",
+    "back": "뒤로",
+    "submit": "제출",
+    "cancel": "취소",
+    "loading": "로딩 중...",
+    "success": "제출 성공",
+    "error": "제출 실패, 다시 시도해 주세요"
+  }
+}

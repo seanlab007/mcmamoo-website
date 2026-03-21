@@ -4,26 +4,24 @@
  */
 import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
-
-const navItems = [
-  { label: "关于我们", href: "#about" },
-  { label: "KOL合作", href: "#kol" },
-  { label: "服务体系", href: "#services" },
-  { label: "全球案例", href: "#global-cases" },
-  { label: "荣誉奖项", href: "#awards" },
-  { label: "联系我们", href: "#contact" },
-];
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 const industryItem = { label: "猫眼工业", href: "#mao-industry" };
 
-const specialItems = [
-  { label: "毛智库", href: "/maothink", external: true },
-  { label: "运营平台", href: "/platform", external: true },
-];
-
 export default function Navbar() {
+  const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const navItems = [
+    { label: t('nav.about'), href: "#about" },
+    { label: t('nav.kol'), href: "#kol" },
+    { label: t('nav.services'), href: "#services" },
+    { label: t('nav.cases'), href: "#global-cases" },
+    { label: t('nav.awards'), href: "#awards" },
+    { label: t('nav.contact'), href: "#contact" },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -151,11 +149,12 @@ export default function Navbar() {
               <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px #C9A84C", flexShrink: 0 }} />
               MaoAI
             </a>
+            <LanguageSwitcher />
             <button
               onClick={() => handleNav("#contact")}
-              className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
+              className="ml-2 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
             >
-              预约咨询
+              {t('nav.bookConsultation')}
             </button>
           </nav>
 
@@ -230,8 +229,11 @@ export default function Navbar() {
             onClick={() => handleNav("#contact")}
             className="mt-4 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] text-lg hover:bg-[#C9A84C]/10 transition-all duration-300"
           >
-            预约咨询
+            {t('nav.bookConsultation')}
           </button>
+          <div className="mt-2">
+            <LanguageSwitcher />
+          </div>
         </div>
       </div>
     </>

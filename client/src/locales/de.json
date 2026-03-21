@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "about": "Über uns",
+    "services": "Dienstleistungen",
+    "cases": "Fallstudien",
+    "team": "Team",
+    "contact": "Kontakt",
+    "maoIndustry": "Mao Industrie",
+    "maoIndustryHome": "Industrie Startseite",
+    "millenniumClock": "Jahrtausend-Uhr",
+    "cooperation": "Partnerschaft"
+  },
+  "hero": {
+    "badge": "Marken-Wachstumsmotor",
+    "title": "Mc&Mamoo",
+    "subtitle": "Verdoppeln Sie Ihre Markengewinne",
+    "description": "Chinas führende Marken-Wachstumsberatung, die Konsummarken bei der Erzielung bahnbrechenden Wachstums unterstützt.",
+    "cta": "Partnerschaft starten",
+    "ctaSecondary": "Mehr erfahren"
+  },
+  "about": {
+    "title": "Über uns",
+    "subtitle": "Mc&Mamoo",
+    "description": "Mc&Mamoo ist Chinas führende Marken-Wachstumsberatung mit über 10 Jahren tiefgreifender Expertise in Konsummarken.",
+    "mission": "Mission",
+    "missionText": "Jede wertvolle Marke für mehr Menschen sichtbar machen",
+    "vision": "Vision",
+    "visionText": "Chinas vertrauenswürdigster Marken-Wachstumspartner werden",
+    "values": "Werte",
+    "valuesText": "Integrität, Innovation, gegenseitiger Erfolg"
+  },
+  "services": {
+    "title": "Kerndienstleistungen",
+    "subtitle": "Ganzheitliche Wachstumslösungen",
+    "brand": "Markenstrategie",
+    "brandDesc": "Von der Markenpositionierung bis zu visuellen Systemen, Aufbau differenzierter Markenassets",
+    "digital": "Digitales Marketing",
+    "digitalDesc": "Integriertes Omnichannel-Marketing zur präzisen Erreichung von Zielgruppen",
+    "kol": "KOL-Marketing",
+    "kolDesc": "Top-Influencer-Matrix mit integriertem Content-Seeding und Conversion",
+    "growth": "Wachstumsberatung",
+    "growthDesc": "Datengetriebene Wachstumsstrategien für kontinuierliche GMV-Durchbrüche"
+  },
+  "maoIndustry": {
+    "title": "Mao Industrie",
+    "subtitle": "Industrietechnologie-Division",
+    "description": "Ein zukunftsorientiertes Industrietechnologie-Portfolio — von Mondenergie bis Rüstungsproduktion.",
+    "helium3": "Mond-Helium-3-Energie",
+    "helium3Desc": "Führend bei der Erkundung und Extraktion von He-3-Ressourcen auf dem Mond",
+    "tokamak": "Tokamak-Gerät F&E",
+    "tokamakDesc": "Eigenständige Entwicklung von Magneteinschluss-Fusionsgeräten der nächsten Generation",
+    "military": "Rüstungsproduktion",
+    "militaryDesc": "Hochpräzise Rüstungskomponentenfertigung und Systemintegration",
+    "partners": "Strategische Partner",
+    "cooperationTitle": "Strategische Partnerschaftsanfrage",
+    "cooperationDesc": "Wenn Sie an einer strategischen Zusammenarbeit mit Mao Industrie interessiert sind, füllen Sie bitte die folgenden Informationen aus."
+  },
+  "millenniumClock": {
+    "title": "Die Jahrtausend-Uhr",
+    "subtitle": "Ein Tick alle 10.000 Jahre",
+    "description": "Erfunden vom Denker Sean DAI, ein Zeitmesser zur Erinnerung der Menschheit an ultra-langfristiges Denken.",
+    "inventor": "Erfinder",
+    "inventorName": "Sean DAI",
+    "reserve": "Reservierung / Kaufanfrage",
+    "reserveDesc": "Bitte füllen Sie Ihre Informationen aus und wir werden Sie kontaktieren"
+  },
+  "contact": {
+    "title": "Kontaktieren Sie uns",
+    "subtitle": "Beginnen Sie Ihre Marken-Wachstumsreise",
+    "name": "Name",
+    "email": "E-Mail",
+    "company": "Unternehmen",
+    "message": "Nachricht",
+    "submit": "Senden",
+    "phone": "Telefon",
+    "address": "Adresse"
+  },
+  "footer": {
+    "rights": "Alle Rechte vorbehalten",
+    "privacy": "Datenschutzrichtlinie",
+    "terms": "Nutzungsbedingungen"
+  },
+  "common": {
+    "learnMore": "Mehr erfahren",
+    "contactUs": "Kontaktieren Sie uns",
+    "viewAll": "Alle anzeigen",
+    "back": "Zurück",
+    "submit": "Senden",
+    "cancel": "Abbrechen",
+    "loading": "Wird geladen...",
+    "success": "Erfolgreich gesendet",
+    "error": "Senden fehlgeschlagen, bitte erneut versuchen"
+  }
+}

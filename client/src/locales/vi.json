@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "about": "Về chúng tôi",
+    "services": "Dịch vụ",
+    "cases": "Trường hợp",
+    "team": "Đội ngũ",
+    "contact": "Liên hệ",
+    "maoIndustry": "Mao Công nghiệp",
+    "maoIndustryHome": "Trang chủ Công nghiệp",
+    "millenniumClock": "Đồng hồ Thiên niên kỷ",
+    "cooperation": "Hợp tác"
+  },
+  "hero": {
+    "badge": "Động cơ Tăng trưởng Thương hiệu",
+    "title": "Mc&Mamoo",
+    "subtitle": "Nhân đôi lợi nhuận thương hiệu của bạn",
+    "description": "Công ty tư vấn tăng trưởng thương hiệu hàng đầu Trung Quốc, chuyên giúp các thương hiệu tiêu dùng đạt được tăng trưởng đột phá.",
+    "cta": "Bắt đầu hợp tác",
+    "ctaSecondary": "Tìm hiểu thêm"
+  },
+  "about": {
+    "title": "Về chúng tôi",
+    "subtitle": "Mc&Mamoo",
+    "description": "Mc&Mamoo là công ty tư vấn tăng trưởng thương hiệu hàng đầu Trung Quốc với hơn 10 năm chuyên môn sâu về thương hiệu tiêu dùng.",
+    "mission": "Sứ mệnh",
+    "missionText": "Làm cho mỗi thương hiệu có giá trị được nhiều người nhìn thấy hơn",
+    "vision": "Tầm nhìn",
+    "visionText": "Trở thành đối tác tăng trưởng thương hiệu đáng tin cậy nhất tại Trung Quốc",
+    "values": "Giá trị",
+    "valuesText": "Chính trực, Đổi mới, Thành công chung"
+  },
+  "services": {
+    "title": "Dịch vụ Cốt lõi",
+    "subtitle": "Giải pháp Tăng trưởng Toàn diện",
+    "brand": "Chiến lược Thương hiệu",
+    "brandDesc": "Từ định vị thương hiệu đến hệ thống hình ảnh, xây dựng tài sản thương hiệu khác biệt",
+    "digital": "Marketing Kỹ thuật số",
+    "digitalDesc": "Marketing tích hợp đa kênh để tiếp cận chính xác đối tượng mục tiêu",
+    "kol": "Marketing KOL",
+    "kolDesc": "Ma trận influencer hàng đầu với seeding nội dung và chuyển đổi tích hợp",
+    "growth": "Tư vấn Tăng trưởng",
+    "growthDesc": "Chiến lược tăng trưởng dựa trên dữ liệu để liên tục đột phá GMV"
+  },
+  "maoIndustry": {
+    "title": "Mao Công nghiệp",
+    "subtitle": "Bộ phận Công nghệ Công nghiệp",
+    "description": "Danh mục công nghệ công nghiệp hướng tới tương lai — từ năng lượng mặt trăng đến sản xuất quốc phòng.",
+    "helium3": "Năng lượng Heli-3 Mặt trăng",
+    "helium3Desc": "Dẫn đầu trong thăm dò và khai thác tài nguyên He-3 mặt trăng để cung cấp năng lượng tổng hợp sạch cho Trái đất",
+    "tokamak": "R&D Thiết bị Tokamak",
+    "tokamakDesc": "Phát triển độc lập các thiết bị tổng hợp giam giữ từ tính thế hệ tiếp theo",
+    "military": "Sản xuất Quốc phòng",
+    "militaryDesc": "Sản xuất linh kiện quốc phòng độ chính xác cao và tích hợp hệ thống",
+    "partners": "Đối tác Chiến lược",
+    "cooperationTitle": "Đơn xin Hợp tác Chiến lược",
+    "cooperationDesc": "Nếu bạn quan tâm đến hợp tác chiến lược với Mao Công nghiệp, vui lòng điền thông tin sau."
+  },
+  "millenniumClock": {
+    "title": "Đồng hồ Thiên niên kỷ",
+    "subtitle": "Một tích tắc mỗi 10.000 năm",
+    "description": "Được phát minh bởi nhà tư tưởng Sean DAI, một thiết bị thời gian được thiết kế để nhắc nhở nhân loại suy nghĩ theo thang thời gian siêu dài.",
+    "inventor": "Nhà phát minh",
+    "inventorName": "Sean DAI",
+    "reserve": "Đặt chỗ / Yêu cầu mua",
+    "reserveDesc": "Vui lòng điền thông tin của bạn và chúng tôi sẽ liên hệ"
+  },
+  "contact": {
+    "title": "Liên hệ với chúng tôi",
+    "subtitle": "Bắt đầu hành trình tăng trưởng thương hiệu của bạn",
+    "name": "Tên",
+    "email": "Email",
+    "company": "Công ty",
+    "message": "Tin nhắn",
+    "submit": "Gửi",
+    "phone": "Điện thoại",
+    "address": "Địa chỉ"
+  },
+  "footer": {
+    "rights": "Bảo lưu mọi quyền",
+    "privacy": "Chính sách Bảo mật",
+    "terms": "Điều khoản Dịch vụ"
+  },
+  "common": {
+    "learnMore": "Tìm hiểu thêm",
+    "contactUs": "Liên hệ với chúng tôi",
+    "viewAll": "Xem tất cả",
+    "back": "Quay lại",
+    "submit": "Gửi",
+    "cancel": "Hủy",
+    "loading": "Đang tải...",
+    "success": "Gửi thành công",
+    "error": "Gửi thất bại, vui lòng thử lại"
+  }
+}

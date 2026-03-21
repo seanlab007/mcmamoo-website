@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "Strona główna",
+    "about": "O nas",
+    "services": "Usługi",
+    "cases": "Przypadki",
+    "team": "Zespół",
+    "contact": "Kontakt",
+    "maoIndustry": "Mao Przemysł",
+    "maoIndustryHome": "Strona główna przemysłu",
+    "millenniumClock": "Zegar Milenijny",
+    "cooperation": "Partnerstwo"
+  },
+  "hero": {
+    "badge": "Silnik Wzrostu Marki",
+    "title": "Mc&Mamoo",
+    "subtitle": "Pomnóż zyski swojej marki",
+    "description": "Wiodąca firma doradcza ds. wzrostu marki w Chinach, pomagająca markom konsumenckim osiągnąć przełomowy wzrost.",
+    "cta": "Rozpocznij partnerstwo",
+    "ctaSecondary": "Dowiedz się więcej"
+  },
+  "about": {
+    "title": "O nas",
+    "subtitle": "Mc&Mamoo",
+    "description": "Mc&Mamoo to wiodąca firma doradcza ds. wzrostu marki w Chinach z ponad 10-letnim głębokim doświadczeniem w markach konsumenckich.",
+    "mission": "Misja",
+    "missionText": "Sprawić, by każda wartościowa marka była widoczna dla większej liczby osób",
+    "vision": "Wizja",
+    "visionText": "Stać się najbardziej zaufanym partnerem wzrostu marki w Chinach",
+    "values": "Wartości",
+    "valuesText": "Uczciwość, Innowacja, Wzajemny sukces"
+  },
+  "services": {
+    "title": "Główne usługi",
+    "subtitle": "Kompleksowe rozwiązania wzrostu",
+    "brand": "Strategia marki",
+    "brandDesc": "Od pozycjonowania marki po systemy wizualne, budowanie zróżnicowanych aktywów marki",
+    "digital": "Marketing cyfrowy",
+    "digitalDesc": "Zintegrowany marketing omnichannel dla precyzyjnego dotarcia do grup docelowych",
+    "kol": "Marketing KOL",
+    "kolDesc": "Matryca najlepszych influencerów ze zintegrowanym zasiewem treści i konwersją",
+    "growth": "Doradztwo ds. wzrostu",
+    "growthDesc": "Strategie wzrostu oparte na danych dla ciągłych przełomów GMV"
+  },
+  "maoIndustry": {
+    "title": "Mao Przemysł",
+    "subtitle": "Dywizja Technologii Przemysłowej",
+    "description": "Portfolio technologii przemysłowej zorientowane na przyszłość — od energii księżycowej po produkcję obronną.",
+    "helium3": "Księżycowa Energia Helu-3",
+    "helium3Desc": "Wiodący w eksploracji i wydobyciu zasobów He-3 na Księżycu",
+    "tokamak": "B+R Urządzenie Tokamak",
+    "tokamakDesc": "Niezależny rozwój urządzeń fuzji z magnetycznym ograniczeniem następnej generacji",
+    "military": "Produkcja Obronna",
+    "militaryDesc": "Wysokoprecyzyjna produkcja komponentów obronnych i integracja systemów",
+    "partners": "Partnerzy Strategiczni",
+    "cooperationTitle": "Wniosek o Partnerstwo Strategiczne",
+    "cooperationDesc": "Jeśli jesteś zainteresowany strategiczną współpracą z Mao Przemysł, wypełnij poniższe informacje."
+  },
+  "millenniumClock": {
+    "title": "Zegar Milenijny",
+    "subtitle": "Jeden tik co 10 000 lat",
+    "description": "Wynaleziony przez myśliciela Seana DAI, przyrząd czasu zaprojektowany, aby przypominać ludzkości o myśleniu w ultra-długich skalach czasowych.",
+    "inventor": "Wynalazca",
+    "inventorName": "Sean DAI",
+    "reserve": "Rezerwacja / Zapytanie o zakup",
+    "reserveDesc": "Wypełnij swoje dane, a my skontaktujemy się z Tobą"
+  },
+  "contact": {
+    "title": "Skontaktuj się z nami",
+    "subtitle": "Rozpocznij swoją podróż wzrostu marki",
+    "name": "Imię",
+    "email": "E-mail",
+    "company": "Firma",
+    "message": "Wiadomość",
+    "submit": "Wyślij",
+    "phone": "Telefon",
+    "address": "Adres"
+  },
+  "footer": {
+    "rights": "Wszelkie prawa zastrzeżone",
+    "privacy": "Polityka prywatności",
+    "terms": "Warunki korzystania z usług"
+  },
+  "common": {
+    "learnMore": "Dowiedz się więcej",
+    "contactUs": "Skontaktuj się z nami",
+    "viewAll": "Zobacz wszystko",
+    "back": "Wstecz",
+    "submit": "Wyślij",
+    "cancel": "Anuluj",
+    "loading": "Ładowanie...",
+    "success": "Wysłano pomyślnie",
+    "error": "Wysyłanie nie powiodło się, spróbuj ponownie"
+  }
+}

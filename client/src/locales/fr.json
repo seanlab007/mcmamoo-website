@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "about": "À propos",
+    "services": "Services",
+    "cases": "Cas",
+    "team": "Équipe",
+    "contact": "Contact",
+    "maoIndustry": "Mao Industrie",
+    "maoIndustryHome": "Accueil Industrie",
+    "millenniumClock": "Horloge Millénaire",
+    "cooperation": "Partenariat"
+  },
+  "hero": {
+    "badge": "Moteur de Croissance de Marque",
+    "title": "Mc&Mamoo",
+    "subtitle": "Multipliez vos profits de marque",
+    "description": "Le premier cabinet de conseil en croissance de marque en Chine, dédié à aider les marques de consommation à réaliser une croissance révolutionnaire.",
+    "cta": "Démarrer le partenariat",
+    "ctaSecondary": "En savoir plus"
+  },
+  "about": {
+    "title": "À propos",
+    "subtitle": "Mc&Mamoo",
+    "description": "Mc&Mamoo est le cabinet de conseil en croissance de marque leader en Chine avec plus de 10 ans d'expertise approfondie dans les marques de consommation.",
+    "mission": "Mission",
+    "missionText": "Rendre chaque marque précieuse visible par davantage de personnes",
+    "vision": "Vision",
+    "visionText": "Devenir le partenaire de croissance de marque le plus fiable en Chine",
+    "values": "Valeurs",
+    "valuesText": "Intégrité, Innovation, Succès mutuel"
+  },
+  "services": {
+    "title": "Services Principaux",
+    "subtitle": "Solutions de croissance globale",
+    "brand": "Stratégie de marque",
+    "brandDesc": "Du positionnement de marque aux systèmes visuels, construction d'actifs de marque différenciés",
+    "digital": "Marketing digital",
+    "digitalDesc": "Marketing intégré omnicanal pour atteindre précisément les audiences cibles",
+    "kol": "Marketing KOL",
+    "kolDesc": "Matrice d'influenceurs top avec ensemencement de contenu et conversion intégrés",
+    "growth": "Conseil en croissance",
+    "growthDesc": "Stratégies de croissance basées sur les données pour des percées GMV continues"
+  },
+  "maoIndustry": {
+    "title": "Mao Industrie",
+    "subtitle": "Division Technologie Industrielle",
+    "description": "Un portefeuille de technologie industrielle tourné vers l'avenir — de l'énergie lunaire à la fabrication de défense.",
+    "helium3": "Énergie Hélium-3 Lunaire",
+    "helium3Desc": "Diriger l'exploration et l'extraction des ressources He-3 lunaires pour fournir une énergie de fusion propre à la Terre",
+    "tokamak": "R&D Dispositif Tokamak",
+    "tokamakDesc": "Développement indépendant de dispositifs de fusion à confinement magnétique de prochaine génération",
+    "military": "Fabrication Défense",
+    "militaryDesc": "Fabrication de composants de défense haute précision et intégration de systèmes",
+    "partners": "Partenaires Stratégiques",
+    "cooperationTitle": "Demande de Partenariat Stratégique",
+    "cooperationDesc": "Si vous êtes intéressé par une coopération stratégique avec Mao Industrie, veuillez remplir les informations suivantes."
+  },
+  "millenniumClock": {
+    "title": "L'Horloge Millénaire",
+    "subtitle": "Un tic toutes les 10 000 ans",
+    "description": "Inventée par le penseur Sean DAI, une pièce d'horlogerie conçue pour rappeler à l'humanité de penser à très long terme.",
+    "inventor": "Inventeur",
+    "inventorName": "Sean DAI",
+    "reserve": "Réserver / Demande d'achat",
+    "reserveDesc": "Veuillez remplir vos informations et nous vous contacterons"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Commencez votre parcours de croissance de marque",
+    "name": "Nom",
+    "email": "Email",
+    "company": "Entreprise",
+    "message": "Message",
+    "submit": "Envoyer",
+    "phone": "Téléphone",
+    "address": "Adresse"
+  },
+  "footer": {
+    "rights": "Tous droits réservés",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation"
+  },
+  "common": {
+    "learnMore": "En savoir plus",
+    "contactUs": "Contactez-nous",
+    "viewAll": "Voir tout",
+    "back": "Retour",
+    "submit": "Envoyer",
+    "cancel": "Annuler",
+    "loading": "Chargement...",
+    "success": "Envoyé avec succès",
+    "error": "Échec de l'envoi, veuillez réessayer"
+  }
+}

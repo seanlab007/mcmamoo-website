@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "about": "Nosotros",
+    "services": "Servicios",
+    "cases": "Casos",
+    "team": "Equipo",
+    "contact": "Contacto",
+    "maoIndustry": "Mao Industria",
+    "maoIndustryHome": "Inicio Industrial",
+    "millenniumClock": "Reloj Milenario",
+    "cooperation": "Asociación"
+  },
+  "hero": {
+    "badge": "Motor de Crecimiento de Marca",
+    "title": "Mc&Mamoo",
+    "subtitle": "Multiplique las ganancias de su marca",
+    "description": "La principal consultora de crecimiento de marca de China, dedicada a ayudar a las marcas de consumo a lograr un crecimiento revolucionario.",
+    "cta": "Iniciar asociación",
+    "ctaSecondary": "Saber más"
+  },
+  "about": {
+    "title": "Nosotros",
+    "subtitle": "Mc&Mamoo",
+    "description": "Mc&Mamoo es la consultora de crecimiento de marca líder en China con más de 10 años de profunda experiencia en marcas de consumo.",
+    "mission": "Misión",
+    "missionText": "Hacer que cada marca valiosa sea vista por más personas",
+    "vision": "Visión",
+    "visionText": "Convertirse en el socio de crecimiento de marca más confiable de China",
+    "values": "Valores",
+    "valuesText": "Integridad, Innovación, Éxito mutuo"
+  },
+  "services": {
+    "title": "Servicios Principales",
+    "subtitle": "Soluciones de crecimiento integral",
+    "brand": "Estrategia de marca",
+    "brandDesc": "Del posicionamiento de marca a los sistemas visuales, construyendo activos de marca diferenciados",
+    "digital": "Marketing digital",
+    "digitalDesc": "Marketing integrado omnicanal para llegar con precisión a audiencias objetivo",
+    "kol": "Marketing KOL",
+    "kolDesc": "Matriz de influencers top con siembra de contenido y conversión integradas",
+    "growth": "Consultoría de crecimiento",
+    "growthDesc": "Estrategias de crecimiento basadas en datos para avances continuos de GMV"
+  },
+  "maoIndustry": {
+    "title": "Mao Industria",
+    "subtitle": "División de Tecnología Industrial",
+    "description": "Un portafolio de tecnología industrial orientado al futuro — desde energía lunar hasta fabricación de defensa.",
+    "helium3": "Energía Helio-3 Lunar",
+    "helium3Desc": "Liderando la exploración y extracción de recursos He-3 lunares para proporcionar energía de fusión limpia a la Tierra",
+    "tokamak": "I+D Dispositivo Tokamak",
+    "tokamakDesc": "Desarrollo independiente de dispositivos de fusión de confinamiento magnético de próxima generación",
+    "military": "Fabricación de Defensa",
+    "militaryDesc": "Fabricación de componentes de defensa de alta precisión e integración de sistemas",
+    "partners": "Socios Estratégicos",
+    "cooperationTitle": "Solicitud de Asociación Estratégica",
+    "cooperationDesc": "Si está interesado en la cooperación estratégica con Mao Industria, complete la siguiente información."
+  },
+  "millenniumClock": {
+    "title": "El Reloj Milenario",
+    "subtitle": "Un tic cada 10.000 años",
+    "description": "Inventado por el pensador Sean DAI, un instrumento de tiempo diseñado para recordar a la humanidad pensar a muy largo plazo.",
+    "inventor": "Inventor",
+    "inventorName": "Sean DAI",
+    "reserve": "Reservar / Consulta de compra",
+    "reserveDesc": "Complete su información y nos pondremos en contacto"
+  },
+  "contact": {
+    "title": "Contáctenos",
+    "subtitle": "Comience su viaje de crecimiento de marca",
+    "name": "Nombre",
+    "email": "Correo",
+    "company": "Empresa",
+    "message": "Mensaje",
+    "submit": "Enviar",
+    "phone": "Teléfono",
+    "address": "Dirección"
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados",
+    "privacy": "Política de privacidad",
+    "terms": "Términos de servicio"
+  },
+  "common": {
+    "learnMore": "Saber más",
+    "contactUs": "Contáctenos",
+    "viewAll": "Ver todo",
+    "back": "Volver",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "loading": "Cargando...",
+    "success": "Enviado con éxito",
+    "error": "Error al enviar, inténtelo de nuevo"
+  }
+}

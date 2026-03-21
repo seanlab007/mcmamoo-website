@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "home": "Início",
+    "about": "Sobre",
+    "services": "Serviços",
+    "cases": "Casos",
+    "team": "Equipe",
+    "contact": "Contato",
+    "maoIndustry": "Mao Indústria",
+    "maoIndustryHome": "Início Industrial",
+    "millenniumClock": "Relógio Milenar",
+    "cooperation": "Parceria"
+  },
+  "hero": {
+    "badge": "Motor de Crescimento de Marca",
+    "title": "Mc&Mamoo",
+    "subtitle": "Multiplique os lucros da sua marca",
+    "description": "A principal consultoria de crescimento de marca da China, dedicada a ajudar marcas de consumo a alcançar crescimento revolucionário.",
+    "cta": "Iniciar parceria",
+    "ctaSecondary": "Saiba mais"
+  },
+  "about": {
+    "title": "Sobre nós",
+    "subtitle": "Mc&Mamoo",
+    "description": "Mc&Mamoo é a consultoria de crescimento de marca líder na China com mais de 10 anos de profunda expertise em marcas de consumo.",
+    "mission": "Missão",
+    "missionText": "Tornar cada marca valiosa visível para mais pessoas",
+    "vision": "Visão",
+    "visionText": "Tornar-se o parceiro de crescimento de marca mais confiável da China",
+    "values": "Valores",
+    "valuesText": "Integridade, Inovação, Sucesso mútuo"
+  },
+  "services": {
+    "title": "Serviços Principais",
+    "subtitle": "Soluções de crescimento integral",
+    "brand": "Estratégia de marca",
+    "brandDesc": "Do posicionamento de marca aos sistemas visuais, construindo ativos de marca diferenciados",
+    "digital": "Marketing digital",
+    "digitalDesc": "Marketing integrado omnicanal para alcançar com precisão públicos-alvo",
+    "kol": "Marketing KOL",
+    "kolDesc": "Matriz de influenciadores top com semeadura de conteúdo e conversão integradas",
+    "growth": "Consultoria de crescimento",
+    "growthDesc": "Estratégias de crescimento baseadas em dados para avanços contínuos de GMV"
+  },
+  "maoIndustry": {
+    "title": "Mao Indústria",
+    "subtitle": "Divisão de Tecnologia Industrial",
+    "description": "Um portfólio de tecnologia industrial orientado para o futuro — da energia lunar à fabricação de defesa.",
+    "helium3": "Energia Hélio-3 Lunar",
+    "helium3Desc": "Liderando a exploração e extração de recursos He-3 lunares para fornecer energia de fusão limpa à Terra",
+    "tokamak": "P&D Dispositivo Tokamak",
+    "tokamakDesc": "Desenvolvimento independente de dispositivos de fusão de confinamento magnético de próxima geração",
+    "military": "Fabricação de Defesa",
+    "militaryDesc": "Fabricação de componentes de defesa de alta precisão e integração de sistemas",
+    "partners": "Parceiros Estratégicos",
+    "cooperationTitle": "Solicitação de Parceria Estratégica",
+    "cooperationDesc": "Se você estiver interessado em cooperação estratégica com a Mao Indústria, preencha as informações a seguir."
+  },
+  "millenniumClock": {
+    "title": "O Relógio Milenar",
+    "subtitle": "Um tique a cada 10.000 anos",
+    "description": "Inventado pelo pensador Sean DAI, um instrumento de tempo projetado para lembrar a humanidade de pensar em escalas ultra-longas.",
+    "inventor": "Inventor",
+    "inventorName": "Sean DAI",
+    "reserve": "Reservar / Consulta de compra",
+    "reserveDesc": "Preencha suas informações e entraremos em contato"
+  },
+  "contact": {
+    "title": "Contate-nos",
+    "subtitle": "Comece sua jornada de crescimento de marca",
+    "name": "Nome",
+    "email": "Email",
+    "company": "Empresa",
+    "message": "Mensagem",
+    "submit": "Enviar",
+    "phone": "Telefone",
+    "address": "Endereço"
+  },
+  "footer": {
+    "rights": "Todos os direitos reservados",
+    "privacy": "Política de privacidade",
+    "terms": "Termos de serviço"
+  },
+  "common": {
+    "learnMore": "Saiba mais",
+    "contactUs": "Contate-nos",
+    "viewAll": "Ver tudo",
+    "back": "Voltar",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "loading": "Carregando...",
+    "success": "Enviado com sucesso",
+    "error": "Falha no envio, tente novamente"
+  }
+}
