@@ -7,6 +7,7 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
+import "./lib/i18n"; // 初始化 i18n 多语言系统
 
 const queryClient = new QueryClient();
 

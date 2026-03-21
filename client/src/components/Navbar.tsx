@@ -1,29 +1,36 @@
 /*
- * Navbar — 猫眼增长引擎官网导航
- * Design: 透明渐变 → 深色固定导航，金色 hover 线条
+ * Navbar — Mc&Mamoo Growth Engine Website Navigation
+ * Design: transparent gradient → dark fixed nav, gold hover lines
+ * i18n: full bilingual support
  */
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-
-const navItems = [
-  { label: "关于我们", href: "#about" },
-  { label: "KOL合作", href: "#kol" },
-  { label: "服务体系", href: "#services" },
-  { label: "全球案例", href: "#global-cases" },
-  { label: "荣誉奖项", href: "#awards" },
-  { label: "联系我们", href: "#contact" },
-];
-
-const industryItem = { label: "猫眼工业", href: "#mao-industry" };
-
-const specialItems = [
-  { label: "毛智库", href: "/maothink", external: true },
-  { label: "运营平台", href: "/platform", external: true },
-];
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 export default function Navbar() {
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const navItems = [
+    { label: t('nav.about'), href: "#about" },
+    { label: t('nav.kol'), href: "#kol" },
+    { label: t('nav.services'), href: "#services" },
+    { label: t('nav.cases'), href: "#global-cases" },
+    { label: t('nav.awards'), href: "#awards" },
+    { label: t('nav.contact'), href: "#contact" },
+  ];
+
+  const industryLabel = isEn ? "Mao Industry" : "猫眼工业";
+  const industryHomeLabel = isEn ? "Industry Home" : "工业板块首页";
+  const millenniumLabel = isEn ? "Millennium Clock" : "万年钟详情页";
+  const cooperationLabel = isEn ? "Partnership" : "合作咨询";
+  const thinkTankLabel = isEn ? "Mao Think Tank" : "毛智库";
+  const platformLabel = isEn ? "Operations Platform" : "运营平台";
+  const crawfishLabel = isEn ? "Crawfish AI" : "小龙虾 AI";
+  const maoAILabel = isEn ? "MaoAI Control Center" : "MaoAI 统一控制中心";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -53,10 +60,9 @@ export default function Navbar() {
             onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
             className="flex items-center gap-3 group"
           >
-            {/* Cat-eye logo from business card */}
             <img
               src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_eye_logo_1a9f9467.png"
-              alt="猫眼咋询 Logo"
+              alt="Mc&Mamoo Logo"
               className="h-10 w-auto object-contain"
               style={{ filter: 'drop-shadow(0 0 6px rgba(201,168,76,0.5))' }}
             />
@@ -65,7 +71,7 @@ export default function Navbar() {
                 Mc&amp;Mamoo
               </div>
               <div className="text-white/40 text-[9px] tracking-[0.2em] uppercase leading-none mt-0.5">
-                Brand Management
+                {isEn ? 'Growth Engine' : 'Brand Management'}
               </div>
             </div>
           </a>
@@ -81,21 +87,50 @@ export default function Navbar() {
                 {item.label}
               </button>
             ))}
-            <button
-              onClick={() => handleNav(industryItem.href)}
-              className="relative text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
-            >
-              <span style={{ width: 6, height: 6, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #4FC3F7" }} />
-              猫眼工业
-            </button>
+            {/* Mao Industry dropdown */}
+            <div className="relative group">
+              <button
+                onClick={() => handleNav("#mao-industry")}
+                className="relative text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
+                style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+              >
+                <span style={{ width: 6, height: 6, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #4FC3F7" }} />
+                {industryLabel}
+                <span className="text-[#4FC3F7]/40 text-[0.6rem] ml-0.5">▾</span>
+              </button>
+              <div className="absolute top-full left-0 mt-1 w-44 bg-[#0A0A0A]/98 border border-[#4FC3F7]/20 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <a
+                  href="#mao-industry"
+                  onClick={(e) => { e.preventDefault(); handleNav("#mao-industry"); }}
+                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#4FC3F7] hover:bg-[#4FC3F7]/5 text-xs font-mono tracking-wider transition-colors duration-200 border-b border-white/5"
+                >
+                  <span style={{ width: 4, height: 4, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block" }} />
+                  {industryHomeLabel}
+                </a>
+                <a
+                  href="/millennium-clock"
+                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 text-xs font-mono tracking-wider transition-colors duration-200 border-b border-white/5"
+                >
+                  <span style={{ width: 4, height: 4, background: "#C9A84C", borderRadius: "50%", display: "inline-block" }} />
+                  {millenniumLabel}
+                </a>
+                <a
+                  href="#contact"
+                  onClick={(e) => { e.preventDefault(); handleNav("#contact"); }}
+                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 text-xs font-mono tracking-wider transition-colors duration-200"
+                >
+                  <span style={{ width: 4, height: 4, background: "#C9A84C", display: "inline-block" }} />
+                  {cooperationLabel}
+                </a>
+              </div>
+            </div>
             <a
               href="/maothink"
               className="relative text-[#8B1A1A] hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
               <span style={{ width: 6, height: 6, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0 }} />
-              毛智库
+              {thinkTankLabel}
             </a>
             <a
               href="/platform"
@@ -103,7 +138,7 @@ export default function Navbar() {
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
               <span style={{ width: 6, height: 6, background: "#40d090", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #40d090" }} />
-              运营平台
+              {platformLabel}
             </a>
             <a
               href="/openclaw"
@@ -111,7 +146,7 @@ export default function Navbar() {
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
               <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>🦞</span>
-              小龙虾 AI
+              {crawfishLabel}
             </a>
             <a
               href="/maoai/login"
@@ -121,11 +156,12 @@ export default function Navbar() {
               <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px #C9A84C", flexShrink: 0 }} />
               MaoAI
             </a>
+            <LanguageSwitcher />
             <button
               onClick={() => handleNav("#contact")}
-              className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
+              className="ml-2 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
             >
-              预约咨询
+              {t('nav.bookConsultation')}
             </button>
           </nav>
 
@@ -157,12 +193,12 @@ export default function Navbar() {
             </button>
           ))}
           <button
-            onClick={() => handleNav(industryItem.href)}
+            onClick={() => handleNav("#mao-industry")}
             className="text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-xl transition-colors duration-300 flex items-center gap-2"
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 8px #4FC3F7" }} />
-            猫眼工业
+            {industryLabel}
           </button>
           <a
             href="/maothink"
@@ -170,7 +206,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block" }} />
-            毛智库
+            {thinkTankLabel}
           </a>
           <a
             href="/platform"
@@ -178,7 +214,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#40d090", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #40d090" }} />
-            运营平台
+            {platformLabel}
           </a>
           <a
             href="/openclaw"
@@ -186,7 +222,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>🦞</span>
-            小龙虾 AI
+            {crawfishLabel}
           </a>
           <a
             href="/maoai/login"
@@ -194,14 +230,17 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #C9A84C" }} />
-            MaoAI 统一控制中心
+            {maoAILabel}
           </a>
           <button
             onClick={() => handleNav("#contact")}
             className="mt-4 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] text-lg hover:bg-[#C9A84C]/10 transition-all duration-300"
           >
-            预约咨询
+            {t('nav.bookConsultation')}
           </button>
+          <div className="mt-2">
+            <LanguageSwitcher />
+          </div>
         </div>
       </div>
     </>

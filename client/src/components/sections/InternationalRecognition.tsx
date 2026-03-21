@@ -2,9 +2,10 @@
  * InternationalRecognition — 首页国际机构认可横幅
  * 放置在 Hero 正下方，进门第一眼看到的核心信任背书
  * 风格：深红军事 · 哑金 · 权威震慑
- * 新增：数字滚动动效统计栏
+ * 新增：数字滚动动效统计栏 + i18n 双语支持
  */
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const RECOGNITIONS = [
   {
@@ -12,6 +13,7 @@ const RECOGNITIONS = [
     name: "国际货币基金组织",
     nameEn: "International Monetary Fund",
     desc: "因在委内瑞拉、津巴布韦通货膨胀治理中提供创新性战略方案，获IMF特别表彰，相关研究成果纳入发展中国家经济危机应对参考案例库。",
+    descEn: "For providing innovative strategic solutions in managing hyperinflation in Venezuela and Zimbabwe, received special commendation from the IMF. Related research outcomes were incorporated into the reference case library for developing countries' economic crisis response.",
     badge: "AWARDED",
     color: "#C9A84C",
   },
@@ -20,6 +22,7 @@ const RECOGNITIONS = [
     name: "俄罗斯战略研究院",
     nameEn: "Russian Institute for Strategic Studies",
     desc: "受普京智库——俄罗斯战略研究院正式接见，就欧亚地区战略格局进行深度交流，建立长期战略研究合作关系。",
+    descEn: "Officially received by Putin's think tank — the Russian Institute for Strategic Studies — for in-depth exchanges on the Eurasian strategic landscape, establishing a long-term strategic research partnership.",
     badge: "PARTNER",
     color: "#C0392B",
   },
@@ -28,16 +31,17 @@ const RECOGNITIONS = [
     name: "中国人民解放军",
     nameEn: "People's Liberation Army",
     desc: "为我国军方提供兵棋推演与国防战略咨询服务，深度参与重大军事战略决策研究，是国内少数具备军事战略咨询资质的民间智库。",
+    descEn: "Providing wargaming and national defense strategy consulting services to China's military, deeply involved in major military strategic decision-making research. One of the few non-governmental think tanks in China with military strategy consulting credentials.",
     badge: "CERTIFIED",
     color: "#8B1A1A",
   },
 ];
 
 const STATS = [
-  { value: 14, suffix: "+", label: "国政府咨询", color: "#C9A84C" },
-  { value: 85, suffix: "%", label: "战略预测准确率", color: "#8B1A1A" },
-  { value: 6, suffix: "年", label: "军事战略合作", color: "#C0392B" },
-  { value: 3, suffix: "大", label: "国际机构认可", color: "#6B8B4A" },
+  { value: 14, suffix: "+", label: "国政府咨询", labelEn: "Govt. Consultations", color: "#C9A84C" },
+  { value: 85, suffix: "%", label: "战略预测准确率", labelEn: "Forecast Accuracy", color: "#8B1A1A" },
+  { value: 6, suffix: "+", label: "军事战略合作", labelEn: "Yrs Military Coop.", color: "#C0392B" },
+  { value: 3, suffix: "+", label: "国际机构认可", labelEn: "Intl. Recognitions", color: "#6B8B4A" },
 ];
 
 // Animated counter hook
@@ -63,7 +67,7 @@ function useCounter(target: number, visible: boolean, duration = 1800) {
   return count;
 }
 
-function StatItem({ stat, index }: { stat: typeof STATS[0]; index: number }) {
+function StatItem({ stat, index, isEn }: { stat: typeof STATS[0]; index: number; isEn: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const count = useCounter(stat.value, visible);
@@ -108,13 +112,13 @@ function StatItem({ stat, index }: { stat: typeof STATS[0]; index: number }) {
         marginTop: 8,
         letterSpacing: "0.05em",
       }}>
-        {stat.label}
+        {isEn ? stat.labelEn : stat.label}
       </div>
     </div>
   );
 }
 
-function RecognitionCard({ item, index }: { item: typeof RECOGNITIONS[0]; index: number }) {
+function RecognitionCard({ item, index, isEn }: { item: typeof RECOGNITIONS[0]; index: number; isEn: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -170,7 +174,7 @@ function RecognitionCard({ item, index }: { item: typeof RECOGNITIONS[0]; index:
             fontWeight: 700,
             margin: 0,
             lineHeight: 1.3,
-          }}>{item.name}</h3>
+          }}>{isEn ? item.nameEn : item.name}</h3>
           <p style={{
             fontFamily: "'DM Mono', monospace",
             fontSize: "0.6rem",
@@ -214,7 +218,7 @@ function RecognitionCard({ item, index }: { item: typeof RECOGNITIONS[0]; index:
         color: "rgba(245,240,232,0.72)",
         lineHeight: 1.85,
         margin: 0,
-      }}>{item.desc}</p>
+      }}>{isEn ? item.descEn : item.desc}</p>
 
       {/* Corner accent */}
       <div style={{
@@ -229,6 +233,8 @@ function RecognitionCard({ item, index }: { item: typeof RECOGNITIONS[0]; index:
 }
 
 export default function InternationalRecognition() {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const titleRef = useRef<HTMLDivElement>(null);
   const [titleVisible, setTitleVisible] = useState(false);
 
@@ -289,7 +295,7 @@ export default function InternationalRecognition() {
               color: "#8B1A1A",
               letterSpacing: "0.25em",
               textTransform: "uppercase",
-            }}>INTERNATIONAL RECOGNITION · 毛智库</span>
+            }}>INTERNATIONAL RECOGNITION · MAO THINK TANK</span>
           </div>
 
           {/* Title */}
@@ -301,7 +307,7 @@ export default function InternationalRecognition() {
               fontWeight: 700,
               margin: 0,
               lineHeight: 1.1,
-            }}>国际机构认可</h2>
+            }}>{isEn ? "International Recognition" : "国际机构认可"}</h2>
             <span style={{
               fontFamily: "'DM Mono', monospace",
               fontSize: "0.65rem",
@@ -321,8 +327,9 @@ export default function InternationalRecognition() {
             maxWidth: 640,
             lineHeight: 1.8,
           }}>
-            毛智库深度参与全球重大战略事务，获得国际顶级机构认可与合作，
-            是中国极少数具备全球战略影响力的民间智库。
+            {isEn
+              ? "Mao Think Tank deeply engages in major global strategic affairs, earning recognition and partnerships from the world's top institutions — one of the few non-governmental think tanks in China with global strategic influence."
+              : "毛智库深度参与全球重大战略事务，获得国际顶级机构认可与合作，是中国极少数具备全球战略影响力的民间智库。"}
           </p>
         </div>
 
@@ -348,7 +355,7 @@ export default function InternationalRecognition() {
           {/* Dividers between stats */}
           {STATS.map((stat, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 0, flex: 1, minWidth: 120 }}>
-              <StatItem stat={stat} index={i} />
+              <StatItem stat={stat} index={i} isEn={isEn} />
               {i < STATS.length - 1 && (
                 <div style={{
                   width: 1,
@@ -369,7 +376,7 @@ export default function InternationalRecognition() {
           flexWrap: "wrap",
         }}>
           {RECOGNITIONS.map((item, i) => (
-            <RecognitionCard key={item.abbr} item={item} index={i} />
+            <RecognitionCard key={item.abbr} item={item} index={i} isEn={isEn} />
           ))}
         </div>
 
@@ -413,7 +420,7 @@ export default function InternationalRecognition() {
             onMouseEnter={e => (e.currentTarget.style.color = "#C9A84C")}
             onMouseLeave={e => (e.currentTarget.style.color = "#8B1A1A")}
           >
-            进入毛智库 →
+            {isEn ? "Enter Mao Think Tank →" : "进入毛智库 →"}
           </a>
         </div>
       </div>

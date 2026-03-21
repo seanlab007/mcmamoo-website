@@ -1,14 +1,15 @@
 /*
  * Methodology Section -- Brand Prestige & Profit Multiplication
  * Design: dark background + four pillars + results showcase
- * Simplified from "Dislocation Competition Theory" to plain language
+ * i18n: full bilingual support
  */
 import { useState } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { useTranslation } from "react-i18next";
 
 const METHODOLOGY_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/methodology-bg-iADjg24sG3B8CAK3kDs55r.webp";
 
-const PILLARS = [
+const PILLARS_ZH = [
   {
     num: "01",
     title: "品牌显贵",
@@ -39,14 +40,52 @@ const PILLARS = [
   },
 ];
 
-const RESULTS = [
+const PILLARS_EN = [
+  {
+    num: "01",
+    title: "Brand Prestige",
+    subtitle: "Brand Prestige",
+    desc: "Elevate brands from selling products to being revered. Through precise brand persona crafting, visual language upgrades, and premium scene penetration, make consumers willingly pay a brand premium.",
+    highlight: "Average premium rate increase: 3–8x",
+  },
+  {
+    num: "02",
+    title: "Profit Multiplication",
+    subtitle: "Profit Multiplication",
+    desc: "Drive organic growth through brand power, not paid traffic. Optimize product structure, channel profit distribution, and repurchase systems to maximize returns on every marketing dollar.",
+    highlight: "Average client profit margin increase: 200%+",
+  },
+  {
+    num: "03",
+    title: "Omni-Channel Growth",
+    subtitle: "Omni-Channel Growth",
+    desc: "Connect online and offline, public and private domains, domestic and international channels into a full-chain growth system. From traffic to retention, from single purchase to lifetime value.",
+    highlight: "Average omni-channel GMV growth: 5–10x",
+  },
+  {
+    num: "04",
+    title: "Trend Leadership",
+    subtitle: "Trend Leadership",
+    desc: "While competitors chase yesterday's trends, we've already positioned brands on tomorrow's tracks. Based on 10x variable forecasting, brands stay perpetually half a step ahead of the market.",
+    highlight: "Lock in growth dividends 6–18 months early",
+  },
+];
+
+const RESULTS_ZH = [
   { brand: "小仙炖鲜炖燕窝", result: "5年从0到20亿", metric: "天猫燕窝品类第一" },
   { brand: "法国奢利 LA CELLE", result: "单日售出2万瓶", metric: "高端香水品类黑马" },
   { brand: "江中猴姑米稀", result: "3年销售额翻10倍", metric: "养胃品类绝对第一" },
   { brand: "美国长盛天 NAD+", result: "单篇带货50万+", metric: "抗衰赛道品牌溢价王" },
 ];
 
-const THINKERS = [
+const RESULTS_EN = [
+  { brand: "Xiaoxiandun Bird's Nest", result: "¥0 to ¥2B in 5 years", metric: "Tmall Bird's Nest Category #1" },
+  { brand: "LA CELLE (France)", result: "20,000 bottles in one day", metric: "Premium Fragrance Dark Horse" },
+  { brand: "Jiangzhong Monkey Mushroom", result: "10x revenue in 3 years", metric: "Stomach Health Category #1" },
+  { brand: "NAD+ (USA)", result: "500K+ sales per article", metric: "Anti-Aging Brand Premium King" },
+];
+
+const THINKERS_ZH = [
   { name: "毛泽东", theory: "桅杆理论" },
   { name: "查尔斯·达尔文", theory: "进化论" },
   { name: "阿尔伯特·爱因斯坦", theory: "第一性原理" },
@@ -56,12 +95,28 @@ const THINKERS = [
   { name: "Sean DAI", theory: "猫眼方法论" },
 ];
 
+const THINKERS_EN = [
+  { name: "Mao Zedong", theory: "Masthead Theory" },
+  { name: "Charles Darwin", theory: "Evolution Theory" },
+  { name: "Albert Einstein", theory: "First Principles" },
+  { name: "L.V. Bertalanffy", theory: "Systems Theory" },
+  { name: "Jack Trout", theory: "Positioning Theory" },
+  { name: "Joseph Schumpeter", theory: "Innovation Theory" },
+  { name: "Sean DAI", theory: "Mao Eye Methodology" },
+];
+
 export default function Methodology() {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const [activePillar, setActivePillar] = useState(0);
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
   const ref3 = useScrollReveal();
   const ref4 = useScrollReveal();
+
+  const PILLARS = isEn ? PILLARS_EN : PILLARS_ZH;
+  const RESULTS = isEn ? RESULTS_EN : RESULTS_ZH;
+  const THINKERS = isEn ? THINKERS_EN : THINKERS_ZH;
 
   return (
     <section id="methodology" className="relative py-24 lg:py-32 overflow-hidden">
@@ -77,21 +132,23 @@ export default function Methodology() {
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="section-label mb-4">02 — Core Methodology</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
-            猫眼方法论
+            {isEn ? "Mc&Mamoo Methodology" : "猫眼方法论"}
           </h2>
           <p className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl italic mb-4">
-            让品牌显贵，让利润倍增，让增长全域
+            {isEn ? "Make brands prestigious. Multiply profits. Grow everywhere." : "让品牌显贵，让利润倍增，让增长全域"}
           </p>
           <p className="text-white/50 max-w-2xl text-base leading-relaxed">
-            我们不做定位，不讲概念。我们只关注一件事：
-            <span className="text-white font-medium">让您的品牌卖得更贵、赚得更多、长得更快。</span>
+            {isEn
+              ? <>We don't do positioning. We don't talk concepts. We focus on one thing: <span className="text-white font-medium">making your brand sell at higher prices, earn more, and grow faster.</span></>
+              : <>我们不做定位，不讲概念。我们只关注一件事：<span className="text-white font-medium">让您的品牌卖得更贵、赚得更多、长得更快。</span></>
+            }
           </p>
         </div>
 
         {/* Four Pillars */}
         <div ref={ref2 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-6 font-['DM_Mono']">
-            四大核心价值主张
+            {isEn ? "Four Core Value Propositions" : "四大核心价值主张"}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-white/10">
             {PILLARS.map((p, i) => (
@@ -143,7 +200,7 @@ export default function Methodology() {
         {/* Results showcase */}
         <div ref={ref3 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-6 font-['DM_Mono']">
-            方法论落地成果 — 真实案例
+            {isEn ? "Methodology in Action — Real Cases" : "方法论落地成果 — 真实案例"}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/8">
             {RESULTS.map((r) => (
@@ -159,7 +216,7 @@ export default function Methodology() {
         {/* Thinkers */}
         <div ref={ref4 as React.RefObject<HTMLDivElement>} className="reveal">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-6 font-['DM_Mono']">
-            思想基石 — 站在巨人的肩膀上
+            {isEn ? "Intellectual Foundations — Standing on the Shoulders of Giants" : "思想基石 — 站在巨人的肩膀上"}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {THINKERS.map((t) => (

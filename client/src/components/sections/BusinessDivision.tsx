@@ -1,10 +1,11 @@
 /*
- * BusinessDivision — 两大业务入口分区
- * Design: 品牌全案（金色粒子流）vs 毛智库（深红扫描线）双面对称布局
- * 位置：首页 Hero 下方，直接展示公司双业务定位
+ * BusinessDivision — Two Core Business Divisions
+ * Design: Brand Management (gold particles) vs Mao Think Tank (red scan lines) dual symmetric layout
+ * i18n: full bilingual support
  */
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 
 function useReveal(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null);
@@ -68,7 +69,6 @@ function GoldParticles() {
         ctx.fillStyle = `rgba(201,168,76,${p.alpha})`;
         ctx.fill();
       }
-      // Draw faint connecting lines
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
@@ -115,25 +115,14 @@ function RedScanLines() {
     let raf: number;
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Horizontal grid lines
       ctx.strokeStyle = "rgba(139,26,26,0.06)";
       ctx.lineWidth = 1;
       for (let y = 0; y < canvas.height; y += 28) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
       }
-      // Vertical grid lines
       for (let x = 0; x < canvas.width; x += 28) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
       }
-
-      // Moving scan line
       scanY.current = (scanY.current + 1.2) % canvas.height;
       const grad = ctx.createLinearGradient(0, scanY.current - 30, 0, scanY.current + 30);
       grad.addColorStop(0, "rgba(139,26,26,0)");
@@ -141,15 +130,8 @@ function RedScanLines() {
       grad.addColorStop(1, "rgba(139,26,26,0)");
       ctx.fillStyle = grad;
       ctx.fillRect(0, scanY.current - 30, canvas.width, 60);
-
-      // Bright scan line
-      ctx.beginPath();
-      ctx.moveTo(0, scanY.current);
-      ctx.lineTo(canvas.width, scanY.current);
-      ctx.strokeStyle = "rgba(139,26,26,0.35)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
+      ctx.beginPath(); ctx.moveTo(0, scanY.current); ctx.lineTo(canvas.width, scanY.current);
+      ctx.strokeStyle = "rgba(139,26,26,0.35)"; ctx.lineWidth = 1; ctx.stroke();
       raf = requestAnimationFrame(draw);
     };
     draw();
@@ -162,6 +144,8 @@ function RedScanLines() {
 }
 
 export default function BusinessDivision() {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const { ref, visible } = useReveal();
 
   return (
@@ -180,7 +164,7 @@ export default function BusinessDivision() {
         <div className="flex items-center justify-center gap-3">
           <div style={{ width: 40, height: 1, background: "rgba(201,168,76,0.4)" }} />
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.62rem", color: "rgba(201,168,76,0.6)", letterSpacing: "0.25em", textTransform: "uppercase" }}>
-            Two Core Businesses · 双核业务
+            {isEn ? "Two Core Businesses" : "Two Core Businesses · 双核业务"}
           </span>
           <div style={{ width: 40, height: 1, background: "rgba(201,168,76,0.4)" }} />
         </div>
@@ -189,22 +173,28 @@ export default function BusinessDivision() {
       {/* Two-panel layout */}
       <div className="grid md:grid-cols-2" style={{ minHeight: "auto" }}>
 
-        {/* Left — 品牌全案 */}
+        {/* Left — Brand Management */}
         <BizPanel
           side="left"
           accent="#C9A84C"
           accentBg="rgba(201,168,76,0.04)"
           borderColor="rgba(201,168,76,0.12)"
-          tag="Brand Management · 品牌全案"
-          title="品牌全案"
+          tag={isEn ? "Brand Management" : "Brand Management · 品牌全案"}
+          title={isEn ? "Brand Management" : "品牌全案"}
           subtitle="Make Brands Premium"
-          desc="运用猫眼「错位竞争」方法论，从品牌定位、KOL矩阵到全域营销一体化操盘，帮助品牌在竞争红海中找到高溢价增长路径。"
-          metrics={[
+          desc={isEn
+            ? "Using Mc&Mamoo's Misaligned Competition methodology, we provide integrated brand positioning, KOL matrix, and omni-channel marketing to help brands find high-premium growth paths in competitive red oceans."
+            : "运用猫眼「错位竞争」方法论，从品牌定位、KOL矩阵到全域营销一体化操盘，帮助品牌在竞争红海中找到高溢价增长路径。"}
+          metrics={isEn ? [
+            { val: "¥800M+", label: "Xietaitai Annual Revenue" },
+            { val: "¥2B", label: "Xiaoxiandun 5-Year Revenue" },
+            { val: "500+", label: "Top KOL Partnerships" },
+          ] : [
             { val: "8亿+", label: "蟹太太年营收" },
             { val: "20亿", label: "小仙炖5年营收" },
             { val: "500+", label: "头部KOL合作" },
           ]}
-          cta={{ label: "查看品牌案例", href: "/#cases" }}
+          cta={{ label: isEn ? "View Brand Cases" : "查看品牌案例", href: "/#cases" }}
           isExternal={false}
           decorChar="◆"
           bg={<GoldParticles />}
@@ -216,22 +206,28 @@ export default function BusinessDivision() {
           style={{ background: "linear-gradient(to bottom, transparent, rgba(201,168,76,0.2) 20%, rgba(139,26,26,0.2) 80%, transparent)", transform: "translateX(-50%)" }}
         />
 
-        {/* Right — 毛智库 */}
+        {/* Right — Mao Think Tank */}
         <BizPanel
           side="right"
           accent="#8B1A1A"
           accentBg="rgba(139,26,26,0.04)"
           borderColor="rgba(139,26,26,0.12)"
-          tag="Strategic Think Tank · 战略智库"
-          title="毛智库"
+          tag={isEn ? "Strategic Think Tank" : "Strategic Think Tank · 战略智库"}
+          title={isEn ? "Mao Think Tank" : "毛智库"}
           subtitle="Mao Strategic Think Tank"
-          desc="运用毛泽东战略思想体系，为国家机构、军方及国际组织提供兵棋推演、地缘战略咨询与重大决策支持。对标美国兰德公司。"
-          metrics={[
+          desc={isEn
+            ? "Applying Mao Zedong's strategic thought system to provide war-gaming simulations, geopolitical strategy consulting, and major decision support for national institutions, military, and international organizations. Benchmarked against the RAND Corporation."
+            : "运用毛泽东战略思想体系，为国家机构、军方及国际组织提供兵棋推演、地缘战略咨询与重大决策支持。对标美国兰德公司。"}
+          metrics={isEn ? [
+            { val: "Invited", label: "Putin's Think Tank Reception" },
+            { val: "IMF", label: "International Monetary Fund Recognition" },
+            { val: "PLA", label: "PLA Strategic Partnership" },
+          ] : [
             { val: "受邀", label: "普京智库接见" },
             { val: "IMF", label: "国际货币基金组织认可" },
             { val: "PLA", label: "解放军战略合作" },
           ]}
-          cta={{ label: "了解毛智库", href: "/maothink" }}
+          cta={{ label: isEn ? "Learn About Mao Think Tank" : "了解毛智库", href: "/maothink" }}
           isExternal={true}
           decorChar="◈"
           bg={<RedScanLines />}
@@ -273,10 +269,8 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Dynamic background canvas */}
       {bg}
 
-      {/* Decorative corner char */}
       <div
         style={{
           position: "absolute",
@@ -296,7 +290,6 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
         {decorChar}
       </div>
 
-      {/* Top section */}
       <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: accent, letterSpacing: "0.2em", marginBottom: 20, opacity: 0.8 }}>
           {tag}
@@ -312,7 +305,6 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
         </p>
       </div>
 
-      {/* Metrics */}
       <div className="grid grid-cols-3 gap-4 my-8" style={{ position: "relative", zIndex: 1 }}>
         {metrics.map(({ val, label }) => (
           <div key={label}>
@@ -326,7 +318,6 @@ function BizPanel({ side, accent, accentBg, borderColor, tag, title, subtitle, d
         ))}
       </div>
 
-      {/* CTA */}
       <div style={{ position: "relative", zIndex: 1 }}>
         <div
           className="inline-flex items-center gap-3"

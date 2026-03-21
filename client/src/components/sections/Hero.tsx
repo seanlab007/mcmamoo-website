@@ -5,11 +5,13 @@
  */
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-bg-d7eizqgBbqatPTyug6Apqv.webp";
 const HERO_VIDEO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-final_5b857fd9.mp4";
 
 export default function Hero() {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayText, setOverlayText] = useState(0);
@@ -120,7 +122,7 @@ export default function Hero() {
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
-              ◆ &nbsp; Global Premium Brand Management · 全球顶奢品牌管理
+              ◆ &nbsp; {t('hero.label')}
             </div>
 
             {/* Main title */}
@@ -133,7 +135,7 @@ export default function Hero() {
                 Mc&amp;Mamoo
               </span>
               <span className="block text-3xl md:text-4xl lg:text-5xl font-light text-[#C9A84C] mt-1 tracking-wide">
-                Brand Management Inc.
+                {t('hero.subtitle')}
               </span>
             </h1>
 
@@ -146,7 +148,7 @@ export default function Hero() {
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-px w-12 bg-[#C9A84C]" />
                 <span className="font-['Noto_Serif_SC'] text-white/80 text-lg md:text-xl tracking-widest">
-                  猫眼增长引擎
+                  {t('hero.brandName')}
                 </span>
               </div>
             </div>
@@ -157,14 +159,14 @@ export default function Hero() {
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
               }`}
             >
-              让品牌显贵，让利润倍增，让增长全域
+              {t('hero.tagline')}
             </p>
             <p
               className={`text-white/50 text-sm md:text-base tracking-wide mb-10 transition-all duration-700 delay-600 ${
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
               }`}
             >
-              Make Brands Premium · Multiply Profits · Grow Across All Channels
+              {t('hero.taglineEn')}
             </p>
 
             {/* CTAs */}
@@ -177,13 +179,13 @@ export default function Hero() {
                 onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
                 className="px-8 py-3.5 bg-[#C9A84C] text-[#0A0A0A] text-sm font-semibold tracking-widest uppercase hover:bg-[#E8D5A0] transition-all duration-300"
               >
-                预约品牌诊断
+                {t('hero.cta1')}
               </button>
               <button
                 onClick={() => document.querySelector("#cases")?.scrollIntoView({ behavior: "smooth" })}
                 className="px-8 py-3.5 border border-white/30 text-white/80 text-sm tracking-widest uppercase hover:border-[#C9A84C]/60 hover:text-[#C9A84C] transition-all duration-300"
               >
-                查看全球案例
+                {t('hero.cta2')}
               </button>
             </div>
           </div>

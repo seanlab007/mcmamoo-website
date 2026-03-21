@@ -28,6 +28,7 @@ import AdminSubscribers from "./pages/AdminSubscribers";
 import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
 import AdminLogs from "./pages/AdminLogs";
+import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 
 function Router() {
   return (
@@ -54,6 +55,7 @@ function Router() {
       <Route path={"/admin/nodes"} component={AdminNodes} />
       <Route path={"/admin/routing"} component={AdminRouting} />
       <Route path={"/admin/logs"} component={AdminLogs} />
+      <Route path={"/admin/millennium-clock"} component={AdminMillenniumClock} />
 
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

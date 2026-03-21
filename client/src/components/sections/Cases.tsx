@@ -1,14 +1,16 @@
 /*
- * Cases Section — 标杆案例
- * Design: 深色皮革纹理背景 + 时间轴卡片 + 金色结果标签
+ * Cases Section — Landmark Cases
+ * Design: dark leather texture background + timeline cards + gold result labels
+ * i18n: full bilingual support
  */
 import { useState } from "react";
 import { Link } from "wouter";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { useTranslation } from "react-i18next";
 
 const CASES_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/cases-texture-dSgNBgPx3RKUh8PnxTSuRn.webp";
 
-const cases = [
+const casesZh = [
   {
     year: "2013",
     brand: "江中猴姑饼干",
@@ -95,16 +97,113 @@ const cases = [
     brand: "湖南胖哥食品",
     category: "食品快消 / 槛榔",
     result: "品牌升级，全国百万终端网点全面覆盖",
-    strategy: "湖南胖哥食品是行业内唯一覆盖全品类槛榔产品的领袖企业，拥最1000多万终端网点、400多位经销商。通过“离男人更近”战略方向，以“男人的奉斗伴侣”为品牌核心定位，建立差异化进攻战略，实现品牌认知度大幅提升，在行业洗牌期成为领先品牌。",
+    strategy: '湖南胖哥食品是行业内唯一覆盖全品类槛榔产品的领袖企业，拥最1000多万终端网点、400多位经销商。通过「离男人更近」战略方向，以「男人的奋斗伴侣」为品牌核心定位，建立差异化进攻战略，实现品牌认知度大幅提升，在行业洗牌期成为领先品牌。',
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
+    link: "/cases/pangge",
+  },
+];
+
+const casesEn = [
+  {
+    year: "2013",
+    brand: "Jiangzhong Monkey Mushroom Biscuit",
+    category: "Health / Food",
+    result: "¥1.7B revenue in first year",
+    strategy: "Starting from user experience, identified stomach care needs among chronic gastritis patients. Disrupted the OTC sector by leveraging pharmaceutical R&D advantages to enter consumer goods via biscuits, competing against FMCG giants like Oreo through category dislocation.",
+    link: "/cases/jiangzhong",
+  },
+  {
+    year: "2014",
+    brand: "Xiaoxiandun Fresh Bird's Nest",
+    category: "Health / New Consumer",
+    result: "¥2B online revenue in 5 years, Tmall Category #1",
+    strategy: "Identified demand for fresh-stewed bird's nest. Category + scene dislocation, leveraging WeChat commerce advantages to build Tmall presence. Xiaoxiandun = fresh bird's nest category. Combined celebrity investment and Xiaohongshu marketing to lock in pricing.",
+    link: "/cases/xiaoxiandun",
+  },
+  {
+    year: "2015",
+    brand: "Changyu Cabernet",
+    category: "Wine / Global",
+    result: "¥2B global blockbuster product",
+    strategy: "Eliminated low-end SKUs, leveraged century-old Changyu brand equity, focused on global middle class, entered global markets through Michelin chef endorsements, capturing mid-to-low market share.",
+  },
+  {
+    year: "2015",
+    brand: "Xiaoguan Tea",
+    category: "Tea / Premium Gift",
+    result: "Redefined China's premium tea gifting; ¥200M revenue",
+    strategy: "Focused on gifting scenarios, radiating to origin audience. Used mini-can packaging for category innovation, aggregating eight production regions, building a master craftsman barrier.",
+    link: "/cases/xiaoguan",
+  },
+  {
+    year: "2018",
+    brand: "Tsingtao Night Owl Series",
+    category: "Beer / Youth",
+    result: "16x growth in one week; London International Chinese Gold Award",
+    strategy: "Created the Night Owl IP to emotionally connect with users and generate content value. Ad views exceeded 100M, Weibo topic reads exceeded 100M, discussions surpassed 1.25M.",
+  },
+  {
+    year: "2019",
+    brand: "Lidu Liquor",
+    category: "Baijiu / HK IPO",
+    result: "First baijiu stock on HKEX in 2022; HK$5.86B market cap",
+    strategy: "Through dislocation competition strategy, found a unique positioning in the red-ocean baijiu market, successfully listed on Hong Kong Stock Exchange as the first baijiu stock.",
+  },
+  {
+    year: "2019",
+    brand: "Yisheng Pharma Hancan",
+    category: "Ginseng / National Gift",
+    result: "Revenue exceeded ¥1B in 2019",
+    strategy: "Brand = Category. Hancan = Chinese Ginseng. Used Han Dynasty cultural symbols to build brand equity, differentiating from Korea's Cheong Kwan Jang, occupying the highest national gift scenario.",
+  },
+  {
+    year: "2022",
+    brand: "LA CELLE Perfume (France)",
+    category: "Fragrance / Cross-Border",
+    result: "20,000 bottles sold in a single day",
+    strategy: "Through dislocation competition strategy, helped LA CELLE achieve explosive growth in the Chinese market, becoming a benchmark case in the cross-border fragrance category.",
+  },
+  {
+    year: "2016",
+    brand: "Mrs. Crab Hairy Crab",
+    category: "Fresh / Brand Building",
+    result: "¥0 to ¥800M revenue; #1 crab voucher sales for multiple years",
+    strategy: "Filled the branding gap in the hairy crab industry. Signed Huang Xiaoming as brand ambassador, creating an industry-unique A-list celebrity barrier. Built a 500+ celebrity & influencer matrix; single livestream peak sales of ¥30M.",
+    link: "/cases/xietaitai",
+  },
+  {
+    year: "2023",
+    brand: "NAD+ (USA)",
+    category: "Health / Cross-Border",
+    result: "¥5M sales at launch; distributor ¥5M/month orders",
+    strategy: "Harvard Research Institute partnership, FDA certified. Seeded via Instagram/TikTok, Amazon commerce, JD.com store. Single Xiaohongshu article drove ¥500K in sales.",
+  },
+  {
+    year: "During COVID",
+    brand: "MasterCard",
+    category: "Payments / Global",
+    result: "Counter-cyclical growth of $7B over three years",
+    strategy: "Amid the global pandemic shock, through strategic restructuring and dislocation competition, helped MasterCard achieve a historic counter-cyclical growth of $7B over three years.",
+  },
+  {
+    year: "2020",
+    brand: "Hunan Pangge Foods",
+    category: "FMCG / Betel Nut",
+    result: "Brand upgrade; full coverage of 1M+ national retail points",
+    strategy: "Hunan Pangge is the only company in the industry covering the full betel nut product range, with 10M+ retail points and 400+ distributors. Through the Closer to Men strategic direction and the Men's Battle Companion core positioning, established a differentiated offensive strategy, significantly boosting brand awareness to become the leading brand during industry consolidation.",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
     link: "/cases/pangge",
   },
 ];
 
 export default function Cases() {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const [activeCase, setActiveCase] = useState(0);
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
+
+  const cases = isEn ? casesEn : casesZh;
 
   return (
     <section id="cases" className="relative py-24 lg:py-32 overflow-hidden">
@@ -120,10 +219,12 @@ export default function Cases() {
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="section-label mb-4">04 — Landmark Cases</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
-            标杆案例
+            {isEn ? "Landmark Cases" : "标杆案例"}
           </h2>
           <p className="text-white/50 max-w-xl text-base">
-            14年，8个10亿级大单品，20+快消品企业战略破局
+            {isEn
+              ? "14 years. 8 blockbuster products each exceeding ¥1B. Strategic breakthroughs for 20+ FMCG companies."
+              : "14年，8个10亿级大单品，20+快消品企业战略破局"}
           </p>
         </div>
 
@@ -169,7 +270,7 @@ export default function Cases() {
               </div>
 
               <div className="text-white/40 text-xs tracking-widest uppercase mb-3 font-['DM_Mono']">
-                错位竞争策略
+                {isEn ? "Dislocation Competition Strategy" : "错位竞争策略"}
               </div>
               <p className="text-white/70 text-base leading-relaxed flex-1">
                 {cases[activeCase].strategy}
@@ -198,7 +299,7 @@ export default function Cases() {
                       letterSpacing: "0.05em",
                     }}
                   >
-                    查看完整案例
+                    {isEn ? "View Full Case" : "查看完整案例"}
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
                       <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>

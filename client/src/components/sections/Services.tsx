@@ -1,10 +1,12 @@
 /*
- * Services Section — 服务体系
- * Design: 深黑底，4大服务模块卡片，金色数字编号
+ * Services Section — Service System
+ * Design: dark background, 4 service module cards, gold number labels
+ * i18n: full bilingual support
  */
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { useTranslation } from "react-i18next";
 
-const services = [
+const servicesZh = [
   {
     num: "01",
     title: "新消费第一品牌全案战略咨询",
@@ -60,7 +62,63 @@ const services = [
   },
 ];
 
-const models = [
+const servicesEn = [
+  {
+    num: "01",
+    title: "Full-Case Brand Strategy Consulting",
+    en: "Full-Case Brand Strategy",
+    items: [
+      "Corporate Strategy Formulation",
+      "No.1 Brand Strategic Planning",
+      "Strategic Alignment Design",
+      "Category Strategy Planning",
+      "Brand Positioning & Concept",
+      "Blockbuster Visual Hammer Design",
+      "Mao Eye Symbol System",
+    ],
+  },
+  {
+    num: "02",
+    title: "Blockbuster Product Marketing",
+    en: "Blockbuster Product Marketing",
+    items: [
+      "Core Value Extraction for Hit Products",
+      "Brand 360° Leadership Building",
+      "Mao Eye Honeycomb 15-Model",
+      "Product Launch Communication Strategy",
+      "IP Creation & Emotional Resonance",
+      "KOL/KOC Marketing Matrix",
+    ],
+  },
+  {
+    num: "03",
+    title: "Tmall Traffic Architecture",
+    en: "Tmall Traffic Architecture",
+    items: [
+      "Tmall Visual Upgrade",
+      "Viral Video Production (Whale Studio)",
+      "Traffic Structure Planning",
+      "Top E-Commerce Advisor for In-Platform Ads",
+      "Livestreamer Sales Commission",
+      "Viral Content Matrix",
+    ],
+  },
+  {
+    num: "04",
+    title: "Integrated Marketing & Commerce",
+    en: "Integrated Marketing & Commerce",
+    items: [
+      "Off-Platform Seeding (Xiaohongshu/Douyin/Weibo)",
+      "Global Influencer Network (20,000+)",
+      "Cross-Border E-Commerce (Amazon/TikTok)",
+      "Lazada/Shopee Southeast Asia Markets",
+      "Private Domain Traffic Operations",
+      "Performance-Brand Unified Ad Strategy",
+    ],
+  },
+];
+
+const modelsZh = [
   {
     title: "增长三角",
     formula: "持续增长 = 好的商业模式 × 正确的战略 × 优秀的组织体系",
@@ -75,10 +133,30 @@ const models = [
   },
 ];
 
+const modelsEn = [
+  {
+    title: "Growth Triangle",
+    formula: "Sustained Growth = Good Business Model × Correct Strategy × Excellent Organization",
+  },
+  {
+    title: "Mao Eye Penetration Formula",
+    formula: "S = C (Customers) × D (Channel Index) × P (Price Index) × F (Purchase Frequency)",
+  },
+  {
+    title: "Honeycomb 15-Model for Hit Products",
+    formula: "Emotional Value + Intrinsic Value + Premium Space + Evolution Trend + Scene Awareness = Hit Product",
+  },
+];
+
 export default function Services() {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
   const ref3 = useScrollReveal();
+
+  const services = isEn ? servicesEn : servicesZh;
+  const models = isEn ? modelsEn : modelsZh;
 
   return (
     <section id="services" className="bg-[#0A0A0A] py-24 lg:py-32">
@@ -88,12 +166,14 @@ export default function Services() {
           <div className="section-label mb-4">03 — Services</div>
           <div className="flex items-end gap-6">
             <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold">
-              服务体系
+              {isEn ? "Service System" : "服务体系"}
             </h2>
             <div className="hidden md:block h-px flex-1 bg-white/10 mb-3" />
           </div>
           <p className="text-white/50 mt-4 max-w-2xl text-base leading-relaxed">
-            不是提供研究报告，而是打造爆品。不是传统甲乙关系，而是事业伙伴。我们以战略护航为核心，构建从品牌到销量的完整闭环。
+            {isEn
+              ? "Not research reports — we build blockbuster products. Not a traditional client-agency relationship — we are strategic business partners. We build a complete closed loop from brand to sales."
+              : "不是提供研究报告，而是打造爆品。不是传统甲乙关系，而是事业伙伴。我们以战略护航为核心，构建从品牌到销量的完整闭环。"}
           </p>
         </div>
 
@@ -133,7 +213,7 @@ export default function Services() {
         {/* Growth models */}
         <div ref={ref3 as React.RefObject<HTMLDivElement>} className="reveal">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-8 font-['DM_Mono']">
-            猫眼增长模型
+            {isEn ? "Mc&Mamoo Growth Models" : "猫眼增长模型"}
           </div>
           <div className="grid md:grid-cols-3 gap-4">
             {models.map((m) => (

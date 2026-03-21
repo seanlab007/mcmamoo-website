@@ -11,6 +11,7 @@ import {
   getRoutingRules, createRoutingRule, updateRoutingRule, deleteRoutingRule,
   getNodeLogs, getNodeStats,
   getContentCopies, createContentCopy, deleteContentCopy, updateContentCopyStatus,
+  createMillenniumClockReservation, getMillenniumClockReservations,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 
@@ -343,28 +344,15 @@ Required structure:
         scheduledAt: z.number().nullable(), // UTC timestamp ms, null = clear
       }))
       .mutation(async ({ input }) => {
-        const { eq } = await import("drizzle-orm");
-        const { getDb } = await import("./db");
-        const { contentCopies } = await import("../drizzle/schema");
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        await db.update(contentCopies)
-          .set({ scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : null, status: input.scheduledAt ? "approved" : "draft" })
-          .where(eq(contentCopies.id, input.id));
+        const { updateContentCopyStatus } = await import("./db");
+        await updateContentCopyStatus(input.id, input.scheduledAt ? "approved" : "draft");
         return { ok: true };
       }),
     // 获取待发布文案（scheduledAt 已设置）
     getScheduled: adminProcedure
       .query(async () => {
-        const { getDb } = await import("./db");
-        const { contentCopies } = await import("../drizzle/schema");
-        const { isNotNull, asc } = await import("drizzle-orm");
-        const db = await getDb();
-        if (!db) return [];
-        return db.select().from(contentCopies)
-          .where(isNotNull(contentCopies.scheduledAt))
-          .orderBy(asc(contentCopies.scheduledAt))
-          .limit(50);
+        const { getContentCopies } = await import("./db");
+        return getContentCopies();
       }),
   }),
   // ─── Mao 和询表单 & 订阅路由 ───────────────────────────────────────────────────
@@ -378,63 +366,102 @@ Required structure:
         description: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { getDb } = await import("./db");
-        const { maoApplications } = await import("../drizzle/schema");
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-        await db.insert(maoApplications).values({
-          name: input.name,
-          organization: input.organization,
-          consultType: input.consultType,
-          description: input.description,
+        const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+        const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY) ?? "";
+        if (!SUPABASE_URL || !SUPABASE_KEY) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/mao_applications`, {
+          method: "POST",
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+          body: JSON.stringify({ name: input.name, organization: input.organization, consult_type: input.consultType, description: input.description, status: "pending" }),
         });
+        if (!resp.ok) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "提交失败" });
         return { success: true };
       }),
     // 公开：订阅战略简报
     subscribeBrief: publicProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
-        const { getDb } = await import("./db");
-        const { briefSubscribers } = await import("../drizzle/schema");
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-        await db.insert(briefSubscribers).values({ email: input.email }).onDuplicateKeyUpdate({ set: { email: input.email } });
+        const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+        const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY) ?? "";
+        if (!SUPABASE_URL || !SUPABASE_KEY) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/brief_subscribers`, {
+          method: "POST",
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=representation" },
+          body: JSON.stringify({ email: input.email }),
+        });
+        if (!resp.ok) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "订阅失败" });
         return { success: true };
       }),
     // 管理员：获取和询列表
     listApplications: protectedProcedure
       .query(async ({ ctx }) => {
         if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可访问" });
-        const { getDb } = await import("./db");
-        const { maoApplications } = await import("../drizzle/schema");
-        const { desc } = await import("drizzle-orm");
-        const db = await getDb();
-        if (!db) return [];
-        return db.select().from(maoApplications).orderBy(desc(maoApplications.createdAt)).limit(100);
+        const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+        const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY) ?? "";
+        if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/mao_applications?order=created_at.desc&limit=100`, {
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+        });
+        if (!resp.ok) return [];
+        return resp.json() as Promise<Record<string, unknown>[]>;
       }),
     // 管理员：获取订阅者列表
     listSubscribers: protectedProcedure
       .query(async ({ ctx }) => {
         if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可访问" });
-        const { getDb } = await import("./db");
-        const { briefSubscribers } = await import("../drizzle/schema");
-        const { desc } = await import("drizzle-orm");
-        const db = await getDb();
-        if (!db) return [];
-        return db.select().from(briefSubscribers).orderBy(desc(briefSubscribers.createdAt)).limit(500);
+        const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+        const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY) ?? "";
+        if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/brief_subscribers?order=created_at.desc&limit=500`, {
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+        });
+        if (!resp.ok) return [];
+        return resp.json() as Promise<Record<string, unknown>[]>;
       }),
     // 管理员：更新和询状态
     updateApplicationStatus: protectedProcedure
       .input(z.object({ id: z.number(), status: z.enum(["pending", "reviewing", "approved", "rejected"]) }))
       .mutation(async ({ ctx, input }) => {
         if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作" });
-        const { getDb } = await import("./db");
-        const { maoApplications } = await import("../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-        await db.update(maoApplications).set({ status: input.status }).where(eq(maoApplications.id, input.id));
+        const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+        const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY) ?? "";
+        if (!SUPABASE_URL || !SUPABASE_KEY) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/mao_applications?id=eq.${input.id}`, {
+          method: "PATCH",
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+          body: JSON.stringify({ status: input.status }),
+        });
+        if (!resp.ok) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "更新失败" });
         return { success: true };
+      }),
+  }),
+
+  // ─── 万年钟预约 ────────────────────────────────────────────────────────────────────────
+  millenniumClock: router({
+    createReservation: publicProcedure
+      .input((val: unknown) => {
+        const v = val as { name: string; company?: string; email: string; phone?: string; intent: string; message?: string };
+        if (!v.name || !v.email || !v.intent) throw new TRPCError({ code: "BAD_REQUEST", message: "必填字段不能为空" });
+        return v;
+      })
+      .mutation(async ({ input, ctx }) => {
+        const reservation = await createMillenniumClockReservation(input);
+        // 发送邮件通知给 Owner
+        try {
+          const { notifyOwner } = await import("./_core/notification");
+          await notifyOwner({
+            title: `万年钟新预约: ${input.name} (${input.intent})`,
+            content: `姓名: ${input.name}\n机构: ${input.company || '未填写'}\n邮筱: ${input.email}\n电话: ${input.phone || '未填写'}\n意向: ${input.intent}\n说明: ${input.message || '无'}`,
+          });
+        } catch (e) {
+          console.warn("[millenniumClock] 邮件通知失败:", e);
+        }
+        return { success: true, id: (reservation as { id: number })?.id };
+      }),
+
+    getReservations: adminProcedure
+      .query(async () => {
+        return getMillenniumClockReservations();
       }),
   }),
 });

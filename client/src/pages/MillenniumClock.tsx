@@ -5,9 +5,12 @@
  */
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 const OG_IMAGE =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/millennium-clock-og-39WfMQxPGT58EpWj3KviJv.png";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/millennium-clock-og_9be09803.jpg";
+const HERO_VIDEO =
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/millennium-clock-hero_9cdad099.mp4";
 const CLOCK_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao-millennium-clock-e7b5V82FhK3kso5tNhy3YX.webp";
 const INDUSTRY_BG =
@@ -42,6 +45,13 @@ export default function MillenniumClock() {
   const [formData, setFormData] = useState({ name: "", company: "", email: "", phone: "", intent: "exhibition", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [showFounderModal, setShowFounderModal] = useState(false);
+
+  const createReservation = trpc.millenniumClock.createReservation.useMutation({
+    onSuccess: () => { setSubmitted(true); setSubmitting(false); },
+    onError: (err) => { setSubmitError(err.message || "提交失败，请稍后重试"); setSubmitting(false); },
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -65,9 +75,8 @@ export default function MillenniumClock() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setSubmitting(false);
-    setSubmitted(true);
+    setSubmitError("");
+    createReservation.mutate(formData);
   };
 
   return (
@@ -92,7 +101,14 @@ export default function MillenniumClock() {
 
       {/* ── Hero ── */}
       <section className="relative pt-16 overflow-hidden" style={{ minHeight: "100vh" }}>
-        <img src={INDUSTRY_BG} alt="宇宙背景" className="absolute inset-0 w-full h-full object-cover object-center" style={{ opacity: 0.2 }} />
+        <video
+          autoPlay muted loop playsInline
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          style={{ opacity: 0.45 }}
+        >
+          <source src={HERO_VIDEO} type="video/mp4" />
+          <img src={INDUSTRY_BG} alt="宇宙背景" className="absolute inset-0 w-full h-full object-cover object-center" style={{ opacity: 0.2 }} />
+        </video>
         <div className="absolute inset-0 bg-gradient-to-b from-[#020408]/40 via-[#020408]/60 to-[#020408]" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
@@ -146,11 +162,24 @@ export default function MillenniumClock() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/5">
           {specs.map((s) => (
-            <div key={s.label} className="bg-[#020408] p-6">
-              <div className="text-2xl mb-3">{s.icon}</div>
-              <div className="text-white/30 text-xs font-mono tracking-widest uppercase mb-2">{s.label}</div>
-              <div className="text-white text-sm font-semibold leading-relaxed">{s.value}</div>
-            </div>
+            s.label === "发明者" ? (
+              <button
+                key={s.label}
+                onClick={() => setShowFounderModal(true)}
+                className="bg-[#020408] p-6 text-left hover:bg-[#C9A84C]/5 border border-transparent hover:border-[#C9A84C]/20 transition-all duration-300 group"
+              >
+                <div className="text-2xl mb-3">{s.icon}</div>
+                <div className="text-white/30 text-xs font-mono tracking-widest uppercase mb-2">{s.label}</div>
+                <div className="text-[#C9A84C] text-sm font-semibold leading-relaxed group-hover:text-[#E8D5A0] transition-colors">{s.value}</div>
+                <div className="text-white/20 text-xs font-mono mt-2 tracking-wider">点击查看个人介绍 →</div>
+              </button>
+            ) : (
+              <div key={s.label} className="bg-[#020408] p-6">
+                <div className="text-2xl mb-3">{s.icon}</div>
+                <div className="text-white/30 text-xs font-mono tracking-widest uppercase mb-2">{s.label}</div>
+                <div className="text-white text-sm font-semibold leading-relaxed">{s.value}</div>
+              </div>
+            )
           ))}
         </div>
       </section>
@@ -174,6 +203,70 @@ export default function MillenniumClock() {
           </div>
         </div>
       </section>
+
+      {/* ── 代言先生个人介绍弹窗 ── */}
+      {showFounderModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setShowFounderModal(false)}
+        >
+          <div
+            className="relative max-w-2xl w-full mx-4 bg-[#020408] border border-[#C9A84C]/20 p-8 md:p-12"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* 关闭按钮 */}
+            <button
+              onClick={() => setShowFounderModal(false)}
+              className="absolute top-4 right-4 text-white/30 hover:text-white/70 text-2xl font-light transition-colors"
+            >×</button>
+
+            {/* 头部 */}
+            <div className="flex items-start gap-6 mb-8">
+              <div className="flex-shrink-0 w-16 h-16 border border-[#C9A84C]/40 flex items-center justify-center bg-[#C9A84C]/5">
+                <span className="text-[#C9A84C] text-2xl font-bold font-mono">S</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h3 className="text-white text-xl font-bold tracking-wide">Sean DAI</h3>
+                  <span className="text-[#C9A84C]/60 text-xs font-mono tracking-[0.2em] uppercase">代言先生</span>
+                </div>
+                <div className="text-[#4FC3F7]/70 text-sm font-mono tracking-wider">猫眼增长引擎 创始人 &amp; CEO</div>
+                <div className="text-white/30 text-xs font-mono mt-1">万年钟发明者 · 超长期主义倡导者</div>
+              </div>
+            </div>
+
+            {/* 分隔线 */}
+            <div className="w-full h-px bg-gradient-to-r from-[#C9A84C]/40 via-[#4FC3F7]/20 to-transparent mb-8" />
+
+            {/* 个人介绍 */}
+            <div className="space-y-4 text-white/60 text-sm leading-relaxed mb-8">
+              <p>Sean DAI，猫眼增长引擎创始人，连续创业者、品牌成长战略家。在全域消费品、科技、能源等领域累积超过20年品牌建设经验，服务客户包括小仙炖、小罐茶、江中猴姑等头部品牌。</p>
+              <p>作为超长期主义的倡导者，Sean相信企业和文明的真正价值在于建立跨代际的长期影响力。万年钟是他将这一哲学展现为实物的尝试——一个每1万年走一下的计时装置，将人类的短视本能与宇宙尺度的时间对比。</p>
+              <p>他同时是猫眼工业的战略布局者，主导月球氦-3能源提炼、托卡马克装置研发等跨居正项目的长期战略规划，致力于为下一个文明纪元奠基。</p>
+            </div>
+
+            {/* 标签 */}
+            <div className="flex flex-wrap gap-2 mb-8">
+              {["创始人 & CEO", "超长期主义倡导者", "万年钟发明者", "品牌成长战略家", "全域消费品专家"].map(tag => (
+                <span key={tag} className="px-3 py-1 bg-white/5 border border-white/10 text-white/50 text-xs font-mono">{tag}</span>
+              ))}
+            </div>
+
+            {/* 底部操作 */}
+            <div className="flex gap-4">
+              <a
+                href="#contact"
+                onClick={() => setShowFounderModal(false)}
+                className="flex-1 py-3 bg-[#C9A84C] text-black font-bold text-sm tracking-widest uppercase text-center hover:bg-[#E8D5A0] transition-colors"
+              >预约与 Sean 交流</a>
+              <button
+                onClick={() => setShowFounderModal(false)}
+                className="px-6 py-3 border border-white/10 text-white/40 text-sm font-mono hover:border-white/20 transition-colors"
+              >关闭</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── 发展历程 ── */}
       <section className="max-w-7xl mx-auto px-6 py-24">
@@ -289,6 +382,9 @@ export default function MillenniumClock() {
                 className="w-full py-4 bg-[#C9A84C] text-black font-bold tracking-widest uppercase text-sm hover:bg-[#E8D5A0] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                 {submitting ? "提交中..." : "提交意向 →"}
               </button>
+              {submitError && (
+                <p className="text-red-400 text-xs text-center font-mono bg-red-400/10 border border-red-400/20 px-4 py-2">{submitError}</p>
+              )}
               <p className="text-white/20 text-xs text-center font-mono">提交即表示您同意我们与您就合作事宜取得联系</p>
             </form>
           )}
