@@ -2,68 +2,71 @@
   "nav": {
     "home": "Strona główna",
     "about": "O nas",
+    "kol": "KOL",
     "services": "Usługi",
     "cases": "Przypadki",
-    "team": "Zespół",
+    "awards": "Nagrody",
     "contact": "Kontakt",
-    "maoIndustry": "Mao Przemysł",
+    "bookConsultation": "Zarezerwuj konsultację",
+    "maoIndustry": "Mao Industry",
     "maoIndustryHome": "Strona główna przemysłu",
-    "millenniumClock": "Zegar Milenijny",
+    "millenniumClock": "Zegar Tysiąclecia",
     "cooperation": "Partnerstwo"
   },
   "hero": {
-    "badge": "Silnik Wzrostu Marki",
-    "title": "Mc&Mamoo",
-    "subtitle": "Pomnóż zyski swojej marki",
-    "description": "Wiodąca firma doradcza ds. wzrostu marki w Chinach, pomagająca markom konsumenckim osiągnąć przełomowy wzrost.",
-    "cta": "Rozpocznij partnerstwo",
-    "ctaSecondary": "Dowiedz się więcej"
+    "label": "Globalne Premium Zarządzanie Marką",
+    "subtitle": "Zwielokrotnij Zyski Swojej Marki",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Podnieś markę · Zwielokrotnij zyski · Rozwijaj się we wszystkich kanałach",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Zarezerwuj Diagnozę Marki",
+    "cta2": "Zobacz Globalne Przypadki"
   },
   "about": {
     "title": "O nas",
-    "subtitle": "Mc&Mamoo",
-    "description": "Mc&Mamoo to wiodąca firma doradcza ds. wzrostu marki w Chinach z ponad 10-letnim głębokim doświadczeniem w markach konsumenckich.",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo to międzynarodowa firma premium zarządzania marką, z siedzibą w Chicago i Szanghaju, wspierana przez Dark Matter Capital.",
     "mission": "Misja",
     "missionText": "Sprawić, by każda wartościowa marka była widoczna dla większej liczby osób",
     "vision": "Wizja",
-    "visionText": "Stać się najbardziej zaufanym partnerem wzrostu marki w Chinach",
+    "visionText": "Stać się najbardziej zaufanym partnerem wzrostu marki na świecie",
     "values": "Wartości",
-    "valuesText": "Uczciwość, Innowacja, Wzajemny sukces"
+    "valuesText": "Uczciwość · Innowacja · Wspólny sukces"
   },
   "services": {
-    "title": "Główne usługi",
-    "subtitle": "Kompleksowe rozwiązania wzrostu",
-    "brand": "Strategia marki",
-    "brandDesc": "Od pozycjonowania marki po systemy wizualne, budowanie zróżnicowanych aktywów marki",
-    "digital": "Marketing cyfrowy",
+    "title": "Główne Usługi",
+    "subtitle": "Rozwiązania Wzrostu Omnichannel",
+    "brand": "Strategia Marki",
+    "brandDesc": "Od pozycjonowania do systemu wizualnego, budowanie zróżnicowanych aktywów marki",
+    "digital": "Marketing Cyfrowy",
     "digitalDesc": "Zintegrowany marketing omnichannel dla precyzyjnego dotarcia do grup docelowych",
     "kol": "Marketing KOL",
-    "kolDesc": "Matryca najlepszych influencerów ze zintegrowanym zasiewem treści i konwersją",
-    "growth": "Doradztwo ds. wzrostu",
+    "kolDesc": "Matryca top influencerów ze zintegrowaną dystrybucją treści i konwersją",
+    "growth": "Doradztwo Wzrostu",
     "growthDesc": "Strategie wzrostu oparte na danych dla ciągłych przełomów GMV"
   },
   "maoIndustry": {
-    "title": "Mao Przemysł",
+    "title": "Mao Industry",
     "subtitle": "Dywizja Technologii Przemysłowej",
-    "description": "Portfolio technologii przemysłowej zorientowane na przyszłość — od energii księżycowej po produkcję obronną.",
-    "helium3": "Księżycowa Energia Helu-3",
-    "helium3Desc": "Wiodący w eksploracji i wydobyciu zasobów He-3 na Księżycu",
+    "description": "Portfolio technologii przemysłowej zorientowane na przyszłość — od energii księżycowej do produkcji obronnej.",
+    "helium3": "Energia Helu-3 z Księżyca",
+    "helium3Desc": "Lider w eksploracji i wydobyciu He-3 z Księżyca dla czystej energii fuzji dla Ziemi",
     "tokamak": "B+R Urządzenie Tokamak",
-    "tokamakDesc": "Niezależny rozwój urządzeń fuzji z magnetycznym ograniczeniem następnej generacji",
+    "tokamakDesc": "Niezależny rozwój urządzeń fuzji magnetycznej nowej generacji",
     "military": "Produkcja Obronna",
     "militaryDesc": "Wysokoprecyzyjna produkcja komponentów obronnych i integracja systemów",
     "partners": "Partnerzy Strategiczni",
     "cooperationTitle": "Wniosek o Partnerstwo Strategiczne",
-    "cooperationDesc": "Jeśli jesteś zainteresowany strategiczną współpracą z Mao Przemysł, wypełnij poniższe informacje."
+    "cooperationDesc": "Jeśli jesteś zainteresowany współpracą strategiczną z Mao Industry, wypełnij poniższe informacje."
   },
   "millenniumClock": {
-    "title": "Zegar Milenijny",
-    "subtitle": "Jeden tik co 10 000 lat",
-    "description": "Wynaleziony przez myśliciela Seana DAI, przyrząd czasu zaprojektowany, aby przypominać ludzkości o myśleniu w ultra-długich skalach czasowych.",
+    "title": "Zegar Tysiąclecia",
+    "subtitle": "Jedno tykanie co 10 000 lat",
+    "description": "Wynaleziony przez myśliciela Sean DAI, zegar zaprojektowany, aby przypominać ludzkości o myśleniu w ultra-długich skalach czasu.",
     "inventor": "Wynalazca",
     "inventorName": "Sean DAI",
     "reserve": "Rezerwacja / Zapytanie o zakup",
-    "reserveDesc": "Wypełnij swoje dane, a my skontaktujemy się z Tobą"
+    "reserveDesc": "Wypełnij swoje dane, a my się z Tobą skontaktujemy"
   },
   "contact": {
     "title": "Skontaktuj się z nami",
@@ -79,11 +82,11 @@
   "footer": {
     "rights": "Wszelkie prawa zastrzeżone",
     "privacy": "Polityka prywatności",
-    "terms": "Warunki korzystania z usług"
+    "terms": "Warunki korzystania"
   },
   "common": {
     "learnMore": "Dowiedz się więcej",
-    "contactUs": "Skontaktuj się z nami",
+    "contactUs": "Skontaktuj się",
     "viewAll": "Zobacz wszystko",
     "back": "Wstecz",
     "submit": "Wyślij",

@@ -2,72 +2,75 @@
   "nav": {
     "home": "Home",
     "about": "Over ons",
+    "kol": "KOL",
     "services": "Diensten",
     "cases": "Cases",
-    "team": "Team",
+    "awards": "Prijzen",
     "contact": "Contact",
-    "maoIndustry": "Mao Industrie",
+    "bookConsultation": "Afspraak maken",
+    "maoIndustry": "Mao Industry",
     "maoIndustryHome": "Industrie Home",
     "millenniumClock": "Millenniumklok",
     "cooperation": "Partnerschap"
   },
   "hero": {
-    "badge": "Merkgroeimotor",
-    "title": "Mc&Mamoo",
-    "subtitle": "Vermenigvuldig uw merkwinsten",
-    "description": "China's toonaangevend adviesbureau voor merkgroei, toegewijd aan het helpen van consumentenmerken bij het realiseren van baanbrekende groei.",
-    "cta": "Partnerschap starten",
-    "ctaSecondary": "Meer weten"
+    "label": "Wereldwijd Premium Merkbeheer",
+    "subtitle": "Vermenigvuldig Uw Merkwinst",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Merken verheffen · Winst vermenigvuldigen · Groeien op alle kanalen",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Merkdiagnose Boeken",
+    "cta2": "Wereldwijde Cases Bekijken"
   },
   "about": {
     "title": "Over ons",
-    "subtitle": "Mc&Mamoo",
-    "description": "Mc&Mamoo is China's toonaangevend adviesbureau voor merkgroei met meer dan 10 jaar diepgaande expertise in consumentenmerken.",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo is een internationaal premium merkbeheerbedrijf, gevestigd in Chicago en Shanghai, ondersteund door Dark Matter Capital.",
     "mission": "Missie",
     "missionText": "Elk waardevol merk zichtbaar maken voor meer mensen",
     "vision": "Visie",
-    "visionText": "De meest vertrouwde merkgroeipartner in China worden",
+    "visionText": "De meest betrouwbare merkgroeipartner ter wereld worden",
     "values": "Waarden",
-    "valuesText": "Integriteit, Innovatie, Wederzijds succes"
+    "valuesText": "Integriteit · Innovatie · Wederzijds succes"
   },
   "services": {
-    "title": "Kerndiensten",
-    "subtitle": "Alomvattende groeioplossingen",
+    "title": "Kernservices",
+    "subtitle": "Omnichannel Groeioplossingen",
     "brand": "Merkstrategie",
-    "brandDesc": "Van merkpositionering tot visuele systemen, het opbouwen van gedifferentieerde merkactiva",
-    "digital": "Digitale marketing",
+    "brandDesc": "Van merkpositionering tot visueel systeem, gedifferentieerde merkactiva opbouwen",
+    "digital": "Digitale Marketing",
     "digitalDesc": "Geïntegreerde omnichannel marketing om doelgroepen nauwkeurig te bereiken",
-    "kol": "KOL-marketing",
-    "kolDesc": "Top influencer matrix met geïntegreerde content seeding en conversie",
-    "growth": "Groeiadvies",
-    "growthDesc": "Datagedreven groeistrategieën voor continue GMV-doorbraken"
+    "kol": "KOL Marketing",
+    "kolDesc": "Top influencer matrix met geïntegreerde contentverspreiding en conversie",
+    "growth": "Groeiconsultancy",
+    "growthDesc": "Datagedreven groeistrategie voor continue GMV-doorbraken"
   },
   "maoIndustry": {
-    "title": "Mao Industrie",
-    "subtitle": "Industriële Technologie Divisie",
+    "title": "Mao Industry",
+    "subtitle": "Industriële Technologiedivisie",
     "description": "Een toekomstgericht industrieel technologieportfolio — van maanenergie tot defensieproductie.",
     "helium3": "Maanhelium-3 Energie",
-    "helium3Desc": "Leidend in de exploratie en extractie van He-3-bronnen op de maan",
+    "helium3Desc": "Leider in verkenning en winning van He-3 op de maan voor schone fusie-energie voor de aarde",
     "tokamak": "Tokamak Apparaat O&O",
-    "tokamakDesc": "Onafhankelijke ontwikkeling van magnetische insluiting fusieapparaten van de volgende generatie",
+    "tokamakDesc": "Onafhankelijke ontwikkeling van magnetische insluitingsfusieapparaten van de volgende generatie",
     "military": "Defensieproductie",
     "militaryDesc": "Hoogprecisie defensiecomponentenproductie en systeemintegratie",
     "partners": "Strategische Partners",
     "cooperationTitle": "Strategisch Partnerschapsverzoek",
-    "cooperationDesc": "Als u geïnteresseerd bent in strategische samenwerking met Mao Industrie, vul dan de volgende informatie in."
+    "cooperationDesc": "Als u geïnteresseerd bent in strategische samenwerking met Mao Industry, vul dan de onderstaande informatie in."
   },
   "millenniumClock": {
     "title": "De Millenniumklok",
-    "subtitle": "Één tik per 10.000 jaar",
-    "description": "Uitgevonden door denker Sean DAI, een tijdmeter ontworpen om de mensheid te herinneren aan ultra-langetermijndenken.",
+    "subtitle": "Eén tik per 10.000 jaar",
+    "description": "Uitgevonden door denker Sean DAI, een klok ontworpen om de mensheid eraan te herinneren op ultra-lange tijdschalen te denken.",
     "inventor": "Uitvinder",
     "inventorName": "Sean DAI",
     "reserve": "Reservering / Aankoopinformatie",
-    "reserveDesc": "Vul uw gegevens in en wij nemen contact met u op"
+    "reserveDesc": "Vul uw informatie in en wij nemen contact met u op"
   },
   "contact": {
-    "title": "Neem contact op",
-    "subtitle": "Begin uw merkgroeireis",
+    "title": "Neem Contact Op",
+    "subtitle": "Begin uw Merkgroeireis",
     "name": "Naam",
     "email": "E-mail",
     "company": "Bedrijf",
@@ -83,13 +86,13 @@
   },
   "common": {
     "learnMore": "Meer weten",
-    "contactUs": "Neem contact op",
+    "contactUs": "Contact opnemen",
     "viewAll": "Alles bekijken",
     "back": "Terug",
     "submit": "Verzenden",
     "cancel": "Annuleren",
     "loading": "Laden...",
     "success": "Succesvol verzonden",
-    "error": "Verzenden mislukt, probeer opnieuw"
+    "error": "Verzenden mislukt, probeer het opnieuw"
   }
 }

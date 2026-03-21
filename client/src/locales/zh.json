@@ -2,22 +2,25 @@
   "nav": {
     "home": "首页",
     "about": "关于我们",
-    "services": "服务",
-    "cases": "案例",
-    "team": "团队",
+    "kol": "KOL合作",
+    "services": "服务体系",
+    "cases": "全球案例",
+    "awards": "荣誉奖项",
     "contact": "联系我们",
+    "bookConsultation": "预约咨询",
     "maoIndustry": "猫眼工业",
     "maoIndustryHome": "工业板块首页",
     "millenniumClock": "万年钟详情",
     "cooperation": "合作咨询"
   },
   "hero": {
-    "badge": "品牌增长引擎",
-    "title": "猫眼增长引擎",
-    "subtitle": "让品牌利润倍增",
-    "description": "我们是中国顶级品牌增长咨询机构，专注于帮助消费品牌实现从0到1的突破性增长。",
-    "cta": "开始合作",
-    "ctaSecondary": "了解更多"
+    "label": "Global Premium Brand Management · 全球顶奢品牌管理",
+    "subtitle": "Multiply Your Brand Profits",
+    "brandName": "猫眼增长引擎",
+    "tagline": "让品牌显贵，让利润倍增，让增长全域",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "预约品牌诊断",
+    "cta2": "查看全球案例"
   },
   "about": {
     "title": "关于我们",

@@ -2,33 +2,36 @@
   "nav": {
     "home": "Home",
     "about": "About",
+    "kol": "KOL",
     "services": "Services",
     "cases": "Cases",
-    "team": "Team",
+    "awards": "Awards",
     "contact": "Contact",
+    "bookConsultation": "Book Consultation",
     "maoIndustry": "Mao Industry",
     "maoIndustryHome": "Industry Home",
     "millenniumClock": "Millennium Clock",
     "cooperation": "Partnership"
   },
   "hero": {
-    "badge": "Brand Growth Engine",
-    "title": "Mc&Mamoo",
+    "label": "Global Premium Brand Management",
     "subtitle": "Multiply Your Brand Profits",
-    "description": "China's premier brand growth consultancy, dedicated to helping consumer brands achieve breakthrough growth from zero to one.",
-    "cta": "Start Partnership",
-    "ctaSecondary": "Learn More"
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Book Brand Diagnosis",
+    "cta2": "View Global Cases"
   },
   "about": {
     "title": "About Us",
-    "subtitle": "Mc&Mamoo Brand Management",
-    "description": "Mc&Mamoo is China's leading brand growth consultancy with over 10 years of deep expertise in consumer brands. Driven by data and empowered by creativity, we help brands achieve sustainable high-speed growth.",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo is a premier international brand management firm, rooted in Chicago and Shanghai, backed by Dark Matter Capital.",
     "mission": "Mission",
     "missionText": "Make every valuable brand seen by more people",
     "vision": "Vision",
-    "visionText": "Become China's most trusted brand growth partner",
+    "visionText": "Become the world's most trusted brand growth partner",
     "values": "Values",
-    "valuesText": "Integrity, Innovation, Mutual Success"
+    "valuesText": "Integrity · Innovation · Mutual Success"
   },
   "services": {
     "title": "Core Services",
