@@ -1,7 +1,29 @@
 /*
- * Footer — 猫眼增长引擎官网页脚
+ * Footer — Mc&Mamoo Growth Engine
+ * i18n: full bilingual support
  */
+import { useTranslation } from "react-i18next";
+
 export default function Footer() {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
+
+  const links = isEn
+    ? [
+        { label: "About Us", href: "#about" },
+        { label: "Methodology", href: "#methodology" },
+        { label: "Services", href: "#services" },
+        { label: "Cases", href: "#cases" },
+        { label: "Contact", href: "#contact" },
+      ]
+    : [
+        { label: "关于我们", href: "#about" },
+        { label: "核心方法论", href: "#methodology" },
+        { label: "服务体系", href: "#services" },
+        { label: "标杆案例", href: "#cases" },
+        { label: "联系我们", href: "#contact" },
+      ];
+
   return (
     <footer className="bg-[#0A0A0A] border-t border-white/5 py-12">
       <div className="container">
@@ -15,23 +37,19 @@ export default function Footer() {
                 <path d="M18 5 L20.5 12 L18 19 L15.5 12 Z" stroke="#C9A84C" strokeWidth="1" fill="#C9A84C" fillOpacity="0.15"/>
               </svg>
               <span className="text-[#C9A84C] font-['Cormorant_Garamond'] font-semibold text-base tracking-wide">
-                Mc&amp;Mamoo Brand Management Inc.
+                {isEn ? "Mc&Mamoo Growth Engine" : "Mc&Mamoo Brand Management Inc."}
               </span>
             </div>
             <p className="text-white/30 text-xs tracking-wide">
-              猫眼企业发展（上海）有限公司 · 全球新消费第一品牌管理公司
+              {isEn
+                ? "Maoyan Enterprise Development (Shanghai) Co., Ltd. · Global #1 New Consumer Brand Management Company"
+                : "猫眼企业发展（上海）有限公司 · 全球新消费第一品牌管理公司"}
             </p>
           </div>
 
           {/* Links */}
           <div className="flex flex-wrap gap-6">
-            {[
-              { label: "关于我们", href: "#about" },
-              { label: "核心方法论", href: "#methodology" },
-              { label: "服务体系", href: "#services" },
-              { label: "标杆案例", href: "#cases" },
-              { label: "联系我们", href: "#contact" },
-            ].map((item) => (
+            {links.map((item) => (
               <button
                 key={item.href}
                 onClick={() => document.querySelector(item.href)?.scrollIntoView({ behavior: "smooth" })}
@@ -47,7 +65,9 @@ export default function Footer() {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-white/20 text-xs">
-            ©2024 Mc&amp;Mamoo Brand Management Inc. 猫眼企业发展（上海）有限公司 版权所有
+            {isEn
+              ? "©2024 Mc&Mamoo Growth Engine. Maoyan Enterprise Development (Shanghai) Co., Ltd. All Rights Reserved."
+              : "©2024 Mc&Mamoo Brand Management Inc. 猫眼企业发展（上海）有限公司 版权所有"}
           </p>
           <p className="text-white/20 text-xs font-['DM_Mono']">
             www.mcmamoo.com
@@ -73,7 +93,9 @@ export default function Footer() {
               DARK MATTER BANK
             </span>
           </a>
-          <span className="text-white/10 text-xs font-['DM_Mono'] tracking-widest hidden sm:inline">— 同一家族旗下的全球金融生态</span>
+          <span className="text-white/10 text-xs font-['DM_Mono'] tracking-widest hidden sm:inline">
+            {isEn ? "— Global Financial Ecosystem Under the Same Family" : "— 同一家族旗下的全球金融生态"}
+          </span>
         </div>
       </div>
     </footer>
