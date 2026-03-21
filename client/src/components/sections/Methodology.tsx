@@ -53,7 +53,7 @@ const THINKERS_EN = [
   { name: "L.V. Bertalanffy", theory: "Systems Theory" },
   { name: "Jack Trout", theory: "Positioning Theory" },
   { name: "Joseph Schumpeter", theory: "Innovation Theory" },
-  { name: "Sean DAI", theory: "Mao Eye Methodology" },
+  { name: "Sean DAI", theory: "Mc&Mamoo Methodology" },
 ];
 
 export default function Methodology() {
@@ -79,7 +79,7 @@ export default function Methodology() {
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="section-label mb-4">02 — Core Methodology</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
-            {isEn ? "Mao Eye Methodology" : "猫眼方法论"}
+            {isEn ? "Mc&Mamoo Methodology" : "猫眼方法论"}
           </h2>
           <p className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl italic mb-4">
             {isEn ? "Make Brands Premium · Multiply Profits · Grow Across All Channels" : "让品牌显贵，让利润倍增，让增长全域"}

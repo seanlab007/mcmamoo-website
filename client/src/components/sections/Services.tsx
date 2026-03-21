@@ -37,13 +37,13 @@ const services_en = [
     num: "01",
     title: "Full-Case Brand Strategy for New Consumer #1 Brand",
     en: "Full-Case Brand Strategy",
-    items: ["Corporate Strategy Formulation", "#1 Brand Strategic Planning", "Strategic Alignment Design", "Category Strategy Planning", "Brand Positioning", "Hero Product Visual Hammer Design", "Mao Eye Symbol System"],
+    items: ["Corporate Strategy Formulation", "#1 Brand Strategic Planning", "Strategic Alignment Design", "Category Strategy Planning", "Brand Positioning", "Hero Product Visual Hammer Design", "Mc&Mamoo Symbol System"],
   },
   {
     num: "02",
     title: "Blockbuster Product Marketing",
     en: "Blockbuster Product Marketing",
-    items: ["Hero Product Core Value Extraction", "Brand 360° Leadership Building", "Mao Eye Honeycomb-15 Model", "Product Launch Communication Strategy", "IP Building & Emotional Resonance", "KOL/KOC Marketing Matrix"],
+    items: ["Hero Product Core Value Extraction", "Brand 360° Leadership Building", "Mc&Mamoo Honeycomb-15 Model", "Product Launch Communication Strategy", "IP Building & Emotional Resonance", "KOL/KOC Marketing Matrix"],
   },
   {
     num: "03",
@@ -67,7 +67,7 @@ const models_zh = [
 
 const models_en = [
   { title: "Growth Triangle", formula: "Sustained Growth = Strong Business Model × Right Strategy × Excellent Organization" },
-  { title: "Mao Eye Penetration Formula", formula: "S = C (Customers) × D (Distribution Index) × P (Price Index) × F (Purchase Frequency)" },
+  { title: "Mc&Mamoo Penetration Formula", formula: "S = C (Customers) × D (Distribution Index) × P (Price Index) × F (Purchase Frequency)" },
   { title: "Honeycomb-15 Hero Product Model", formula: "Emotional Value + Intrinsic Value + Premium Space + Evolution Trend + Scene Perception = Hero Product" },
 ];
 
@@ -128,7 +128,7 @@ export default function Services() {
         {/* Growth models */}
         <div ref={ref3 as React.RefObject<HTMLDivElement>} className="reveal">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-8 font-['DM_Mono']">
-            {isEn ? "Mao Eye Growth Models" : "猫眼增长模型"}
+            {isEn ? "Mc&Mamoo Growth Models" : "猫眼增长模型"}
           </div>
           <div className="grid md:grid-cols-3 gap-4">
             {models.map((m) => (
