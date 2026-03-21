@@ -2,7 +2,7 @@
  * Navbar — 猫眼增长引擎官网导航
  * Design: 透明渐变 → 深色固定导航，金色 hover 线条
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 
 const navItems = [
@@ -81,14 +81,44 @@ export default function Navbar() {
                 {item.label}
               </button>
             ))}
-            <button
-              onClick={() => handleNav(industryItem.href)}
-              className="relative text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
-            >
-              <span style={{ width: 6, height: 6, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #4FC3F7" }} />
-              猫眼工业
-            </button>
+            {/* 猫眼工业 下拉菜单 */}
+            <div className="relative group">
+              <button
+                onClick={() => handleNav(industryItem.href)}
+                className="relative text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
+                style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+              >
+                <span style={{ width: 6, height: 6, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #4FC3F7" }} />
+                猫眼工业
+                <span className="text-[#4FC3F7]/40 text-[0.6rem] ml-0.5">▾</span>
+              </button>
+              {/* 下拉菜单 */}
+              <div className="absolute top-full left-0 mt-1 w-44 bg-[#0A0A0A]/98 border border-[#4FC3F7]/20 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <a
+                  href="#mao-industry"
+                  onClick={(e) => { e.preventDefault(); handleNav("#mao-industry"); }}
+                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#4FC3F7] hover:bg-[#4FC3F7]/5 text-xs font-mono tracking-wider transition-colors duration-200 border-b border-white/5"
+                >
+                  <span style={{ width: 4, height: 4, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block" }} />
+                  工业板块首页
+                </a>
+                <a
+                  href="/millennium-clock"
+                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 text-xs font-mono tracking-wider transition-colors duration-200 border-b border-white/5"
+                >
+                  <span style={{ width: 4, height: 4, background: "#C9A84C", borderRadius: "50%", display: "inline-block" }} />
+                  万年钟详情页
+                </a>
+                <a
+                  href="#contact"
+                  onClick={(e) => { e.preventDefault(); handleNav("#contact"); }}
+                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 text-xs font-mono tracking-wider transition-colors duration-200"
+                >
+                  <span style={{ width: 4, height: 4, background: "#C9A84C", display: "inline-block" }} />
+                  合作咨询
+                </a>
+              </div>
+            </div>
             <a
               href="/maothink"
               className="relative text-[#8B1A1A] hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"

@@ -5,9 +5,12 @@
  */
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 const OG_IMAGE =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/millennium-clock-og-39WfMQxPGT58EpWj3KviJv.png";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/millennium-clock-og_9be09803.jpg";
+const HERO_VIDEO =
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/millennium-clock-hero_9cdad099.mp4";
 const CLOCK_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao-millennium-clock-e7b5V82FhK3kso5tNhy3YX.webp";
 const INDUSTRY_BG =
@@ -42,6 +45,12 @@ export default function MillenniumClock() {
   const [formData, setFormData] = useState({ name: "", company: "", email: "", phone: "", intent: "exhibition", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const createReservation = trpc.millenniumClock.createReservation.useMutation({
+    onSuccess: () => { setSubmitted(true); setSubmitting(false); },
+    onError: (err) => { setSubmitError(err.message || "提交失败，请稍后重试"); setSubmitting(false); },
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -65,9 +74,8 @@ export default function MillenniumClock() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setSubmitting(false);
-    setSubmitted(true);
+    setSubmitError("");
+    createReservation.mutate(formData);
   };
 
   return (
@@ -92,7 +100,14 @@ export default function MillenniumClock() {
 
       {/* ── Hero ── */}
       <section className="relative pt-16 overflow-hidden" style={{ minHeight: "100vh" }}>
-        <img src={INDUSTRY_BG} alt="宇宙背景" className="absolute inset-0 w-full h-full object-cover object-center" style={{ opacity: 0.2 }} />
+        <video
+          autoPlay muted loop playsInline
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          style={{ opacity: 0.45 }}
+        >
+          <source src={HERO_VIDEO} type="video/mp4" />
+          <img src={INDUSTRY_BG} alt="宇宙背景" className="absolute inset-0 w-full h-full object-cover object-center" style={{ opacity: 0.2 }} />
+        </video>
         <div className="absolute inset-0 bg-gradient-to-b from-[#020408]/40 via-[#020408]/60 to-[#020408]" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
@@ -289,6 +304,9 @@ export default function MillenniumClock() {
                 className="w-full py-4 bg-[#C9A84C] text-black font-bold tracking-widest uppercase text-sm hover:bg-[#E8D5A0] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                 {submitting ? "提交中..." : "提交意向 →"}
               </button>
+              {submitError && (
+                <p className="text-red-400 text-xs text-center font-mono bg-red-400/10 border border-red-400/20 px-4 py-2">{submitError}</p>
+              )}
               <p className="text-white/20 text-xs text-center font-mono">提交即表示您同意我们与您就合作事宜取得联系</p>
             </form>
           )}

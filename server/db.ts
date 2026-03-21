@@ -246,3 +246,24 @@ export async function deleteContentCopy(id: number) {
 export async function updateContentCopyStatus(id: number, status: "draft" | "approved" | "published") {
   await supabasePatch("content_copies", `id=eq.${id}`, { status });
 }
+
+// ─── Millennium Clock Reservations ───────────────────────────────────────────
+export interface MillenniumClockReservationInput {
+  name: string;
+  company?: string;
+  email: string;
+  phone?: string;
+  intent: string;
+  message?: string;
+}
+
+export async function createMillenniumClockReservation(data: MillenniumClockReservationInput) {
+  return supabaseInsert<Record<string, unknown>>("millennium_clock_reservations", {
+    ...data,
+    status: "pending",
+  });
+}
+
+export async function getMillenniumClockReservations() {
+  return supabaseGet<Record<string, unknown>>("millennium_clock_reservations", "order=createdAt.desc&limit=200");
+}

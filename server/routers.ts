@@ -11,6 +11,7 @@ import {
   getRoutingRules, createRoutingRule, updateRoutingRule, deleteRoutingRule,
   getNodeLogs, getNodeStats,
   getContentCopies, createContentCopy, deleteContentCopy, updateContentCopyStatus,
+  createMillenniumClockReservation, getMillenniumClockReservations,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 
@@ -435,6 +436,35 @@ Required structure:
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         await db.update(maoApplications).set({ status: input.status }).where(eq(maoApplications.id, input.id));
         return { success: true };
+      }),
+  }),
+
+  // ─── 万年钟预约 ────────────────────────────────────────────────────────────────────────
+  millenniumClock: router({
+    createReservation: publicProcedure
+      .input((val: unknown) => {
+        const v = val as { name: string; company?: string; email: string; phone?: string; intent: string; message?: string };
+        if (!v.name || !v.email || !v.intent) throw new TRPCError({ code: "BAD_REQUEST", message: "必填字段不能为空" });
+        return v;
+      })
+      .mutation(async ({ input, ctx }) => {
+        const reservation = await createMillenniumClockReservation(input);
+        // 发送邮件通知给 Owner
+        try {
+          const { notifyOwner } = await import("./_core/notification");
+          await notifyOwner({
+            title: `万年钟新预约: ${input.name} (${input.intent})`,
+            content: `姓名: ${input.name}\n机构: ${input.company || '未填写'}\n邮筱: ${input.email}\n电话: ${input.phone || '未填写'}\n意向: ${input.intent}\n说明: ${input.message || '无'}`,
+          });
+        } catch (e) {
+          console.warn("[millenniumClock] 邮件通知失败:", e);
+        }
+        return { success: true, id: (reservation as { id: number })?.id };
+      }),
+
+    getReservations: adminProcedure
+      .query(async () => {
+        return getMillenniumClockReservations();
       }),
   }),
 });

@@ -155,3 +155,18 @@ export const contentCopies = pgTable("content_copies", {
 });
 export type ContentCopy = typeof contentCopies.$inferSelect;
 export type InsertContentCopy = typeof contentCopies.$inferInsert;
+
+// ─── 万年钟预约表 ─────────────────────────────────────────────────────────────────────────────────
+export const millenniumClockReservations = pgTable("millennium_clock_reservations", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  company: varchar("company", { length: 256 }),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 64 }),
+  intent: varchar("intent", { length: 64 }).notNull().default("exhibition"),
+  message: text("message"),
+  status: varchar("status", { length: 32 }).notNull().default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type MillenniumClockReservation = typeof millenniumClockReservations.$inferSelect;
+export type InsertMillenniumClockReservation = typeof millenniumClockReservations.$inferInsert;
