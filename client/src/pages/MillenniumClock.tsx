@@ -3,35 +3,21 @@
  * 发明者：代言先生（Sean DAI）
  * 设计：超长期主义 · 宇宙尺度时间 · 科幻极简暗黑
  */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 
+const OG_IMAGE =
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/millennium-clock-og-39WfMQxPGT58EpWj3KviJv.png";
 const CLOCK_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao-millennium-clock-e7b5V82FhK3kso5tNhy3YX.webp";
 const INDUSTRY_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao-industry-bg-5fKD5GfBWeFuC7bBKnwxHN.webp";
 
 const timeline = [
-  {
-    year: "2019",
-    title: "概念诞生",
-    desc: "代言先生在思考人类文明的长期存续问题时，提出「万年钟」概念：一个以万年为单位走动的计时装置，用以对抗人类天然的短视本能。",
-  },
-  {
-    year: "2021",
-    title: "哲学框架建立",
-    desc: "发展出「超长期主义」思想体系：在宇宙138亿年的时间轴上，人类文明不过是一瞬。万年钟成为这一哲学的物质载体与仪式象征。",
-  },
-  {
-    year: "2023",
-    title: "工程原型设计",
-    desc: "联合精密机械工程师完成第一代原型设计。采用恒温铟钢合金框架、真空密封腔体、原子钟校准系统，确保万年精度±1秒。",
-  },
-  {
-    year: "2025",
-    title: "猫眼工业代言",
-    desc: "万年钟成为猫眼工业的精神图腾与代言产品，象征猫眼工业在月球氦-3能源、托卡马克聚变等领域的超长期战略布局。",
-  },
+  { year: "2019", title: "概念诞生", desc: "代言先生在思考人类文明的长期存续问题时，提出「万年钟」概念：一个以万年为单位走动的计时装置，用以对抗人类天然的短视本能。" },
+  { year: "2021", title: "哲学框架建立", desc: "发展出「超长期主义」思想体系：在宇宙138亿年的时间轴上，人类文明不过是一瞬。万年钟成为这一哲学的物质载体与仪式象征。" },
+  { year: "2023", title: "工程原型设计", desc: "联合精密机械工程师完成第一代原型设计。采用恒温铟钢合金框架、真空密封腔体、原子钟校准系统，确保万年精度±1秒。" },
+  { year: "2025", title: "猫眼工业代言", desc: "万年钟成为猫眼工业的精神图腾与代言产品，象征猫眼工业在月球氦-3能源、托卡马克聚变等领域的超长期战略布局。" },
 ];
 
 const specs = [
@@ -46,33 +32,47 @@ const specs = [
 ];
 
 const philosophyPoints = [
-  {
-    title: "对抗短视本能",
-    desc: "人类大脑进化为处理即时威胁，天然倾向于短期决策。万年钟通过极端的时间尺度对比，强迫观者重新校准自己的决策时间框架。",
-  },
-  {
-    title: "文明尺度的责任",
-    desc: "当你意识到今天的一个决策将在10,000年后仍然产生影响，你对能源、环境、基因、教育的态度将彻底改变。这是万年钟最深层的设计意图。",
-  },
-  {
-    title: "星际文明的预演",
-    desc: "人类若要成为跨星际文明，必须学会以千年、万年为单位规划。万年钟是这种思维方式的训练装置，也是文明成熟度的标志。",
-  },
-  {
-    title: "超长期主义宣言",
-    desc: "「我们不是在为下一个季度做决策，我们是在为下一个文明纪元奠基。」——代言先生 Sean DAI",
-  },
+  { title: "对抗短视本能", desc: "人类大脑进化为处理即时威胁，天然倾向于短期决策。万年钟通过极端的时间尺度对比，强迫观者重新校准自己的决策时间框架。" },
+  { title: "文明尺度的责任", desc: "当你意识到今天的一个决策将在10,000年后仍然产生影响，你对能源、环境、基因、教育的态度将彻底改变。这是万年钟最深层的设计意图。" },
+  { title: "星际文明的预演", desc: "人类若要成为跨星际文明，必须学会以千年、万年为单位规划。万年钟是这种思维方式的训练装置，也是文明成熟度的标志。" },
+  { title: "超长期主义宣言", desc: "「我们不是在为下一个季度做决策，我们是在为下一个文明纪元奠基。」——代言先生 Sean DAI" },
 ];
 
 export default function MillenniumClock() {
+  const [formData, setFormData] = useState({ name: "", company: "", email: "", phone: "", intent: "exhibition", message: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     document.title = "代言万年钟 — 每10,000年走一下 | 猫眼工业";
+    const setMeta = (prop: string, content: string, attr = "property") => {
+      let el = document.querySelector(`meta[${attr}="${prop}"]`) as HTMLMetaElement | null;
+      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, prop); document.head.appendChild(el); }
+      el.setAttribute("content", content);
+    };
+    setMeta("og:title", "代言万年钟 — 每10,000年走一下 | 猫眼工业");
+    setMeta("og:description", "由思想家代言先生发明，每一万年走一下的计时装置。超长期主义的物质载体，文明尺度的思考工具。");
+    setMeta("og:image", OG_IMAGE);
+    setMeta("og:url", window.location.href);
+    setMeta("og:type", "website");
+    setMeta("twitter:card", "summary_large_image", "name");
+    setMeta("twitter:image", OG_IMAGE, "name");
+    setMeta("twitter:title", "代言万年钟 MILLENNIUM CLOCK", "name");
+    setMeta("twitter:description", "每10,000年走一下 · 猫眼工业代言 · 超长期主义", "name");
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    await new Promise(r => setTimeout(r, 1200));
+    setSubmitting(false);
+    setSubmitted(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#020408] text-white">
-      {/* ── 顶部导航返回 ── */}
+      {/* ── 顶部导航 ── */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#020408]/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/">
@@ -84,106 +84,51 @@ export default function MillenniumClock() {
           <div className="text-[#4FC3F7]/60 text-xs font-mono tracking-[0.3em] uppercase">
             MAO INDUSTRY · MILLENNIUM CLOCK
           </div>
-          <Link href="/#contact">
-            <a className="px-4 py-2 border border-[#C9A84C]/40 text-[#C9A84C] text-xs font-mono tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-all duration-300">
-              合作咨询
-            </a>
-          </Link>
+          <a href="/#contact" className="px-4 py-2 border border-[#C9A84C]/40 text-[#C9A84C] text-xs font-mono tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-all duration-300">
+            合作咨询
+          </a>
         </div>
       </header>
 
-      {/* ── Hero 区 ── */}
+      {/* ── Hero ── */}
       <section className="relative pt-16 overflow-hidden" style={{ minHeight: "100vh" }}>
-        {/* 背景图 */}
-        <img
-          src={INDUSTRY_BG}
-          alt="宇宙背景"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-          style={{ opacity: 0.2 }}
-        />
+        <img src={INDUSTRY_BG} alt="宇宙背景" className="absolute inset-0 w-full h-full object-cover object-center" style={{ opacity: 0.2 }} />
         <div className="absolute inset-0 bg-gradient-to-b from-[#020408]/40 via-[#020408]/60 to-[#020408]" />
-
         <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* 左：文字 */}
           <div>
             <div className="flex items-center gap-3 mb-6">
               <span className="w-10 h-px bg-[#4FC3F7]" />
-              <span className="text-[#4FC3F7] text-xs tracking-[0.4em] uppercase font-mono">
-                ENDORSED BY MAO INDUSTRY
-              </span>
+              <span className="text-[#4FC3F7] text-xs tracking-[0.4em] uppercase font-mono">ENDORSED BY MAO INDUSTRY</span>
             </div>
-
-            <h1
-              className="font-bold leading-tight mb-4"
-              style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)" }}
-            >
-              代言
-              <br />
-              <span className="text-[#4FC3F7]">万年钟</span>
+            <h1 className="font-bold leading-tight mb-4" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)" }}>
+              代言<br /><span className="text-[#4FC3F7]">万年钟</span>
             </h1>
-
             <div className="text-[#C9A84C] font-mono text-sm tracking-[0.4em] mb-8 uppercase">
               MILLENNIUM TIMEPIECE · 每 10,000 年 · 走一下
             </div>
-
             <p className="text-white/60 text-lg leading-relaxed mb-6 max-w-xl">
-              由思想家、发明家{" "}
-              <span className="text-white font-semibold">代言先生（Sean DAI）</span>{" "}
-              构思发明。万年钟的指针每隔一万年才走动一格——
-              它不是用来看时间的，而是用来提醒人类：
+              由思想家、发明家 <span className="text-white font-semibold">代言先生（Sean DAI）</span> 构思发明。万年钟的指针每隔一万年才走动一格——它不是用来看时间的，而是用来提醒人类：
             </p>
-
             <blockquote className="border-l-2 border-[#4FC3F7] pl-6 mb-10">
               <p className="text-[#4FC3F7] text-xl font-light italic leading-relaxed">
-                "在宇宙尺度的时间轴上，
-                <br />
-                我们的决策应当以万年为单位思考。"
+                "在宇宙尺度的时间轴上，<br />我们的决策应当以万年为单位思考。"
               </p>
-              <cite className="text-white/40 text-sm font-mono mt-3 block not-italic">
-                — 代言先生 Sean DAI，超长期主义创始人
-              </cite>
+              <cite className="text-white/40 text-sm font-mono mt-3 block not-italic">— 代言先生 Sean DAI，超长期主义创始人</cite>
             </blockquote>
-
             <div className="flex flex-wrap gap-4">
-              <a
-                href="/#contact"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-[#C9A84C] text-black text-sm font-bold tracking-widest uppercase hover:bg-[#E8D5A0] transition-colors duration-300"
-              >
-                合作咨询 →
+              <a href="#reservation" onClick={(e) => { e.preventDefault(); document.querySelector('#reservation')?.scrollIntoView({ behavior: 'smooth' }); }}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-[#C9A84C] text-black text-sm font-bold tracking-widest uppercase hover:bg-[#E8D5A0] transition-colors duration-300">
+                预约参观 →
               </a>
-              <a
-                href="/#mao-industry"
-                className="inline-flex items-center gap-2 px-8 py-4 border border-[#4FC3F7]/40 text-[#4FC3F7] text-sm font-mono tracking-widest uppercase hover:bg-[#4FC3F7]/10 transition-all duration-300"
-              >
+              <a href="/#mao-industry" className="inline-flex items-center gap-2 px-8 py-4 border border-[#4FC3F7]/40 text-[#4FC3F7] text-sm font-mono tracking-widest uppercase hover:bg-[#4FC3F7]/10 transition-all duration-300">
                 猫眼工业 →
               </a>
             </div>
           </div>
-
-          {/* 右：万年钟图 */}
           <div className="relative">
-            {/* 光晕 */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: "radial-gradient(ellipse at center, rgba(79,195,247,0.12) 0%, transparent 70%)",
-                filter: "blur(40px)",
-              }}
-            />
-            <img
-              src={CLOCK_IMG}
-              alt="代言万年钟"
-              className="relative z-10 w-full rounded-sm"
-              style={{ maxHeight: "600px", objectFit: "cover" }}
-            />
-            {/* 扫描线 */}
-            <div
-              className="absolute inset-0 z-20 pointer-events-none"
-              style={{
-                background: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(79,195,247,0.02) 3px, rgba(79,195,247,0.02) 6px)",
-              }}
-            />
-            {/* 角落装饰 */}
+            <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, rgba(79,195,247,0.12) 0%, transparent 70%)", filter: "blur(40px)" }} />
+            <img src={CLOCK_IMG} alt="代言万年钟" className="relative z-10 w-full rounded-sm" style={{ maxHeight: "600px", objectFit: "cover" }} />
+            <div className="absolute inset-0 z-20 pointer-events-none" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(79,195,247,0.02) 3px, rgba(79,195,247,0.02) 6px)" }} />
             <div className="absolute top-4 left-4 z-30 w-6 h-6 border-t-2 border-l-2 border-[#4FC3F7]/60" />
             <div className="absolute top-4 right-4 z-30 w-6 h-6 border-t-2 border-r-2 border-[#4FC3F7]/60" />
             <div className="absolute bottom-4 left-4 z-30 w-6 h-6 border-b-2 border-l-2 border-[#4FC3F7]/60" />
@@ -217,18 +162,11 @@ export default function MillenniumClock() {
             <span className="w-10 h-px bg-[#4FC3F7]" />
             <h2 className="text-white text-2xl font-bold tracking-wide">超长期主义哲学</h2>
           </div>
-          <p className="text-white/40 text-sm font-mono tracking-wider mb-12 ml-14">
-            ULTRA-LONG-TERMISM PHILOSOPHY
-          </p>
+          <p className="text-white/40 text-sm font-mono tracking-wider mb-12 ml-14">ULTRA-LONG-TERMISM PHILOSOPHY</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {philosophyPoints.map((p, i) => (
               <div key={i} className="border border-white/5 p-8 relative">
-                <div
-                  className="absolute top-6 right-6 text-[#4FC3F7]/10 font-bold"
-                  style={{ fontSize: "4rem", lineHeight: 1, fontFamily: "monospace" }}
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </div>
+                <div className="absolute top-6 right-6 text-[#4FC3F7]/10 font-bold" style={{ fontSize: "4rem", lineHeight: 1, fontFamily: "monospace" }}>{String(i + 1).padStart(2, "0")}</div>
                 <h3 className="text-[#4FC3F7] text-lg font-bold mb-4">{p.title}</h3>
                 <p className="text-white/50 text-sm leading-relaxed">{p.desc}</p>
               </div>
@@ -245,7 +183,6 @@ export default function MillenniumClock() {
           <div className="flex-1 h-px bg-white/5" />
         </div>
         <div className="relative">
-          {/* 时间轴线 */}
           <div className="absolute left-16 top-0 bottom-0 w-px bg-gradient-to-b from-[#4FC3F7]/40 via-[#C9A84C]/40 to-transparent" />
           <div className="space-y-12">
             {timeline.map((t, i) => (
@@ -253,7 +190,6 @@ export default function MillenniumClock() {
                 <div className="flex-shrink-0 w-32 text-right">
                   <span className="text-[#C9A84C] font-bold text-xl font-mono">{t.year}</span>
                 </div>
-                {/* 节点 */}
                 <div className="flex-shrink-0 w-3 h-3 rounded-full bg-[#4FC3F7] mt-1.5 relative z-10 ring-4 ring-[#4FC3F7]/20" />
                 <div className="flex-1 pb-4">
                   <h3 className="text-white font-bold text-lg mb-2">{t.title}</h3>
@@ -267,32 +203,19 @@ export default function MillenniumClock() {
 
       {/* ── CTA ── */}
       <section className="relative py-24 overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "radial-gradient(ellipse at center, rgba(79,195,247,0.06) 0%, transparent 70%)",
-          }}
-        />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, rgba(79,195,247,0.06) 0%, transparent 70%)" }} />
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
-          <div className="text-[#4FC3F7]/40 text-xs font-mono tracking-[0.4em] uppercase mb-6">
-            MAO INDUSTRY · COLLABORATION
-          </div>
+          <div className="text-[#4FC3F7]/40 text-xs font-mono tracking-[0.4em] uppercase mb-6">MAO INDUSTRY · COLLABORATION</div>
           <h2 className="text-white text-3xl md:text-4xl font-bold mb-6 leading-tight">
-            以万年尺度思考，
-            <br />
-            <span className="text-[#C9A84C]">与猫眼工业共建文明基础设施</span>
+            以万年尺度思考，<br /><span className="text-[#C9A84C]">与猫眼工业共建文明基础设施</span>
           </h2>
           <p className="text-white/40 text-base leading-relaxed mb-10">
-            无论是月球氦-3能源合作、托卡马克技术授权，
-            还是万年钟展览与超长期主义论坛合作，
-            我们期待与同频的文明建设者深度对话。
+            无论是月球氦-3能源合作、托卡马克技术授权，还是万年钟展览与超长期主义论坛合作，我们期待与同频的文明建设者深度对话。
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <a
-              href="/#contact"
-              className="inline-flex items-center gap-2 px-10 py-4 bg-[#C9A84C] text-black text-sm font-bold tracking-widest uppercase hover:bg-[#E8D5A0] transition-colors duration-300"
-            >
-              立即合作咨询 →
+            <a href="#reservation" onClick={(e) => { e.preventDefault(); document.querySelector('#reservation')?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="inline-flex items-center gap-2 px-10 py-4 bg-[#C9A84C] text-black text-sm font-bold tracking-widest uppercase hover:bg-[#E8D5A0] transition-colors duration-300">
+              立即预约 →
             </a>
             <Link href="/">
               <a className="inline-flex items-center gap-2 px-10 py-4 border border-white/20 text-white/60 text-sm font-mono tracking-widest uppercase hover:border-white/40 hover:text-white transition-all duration-300">
@@ -303,15 +226,80 @@ export default function MillenniumClock() {
         </div>
       </section>
 
+      {/* ── 预约/购买意向表单 ── */}
+      <section id="reservation" className="bg-[#040810] py-24">
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="flex items-center gap-4 mb-4">
+            <span className="w-10 h-px bg-[#C9A84C]" />
+            <h2 className="text-white text-2xl font-bold tracking-wide">预约参观 · 购买意向</h2>
+          </div>
+          <p className="text-white/30 text-sm font-mono tracking-wider mb-10 ml-14">RESERVATION &amp; PURCHASE INQUIRY</p>
+
+          {submitted ? (
+            <div className="border border-[#4FC3F7]/30 bg-[#4FC3F7]/5 p-12 text-center">
+              <div className="text-4xl mb-4">✦</div>
+              <h3 className="text-[#4FC3F7] text-xl font-bold mb-3">意向已收到</h3>
+              <p className="text-white/50 text-sm leading-relaxed">
+                感谢您对万年钟的关注。<br />我们将在 3 个工作日内与您取得联系，共同探讨合作可能。
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">姓名 *</label>
+                  <input required value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20" placeholder="您的姓名" />
+                </div>
+                <div>
+                  <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">机构/公司</label>
+                  <input value={formData.company} onChange={e => setFormData(p => ({ ...p, company: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20" placeholder="您所在的机构或公司" />
+                </div>
+                <div>
+                  <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">邮箱 *</label>
+                  <input required type="email" value={formData.email} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20" placeholder="your@email.com" />
+                </div>
+                <div>
+                  <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">联系电话</label>
+                  <input value={formData.phone} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20" placeholder="+86 138 0000 0000" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">合作意向 *</label>
+                <select value={formData.intent} onChange={e => setFormData(p => ({ ...p, intent: e.target.value }))}
+                  className="w-full bg-[#020408] border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50">
+                  <option value="exhibition">预约参观展览装置</option>
+                  <option value="purchase">购买/定制万年钟</option>
+                  <option value="forum">超长期主义论坛合作</option>
+                  <option value="media">媒体报道/专访</option>
+                  <option value="investment">战略投资合作</option>
+                  <option value="other">其他合作</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-white/40 text-xs font-mono tracking-widest uppercase mb-2">补充说明</label>
+                <textarea rows={4} value={formData.message} onChange={e => setFormData(p => ({ ...p, message: e.target.value }))}
+                  className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 text-sm focus:outline-none focus:border-[#4FC3F7]/50 placeholder-white/20 resize-none"
+                  placeholder="请描述您的合作设想或具体需求..." />
+              </div>
+              <button type="submit" disabled={submitting}
+                className="w-full py-4 bg-[#C9A84C] text-black font-bold tracking-widest uppercase text-sm hover:bg-[#E8D5A0] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                {submitting ? "提交中..." : "提交意向 →"}
+              </button>
+              <p className="text-white/20 text-xs text-center font-mono">提交即表示您同意我们与您就合作事宜取得联系</p>
+            </form>
+          )}
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer className="border-t border-white/5 py-8">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-white/20 text-xs font-mono tracking-wider">
-            © 2025 猫眼工业 MAO INDUSTRY · 代言万年钟 MILLENNIUM CLOCK
-          </div>
-          <div className="text-white/20 text-xs font-mono">
-            发明者：代言先生 Sean DAI · 超长期主义创始人
-          </div>
+          <div className="text-white/20 text-xs font-mono tracking-wider">© 2025 猫眼工业 MAO INDUSTRY · 代言万年钟 MILLENNIUM CLOCK</div>
+          <div className="text-white/20 text-xs font-mono">发明者：代言先生 Sean DAI · 超长期主义创始人</div>
         </div>
       </footer>
     </div>

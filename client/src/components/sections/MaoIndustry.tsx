@@ -146,6 +146,36 @@ export default function MaoIndustry() {
         </div>
       </div>
 
+      {/* ── 战略合作伙伴 Logo 墙 ── */}
+      <div className="relative px-8 md:px-16 lg:px-24 py-16 border-t border-white/5">
+        <div className="flex items-center gap-4 mb-10">
+          <span className="w-8 h-px bg-[#C9A84C]/50" />
+          <span className="text-white/30 text-xs tracking-[0.4em] uppercase font-mono whitespace-nowrap">
+            STRATEGIC PARTNERS &amp; COLLABORATORS
+          </span>
+          <div className="flex-1 h-px bg-white/5" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-px bg-white/5">
+          {[
+            { name: "ITER", sub: "国际热核聚变组织", icon: "⚛" },
+            { name: "CNSA", sub: "中国航天局", icon: "🚀" },
+            { name: "CASC", sub: "航天科技集团", icon: "✦" },
+            { name: "RAND", sub: "兰德智库对标", icon: "📊" },
+            { name: "MIT", sub: "麻省理工学院", icon: "⬡" },
+            { name: "ESA", sub: "欧洲航天局", icon: "★" },
+          ].map((p) => (
+            <div key={p.name} className="bg-[#020408] p-6 flex flex-col items-center justify-center gap-2 group">
+              <div className="text-xl text-white/20 group-hover:text-[#C9A84C]/50 transition-colors">{p.icon}</div>
+              <div className="text-white/50 text-sm font-bold font-mono tracking-widest group-hover:text-white/80 transition-colors">{p.name}</div>
+              <div className="text-white/20 text-xs text-center leading-tight">{p.sub}</div>
+            </div>
+          ))}
+        </div>
+        <p className="text-white/15 text-xs font-mono text-center mt-4 tracking-wider">
+          * 战略对标机构，部分合作洽谈中
+        </p>
+      </div>
+
       {/* ── 代言万年钟 ── */}
       <div className="relative px-8 md:px-16 lg:px-24 pb-24">
         {/* 分割线 */}
