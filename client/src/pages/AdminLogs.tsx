@@ -24,7 +24,7 @@ export default function AdminLogs() {
     <div className="flex flex-col h-screen bg-background">
       <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50">
         <div className="flex items-center gap-3">
-          <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">← 返回聊天</Link>
+          <Link href="/maoai" className="text-muted-foreground hover:text-foreground text-sm">← 返回聊天</Link>
           <span className="text-muted-foreground">/</span>
           <Link href="/admin/nodes" className="text-muted-foreground hover:text-foreground text-sm">节点管理</Link>
           <span className="text-muted-foreground">/</span>

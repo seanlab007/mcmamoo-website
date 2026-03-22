@@ -366,9 +366,13 @@ export default function MaoAIChat() {
             {isAuthenticated && (
               <div className="flex items-center gap-2">
                 {isAdmin && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/60 font-mono">
-                    ADMIN
-                  </span>
+                  <a
+                    href="/admin/nodes"
+                    className="text-[10px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/60 font-mono hover:bg-[#C9A84C]/20 hover:text-[#C9A84C] transition-all"
+                    title="进入管理控制台"
+                  >
+                    ADMIN →
+                  </a>
                 )}
                 <span className="text-white/40 text-xs hidden sm:block">{(user as any)?.email}</span>
                 <button
