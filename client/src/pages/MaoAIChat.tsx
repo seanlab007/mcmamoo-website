@@ -223,7 +223,22 @@ export default function MaoAIChat() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
-  const stopStreaming = () => abortRef.current?.abort();
+  const stopStreaming = () => {
+    // Save any partial content before aborting
+    if (streamingContent) {
+      setMessages(prev => {
+        // Check if we already have this content (avoid duplicate)
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && last.content === streamingContent) return prev;
+        return [...prev, {
+          role: "assistant" as const,
+          content: streamingContent,
+          nodeInfo: activeNodeInfo || undefined,
+        }];
+      });
+    }
+    abortRef.current?.abort();
+  };
 
   // ── Loading state ───────────────────────────────────────────────────────────
   if (loading) {
