@@ -64,7 +64,10 @@ function getAuthHeaders(): Record<string, string> {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MaoAIChat() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth({
+    redirectOnUnauthenticated: true,
+    redirectPath: "/maoai/login",
+  });
   const isAdmin = (user as any)?.role === "admin";
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -369,7 +372,11 @@ export default function MaoAIChat() {
                 )}
                 <span className="text-white/40 text-xs hidden sm:block">{(user as any)?.email}</span>
                 <button
-                  onClick={() => logout()}
+                  onClick={async () => {
+                    localStorage.removeItem("maoai_session_token");
+                    await logout();
+                    window.location.href = "/maoai/login";
+                  }}
                   className="text-white/30 hover:text-[#C9A84C] transition-colors p-1"
                   title="退出登录"
                 >
