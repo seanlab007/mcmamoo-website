@@ -1185,7 +1185,7 @@ var MODEL_CONFIGS = {
   "deepseek-reasoner": { name: "DeepSeek R1", badge: "\u{1F9E0}", baseUrl: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY || "", model: "deepseek-reasoner" },
   "glm-4-flash": { name: "\u667A\u8C31 GLM-4 Flash", badge: "\u26A1", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4-flash" },
   "glm-4-plus": { name: "\u667A\u8C31 GLM-4 Plus", badge: "\u{1F7E3}", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4-plus" },
-  "glm-4v-flash": { name: "GLM-4V \u89C6\u89C9", badge: "\u{1F441}\uFE0F", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4v-flash", supportsVision: true },
+  "glm-4v-flash": { name: "GLM-4V \u89C6\u89C9", badge: "\u{1F441}\uFE0F", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4v-flash", supportsVision: true, maxTokens: 1024 },
   "llama-3.3-70b-versatile": { name: "Groq Llama 3.3 70B", badge: "\u26A1", baseUrl: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY || "", model: "llama-3.3-70b-versatile" }
 };
 var SYSTEM_PRESETS = [
@@ -2033,7 +2033,7 @@ aiStreamRouter.post("/chat/stream", async (req, res) => {
     const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
-      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: 4096 })
+      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: cfg.maxTokens || 4096 })
     });
     if (!response.ok) {
       const errText = await response.text();

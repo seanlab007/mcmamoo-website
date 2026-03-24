@@ -227,7 +227,7 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
-      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: 4096 }),
+      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: cfg.maxTokens || 4096 }),
     });
     if (!response.ok) {
       const errText = await response.text();

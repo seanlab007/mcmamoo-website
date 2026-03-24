@@ -24,12 +24,12 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 // ─── Model Configs ────────────────────────────────────────────────────────────
-export const MODEL_CONFIGS: Record<string, { name: string; baseUrl: string; apiKey: string; model: string; badge: string; supportsVision?: boolean }> = {
+export const MODEL_CONFIGS: Record<string, { name: string; baseUrl: string; apiKey: string; model: string; badge: string; supportsVision?: boolean; maxTokens?: number }> = {
   "deepseek-chat": { name: "DeepSeek V3", badge: "🔵", baseUrl: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY || "", model: "deepseek-chat" },
   "deepseek-reasoner": { name: "DeepSeek R1", badge: "🧠", baseUrl: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY || "", model: "deepseek-reasoner" },
   "glm-4-flash": { name: "智谱 GLM-4 Flash", badge: "⚡", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4-flash" },
   "glm-4-plus": { name: "智谱 GLM-4 Plus", badge: "🟣", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4-plus" },
-  "glm-4v-flash": { name: "GLM-4V 视觉", badge: "👁️", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4v-flash", supportsVision: true },
+  "glm-4v-flash": { name: "GLM-4V 视觉", badge: "👁️", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4v-flash", supportsVision: true, maxTokens: 1024 },
   "llama-3.3-70b-versatile": { name: "Groq Llama 3.3 70B", badge: "⚡", baseUrl: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY || "", model: "llama-3.3-70b-versatile" },
 };
 
