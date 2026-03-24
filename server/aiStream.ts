@@ -149,9 +149,26 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     }
   }
 
-  const allMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
+  // ── Normalize image_url for GLM-4V: strip data: prefix, keep only base64 string ──
+  const normalizeMessagesForVision = (msgs: any[]) => msgs.map((m: any) => {
+    if (!Array.isArray(m.content)) return m;
+    return {
+      ...m,
+      content: m.content.map((c: any) => {
+        if (c.type === "image_url" && c.image_url?.url?.startsWith("data:")) {
+          // GLM-4V expects pure base64 without the data:image/xxx;base64, prefix
+          const base64 = c.image_url.url.split(",")[1] || c.image_url.url;
+          return { type: "image_url", image_url: { url: base64 } };
+        }
+        return c;
+      }),
+    };
+  });
 
-  // ── Local node routing (admin only) ──────────────────────────────────────
+  const rawMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
+  const allMessages = hasImage ? normalizeMessagesForVision(rawMessages) : rawMessages;
+
+  // ── Local node routing (admin only) ────────────────────────────────────────────────────────────────────────────
   if (useLocal || (typeof model === "string" && model.startsWith("local:"))) {
     const admin = await getAdminUser(req);
     if (!admin) {
