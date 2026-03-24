@@ -2028,7 +2028,7 @@ aiStreamRouter.post("/chat/stream", async (req, res) => {
           return c;
         }) : m.content
       }));
-      console.log("[Vision Debug] model:", cfg.model, "msgs:", JSON.stringify(debugMsgs));
+      console.log("[Vision Debug] model:", cfg.model, "baseUrl:", cfg.baseUrl, "apiKey_len:", cfg.apiKey.length, "msgs:", JSON.stringify(debugMsgs));
     }
     const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
