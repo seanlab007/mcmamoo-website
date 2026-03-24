@@ -2327,7 +2327,7 @@ aiStreamRouter.get("/status", async (_req, res) => {
     onlineCount = nodes.filter((n) => n.isOnline).length;
   } catch {
   }
-  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v2.1-vision-debug" });
 });
 var aiStream_default = aiStreamRouter;
 
