@@ -71,7 +71,11 @@ async function startServer() {
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    try {
+      serveStatic(app);
+    } catch (e) {
+      console.warn("[serveStatic] Failed to serve static files (API-only mode):", e);
+    }
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
