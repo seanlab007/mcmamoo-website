@@ -130,13 +130,24 @@ async function streamFromNode(
 // model: cloud model ID (e.g. "deepseek-chat") or "local:<nodeId>" for local node
 // useLocal: true = admin-only, force local node routing
 aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
-  const { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId } = req.body;
+  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId } = req.body;
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
+
+  // ── Vision auto-routing: if any message contains image_url, switch to vision model ──
+  const hasImage = Array.isArray(messages) && messages.some((m: any) =>
+    Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url")
+  );
+  if (hasImage && !useLocal && !String(model).startsWith("local:")) {
+    const currentCfg = MODEL_CONFIGS[model];
+    if (!currentCfg?.supportsVision) {
+      model = "glm-4v-flash"; // auto-switch to vision model
+    }
+  }
 
   const allMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
 
