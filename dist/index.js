@@ -2020,6 +2020,16 @@ aiStreamRouter.post("/chat/stream", async (req, res) => {
     return;
   }
   try {
+    if (hasImage) {
+      const debugMsgs = allMessages.map((m) => ({
+        role: m.role,
+        content: Array.isArray(m.content) ? m.content.map((c) => {
+          if (c.type === "image_url") return { type: "image_url", url_start: (c.image_url?.url || "").substring(0, 30), url_len: (c.image_url?.url || "").length };
+          return c;
+        }) : m.content
+      }));
+      console.log("[Vision Debug] model:", cfg.model, "msgs:", JSON.stringify(debugMsgs));
+    }
     const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },

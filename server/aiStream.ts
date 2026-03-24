@@ -213,6 +213,17 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   if (!cfg.apiKey) { res.write(`data: ${JSON.stringify({ error: `API key not configured for model: ${model}` })}\n\n`); res.end(); return; }
 
   try {
+    // Debug: log vision request structure
+    if (hasImage) {
+      const debugMsgs = allMessages.map((m: any) => ({
+        role: m.role,
+        content: Array.isArray(m.content) ? m.content.map((c: any) => {
+          if (c.type === 'image_url') return { type: 'image_url', url_start: (c.image_url?.url || '').substring(0, 30), url_len: (c.image_url?.url || '').length };
+          return c;
+        }) : m.content
+      }));
+      console.log('[Vision Debug] model:', cfg.model, 'msgs:', JSON.stringify(debugMsgs));
+    }
     const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
