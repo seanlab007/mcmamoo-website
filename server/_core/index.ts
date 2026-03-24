@@ -1,4 +1,9 @@
 import "dotenv/config";
+// Polyfill globalThis.crypto for Node.js 18 (required by jose@6+)
+import { webcrypto } from "node:crypto";
+if (!globalThis.crypto) {
+  (globalThis as any).crypto = webcrypto;
+}
 import cors from "cors";
 import express from "express";
 import { createServer } from "http";

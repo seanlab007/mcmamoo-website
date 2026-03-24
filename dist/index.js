@@ -369,6 +369,7 @@ var init_notification = __esm({
 
 // server/_core/index.ts
 import "dotenv/config";
+import { webcrypto } from "node:crypto";
 import cors from "cors";
 import express2 from "express";
 import { createServer } from "http";
@@ -2321,6 +2322,9 @@ aiStreamRouter.get("/status", async (_req, res) => {
 var aiStream_default = aiStreamRouter;
 
 // server/_core/index.ts
+if (!globalThis.crypto) {
+  globalThis.crypto = webcrypto;
+}
 function isPortAvailable(port) {
   return new Promise((resolve) => {
     const server = net.createServer();
