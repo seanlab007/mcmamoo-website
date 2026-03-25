@@ -13,7 +13,9 @@ import CasePangge from "./pages/CasePangge";
 import MaoThinkTank from "./pages/MaoThinkTank";
 import AdminMaoApplications from "./pages/AdminMaoApplications";
 import AdminSubscribers from "./pages/AdminSubscribers";
+import AdminAiNodes from "./pages/AdminAiNodes";
 import Platform from "./pages/Platform";
+import Chat from "./pages/Chat";
 import WechatFloat from "./components/WechatFloat";
 
 function Router() {
@@ -29,7 +31,9 @@ function Router() {
       <Route path={"/maothink"} component={MaoThinkTank} />
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />
+      <Route path={"/admin/ai-nodes"} component={AdminAiNodes} />
       <Route path={"/platform"} component={Platform} />
+      <Route path={"/chat"} component={Chat} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

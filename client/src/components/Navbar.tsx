@@ -95,6 +95,14 @@ export default function Navbar() {
               <span style={{ width: 6, height: 6, background: "#40d090", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #40d090" }} />
               运营平台
             </a>
+            <a
+              href="/chat"
+              className="relative text-[#C9A84C]/80 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5"
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+            >
+              <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "2px", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px rgba(201,168,76,0.6)" }} />
+              MaoAI
+            </a>
             <button
               onClick={() => handleNav("#contact")}
               className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
@@ -145,6 +153,14 @@ export default function Navbar() {
           >
             <span style={{ width: 8, height: 8, background: "#40d090", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #40d090" }} />
             运营平台
+          </a>
+          <a
+            href="/chat"
+            className="text-[#C9A84C]/80 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "2px", display: "inline-block", boxShadow: "0 0 8px rgba(201,168,76,0.6)" }} />
+            MaoAI
           </a>
           <button
             onClick={() => handleNav("#contact")}

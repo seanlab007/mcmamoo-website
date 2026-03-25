@@ -67,11 +67,33 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 
 export default function CaseXiaoxiandun() {
   useSEO({
-    title: "小仙炖鲜炖燕窝 · 开创品类5年达20亿 | 猫眼咨询",
-    description: "猫眼咨询助力小仙炖开创鲜炖燕窝品类，5年营收突破20亿，成为天猫燕窝类目第一品牌。",
+    title: "小仙炖鲜炖燕窝 · 5年营收20亿 · 天猫品类第一 | 猫眼咨询",
+    description: "猫眼咨询助力小仙炖开创鲜炖燕窝新品类，5年在线营收突破20亿，成为天猫燕窝类目长期第一。通过品类错位+场景错位+陈数入股IP策略，建立竞争壁垒。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoxiandun-hero-MSw4oXFtJRpVC9YWG9wg4G.webp",
     url: "https://www.mcmamoo.com/cases/xiaoxiandun",
     type: "article",
+    keywords: "小仙炖,鲜炖燕窝,燕窝品牌,天猫第一品牌,新消费品牌营销,品类创新,猫眼咨询案例,滋补品牌,燕窝市场",
+    breadcrumbs: [
+      { name: "首页", url: "/" },
+      { name: "标杆案例", url: "/#cases" },
+      { name: "小仙炖鲜炖燕窝", url: "/cases/xiaoxiandun" },
+    ],
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "小仙炖鲜炖燕窝 · 开创品类5年达20亿在线营收 · 天猫燕窝第一",
+        "description": "猫眼咨询助力小仙炖开创鲜炖燕窝品类，通过品类错位+场景错位策略，5年营收突破20亿，成为天猫燕窝类目第一品牌。",
+        "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoxiandun-hero-MSw4oXFtJRpVC9YWG9wg4G.webp",
+        "url": "https://www.mcmamoo.com/cases/xiaoxiandun",
+        "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
+        "author": { "@id": "https://www.mcmamoo.com/#organization" },
+        "datePublished": "2014-01-01",
+        "dateModified": "2024-01-01",
+        "keywords": "小仙炖,鲜炖燕窝,燕窝品类开创,天猫第一,新消费品牌",
+        "articleSection": "品牌案例"
+      }
+    ],
   });
   return (
     <div style={{ background: "#080C14", minHeight: "100vh", color: "#F5F0E8" }}>

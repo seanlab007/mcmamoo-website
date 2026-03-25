@@ -67,11 +67,33 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 
 export default function CaseJiangzhong() {
   useSEO({
-    title: "江中猴姑饼干 · 养胃食品品类创新 | 猫眼咨询",
-    description: "猫眼咨询操盘江中猴姑饼干，创造养胃食品新品类，天猫养胃食品第一，年销售额超10亿。",
+    title: "江中猴姑饼干 · 上市第一年17亿销售额 · 养胃食品品类创新 | 猫眼咨询",
+    description: "猫眼咨询操盘江中猴姑饼干，洞察养胃需求，跨界错位OTC领域进入快消品，上市第一年销售额达17亿元，开创养胃食品新品类，成为天猫养胃食品第一品牌。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp",
     url: "https://www.mcmamoo.com/cases/jiangzhong",
     type: "article",
+    keywords: "江中猴姑饼干,养胃食品,品类创新,新消费品牌营销,OTC跨界,猫眼咨询案例,功能性食品,健康食品品牌",
+    breadcrumbs: [
+      { name: "首页", url: "/" },
+      { name: "标杆案例", url: "/#cases" },
+      { name: "江中猴姑饼干", url: "/cases/jiangzhong" },
+    ],
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "江中猴姑饼干 · 上市第一年17亿销售额 · 养胃食品品类开创案例",
+        "description": "猫眼咨询操盘江中猴姑饼干，从用户体验出发，错位OTC领域，进入快消品赛道，上市第一年销售额达17亿元。",
+        "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp",
+        "url": "https://www.mcmamoo.com/cases/jiangzhong",
+        "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
+        "author": { "@id": "https://www.mcmamoo.com/#organization" },
+        "datePublished": "2013-01-01",
+        "dateModified": "2024-01-01",
+        "keywords": "江中猴姑,养胃饼干,品类创新,功能食品品牌",
+        "articleSection": "品牌案例"
+      }
+    ],
   });
   return (
     <div style={{ background: "#080C0A", minHeight: "100vh", color: "#F5F0E8" }}>

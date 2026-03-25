@@ -67,11 +67,33 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 
 export default function CaseXiaoguan() {
   useSEO({
-    title: "小罐茶 · 高端礼品茶品类重塑 | 猫眼咨询",
-    description: "猫眼咨询助力小罐茶重塑高端礼品茶品类，天猫茶叶礼品市场第一，年营收超20亿。",
+    title: "小罐茶 · 重塑中国高端礼品茶 · 大师作品牌壁垒 | 猫眼咨询",
+    description: "猫眼咨询助力小罐茶重定义中国高端茶礼，聚焦送礼场景，辐射原点人群，聚合八大产地大师作，2亿营收，天猫茶叶礼品市场第一。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoguan-hero-VMo5tD5EjgTVTXUiupePuQ.webp",
     url: "https://www.mcmamoo.com/cases/xiaoguan",
     type: "article",
+    keywords: "小罐茶,高端礼品茶,茶叶品牌营销,送礼场景,大师作茶,品类创新,茶礼品牌,天猫茶叶第一,猫眼咨询案例",
+    breadcrumbs: [
+      { name: "首页", url: "/" },
+      { name: "标杆案例", url: "/#cases" },
+      { name: "小罐茶", url: "/cases/xiaoguan" },
+    ],
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "小罐茶 · 重新定义中国高端茶礼 · 天猫茶叶礼品市场第一",
+        "description": "猫眼咨询助力小罐茶，聚焦送礼场景，辐射原点人群，用小罐品相进行品类创新，聚合八大产地大师作，建立竞争壁垒。",
+        "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoguan-hero-VMo5tD5EjgTVTXUiupePuQ.webp",
+        "url": "https://www.mcmamoo.com/cases/xiaoguan",
+        "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
+        "author": { "@id": "https://www.mcmamoo.com/#organization" },
+        "datePublished": "2015-01-01",
+        "dateModified": "2024-01-01",
+        "keywords": "小罐茶,高端茶礼,品类创新,送礼场景",
+        "articleSection": "品牌案例"
+      }
+    ],
   });
   return (
     <div style={{ background: "#080808", minHeight: "100vh", color: "#F5F0E8" }}>

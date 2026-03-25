@@ -125,8 +125,33 @@ function BattleCard({ num, title, desc }: { num: string; title: string; desc: st
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function CasePangge() {
   useSEO({
-    title: "湖南胖哥食品 — 品牌战略升级案例 | 猫眼咨询",
+    title: "湖南胖哥食品 · 槟榔行业领袖品牌战略升级 | 猫眼咨询",
     description: "猫眼咨询助力湖南胖哥食品完成品牌战略升级，打响四大战役，成为槟榔行业洗牌期领先品牌。100万+终端网点，400+经销商，覆盖全国主要地级市。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
+    url: "https://www.mcmamoo.com/cases/pangge",
+    type: "article",
+    keywords: "胖哥食品,槟榔品牌营销,快消品战略,品牌战略升级,渠道扩张,终端网点,经销商管理,猫眼咨询案例,湖南品牌",
+    breadcrumbs: [
+      { name: "首页", url: "/" },
+      { name: "标杆案例", url: "/#cases" },
+      { name: "湖南胖哥食品", url: "/cases/pangge" },
+    ],
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "湖南胖哥食品 · 槟榔行业领袖品牌战略升级案例",
+        "description": "猫眼咨询助力湖南胖哥食品完成品牌战略升级，打响四大战役，成为槟榔行业洗牌期领先品牌，100万+终端网点覆盖全国。",
+        "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
+        "url": "https://www.mcmamoo.com/cases/pangge",
+        "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
+        "author": { "@id": "https://www.mcmamoo.com/#organization" },
+        "datePublished": "2024-01-01",
+        "dateModified": "2024-01-01",
+        "keywords": "胖哥食品,槟榔品牌,快消品战略,渠道扩张",
+        "articleSection": "品牌案例"
+      }
+    ],
   });
 
   return (

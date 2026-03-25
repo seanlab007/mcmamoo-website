@@ -7,6 +7,8 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { aiNodesRouter } from "../aiNodes";
+import { chatRouter } from "../chat";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -35,6 +37,10 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // AI 节点协同 API（OpenClaw × MaoAI 协同架构）
+  app.use("/api/ai", aiNodesRouter);
+  // MaoAI Chat API（对话历史 + 联网搜索 + 图片生成）
+  app.use("/api/chat", chatRouter);
   // tRPC API
   app.use(
     "/api/trpc",

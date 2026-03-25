@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -49,3 +49,51 @@ export const briefSubscribers = mysqlTable("brief_subscribers", {
 });
 
 export type BriefSubscriber = typeof briefSubscribers.$inferSelect;
+
+// ── AI Local Nodes (OpenClaw instances) ───────────────────────────────────────
+// 注意：ai_nodes / node_skills 实际运行在 Supabase PostgreSQL 上。
+// 这里仅作类型参考；写入/读取全部通过 server/aiNodes.ts 的 Supabase REST API 完成，
+// 不经过 Drizzle ORM / mysql2。
+//
+// 对应 Supabase 迁移文件：
+//   supabase/migrations/20260325234100_openclaw_node_skills.sql  （PostgreSQL DDL）
+
+export interface AiNode {
+  id: number;
+  name: string;
+  baseUrl: string;
+  type: string;
+  modelId: string | null;
+  /** 节点是否在线（PostgreSQL 列名：isOnline） */
+  isOnline: boolean;
+  /** 是否本地节点（PostgreSQL 列名：isLocal） */
+  isLocal: boolean;
+  isActive: boolean;
+  /** 所有技能版本号的 SHA256 摘要，用于心跳校验 */
+  skillsChecksum: string | null;
+  /** 注册鉴权 token */
+  token: string;
+  lastHeartbeatAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertAiNode = Omit<AiNode, "id" | "createdAt" | "updatedAt">;
+
+export interface NodeSkill {
+  id: number;
+  nodeId: number;
+  skillId: string;
+  name: string;
+  version: string;
+  description: string | null;
+  /** JSONB 数组，如 ["搜索", "查找"] */
+  triggers: string[];
+  /** 技能分类，如 "search" | "file" | "browser" | "code" | "custom" */
+  category: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertNodeSkill = Omit<NodeSkill, "id" | "createdAt" | "updatedAt">;

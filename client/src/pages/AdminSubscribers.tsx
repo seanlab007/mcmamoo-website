@@ -96,6 +96,11 @@ export default function AdminSubscribers() {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <Link href="/admin/ai-nodes">
+            <a style={{ fontFamily: "'DM Mono', monospace", color: "rgba(201,168,76,0.5)", fontSize: "0.6rem", letterSpacing: "0.12em", textDecoration: "none", border: "1px solid rgba(201,168,76,0.2)", padding: "6px 12px" }}>
+              AI 节点 →
+            </a>
+          </Link>
           <button
             onClick={() => { setShowSendModal(true); setSendResult(null); }}
             style={{
