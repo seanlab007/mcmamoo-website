@@ -1,0 +1,7 @@
+node_modules/
+.git/
+client/
+scripts/
+supabase/
+*.md
+.env*
