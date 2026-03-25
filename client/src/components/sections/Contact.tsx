@@ -119,7 +119,7 @@ export default function Contact() {
                   <div className="absolute -inset-2 border border-[#C9A84C]/15" />
                   <div className="p-1.5 bg-white">
                     <img
-                      src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png"
+                      src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/wechat-qr-businesscard_be2c02b6.png"
                       alt="WeChat QR Code"
                       className="w-20 h-20 object-contain block"
                     />
