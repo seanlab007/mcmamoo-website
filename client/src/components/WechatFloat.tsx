@@ -289,7 +289,7 @@ export default function WechatFloat() {
                     style={{ borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.03)" }}
                   >
                     <IconPhone />
-                    <span>电话拨打</span>
+                    <span className="flex flex-col leading-tight"><span>电话拨打</span><span style={{ fontSize: '0.65rem', color: 'rgba(201,168,76,0.7)', letterSpacing: '0.03em' }}>+86 13764597723</span></span>
                   </a>
 
                   {/* WhatsApp */}
@@ -489,7 +489,7 @@ function InlineModalContent({ onClose }: { onClose: () => void }) {
         <div className="text-xs tracking-widest uppercase pt-4 mb-3" style={{ color: "rgba(255,255,255,0.3)", fontFamily: "'DM Mono', monospace" }}>其他联系方式</div>
         <div className="grid grid-cols-2 gap-2">
           <a href={`tel:+${CONTACT.phone}`} className={channelBtnClass} style={{ borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.03)" }}>
-            <IconPhone /><span>电话拨打</span>
+            <IconPhone /><span className="flex flex-col leading-tight"><span>电话拨打</span><span style={{ fontSize: '0.65rem', color: 'rgba(201,168,76,0.7)', letterSpacing: '0.03em' }}>+86 13764597723</span></span>
           </a>
           <a href={`https://wa.me/${CONTACT.whatsapp}`} target="_blank" rel="noopener noreferrer" className={channelBtnClass} style={{ borderColor: "rgba(37,211,102,0.3)", color: "rgba(37,211,102,0.85)", background: "rgba(37,211,102,0.05)" }}>
             <IconWhatsApp /><span>WhatsApp</span>
