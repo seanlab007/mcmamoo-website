@@ -3,6 +3,12 @@
  * Uses Nodemailer with configurable SMTP (Gmail, QQ, 163, etc.)
  */
 import nodemailer from "nodemailer";
+import { createTransport } from "nodemailer";
+
+// RFC2047 encode Chinese sender name
+function encodeHeader(text: string): string {
+  return `=?UTF-8?B?${Buffer.from(text).toString('base64')}?=`;
+}
 
 function getTransporter() {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
@@ -36,7 +42,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<boolean> {
     const fromEmail = process.env.SMTP_USER || "";
 
     await transporter.sendMail({
-      from: `"${fromName}" <${fromEmail}>`,
+      from: `${encodeHeader(fromName)} <${fromEmail}>`,
       to: Array.isArray(opts.to) ? opts.to.join(", ") : opts.to,
       subject: opts.subject,
       html: opts.html,

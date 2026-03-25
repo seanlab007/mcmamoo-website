@@ -642,6 +642,76 @@ function ServiceSection({ data, isEn }: { data: any; isEn: boolean }) {
   );
 }
 
+// ─── 品牌客户 Logo 墙 ─────────────────────────────────────────────────────────────────────────────
+const CLIENTS = [
+  { name: "蟹太太",       nameEn: "Xie Taitai",   href: "/cases/xietaitai",   tag: "大闸蟹 · 10亿品牌",        tagEn: "Hairy Crab · ¥1B Brand" },
+  { name: "小仙炖",       nameEn: "Xiaoxiandun",   href: "/cases/xiaoxiandun", tag: "鲜炖燕窝 · 品类第一",        tagEn: "Fresh Stewed Swiftlet · #1" },
+  { name: "江中",         nameEn: "Jiangzhong",    href: "/cases/jiangzhong",  tag: "健康食品 · 品牌重塑",        tagEn: "Health Food · Rebrand" },
+  { name: "小罐茶",       nameEn: "Xiaoguan Tea",  href: "/cases/xiaoguan",   tag: "高端茶礼 · 爆品打造",        tagEn: "Premium Tea · Hero Product" },
+  { name: "胖哥俩",       nameEn: "Pangge",        href: "/cases/pangge",     tag: "餐饮连锁 · 全国扩张",        tagEn: "F&B Chain · National Expansion" },
+  { name: "MasterCard",  nameEn: "MasterCard",    href: "#global-cases",     tag: "全球支付 · 逆势增长70亿",    tagEn: "Global Payment · $7B Growth" },
+  { name: "Nestlé",      nameEn: "Nestlé",        href: "#global-cases",     tag: "全球快消 · 品牌战略",        tagEn: "Global FMCG · Brand Strategy" },
+  { name: "Unilever",    nameEn: "Unilever",      href: "#global-cases",     tag: "跨国快消 · 多品牌管理",      tagEn: "Multinational FMCG · Portfolio" },
+];
+
+function ClientLogoWall({ isEn }: { isEn: boolean }) {
+  return (
+    <section className="py-16 border-b border-white/5 overflow-hidden">
+      <div className="container">
+        <div className="text-center mb-10">
+          <div className="text-[#C9A84C] text-xs font-['DM_Mono'] tracking-[0.3em] uppercase mb-3">
+            {isEn ? "Trusted By" : "已服务品牌"}
+          </div>
+          <h2 className="text-white/80 font-['Noto_Serif_SC'] text-2xl md:text-3xl">
+            {isEn ? "Brands We've Grown" : "我们服务过的品牌"}
+          </h2>
+          <p className="text-white/30 text-sm mt-3 max-w-xl mx-auto">
+            {isEn
+              ? "From domestic champions to global giants — we've built category leaders across industries."
+              : "从国内冠军到全球巨头——我们在各行业打造了品类领导者。"}
+          </p>
+        </div>
+
+        {/* Logo Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/5">
+          {CLIENTS.map((client) => (
+            <a
+              key={client.name}
+              href={client.href}
+              className="group bg-[#0A0A0A] px-6 py-8 flex flex-col items-center justify-center gap-2 hover:bg-[#C9A84C]/5 transition-all duration-300 text-center"
+            >
+              <div
+                className="text-white/60 group-hover:text-[#C9A84C] transition-colors duration-300 font-['Cormorant_Garamond'] font-semibold tracking-wide"
+                style={{ fontSize: "1.35rem" }}
+              >
+                {isEn ? client.nameEn : client.name}
+              </div>
+              <div className="text-white/20 text-[10px] font-['DM_Mono'] tracking-widest group-hover:text-white/40 transition-colors duration-300">
+                {isEn ? client.tagEn : client.tag}
+              </div>
+              <div className="w-6 h-px bg-[#C9A84C]/0 group-hover:bg-[#C9A84C]/60 transition-all duration-300 mt-1" />
+            </a>
+          ))}
+        </div>
+
+        {/* 社会证明数字 */}
+        <div className="mt-10 grid grid-cols-3 gap-8 max-w-2xl mx-auto text-center">
+          {[
+            { num: "8+",   label: isEn ? "Billion-dollar brands" : "10亿级大单品" },
+            { num: "500+", label: isEn ? "KOL partnerships" : "头部KOL合作" },
+            { num: "20+",  label: isEn ? "Global brands" : "全球品牌服务" },
+          ].map((s) => (
+            <div key={s.num}>
+              <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-4xl font-bold">{s.num}</div>
+              <div className="text-white/30 text-xs font-['DM_Mono'] tracking-widest mt-1 uppercase">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── 预约咨询表单组件 ──────────────────────────────────────────────────────────────────────────────
 function ConsultingForm({ isEn }: { isEn: boolean }) {
   const [form, setForm] = useState({ name: "", company: "", email: "", phone: "", service: "", budget: "", message: "" });
@@ -839,6 +909,9 @@ export default function Pricing() {
       </section>
 
 
+
+      {/* 品牌客户 Logo 墙 */}
+      <ClientLogoWall isEn={isEn} />
 
       {/* 所有服务定价 */}
       {services.map((service) => (

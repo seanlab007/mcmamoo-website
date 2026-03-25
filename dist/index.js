@@ -487,6 +487,9 @@ __export(email_exports, {
   sendEmail: () => sendEmail
 });
 import nodemailer from "nodemailer";
+function encodeHeader(text) {
+  return `=?UTF-8?B?${Buffer.from(text).toString("base64")}?=`;
+}
 function getTransporter() {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = parseInt(process.env.SMTP_PORT || "587");
@@ -508,7 +511,7 @@ async function sendEmail(opts) {
     const fromName = process.env.SMTP_FROM_NAME || "\u732B\u773C\u589E\u957F\u5F15\u64CE";
     const fromEmail = process.env.SMTP_USER || "";
     await transporter.sendMail({
-      from: `"${fromName}" <${fromEmail}>`,
+      from: `${encodeHeader(fromName)} <${fromEmail}>`,
       to: Array.isArray(opts.to) ? opts.to.join(", ") : opts.to,
       subject: opts.subject,
       html: opts.html,
