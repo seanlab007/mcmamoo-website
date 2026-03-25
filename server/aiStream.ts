@@ -3,7 +3,7 @@ import { MODEL_CONFIGS } from "./routers";
 import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog, getNodeSkills, getAllNodeSkills, upsertNodeSkill, deleteNodeSkill, deleteAllNodeSkills, setNodeSkillEnabled } from "./db";
 import { sdk } from "./_core/sdk";
 import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
+// pdf-parse is loaded dynamically to avoid DOMMatrix crash at startup
 import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 
 const aiStreamRouter = Router();
@@ -811,10 +811,17 @@ aiStreamRouter.post("/upload", async (req: Request, res: Response) => {
     // ── PDF ──
     if (mimetype === "application/pdf" || /\.pdf$/i.test(originalname)) {
       try {
-        // pdf-parse v2: new PDFParse({ data: buffer }).getText()
+        // Polyfill DOMMatrix for pdfjs-dist on Node.js 18
+        if (typeof (globalThis as any).DOMMatrix === 'undefined') {
+          (globalThis as any).DOMMatrix = class DOMMatrix {
+            constructor() { return new Proxy({}, { get: () => 0 }); }
+          };
+        }
+        // Dynamic import to avoid DOMMatrix crash at module load time
+        const { PDFParse } = await import('pdf-parse');
         const parser = new PDFParse({ data: buffer });
-        const result = await parser.getText();
-        extractedText = result.text?.trim() || "";
+        const parseResult = await parser.getText();
+        extractedText = parseResult.text?.trim() || "";
         if (!extractedText) extractedText = "[PDF 内容为空或为扫描件，无法提取文字]";
         fileType = "pdf";
       } catch (e: any) {
@@ -903,7 +910,7 @@ aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
     nodeCount = nodes.length;
     onlineCount = nodes.filter(n => n.isOnline).length;
   } catch { /* db not ready */ }
-  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: new Date().toISOString(), version: "v2.2-max-tokens-fix" });
+  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: new Date().toISOString(), version: "v2.3-openclaw-skills" });
 });
 
 export default aiStreamRouter;

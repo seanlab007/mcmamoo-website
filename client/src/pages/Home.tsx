@@ -1,54 +1,107 @@
 /*
- * Home Page — 猫眼增长引擎官网首页
+ * Home Page — 猫眼咨询官网首页
  * Design: 暗夜金融极简主义 — 深黑底色 + 猫眼金点缀
  * Theme: 品牌显贵 · 利润倍增 · 全域增长
- * Sections:
- *   IPAndWhale（IP授权，玛丽莲梦露视觉冲击，首屏第一板块）
- *   → Hero
- *   → InternationalRecognition（国际机构认可）
- *   → BusinessDivision → About
- *   → Awards（荣誉，资质展示）
- *   → KOL → Services（主业）
- *   → Cases → GlobalCases（案例佐证）
- *   → Methodology（方法论）
- *   → Team → MaoIndustry（猫眼工业，置底）
- *   → Contact → Footer
+ * Sections: Hero → InternationalRecognition → BusinessDivision → About → Methodology → KOL → Services → Cases → GlobalCases → Awards → Team → Contact → Footer
  */
+import { useSEO } from "@/hooks/useSEO";
 import Navbar from "@/components/Navbar";
-import IPAndWhale from "@/components/sections/IPAndWhale";
 import Hero from "@/components/sections/Hero";
 import BusinessDivision from "@/components/sections/BusinessDivision";
 import InternationalRecognition from "@/components/sections/InternationalRecognition";
 import About from "@/components/sections/About";
-import Awards from "@/components/sections/Awards";
+import Methodology from "@/components/sections/Methodology";
 import KOL from "@/components/sections/KOL";
 import Services from "@/components/sections/Services";
 import Cases from "@/components/sections/Cases";
 import GlobalCases from "@/components/sections/GlobalCases";
-import Methodology from "@/components/sections/Methodology";
+import Awards from "@/components/sections/Awards";
 import Team from "@/components/sections/Team";
-import MaoIndustry from "@/components/sections/MaoIndustry";
+import FAQ from "@/components/sections/FAQ";
 import Contact from "@/components/sections/Contact";
 import Footer from "@/components/Footer";
 
+const HOME_JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "@id": "https://www.mcmamoo.com/#service",
+    "name": "猫眼咨询品牌战略服务",
+    "description": "猫眼咨询为新消费品牌提供全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货四大核心服务。",
+    "provider": { "@id": "https://www.mcmamoo.com/#organization" },
+    "areaServed": "CN",
+    "serviceType": "品牌战略咨询",
+    "url": "https://www.mcmamoo.com"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "猫眼咨询的核心服务是什么？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "猫眼咨询提供四大核心服务：新消费第一品牌全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货。独创错位竞争理论，帮助品牌实现品类第一。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "猫眼咨询服务过哪些知名品牌？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "猫眼咨询服务过江中猴姑饼干（上市第一年17亿销售额）、小仙炖鲜炖燕窝（5年20亿在线营收、天猫品类第一）、小罐茶、蟹太太大闸蟹（全网蟹券销量连续多年第一）、胖哥食品等10亿级大单品品牌。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "什么是错位竞争理论？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "错位竞争是猫眼咨询独创的品牌战略理论，核心是帮助品牌避开正面竞争，通过品类错位、场景错位、人群错位等方式找到市场空白，实现快速成为细分品类第一。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "猫眼咨询与麦肯锡等传统咨询公司有什么区别？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "猫眼咨询不提供研究报告，而是打造爆品使利润倍增；不是传统甲乙关系，而是深度战略合伙人；不只给建议，而是全域增长打爆天猫；不做短期项目指导，而是品牌显贵长期护航。"
+        }
+      }
+    ]
+  }
+];
+
 export default function Home() {
+  useSEO({
+    title: "猫眼咨询 · Mc&Mamoo Brand Management Inc. | 中国新消费第一品牌战略咨询公司",
+    description: "猫眼咨询（Mc&Mamoo Brand Management Inc.）独创错位竞争理论，服务江中猴姑、小仙炖、小罐茶、蟹太太等10亿级大单品。品牌显贵·利润倍增·全域增长，成为您的深度战略合伙人。",
+    url: "https://www.mcmamoo.com/",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-bg-d7eizqgBbqatPTyug6Apqv.webp",
+    keywords: "猫眼咨询,Mc&Mamoo,品牌战略咨询,新消费品牌,错位竞争,品牌定位,爆品策划,天猫运营,品牌管理公司,战略咨询,消费品牌升级,品类战略",
+    jsonLd: HOME_JSON_LD,
+    breadcrumbs: [{ name: "首页", url: "/" }],
+  });
+
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       <Navbar />
-      <IPAndWhale />
-      <Hero />
-      <InternationalRecognition />
-      <BusinessDivision />
-      <About />
-      <Awards />
-      <KOL />
-      <Services />
-      <Cases />
-      <GlobalCases />
-      <Methodology />
-      <Team />
-      <MaoIndustry />
-      <Contact />
+      <main>
+        <Hero />
+        <InternationalRecognition />
+        <BusinessDivision />
+        <About />
+        <Methodology />
+        <KOL />
+        <Services />
+        <Cases />
+        <GlobalCases />
+        <Awards />
+        <Team />
+        <FAQ />
+        <Contact />
+      </main>
       <Footer />
     </div>
   );

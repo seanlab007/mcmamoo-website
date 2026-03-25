@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 
 const WECHAT_QR_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/wechat-qr-clean_212dda69.png";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png";
 
 const CONTACT = {
   wechatId: "K70727072",
@@ -218,7 +218,7 @@ export default function WechatFloat() {
 
               {/* QR Code */}
               <div className="px-6 pt-5 pb-3 flex flex-col items-center">
-                <div className="p-3 mb-3" style={{ background: "#0A0A0A", border: "2px solid rgba(201,168,76,0.8)" }}>
+                <div className="p-3 mb-3" style={{ background: "white", border: "1px solid rgba(201,168,76,0.3)" }}>
                   <img src={WECHAT_QR_URL} alt="微信二维码" className="w-44 h-44 object-contain" />
                 </div>
                 <p className="text-center text-sm mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>
@@ -289,7 +289,7 @@ export default function WechatFloat() {
                     style={{ borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.03)" }}
                   >
                     <IconPhone />
-                    <span className="flex flex-col leading-tight"><span>电话拨打</span><span style={{ fontSize: '0.65rem', color: 'rgba(201,168,76,0.7)', letterSpacing: '0.03em' }}>+86 13764597723</span></span>
+                    <span>电话拨打</span>
                   </a>
 
                   {/* WhatsApp */}
@@ -489,7 +489,7 @@ function InlineModalContent({ onClose }: { onClose: () => void }) {
         <div className="text-xs tracking-widest uppercase pt-4 mb-3" style={{ color: "rgba(255,255,255,0.3)", fontFamily: "'DM Mono', monospace" }}>其他联系方式</div>
         <div className="grid grid-cols-2 gap-2">
           <a href={`tel:+${CONTACT.phone}`} className={channelBtnClass} style={{ borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.03)" }}>
-            <IconPhone /><span className="flex flex-col leading-tight"><span>电话拨打</span><span style={{ fontSize: '0.65rem', color: 'rgba(201,168,76,0.7)', letterSpacing: '0.03em' }}>+86 13764597723</span></span>
+            <IconPhone /><span>电话拨打</span>
           </a>
           <a href={`https://wa.me/${CONTACT.whatsapp}`} target="_blank" rel="noopener noreferrer" className={channelBtnClass} style={{ borderColor: "rgba(37,211,102,0.3)", color: "rgba(37,211,102,0.85)", background: "rgba(37,211,102,0.05)" }}>
             <IconWhatsApp /><span>WhatsApp</span>

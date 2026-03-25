@@ -1,17 +1,15 @@
 /*
- * Hero Section — 猫眼增长引擎官网英雄区
+ * Hero Section — 猫眼咨询官网英雄区
  * Design: 全屏深色背景 + 猫眼金线图 + 大字标题 + 不对称布局
  * Theme: 品牌显贵 · 利润提升 · 全域增长
  */
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-bg-d7eizqgBbqatPTyug6Apqv.webp";
 const HERO_VIDEO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-final_5b857fd9.mp4";
 
 export default function Hero() {
-  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayText, setOverlayText] = useState(0);
@@ -34,7 +32,7 @@ export default function Hero() {
     { en: "STRATEGIC INTELLIGENCE", zh: "运用毛泽东思想" },
     { en: "GLOBAL BATTLEFIELD ANALYSIS", zh: "洞察全球战略格局" },
     { en: "PREDICT · DOMINATE · WIN", zh: "预测·制胜·胜利" },
-    { en: "MAO THINK TANK", zh: "毛智库 · 对标美国五角大楼兰德咨询" },
+    { en: "MAO THINK TANK", zh: "毛智库 · 对标兰德和中心" },
   ];
 
   useEffect(() => {
@@ -122,7 +120,7 @@ export default function Hero() {
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
-              ◆ &nbsp; {t('hero.label')}
+              ◆ &nbsp; Global Premium Brand Management · 全球顶奢品牌管理
             </div>
 
             {/* Main title */}
@@ -135,7 +133,7 @@ export default function Hero() {
                 Mc&amp;Mamoo
               </span>
               <span className="block text-3xl md:text-4xl lg:text-5xl font-light text-[#C9A84C] mt-1 tracking-wide">
-                {t('hero.subtitle')}
+                Brand Management Inc.
               </span>
             </h1>
 
@@ -148,7 +146,7 @@ export default function Hero() {
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-px w-12 bg-[#C9A84C]" />
                 <span className="font-['Noto_Serif_SC'] text-white/80 text-lg md:text-xl tracking-widest">
-                  {t('hero.brandName')}
+                  猫眼咨询
                 </span>
               </div>
             </div>
@@ -159,14 +157,14 @@ export default function Hero() {
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
               }`}
             >
-              {t('hero.tagline')}
+              让品牌显贵，让利润倍增，让增长全域
             </p>
             <p
               className={`text-white/50 text-sm md:text-base tracking-wide mb-10 transition-all duration-700 delay-600 ${
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
               }`}
             >
-              {t('hero.taglineEn')}
+              Make Brands Premium · Multiply Profits · Grow Across All Channels
             </p>
 
             {/* CTAs */}
@@ -179,41 +177,14 @@ export default function Hero() {
                 onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
                 className="px-8 py-3.5 bg-[#C9A84C] text-[#0A0A0A] text-sm font-semibold tracking-widest uppercase hover:bg-[#E8D5A0] transition-all duration-300"
               >
-                {t('hero.cta1')}
+                预约品牌诊断
               </button>
               <button
                 onClick={() => document.querySelector("#cases")?.scrollIntoView({ behavior: "smooth" })}
                 className="px-8 py-3.5 border border-white/30 text-white/80 text-sm tracking-widest uppercase hover:border-[#C9A84C]/60 hover:text-[#C9A84C] transition-all duration-300"
               >
-                {t('hero.cta2')}
+                查看全球案例
               </button>
-            </div>
-
-            {/* IP Licensing Highlight */}
-            <div
-              className={`mt-8 flex flex-wrap items-center gap-3 transition-all duration-700 delay-800 ${
-                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-              }`}
-            >
-              <a
-                href="/ip-licensing"
-                className="group flex items-center gap-2.5 px-4 py-2 border border-[#C9A84C]/30 hover:border-[#C9A84C] hover:bg-[#C9A84C]/8 transition-all duration-300"
-              >
-                <span style={{ width: 5, height: 5, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 6px #C9A84C80" }} />
-                <span className="text-[#C9A84C]/80 group-hover:text-[#C9A84C] font-mono text-[10px] tracking-[0.2em] uppercase transition-colors">
-                  {t('hero.ipBadge')}
-                </span>
-                <span className="text-[#C9A84C]/40 group-hover:text-[#C9A84C]/70 font-mono text-[10px] transition-colors">→</span>
-              </a>
-              <a
-                href="/whale-pictures"
-                className="group flex items-center gap-2 px-4 py-2 border border-white/10 hover:border-white/25 transition-all duration-300"
-              >
-                <span className="text-white/40 group-hover:text-white/60 font-mono text-[10px] tracking-[0.15em] uppercase transition-colors">
-                  {t('hero.whaleBadge')}
-                </span>
-                <span className="text-white/25 group-hover:text-white/40 font-mono text-[10px] transition-colors">→</span>
-              </a>
             </div>
           </div>
         </div>

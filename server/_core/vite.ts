@@ -5,7 +5,11 @@ import { nanoid } from "nanoid";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
-import viteConfig from "../../vite.config";
+
+// Node 18 compatible __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// vite.config is loaded dynamically to avoid loading tailwindcss in production
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -14,6 +18,7 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true as const,
   };
 
+  const viteConfig = await import("../../vite.config").then(m => m.default || m);
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
@@ -26,12 +31,8 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      // ESM-safe dirname: works with esbuild bundling
-      const __dir = typeof import.meta.dirname === "string"
-        ? import.meta.dirname
-        : path.dirname(fileURLToPath(import.meta.url));
       const clientTemplate = path.resolve(
-        __dir,
+        __dirname,
         "../..",
         "client",
         "index.html"
@@ -53,18 +54,16 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // Use process.cwd() for Railway compatibility (import.meta.dirname is undefined in bundled ESM)
-  const distPath = path.resolve(process.cwd(), "dist", "public");
-
+  const distPath =
+    process.env.NODE_ENV === "development"
+      ? path.resolve(__dirname, "../..", "dist", "public")
+      : path.resolve(__dirname, "public");
   if (!fs.existsSync(distPath)) {
-    console.warn(
-      `[serveStatic] Build directory not found: ${distPath}. Running in API-only mode.`
+    console.error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
-    // Don't crash - API routes still work without frontend static files
-    return;
   }
 
-  console.log(`[serveStatic] Serving static files from: ${distPath}`);
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist

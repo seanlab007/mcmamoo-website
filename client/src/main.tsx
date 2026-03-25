@@ -7,7 +7,6 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
-import "./lib/i18n"; // 初始化 i18n 多语言系统
 
 const queryClient = new QueryClient();
 
@@ -38,22 +37,11 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
-// 直接请求 api.mcmamoo.com，避免 Cloudflare Pages 无法代理 POST 请求的问题
-const TRPC_URL = import.meta.env.VITE_TRPC_URL || "https://api.mcmamoo.com/api/trpc";
-
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: TRPC_URL,
+      url: "/api/trpc",
       transformer: superjson,
-      headers() {
-        // 使用 localStorage 中的 session token 作为 Authorization header
-        // 这样可以绕过跨域 Cookie 限制
-        const token = typeof window !== 'undefined'
-          ? localStorage.getItem('maoai_session_token')
-          : null;
-        return token ? { Authorization: `Bearer ${token}` } : {};
-      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),
