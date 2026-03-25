@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { aiNodesRouter } from "../aiNodes";
 import { chatRouter } from "../chat";
+import { notesRouter } from "../notes";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -39,6 +40,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // AI 节点协同 API（OpenClaw × MaoAI 协同架构）
   app.use("/api/ai", aiNodesRouter);
+  // 私密云笔记 API（管理员专属）
+  app.use("/api/notes", notesRouter);
   // MaoAI Chat API（对话历史 + 联网搜索 + 图片生成）
   app.use("/api/chat", chatRouter);
   // tRPC API
