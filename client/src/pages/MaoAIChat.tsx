@@ -24,6 +24,7 @@ type Message = {
   imageUrls?: string[];
   generatedImageUrl?: string;
   isImageGeneration?: boolean;
+  toolCalls?: ToolCallStep[]; // tool calling steps shown in this message
 };
 
 type ActiveNodeInfo = {
@@ -74,6 +75,24 @@ type PendingFile = {
   charCount?: number;
 };
 
+type ToolCallStep = {
+  id: string;
+  name: string;
+  args?: Record<string, any>;
+  status: "calling" | "done" | "error";
+  outputPreview?: string;
+};
+
+// Tool name → 中文显示名和图标
+const TOOL_DISPLAY: Record<string, { label: string; emoji: string; color: string }> = {
+  web_search:  { label: "联网搜索", emoji: "🔍", color: "text-blue-400" },
+  run_code:    { label: "执行代码", emoji: "⚡", color: "text-yellow-400" },
+  github_push: { label: "GitHub 推送", emoji: "🚀", color: "text-green-400" },
+  github_read: { label: "读取仓库", emoji: "📂", color: "text-purple-400" },
+  read_url:    { label: "读取网页", emoji: "🌐", color: "text-cyan-400" },
+  run_shell:   { label: "Shell 命令", emoji: "🖥️", color: "text-red-400" },
+};
+
 // ─── Cloud models ─────────────────────────────────────────────────────────────
 const CLOUD_MODELS: CloudModel[] = [
   { id: "deepseek-chat",           name: "DeepSeek V3",   badge: "🔵", description: "通用对话·写作·分析",   isLocal: false },
@@ -122,6 +141,41 @@ function formatTime(dateStr: string): string {
   return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
 }
 
+// ─── ToolCallSteps Component ─────────────────────────────────────────────────
+function ToolCallSteps({ steps, live = false }: { steps: ToolCallStep[]; live?: boolean }) {
+  if (steps.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1 mb-2">
+      {steps.map((tc) => {
+        const display = TOOL_DISPLAY[tc.name] || { label: tc.name, emoji: "🔧", color: "text-white/50" };
+        return (
+          <div key={tc.id} className="flex items-start gap-2 px-3 py-2 bg-black/40 border border-white/8 text-[11px]">
+            <span className="shrink-0 mt-0.5 text-base leading-none">{display.emoji}</span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className={`font-mono font-semibold ${display.color}`}>{display.label}</span>
+                {tc.status === "calling" && <Loader2 size={10} className="animate-spin text-white/40" />}
+                {tc.status === "done" && <span className="text-emerald-400/70 text-[10px]">✓ 完成</span>}
+                {tc.status === "error" && <span className="text-red-400/70 text-[10px]">✗ 失败</span>}
+              </div>
+              {tc.args && Object.keys(tc.args).length > 0 && (
+                <div className="text-white/30 mt-0.5 font-mono truncate text-[10px]">
+                  {Object.entries(tc.args).map(([k, v]) => `${k}: ${String(v).slice(0, 60)}`).join(" · ")}
+                </div>
+              )}
+              {tc.outputPreview && (
+                <div className="text-white/25 mt-1 font-mono text-[10px] line-clamp-3 whitespace-pre-wrap">
+                  {tc.outputPreview.slice(0, 300)}{tc.outputPreview.length > 300 ? "..." : ""}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function MaoAIChat() {
   const { user, loading, logout } = useAuth({
@@ -150,6 +204,7 @@ export default function MaoAIChat() {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
+  const [currentToolCalls, setCurrentToolCalls] = useState<ToolCallStep[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -655,6 +710,8 @@ export default function MaoAIChat() {
 
     let fullContent = "";
     let capturedNodeInfo: ActiveNodeInfo | null = null;
+    const liveToolCalls: ToolCallStep[] = [];
+    setCurrentToolCalls([]);
 
     try {
       const resp = await fetch(`${BACKEND_URL}/api/ai/chat/stream`, {
@@ -691,6 +748,27 @@ export default function MaoAIChat() {
               } else if (chunk.error) {
                 fullContent += `\n\n⚠️ 错误: ${chunk.error}`;
                 setStreamingContent(fullContent);
+              } else if (chunk.toolCall) {
+                // Tool is being called
+                const step: ToolCallStep = {
+                  id: chunk.toolCall.id,
+                  name: chunk.toolCall.name,
+                  args: chunk.toolCall.args,
+                  status: "calling",
+                };
+                liveToolCalls.push(step);
+                setCurrentToolCalls([...liveToolCalls]);
+              } else if (chunk.toolResult) {
+                // Tool result received
+                const idx = liveToolCalls.findIndex(t => t.id === chunk.toolResult.id);
+                if (idx >= 0) {
+                  liveToolCalls[idx] = {
+                    ...liveToolCalls[idx],
+                    status: chunk.toolResult.success ? "done" : "error",
+                    outputPreview: chunk.toolResult.output,
+                  };
+                  setCurrentToolCalls([...liveToolCalls]);
+                }
               }
             } catch { /* skip */ }
           }
@@ -701,7 +779,9 @@ export default function MaoAIChat() {
         role: "assistant",
         content: fullContent || "（无响应）",
         nodeInfo: capturedNodeInfo || undefined,
+        toolCalls: liveToolCalls.length > 0 ? [...liveToolCalls] : undefined,
       }]);
+      setCurrentToolCalls([]);
       if (convId) {
         await saveMessageToDB(convId, "assistant", fullContent || "（无响应）", selectedId);
         updateConvMutation.mutate({ id: convId, model: selectedId });
@@ -715,10 +795,11 @@ export default function MaoAIChat() {
         setMessages(prev => {
           const last = prev[prev.length - 1];
           if (last?.role === "assistant") return prev;
-          return [...prev, { role: "assistant" as const, content: fullContent, nodeInfo: capturedNodeInfo || undefined }];
+          return [...prev, { role: "assistant" as const, content: fullContent, nodeInfo: capturedNodeInfo || undefined, toolCalls: liveToolCalls.length > 0 ? [...liveToolCalls] : undefined }];
         });
         if (convId) await saveMessageToDB(convId, "assistant", fullContent, selectedId);
       }
+      setCurrentToolCalls([]);
     } finally {
       setIsStreaming(false);
       setStreamingContent("");
@@ -1022,6 +1103,10 @@ export default function MaoAIChat() {
                         <span className="font-mono">{msg.nodeInfo.model}</span>
                       </div>
                     )}
+                    {/* Tool call steps — shown for completed messages */}
+                    {msg.role === "assistant" && msg.toolCalls && msg.toolCalls.length > 0 && (
+                      <ToolCallSteps steps={msg.toolCalls} />
+                    )}
                     {/* Image generation result */}
                     {msg.role === "assistant" && msg.isImageGeneration && msg.generatedImageUrl ? (
                       <div className="bg-white/5 border border-purple-500/20 rounded px-4 py-3">
@@ -1091,10 +1176,18 @@ export default function MaoAIChat() {
                       <span className="font-mono">{activeNodeInfo.model}</span>
                     </div>
                   )}
+                  {currentToolCalls.length > 0 && (
+                    <ToolCallSteps steps={currentToolCalls} live={true} />
+                  )}
                   <div className="bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">
                     {streamingContent ? (
                       <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
                         <Streamdown>{streamingContent}</Streamdown>
+                      </div>
+                    ) : currentToolCalls.length > 0 ? (
+                      <div className="flex items-center gap-2 text-white/40">
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>执行工具中...</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 text-white/40">
