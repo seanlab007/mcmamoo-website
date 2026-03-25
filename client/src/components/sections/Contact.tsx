@@ -117,7 +117,7 @@ export default function Contact() {
                 <div className="relative flex-shrink-0">
                   <div className="absolute -inset-1 border border-[#C9A84C]/40" />
                   <div className="absolute -inset-2 border border-[#C9A84C]/15" />
-                  <div className="p-1.5 bg-white">
+                  <div className="p-2 bg-[#0A0A0A] border-2 border-[#C9A84C]/80">
                     <img
                       src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/wechat-qr-clean_212dda69.png"
                       alt="WeChat QR Code"
