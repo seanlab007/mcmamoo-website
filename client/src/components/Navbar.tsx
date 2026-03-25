@@ -71,6 +71,15 @@ export default function Navbar() {
       glow: true,
       external: false,
     },
+    {
+      href: "/ip-licensing",
+      label: isEn ? 'IP Licensing' : 'IP 授权',
+      sublabel: isEn ? 'Global IP Resource Database' : '全球 IP 资源库 · 公版 · 合作',
+      color: "#C9A84C",
+      dot: "circle",
+      glow: true,
+      external: false,
+    },
   ];
 
   useEffect(() => {
@@ -240,6 +249,15 @@ export default function Navbar() {
                 </div>
               </div>
             </div>
+
+            {/* IP 授权入口 */}
+            <a
+              href="/ip-licensing"
+              className="relative text-white/60 hover:text-[#C9A84C] text-sm tracking-wide transition-all duration-300 py-1 whitespace-nowrap"
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+            >
+              {isEn ? 'IP Licensing' : 'IP 授权'}
+            </a>
 
             {/* 咨询服务 — 独立主入口 */}
             <a
