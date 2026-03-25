@@ -1,4 +1,4 @@
-import { integer, pgEnum, pgTable, text, timestamp, varchar, boolean, serial } from "drizzle-orm/pg-core";
+import { integer, pgEnum, pgTable, text, timestamp, varchar, boolean, serial, numeric } from "drizzle-orm/pg-core";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
@@ -16,6 +16,58 @@ export const loadBalanceEnum = pgEnum("load_balance", ["priority", "round_robin"
 export const nodeLogStatusEnum = pgEnum("node_log_status", ["success", "error", "timeout", "failover"]);
 export const appStatusEnum = pgEnum("app_status", ["pending", "reviewing", "approved", "rejected"]);
 export const copyStatusEnum = pgEnum("copy_status", ["draft", "approved", "published"]);
+export const planTierEnum = pgEnum("plan_tier", ["free", "pro", "max"]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "expired", "cancelled", "pending"]);
+export const paymentProviderEnum = pgEnum("payment_provider", ["alipay", "lianpay", "paypal", "stripe", "wechatpay", "manual"]);
+export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
+export const currencyEnum = pgEnum("currency", ["CNY", "USD"]);
+
+// ─── Subscriptions ───────────────────────────────────────────────────────────
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  tier: planTierEnum("tier").notNull().default("free"),
+  status: subscriptionStatusEnum("status").notNull().default("active"),
+  currentPeriodStart: timestamp("currentPeriodStart").defaultNow().notNull(),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  cancelledAt: timestamp("cancelledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+// ─── Payment Orders ───────────────────────────────────────────────────────────
+export const paymentOrders = pgTable("payment_orders", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  tier: planTierEnum("tier").notNull(),
+  provider: paymentProviderEnum("provider").notNull(),
+  currency: currencyEnum("currency").notNull().default("CNY"),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  status: paymentStatusEnum("status").notNull().default("pending"),
+  externalOrderId: varchar("externalOrderId", { length: 256 }),
+  paymentUrl: text("paymentUrl"),
+  metadata: text("metadata"),
+  paidAt: timestamp("paidAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type PaymentOrder = typeof paymentOrders.$inferSelect;
+export type InsertPaymentOrder = typeof paymentOrders.$inferInsert;
+
+// ─── Usage Tracking ───────────────────────────────────────────────────────────
+export const usageRecords = pgTable("usage_records", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  date: varchar("date", { length: 10 }).notNull(),
+  chatMessages: integer("chatMessages").default(0).notNull(),
+  imageGenerations: integer("imageGenerations").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type UsageRecord = typeof usageRecords.$inferSelect;
+export type InsertUsageRecord = typeof usageRecords.$inferInsert;
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const users = pgTable("users", {

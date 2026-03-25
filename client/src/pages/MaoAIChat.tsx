@@ -1,16 +1,29 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
+  ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
+  Wand2, Image as ImageIcon, Crown, Zap,
+} from "lucide-react";
+import type { PlanTier } from "@shared/plans";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Streamdown } from "streamdown";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://api.mcmamoo.com";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+type MessageContent =
+  | string
+  | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
 
 type Message = {
   role: "user" | "assistant";
-  content: string;
+  content: MessageContent;
   nodeInfo?: ActiveNodeInfo;
+  displayText?: string;
+  imageUrls?: string[];
+  generatedImageUrl?: string;
+  isImageGeneration?: boolean;
 };
 
 type ActiveNodeInfo = {
@@ -26,11 +39,12 @@ type CloudModel = {
   name: string;
   badge: string;
   description: string;
+  supportsVision?: boolean;
   isLocal: false;
 };
 
 type LocalNode = {
-  id: string;       // "local:<nodeId>"
+  id: string;
   nodeId: number;
   name: string;
   badge: string;
@@ -42,18 +56,26 @@ type LocalNode = {
 
 type ModelOption = CloudModel | LocalNode;
 
-// ─── Cloud models (always available) ─────────────────────────────────────────
+type Conversation = {
+  id: number;
+  title: string;
+  model: string;
+  updatedAt: string;
+};
 
+type InputMode = "chat" | "image";
+
+// ─── Cloud models ─────────────────────────────────────────────────────────────
 const CLOUD_MODELS: CloudModel[] = [
-  { id: "deepseek-chat",              name: "DeepSeek V3",    badge: "🔵", description: "通用对话·写作·分析",   isLocal: false },
-  { id: "deepseek-reasoner",          name: "DeepSeek R1",    badge: "🧠", description: "深度推理·复杂逻辑",   isLocal: false },
-  { id: "glm-4-flash",                name: "GLM-4 Flash",    badge: "⚡", description: "智谱极速·免费额度多", isLocal: false },
-  { id: "glm-4-plus",                 name: "GLM-4 Plus",     badge: "🟣", description: "智谱旗舰·能力强",     isLocal: false },
-  { id: "llama-3.3-70b-versatile",    name: "Llama 3.3 70B",  badge: "🦙", description: "Groq 超快·英文优秀",  isLocal: false },
+  { id: "deepseek-chat",           name: "DeepSeek V3",   badge: "🔵", description: "通用对话·写作·分析",   isLocal: false },
+  { id: "deepseek-reasoner",       name: "DeepSeek R1",   badge: "🧠", description: "深度推理·复杂逻辑",   isLocal: false },
+  { id: "glm-4-flash",             name: "GLM-4 Flash",   badge: "⚡", description: "智谱极速·免费额度多", isLocal: false },
+  { id: "glm-4-plus",              name: "GLM-4 Plus",    badge: "🟣", description: "智谱旗舰·能力强",     isLocal: false },
+  { id: "glm-4v-flash",            name: "GLM-4V 视觉",   badge: "👁️", description: "图片理解·截图分析",   supportsVision: true, isLocal: false },
+  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", badge: "🦙", description: "Groq 超快·英文优秀",  isLocal: false },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem("maoai_session_token");
   const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -61,10 +83,42 @@ function getAuthHeaders(): Record<string, string> {
   return h;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+function fileToDataUrl(file: File | Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
+function getDisplayText(content: MessageContent): string {
+  if (typeof content === "string") return content;
+  return content.filter(c => c.type === "text").map(c => (c as any).text).join("");
+}
+
+function getImageUrls(content: MessageContent): string[] {
+  if (typeof content === "string") return [];
+  return content.filter(c => c.type === "image_url").map(c => (c as any).image_url.url);
+}
+
+function formatTime(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  if (diffDays === 1) return "昨天";
+  if (diffDays < 7) return `${diffDays}天前`;
+  return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function MaoAIChat() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
+  const { user, loading, logout } = useAuth({
+    redirectOnUnauthenticated: true,
+    redirectPath: "/maoai/login",
+  });
   const isAdmin = (user as any)?.role === "admin";
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -72,23 +126,88 @@ export default function MaoAIChat() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [activeNodeInfo, setActiveNodeInfo] = useState<ActiveNodeInfo | null>(null);
-
-  // Model/node picker
+  const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string>("deepseek-chat");
   const [showPicker, setShowPicker] = useState(false);
   const [localNodes, setLocalNodes] = useState<LocalNode[]>([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
+  const [currentConvId, setCurrentConvId] = useState<number | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [inputMode, setInputMode] = useState<InputMode>("chat");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll
+  // ── tRPC ────────────────────────────────────────────────────────────────────
+  const utils = trpc.useUtils();
+  const { data: conversations = [], isLoading: loadingConvs } = trpc.conversations.list.useQuery(
+    undefined,
+    { enabled: !!user }
+  );
+  const createConvMutation = trpc.conversations.create.useMutation({
+    onSuccess: () => utils.conversations.list.invalidate(),
+  });
+  const updateConvMutation = trpc.conversations.update.useMutation({
+    onSuccess: () => utils.conversations.list.invalidate(),
+  });
+  const deleteConvMutation = trpc.conversations.delete.useMutation({
+    onSuccess: () => utils.conversations.list.invalidate(),
+  });
+  const saveMsgMutation = trpc.messages.save.useMutation();
+  const { data: mySubscription, refetch: refetchSubscription } = trpc.billing.mySubscription.useQuery(
+    undefined,
+    { enabled: !!user, staleTime: 60_000 }
+  );
+  const { data: historyMessages } = trpc.messages.list.useQuery(
+    { conversationId: currentConvId! },
+    { enabled: !!currentConvId }
+  );
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
 
-  // Fetch local nodes (admin only)
+  // Load messages when switching conversations
+  useEffect(() => {
+    if (!historyMessages || !currentConvId) return;
+    const loaded: Message[] = historyMessages.map((m: any) => {
+      let content: MessageContent;
+      let generatedImageUrl: string | undefined;
+      let isImageGeneration = false;
+
+      // Try to detect image generation messages stored as JSON
+      try {
+        const meta = JSON.parse(m.content);
+        if (meta && typeof meta === "object" && meta.generatedImageUrl) {
+          generatedImageUrl = meta.generatedImageUrl as string;
+          isImageGeneration = true;
+          content = meta.prompt ? `🎨 生成图像：${meta.prompt}` : "🎨 生成图像";
+        } else if (Array.isArray(meta)) {
+          content = meta;
+        } else {
+          content = m.content as string;
+        }
+      } catch {
+        content = m.content as string;
+      }
+
+      return {
+        role: m.role as "user" | "assistant",
+        content,
+        displayText: getDisplayText(content),
+        imageUrls: getImageUrls(content),
+        generatedImageUrl,
+        isImageGeneration,
+      };
+    });
+    setMessages(loaded);
+  }, [historyMessages, currentConvId]);
+
   const fetchLocalNodes = useCallback(async () => {
     if (!isAdmin) return;
     setLoadingNodes(true);
@@ -121,39 +240,260 @@ export default function MaoAIChat() {
     if (isAdmin) fetchLocalNodes();
   }, [isAdmin, fetchLocalNodes]);
 
-  // All options: cloud + local (admin only)
-  const allOptions: ModelOption[] = [
-    ...CLOUD_MODELS,
-    ...(isAdmin ? localNodes : []),
-  ];
+  const addImageFromFile = async (file: File | Blob) => {
+    if (!file.type.startsWith("image/")) return;
+    const dataUrl = await fileToDataUrl(file);
+    setPendingImages(prev => [...prev, dataUrl]);
+  };
 
+  const handlePaste = useCallback(async (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const blob = item.getAsFile();
+        if (blob) await addImageFromFile(blob);
+        return;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    for (const file of Array.from(files)) await addImageFromFile(file);
+    e.target.value = "";
+  };
+
+  const removePendingImage = (idx: number) => {
+    setPendingImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const startNewChat = () => {
+    setCurrentConvId(null);
+    setMessages([]);
+    setInput("");
+    setPendingImages([]);
+    setInputMode("chat");
+  };
+
+  const switchConversation = (conv: Conversation) => {
+    if (conv.id === currentConvId) return;
+    setCurrentConvId(conv.id);
+    setMessages([]);
+    setSelectedId(conv.model || "deepseek-chat");
+  };
+
+  const deleteConversation = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (deletingId === id) return;
+    setDeletingId(id);
+    try {
+      await deleteConvMutation.mutateAsync({ id });
+      if (currentConvId === id) startNewChat();
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const saveMessageToDB = async (convId: number, role: "user" | "assistant", content: MessageContent, model?: string) => {
+    const contentStr = typeof content === "string" ? content : JSON.stringify(content);
+    try {
+      await saveMsgMutation.mutateAsync({ conversationId: convId, role, content: contentStr, model });
+    } catch (err) {
+      console.warn("[MaoAI] save msg failed:", err);
+    }
+  };
+
+  const generateTitle = (text: string): string => {
+    const cleaned = text.trim().replace(/\s+/g, " ");
+    return cleaned.length > 30 ? cleaned.slice(0, 30) + "…" : cleaned || "新对话";
+  };
+
+  const ensureConversation = async (titleText: string): Promise<number | null> => {
+    if (currentConvId) return currentConvId;
+    try {
+      const title = generateTitle(titleText);
+      const created = await createConvMutation.mutateAsync({ title, model: selectedId });
+      const newId = (created as any).id as number;
+      setCurrentConvId(newId);
+      return newId;
+    } catch (err) {
+      console.warn("[MaoAI] create conv failed:", err);
+      return null;
+    }
+  };
+
+  const allOptions: ModelOption[] = [...CLOUD_MODELS, ...(isAdmin ? localNodes : [])];
   const currentOption = allOptions.find(m => m.id === selectedId) || CLOUD_MODELS[0];
 
-  // ── Send message ────────────────────────────────────────────────────────────
-  const sendMessage = async (content: string) => {
-    if (!content.trim() || isStreaming) return;
+  // ── Limit check helpers ───────────────────────────────────────────────────────────
+  const checkChatLimit = (): boolean => {
+    if (!mySubscription) return true; // not loaded yet, allow
+    const { limits, usage } = mySubscription;
+    if (limits.dailyChatMessages === -1) return true;
+    if (usage.chatMessages >= limits.dailyChatMessages) {
+      setShowUpgradePrompt("chat");
+      return false;
+    }
+    return true;
+  };
 
-    const userMsg: Message = { role: "user", content: content.trim() };
+  const checkImageLimit = (): boolean => {
+    if (!mySubscription) return true;
+    const { limits, usage, tier } = mySubscription;
+    if (!limits.imageGeneration) {
+      setShowUpgradePrompt("image_locked");
+      return false;
+    }
+    if (limits.dailyImageGenerations !== -1 && usage.imageGenerations >= limits.dailyImageGenerations) {
+      setShowUpgradePrompt("image");
+      return false;
+    }
+    return true;
+  };
+
+  const checkPremiumModel = (modelId: string): boolean => {
+    const premiumModels = ["deepseek-reasoner", "glm-4-plus"];
+    if (!premiumModels.includes(modelId)) return true;
+    if (!mySubscription) return true;
+    if (!mySubscription.limits.premiumModels) {
+      setShowUpgradePrompt("premium_model");
+      return false;
+    }
+    return true;
+  };
+
+  // ── Image generation (nano banana) ─────────────────────────────────────────
+  const generateImage = async (prompt: string) => {
+    if (!prompt.trim() || isGeneratingImage) return;
+    if (!checkImageLimit()) return;
+
+    const userMsg: Message = {
+      role: "user",
+      content: `🎨 生成图像：${prompt.trim()}`,
+      displayText: `🎨 生成图像：${prompt.trim()}`,
+      isImageGeneration: true,
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+    setIsGeneratingImage(true);
+
+    const convId = await ensureConversation(`图像：${prompt.trim()}`);
+    if (convId) {
+      await saveMessageToDB(convId, "user", `🎨 生成图像：${prompt.trim()}`);
+    }
+
+    try {
+      const resp = await fetch(`${BACKEND_URL}/api/ai/image/generate`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({ prompt: prompt.trim() }),
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+        throw new Error(errData.error || `HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const imageUrl = data.url as string;
+
+      const assistantMsg: Message = {
+        role: "assistant",
+        content: JSON.stringify({ generatedImageUrl: imageUrl, prompt: prompt.trim() }),
+        generatedImageUrl: imageUrl,
+        isImageGeneration: true,
+        displayText: `已生成图像：${prompt.trim()}`,
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+
+      if (convId) {
+        await saveMessageToDB(
+          convId,
+          "assistant",
+          JSON.stringify({ generatedImageUrl: imageUrl, prompt: prompt.trim() }),
+          "nano-banana"
+        );
+        updateConvMutation.mutate({ id: convId, model: "nano-banana" });
+      }
+    } catch (err: any) {
+      const errMsg = `⚠️ 图像生成失败: ${err.message}`;
+      setMessages(prev => [...prev, { role: "assistant", content: errMsg, displayText: errMsg }]);
+      if (convId) {
+        await saveMessageToDB(convId, "assistant", errMsg);
+      }
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  // ── Send chat message ────────────────────────────────────────────────────────
+  const sendMessage = async (textContent: string) => {
+    if ((!textContent.trim() && pendingImages.length === 0) || isStreaming) return;
+    if (!checkChatLimit()) return;
+    if (!currentOption.isLocal && !checkPremiumModel(selectedId)) return;
+
+    let userContent: MessageContent;
+    if (pendingImages.length > 0) {
+      const parts: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [];
+      for (const imgUrl of pendingImages) parts.push({ type: "image_url", image_url: { url: imgUrl } });
+      parts.push({ type: "text", text: textContent.trim() || "请分析这张图片" });
+      userContent = parts;
+    } else {
+      userContent = textContent.trim();
+    }
+
+    const userMsg: Message = {
+      role: "user",
+      content: userContent,
+      displayText: getDisplayText(userContent),
+      imageUrls: getImageUrls(userContent),
+    };
+
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
+    setPendingImages([]);
     setIsStreaming(true);
     setStreamingContent("");
     setActiveNodeInfo(null);
-
     abortRef.current = new AbortController();
+
+    let convId = currentConvId;
+    if (!convId) {
+      try {
+        const title = generateTitle(getDisplayText(userContent));
+        const created = await createConvMutation.mutateAsync({ title, model: selectedId });
+        convId = (created as any).id;
+        setCurrentConvId(convId);
+      } catch (err) {
+        console.warn("[MaoAI] create conv failed:", err);
+      }
+    }
+
+    if (convId) await saveMessageToDB(convId, "user", userContent);
 
     const isLocal = currentOption.isLocal;
     const bodyPayload: Record<string, any> = {
       messages: newMessages.map(m => ({ role: m.role, content: m.content })),
     };
-
     if (isLocal) {
       bodyPayload.useLocal = true;
       bodyPayload.nodeId = (currentOption as LocalNode).nodeId;
     } else {
       bodyPayload.model = selectedId;
     }
+
+    let fullContent = "";
+    let capturedNodeInfo: ActiveNodeInfo | null = null;
 
     try {
       const resp = await fetch(`${BACKEND_URL}/api/ai/chat/stream`, {
@@ -163,14 +503,11 @@ export default function MaoAIChat() {
         signal: abortRef.current.signal,
         body: JSON.stringify(bodyPayload),
       });
-
       if (!resp.ok || !resp.body) throw new Error(`HTTP ${resp.status}`);
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let fullContent = "";
-      let capturedNodeInfo: ActiveNodeInfo | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -178,7 +515,6 @@ export default function MaoAIChat() {
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";
-
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed || trimmed === "data: [DONE]") continue;
@@ -205,9 +541,22 @@ export default function MaoAIChat() {
         content: fullContent || "（无响应）",
         nodeInfo: capturedNodeInfo || undefined,
       }]);
+      if (convId) {
+        await saveMessageToDB(convId, "assistant", fullContent || "（无响应）", selectedId);
+        updateConvMutation.mutate({ id: convId, model: selectedId });
+      }
     } catch (err: any) {
       if (err.name !== "AbortError") {
-        setMessages(prev => [...prev, { role: "assistant", content: `⚠️ 请求失败: ${err.message}` }]);
+        const errMsg = `⚠️ 请求失败: ${err.message}`;
+        setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
+        if (convId) await saveMessageToDB(convId, "assistant", errMsg);
+      } else if (fullContent) {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant") return prev;
+          return [...prev, { role: "assistant" as const, content: fullContent, nodeInfo: capturedNodeInfo || undefined }];
+        });
+        if (convId) await saveMessageToDB(convId, "assistant", fullContent, selectedId);
       }
     } finally {
       setIsStreaming(false);
@@ -216,13 +565,31 @@ export default function MaoAIChat() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
+  const handleSend = () => {
+    if (inputMode === "image") {
+      generateImage(input);
+    } else {
+      sendMessage(input);
+    }
   };
 
-  const stopStreaming = () => abortRef.current?.abort();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
 
-  // ── Loading state ───────────────────────────────────────────────────────────
+  const stopStreaming = () => {
+    if (streamingContent) {
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && last.content === streamingContent) return prev;
+        return [...prev, { role: "assistant" as const, content: streamingContent, nodeInfo: activeNodeInfo || undefined }];
+      });
+    }
+    abortRef.current?.abort();
+  };
+
+  const isBusy = isStreaming || isGeneratingImage;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
@@ -231,333 +598,605 @@ export default function MaoAIChat() {
     );
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex flex-col" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="h-screen bg-[#0A0A0A] flex overflow-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
 
-      {/* ── Header ── */}
-      <header className="border-b border-[#C9A84C]/20 bg-[#0A0A0A]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-
-          {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center">
-              <Bot size={16} className="text-[#C9A84C]" />
-            </div>
-            <div>
-              <h1 className="text-[#C9A84C] font-semibold text-sm tracking-wide" style={{ fontFamily: "'DM Mono', monospace" }}>
-                MaoAI
-              </h1>
-              <p className="text-white/30 text-xs">智能 AI 控制中心</p>
-            </div>
+      {/* ── Sidebar ── */}
+      <aside className={`flex flex-col border-r border-[#C9A84C]/10 bg-[#080808] transition-all duration-200 shrink-0 ${sidebarOpen ? "w-64" : "w-0 overflow-hidden"}`}>
+        <div className="flex items-center justify-between px-3 py-3 border-b border-[#C9A84C]/10 shrink-0">
+          <div className="flex items-center gap-2 text-[#C9A84C]/70">
+            <History size={14} />
+            <span className="text-xs font-semibold tracking-wide" style={{ fontFamily: "'DM Mono', monospace" }}>历史对话</span>
           </div>
-
-          <div className="flex items-center gap-3">
-
-            {/* Model / Node Picker */}
-            <div className="relative">
+          <button
+            onClick={startNewChat}
+            className="flex items-center gap-1 px-2 py-1 text-[10px] text-[#C9A84C]/60 border border-[#C9A84C]/20 hover:border-[#C9A84C]/50 hover:text-[#C9A84C] transition-all"
+            title="新建对话"
+          >
+            <MessageSquarePlus size={11} />
+            <span>新建</span>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto py-1">
+          {loadingConvs && (
+            <div className="flex items-center justify-center py-8 text-white/20">
+              <Loader2 size={16} className="animate-spin" />
+            </div>
+          )}
+          {!loadingConvs && (conversations as Conversation[]).length === 0 && (
+            <div className="px-4 py-8 text-center">
+              <p className="text-white/20 text-xs">暂无历史对话</p>
+              <p className="text-white/10 text-[11px] mt-1">发送消息后自动保存</p>
+            </div>
+          )}
+          {(conversations as Conversation[]).map((conv) => (
+            <div
+              key={conv.id}
+              onClick={() => switchConversation(conv)}
+              className={`group relative flex items-start gap-2 px-3 py-2.5 cursor-pointer transition-colors ${
+                conv.id === currentConvId
+                  ? "bg-[#C9A84C]/10 border-l-2 border-[#C9A84C]/60"
+                  : "hover:bg-white/3 border-l-2 border-transparent"
+              }`}
+            >
+              <div className="flex-1 min-w-0 pr-5">
+                <p className={`text-xs truncate leading-snug ${conv.id === currentConvId ? "text-white/85" : "text-white/55"}`}>
+                  {conv.title}
+                </p>
+                <p className="text-[10px] text-white/20 mt-0.5">{formatTime(conv.updatedAt)}</p>
+              </div>
               <button
-                onClick={() => setShowPicker(!showPicker)}
-                className="flex items-center gap-2 px-3 py-1.5 border border-[#C9A84C]/30 text-[#C9A84C]/80 text-xs hover:border-[#C9A84C]/60 hover:text-[#C9A84C] transition-all"
-                style={{ fontFamily: "'DM Mono', monospace" }}
+                onClick={(e) => deleteConversation(conv.id, e)}
+                className="absolute right-2 top-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-white/25 hover:text-red-400/70 p-0.5"
+                title="删除对话"
               >
-                {/* Source badge */}
-                {currentOption.isLocal ? (
-                  <Monitor size={11} className="text-emerald-400" />
-                ) : (
-                  <Cloud size={11} className="text-sky-400" />
-                )}
-                <span>{currentOption.badge}</span>
-                <span className="max-w-[100px] truncate">{currentOption.name}</span>
-                <ChevronDown size={12} />
+                {deletingId === conv.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
               </button>
+            </div>
+          ))}
+        </div>
+      </aside>
 
-              {showPicker && (
-                <div className="absolute right-0 top-full mt-1 w-72 bg-[#111] border border-[#C9A84C]/20 shadow-2xl z-20">
+      {/* ── Main area ── */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-                  {/* Cloud section */}
-                  <div className="px-3 py-2 border-b border-white/5">
-                    <div className="flex items-center gap-1.5 text-sky-400/70 text-[10px] font-semibold tracking-widest uppercase">
-                      <Cloud size={10} />
-                      <span>云端模型</span>
-                    </div>
-                  </div>
-                  {CLOUD_MODELS.map(m => (
-                    <button
-                      key={m.id}
-                      onClick={() => { setSelectedId(m.id); setShowPicker(false); }}
-                      className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${m.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}
-                    >
-                      <span className="text-sm mt-0.5 shrink-0">{m.badge}</span>
-                      <div className="min-w-0">
-                        <div className="text-white/90 text-xs font-medium" style={{ fontFamily: "'DM Mono', monospace" }}>{m.name}</div>
-                        <div className="text-white/35 text-[11px] mt-0.5 truncate">{m.description}</div>
+        {/* ── Header ── */}
+        <header className="border-b border-[#C9A84C]/20 bg-[#0A0A0A]/95 backdrop-blur-sm shrink-0 z-10">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(v => !v)}
+                className="text-white/30 hover:text-[#C9A84C]/70 transition-colors p-1"
+                title={sidebarOpen ? "收起侧边栏" : "展开侧边栏"}
+              >
+                {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+              </button>
+              <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center">
+                <Bot size={16} className="text-[#C9A84C]" />
+              </div>
+              <div>
+                <h1 className="text-[#C9A84C] font-semibold text-sm tracking-wide" style={{ fontFamily: "'DM Mono', monospace" }}>MaoAI</h1>
+                <p className="text-white/30 text-xs">智能 AI 控制中心</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={startNewChat} className="text-white/30 hover:text-[#C9A84C]/70 transition-colors p-1" title="新建对话">
+                <MessageSquarePlus size={16} />
+              </button>
+              {/* Model picker — only in chat mode */}
+              {inputMode === "chat" && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowPicker(!showPicker)}
+                    className="flex items-center gap-2 px-3 py-1.5 border border-[#C9A84C]/30 text-[#C9A84C]/80 text-xs hover:border-[#C9A84C]/60 hover:text-[#C9A84C] transition-all"
+                    style={{ fontFamily: "'DM Mono', monospace" }}
+                  >
+                    {currentOption.isLocal ? <Monitor size={11} className="text-emerald-400" /> : <Cloud size={11} className="text-sky-400" />}
+                    <span>{currentOption.badge}</span>
+                    <span className="max-w-[100px] truncate">{currentOption.name}</span>
+                    <ChevronDown size={12} />
+                  </button>
+                  {showPicker && (
+                    <div className="absolute right-0 top-full mt-1 w-72 bg-[#111] border border-[#C9A84C]/20 shadow-2xl z-20">
+                      <div className="px-3 py-2 border-b border-white/5">
+                        <div className="flex items-center gap-1.5 text-sky-400/70 text-[10px] font-semibold tracking-widest uppercase">
+                          <Cloud size={10} /><span>云端模型</span>
+                        </div>
                       </div>
-                      {m.id === selectedId && <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-[#C9A84C] mt-1.5" />}
-                    </button>
-                  ))}
-
-                  {/* Local section (admin only) */}
-                  {isAdmin && (
-                    <>
-                      <div className="px-3 py-2 border-t border-white/5 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-emerald-400/70 text-[10px] font-semibold tracking-widest uppercase">
-                          <Monitor size={10} />
-                          <span>本地节点</span>
-                          <span className="text-white/20 normal-case font-normal">· 仅管理员</span>
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); fetchLocalNodes(); }}
-                          className="text-white/30 hover:text-white/60 transition-colors p-0.5"
-                          title="刷新本地节点"
-                        >
-                          <RefreshCw size={10} className={loadingNodes ? "animate-spin" : ""} />
-                        </button>
-                      </div>
-
-                      {loadingNodes && (
-                        <div className="px-4 py-3 text-white/30 text-xs flex items-center gap-2">
-                          <Loader2 size={12} className="animate-spin" />
-                          <span>正在获取本地节点...</span>
-                        </div>
-                      )}
-
-                      {!loadingNodes && localNodes.length === 0 && (
-                        <div className="px-4 py-3 text-white/25 text-xs">
-                          暂无在线本地节点
-                          <div className="text-white/15 text-[11px] mt-0.5">需要先通过内网穿透注册</div>
-                        </div>
-                      )}
-
-                      {localNodes.map(n => (
-                        <button
-                          key={n.id}
-                          onClick={() => { if (n.isOnline) { setSelectedId(n.id); setShowPicker(false); } }}
-                          disabled={!n.isOnline}
-                          className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-colors
-                            ${n.isOnline ? "hover:bg-emerald-400/5 cursor-pointer" : "opacity-40 cursor-not-allowed"}
-                            ${n.id === selectedId ? "bg-emerald-400/10" : ""}
-                          `}
-                        >
-                          <span className="text-sm mt-0.5 shrink-0">{n.badge}</span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-white/90 text-xs font-medium" style={{ fontFamily: "'DM Mono', monospace" }}>{n.name}</span>
-                              {n.isOnline
-                                ? <Wifi size={9} className="text-emerald-400 shrink-0" />
-                                : <WifiOff size={9} className="text-red-400/60 shrink-0" />
-                              }
+                      {CLOUD_MODELS.map(m => (
+                        <button key={m.id} onClick={() => { setSelectedId(m.id); setShowPicker(false); }}
+                          className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${m.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}>
+                          <span className="text-sm mt-0.5 shrink-0">{m.badge}</span>
+                          <div className="min-w-0">
+                            <div className="text-white/90 text-xs font-medium flex items-center gap-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
+                              {m.name}
+                              {m.supportsVision && <span className="text-[9px] px-1 py-0.5 bg-purple-500/20 text-purple-400/80 border border-purple-500/20">视觉</span>}
                             </div>
-                            <div className="text-white/35 text-[11px] mt-0.5 truncate">{n.description}</div>
+                            <div className="text-white/35 text-[11px] mt-0.5 truncate">{m.description}</div>
                           </div>
-                          {n.id === selectedId && <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5" />}
+                          {m.id === selectedId && <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-[#C9A84C] mt-1.5" />}
                         </button>
                       ))}
-                    </>
+                      {isAdmin && (
+                        <>
+                          <div className="px-3 py-2 border-t border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 text-emerald-400/70 text-[10px] font-semibold tracking-widest uppercase">
+                              <Monitor size={10} /><span>本地节点</span>
+                              <span className="text-white/20 normal-case font-normal">· 仅管理员</span>
+                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); fetchLocalNodes(); }} className="text-white/30 hover:text-white/60 transition-colors p-0.5" title="刷新本地节点">
+                              <RefreshCw size={10} className={loadingNodes ? "animate-spin" : ""} />
+                            </button>
+                          </div>
+                          {loadingNodes && <div className="px-4 py-3 text-white/30 text-xs flex items-center gap-2"><Loader2 size={12} className="animate-spin" /><span>正在获取...</span></div>}
+                          {!loadingNodes && localNodes.length === 0 && <div className="px-4 py-3 text-white/25 text-xs">暂无在线本地节点<div className="text-white/15 text-[11px] mt-0.5">需要先通过内网穿透注册</div></div>}
+                          {localNodes.map(n => (
+                            <button key={n.id} onClick={() => { setSelectedId(n.id); setShowPicker(false); }}
+                              className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${n.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}>
+                              <span className="text-sm mt-0.5 shrink-0">{n.badge}</span>
+                              <div className="min-w-0">
+                                <div className="text-white/90 text-xs font-medium flex items-center gap-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
+                                  {n.name}
+                                  {n.isOnline ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> : <span className="w-1.5 h-1.5 rounded-full bg-red-400/60 inline-block" />}
+                                </div>
+                                <div className="text-white/35 text-[11px] mt-0.5 truncate">{n.description}</div>
+                              </div>
+                              {n.id === selectedId && <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-[#C9A84C] mt-1.5" />}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
+              {/* Image mode badge */}
+              {inputMode === "image" && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 border border-purple-500/30 text-purple-400/80 text-xs" style={{ fontFamily: "'DM Mono', monospace" }}>
+                  <Wand2 size={11} />
+                  <span>nano banana</span>
+                </div>
+              )}
+              {isAdmin && (
+                <a href="/admin/nodes" className="text-[#C9A84C]/60 text-xs hover:text-[#C9A84C] transition-colors font-mono border border-[#C9A84C]/20 px-2 py-1 hover:border-[#C9A84C]/40" title="进入管理控制台">
+                  ADMIN →
+                </a>
+              )}
+              {user && (
+                <div className="flex items-center gap-2">
+                  <span className="text-white/30 text-xs hidden sm:block truncate max-w-[120px]">{(user as any).name || (user as any).email}</span>
+                  <button onClick={logout} className="text-white/30 hover:text-white/60 transition-colors p-1" title="退出登录">
+                    <LogOut size={14} />
+                  </button>
+                </div>
+              )}
             </div>
+          </div>
+        </header>
 
-            {/* User info + logout */}
-            {isAuthenticated && (
-              <div className="flex items-center gap-2">
-                {isAdmin && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/60 font-mono">
-                    ADMIN
-                  </span>
-                )}
-                <span className="text-white/40 text-xs hidden sm:block">{(user as any)?.email}</span>
-                <button
-                  onClick={() => logout()}
-                  className="text-white/30 hover:text-[#C9A84C] transition-colors p-1"
-                  title="退出登录"
-                >
-                  <LogOut size={14} />
-                </button>
+        {/* ── Messages area ── */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col gap-6">
+            {messages.length === 0 && !isBusy && (
+              <div className="flex flex-col items-center justify-center py-16 gap-6">
+                <div className="w-16 h-16 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center">
+                  <Bot size={28} className="text-[#C9A84C]/60" />
+                </div>
+                <div className="text-center">
+                  <h2 className="text-white/70 text-lg font-medium mb-1">你好，我是 MaoAI</h2>
+                  <p className="text-white/30 text-sm">
+                    当前：
+                    <span className={currentOption.isLocal ? "text-emerald-400/70" : "text-sky-400/70"}>
+                      {currentOption.isLocal ? "本地节点" : "云端"}
+                    </span>
+                    {" · "}
+                    <span className="text-white/50">{currentOption.badge} {currentOption.name}</span>
+                  </p>
+                  <p className="text-white/20 text-xs mt-2">支持对话、图片理解（Ctrl+V 粘贴）和 AI 图像生成</p>
+                </div>
+                {/* Chat quick prompts */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
+                  {["帮我写一份市场分析报告", "解释一下量子计算的原理", "用 Python 写一个爬虫", "给我推荐几本商业书籍"].map(prompt => (
+                    <button key={prompt} onClick={() => { setInputMode("chat"); sendMessage(prompt); }}
+                      className="text-left px-4 py-3 border border-white/10 text-white/50 text-sm hover:border-[#C9A84C]/40 hover:text-white/70 transition-all">
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+                {/* Image generation quick prompts */}
+                <div className="w-full max-w-lg">
+                  <p className="text-white/20 text-[11px] mb-2 flex items-center gap-1.5">
+                    <Wand2 size={10} className="text-purple-400/50" />
+                    <span>或者用 nano banana 生成图像</span>
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {["赛博朋克风格的城市夜景", "水墨画风格的山水", "未来科技感的机器人", "金色光芒中的猫咪"].map(prompt => (
+                      <button key={prompt} onClick={() => { setInputMode("image"); setInput(prompt); textareaRef.current?.focus(); }}
+                        className="text-left px-4 py-3 border border-purple-500/15 text-white/35 text-sm hover:border-purple-500/40 hover:text-white/60 transition-all flex items-center gap-2">
+                        <ImageIcon size={12} className="text-purple-400/40 shrink-0" />
+                        <span>{prompt}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        </div>
-      </header>
 
-      {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+            {/* Message list */}
+            {messages.map((msg, i) => {
+              const displayText = msg.displayText ?? (typeof msg.content === "string" ? msg.content : getDisplayText(msg.content));
+              const imageUrls = msg.imageUrls ?? getImageUrls(msg.content);
 
-          {/* Welcome screen */}
-          {messages.length === 0 && !isStreaming && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center mb-6">
-                <Bot size={28} className="text-[#C9A84C]/60" />
-              </div>
-              <h2 className="text-white/60 text-lg mb-2" style={{ fontFamily: "'Noto Serif SC', serif" }}>
-                你好，我是 MaoAI
-              </h2>
-              {/* Current model indicator */}
-              <div className="flex items-center gap-2 mb-8">
-                {currentOption.isLocal
-                  ? <Monitor size={12} className="text-emerald-400" />
-                  : <Cloud size={12} className="text-sky-400" />
-                }
-                <span className="text-white/30 text-sm">
-                  当前：
-                  <span className={currentOption.isLocal ? "text-emerald-400/70" : "text-sky-400/70"}>
-                    {currentOption.isLocal ? "本地节点" : "云端"}
-                  </span>
-                  {" · "}
-                  <span className="text-white/50">{currentOption.badge} {currentOption.name}</span>
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-                {["帮我写一份市场分析报告", "解释一下量子计算的原理", "用 Python 写一个爬虫", "给我推荐几本商业书籍"].map(prompt => (
-                  <button
-                    key={prompt}
-                    onClick={() => sendMessage(prompt)}
-                    className="text-left px-4 py-3 border border-white/10 text-white/50 text-sm hover:border-[#C9A84C]/40 hover:text-white/70 transition-all"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+              return (
+                <div key={i} className={`flex gap-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  {msg.role === "assistant" && (
+                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 mt-1 ${msg.isImageGeneration ? "bg-purple-500/10 border-purple-500/20" : "bg-[#C9A84C]/10 border-[#C9A84C]/20"}`}>
+                      {msg.isImageGeneration ? <Wand2 size={14} className="text-purple-400" /> : <Bot size={14} className="text-[#C9A84C]" />}
+                    </div>
+                  )}
+                  <div className="max-w-[80%] flex flex-col gap-1">
+                    {msg.role === "assistant" && msg.nodeInfo && !msg.isImageGeneration && (
+                      <div className={`flex items-center gap-1.5 text-[10px] ${msg.nodeInfo.isLocal ? "text-emerald-400/50" : "text-sky-400/50"}`}>
+                        {msg.nodeInfo.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
+                        <span>{msg.nodeInfo.isLocal ? "本地节点" : "云端"}</span>
+                        <span className="text-white/20">·</span>
+                        <span>{msg.nodeInfo.name}</span>
+                        <span className="text-white/20">·</span>
+                        <span className="font-mono">{msg.nodeInfo.model}</span>
+                      </div>
+                    )}
+                    {/* Image generation result */}
+                    {msg.role === "assistant" && msg.isImageGeneration && msg.generatedImageUrl ? (
+                      <div className="bg-white/5 border border-purple-500/20 rounded px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-[10px] text-purple-400/60 mb-2">
+                          <Wand2 size={9} />
+                          <span>nano banana · 图像生成</span>
+                        </div>
+                        <img
+                          src={msg.generatedImageUrl}
+                          alt="AI 生成图像"
+                          className="max-w-full rounded border border-white/10 object-contain"
+                          style={{ maxHeight: "512px" }}
+                        />
+                        <a
+                          href={msg.generatedImageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors"
+                        >
+                          <ImageIcon size={9} />
+                          <span>查看原图</span>
+                        </a>
+                      </div>
+                    ) : (
+                      <div className={`rounded px-4 py-3 text-sm ${msg.role === "user" ? "bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-white/90" : "bg-white/5 border border-white/10 text-white/85"}`}>
+                        {msg.role === "user" && imageUrls.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {imageUrls.map((url, idx) => (
+                              <img key={idx} src={url} alt="附图" className="max-h-48 max-w-xs object-contain rounded border border-white/10" />
+                            ))}
+                          </div>
+                        )}
+                        {msg.role === "assistant" ? (
+                          <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
+                            <Streamdown>{displayText}</Streamdown>
+                          </div>
+                        ) : (
+                          displayText && <p className="whitespace-pre-wrap">{displayText}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-1">
+                      <User size={14} className="text-white/50" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
-          {/* Message list */}
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex gap-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              {msg.role === "assistant" && (
+            {/* Streaming chat bubble */}
+            {isStreaming && (
+              <div className="flex gap-4 justify-start">
                 <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center shrink-0 mt-1">
                   <Bot size={14} className="text-[#C9A84C]" />
                 </div>
-              )}
-              <div className="max-w-[80%] flex flex-col gap-1">
-                {/* Node attribution tag (assistant messages only) */}
-                {msg.role === "assistant" && msg.nodeInfo && (
-                  <div className={`flex items-center gap-1.5 text-[10px] ${msg.nodeInfo.isLocal ? "text-emerald-400/50" : "text-sky-400/50"}`}>
-                    {msg.nodeInfo.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
-                    <span>{msg.nodeInfo.isLocal ? "本地节点" : "云端"}</span>
-                    <span className="text-white/20">·</span>
-                    <span>{msg.nodeInfo.name}</span>
-                    <span className="text-white/20">·</span>
-                    <span className="font-mono">{msg.nodeInfo.model}</span>
-                  </div>
-                )}
-                <div className={`rounded px-4 py-3 text-sm ${
-                  msg.role === "user"
-                    ? "bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-white/90"
-                    : "bg-white/5 border border-white/10 text-white/85"
-                }`}>
-                  {msg.role === "assistant" ? (
-                    <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
-                      <Streamdown>{msg.content}</Streamdown>
+                <div className="max-w-[80%] flex flex-col gap-1">
+                  {activeNodeInfo && (
+                    <div className={`flex items-center gap-1.5 text-[10px] ${activeNodeInfo.isLocal ? "text-emerald-400/60" : "text-sky-400/60"}`}>
+                      {activeNodeInfo.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
+                      <span className="animate-pulse">●</span>
+                      <span>{activeNodeInfo.isLocal ? "本地节点" : "云端"}</span>
+                      <span className="text-white/20">·</span>
+                      <span>{activeNodeInfo.name}</span>
+                      <span className="text-white/20">·</span>
+                      <span className="font-mono">{activeNodeInfo.model}</span>
                     </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
                   )}
+                  <div className="bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">
+                    {streamingContent ? (
+                      <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
+                        <Streamdown>{streamingContent}</Streamdown>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-white/40">
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>思考中...</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              {msg.role === "user" && (
-                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-1">
-                  <User size={14} className="text-white/50" />
+            )}
+
+            {/* Image generating bubble */}
+            {isGeneratingImage && (
+              <div className="flex gap-4 justify-start">
+                <div className="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 mt-1">
+                  <Wand2 size={14} className="text-purple-400" />
                 </div>
+                <div className="max-w-[80%]">
+                  <div className="flex items-center gap-1.5 text-[10px] text-purple-400/60 mb-1">
+                    <span className="animate-pulse">●</span>
+                    <span>nano banana · 正在生成图像...</span>
+                  </div>
+                  <div className="bg-white/5 border border-purple-500/20 rounded px-4 py-4 flex items-center gap-3">
+                    <Loader2 size={16} className="animate-spin text-purple-400/60 shrink-0" />
+                    <div>
+                      <p className="text-white/50 text-sm">正在生成图像，通常需要 10-30 秒</p>
+                      <p className="text-white/20 text-xs mt-0.5">nano banana 图像生成服务</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* ── Input bar ── */}
+        <div className="border-t border-white/5 bg-[#0A0A0A]/95 backdrop-blur-sm shrink-0">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            {/* Mode tabs + status */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setInputMode("chat")}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] transition-all ${
+                    inputMode === "chat"
+                      ? "text-[#C9A84C] border-b border-[#C9A84C]/60"
+                      : "text-white/25 hover:text-white/50"
+                  }`}
+                >
+                  <Bot size={10} />
+                  <span>对话</span>
+                </button>
+                <button
+                  onClick={() => setInputMode("image")}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] transition-all ${
+                    inputMode === "image"
+                      ? "text-purple-400 border-b border-purple-400/60"
+                      : "text-white/25 hover:text-white/50"
+                  }`}
+                >
+                  <Wand2 size={10} />
+                  <span>生成图像</span>
+                </button>
+              </div>
+              <div className={`flex items-center gap-1.5 text-[10px] ${inputMode === "image" ? "text-purple-400/40" : currentOption.isLocal ? "text-emerald-400/40" : "text-sky-400/40"}`}>
+                {inputMode === "image" ? (
+                  <>
+                    <Wand2 size={9} />
+                    <span>nano banana · 图像生成</span>
+                  </>
+                ) : (
+                  <>
+                    {currentOption.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
+                    <span>{currentOption.isLocal ? "本地节点" : "云端"}</span>
+                    <span className="text-white/15">·</span>
+                    <span>{currentOption.badge} {currentOption.name}</span>
+                    {currentOption.isLocal && !(currentOption as LocalNode).isOnline && <span className="text-red-400/60 ml-1">· 离线</span>}
+                  </>
+                )}
+                {currentConvId && <><span className="text-white/15 ml-1">·</span><span className="text-[#C9A84C]/30 ml-1">已保存</span></>}
+              </div>
+            </div>
+
+            {/* Pending image previews (chat mode only) */}
+            {inputMode === "chat" && pendingImages.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {pendingImages.map((url, idx) => (
+                  <div key={idx} className="relative group">
+                    <img src={url} alt="待发送图片" className="h-20 w-auto max-w-[160px] object-contain border border-[#C9A84C]/30 rounded" />
+                    <button onClick={() => removePendingImage(idx)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500/80 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X size={10} className="text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 items-end">
+              {/* Image upload button (chat mode only) */}
+              {inputMode === "chat" && (
+                <>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isBusy}
+                    className={`px-3 py-3 border text-xs transition-all shrink-0 ${pendingImages.length > 0 ? "border-[#C9A84C]/50 text-[#C9A84C] bg-[#C9A84C]/10" : "border-white/10 text-white/30 hover:border-[#C9A84C]/30 hover:text-[#C9A84C]/60"} disabled:opacity-30 disabled:cursor-not-allowed`}
+                    title="上传图片（或直接 Ctrl+V 粘贴截图）"
+                  >
+                    <ImagePlus size={16} />
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                </>
+              )}
+              {/* Image mode icon */}
+              {inputMode === "image" && (
+                <div className="px-3 py-3 border border-purple-500/20 text-purple-400/40 shrink-0">
+                  <Wand2 size={16} />
+                </div>
+              )}
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  isBusy
+                    ? inputMode === "image" ? "正在生成图像..." : "AI 正在回复中..."
+                    : inputMode === "image"
+                    ? "描述你想生成的图像，例如：赛博朋克风格的城市夜景，高清，4K..."
+                    : pendingImages.length > 0
+                    ? "描述图片内容，或直接发送让 AI 分析..."
+                    : "输入消息，Enter 发送，Shift+Enter 换行，Ctrl+V 粘贴截图"
+                }
+                disabled={isBusy}
+                rows={1}
+                className={`flex-1 bg-white/5 border text-white/85 text-sm px-4 py-3 resize-none focus:outline-none placeholder-white/20 disabled:opacity-50 ${
+                  inputMode === "image"
+                    ? "border-purple-500/20 focus:border-purple-500/40"
+                    : "border-white/10 focus:border-[#C9A84C]/40"
+                }`}
+                style={{ minHeight: "44px", maxHeight: "200px" }}
+                onInput={e => {
+                  const t = e.target as HTMLTextAreaElement;
+                  t.style.height = "auto";
+                  t.style.height = Math.min(t.scrollHeight, 200) + "px";
+                }}
+              />
+              {isStreaming ? (
+                <button onClick={stopStreaming} className="px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs hover:bg-red-500/20 transition-all shrink-0">停止</button>
+              ) : (
+                <button
+                  onClick={handleSend}
+                  disabled={(!input.trim() && pendingImages.length === 0) || isGeneratingImage}
+                  className={`px-4 py-3 border transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0 ${
+                    inputMode === "image"
+                      ? "bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20"
+                      : "bg-[#C9A84C]/10 border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/20"
+                  }`}
+                >
+                  {inputMode === "image" ? <Wand2 size={16} /> : <Send size={16} />}
+                </button>
               )}
             </div>
-          ))}
 
-          {/* Streaming bubble */}
-          {isStreaming && (
-            <div className="flex gap-4 justify-start">
-              <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center shrink-0 mt-1">
-                <Bot size={14} className="text-[#C9A84C]" />
+            {/* Hints */}
+            {inputMode === "chat" && pendingImages.length > 0 && (
+              <p className="text-[10px] text-purple-400/50 mt-2 flex items-center gap-1">
+                <span>👁️</span><span>将自动使用 GLM-4V 视觉模型分析图片</span>
+              </p>
+            )}
+            {inputMode === "image" && (
+              <p className="text-[10px] text-purple-400/30 mt-2 flex items-center gap-1">
+                <Wand2 size={9} />
+                <span>nano banana 图像生成 · 通常需要 10-30 秒 · 生成结果自动保存到对话历史</span>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showPicker && <div className="fixed inset-0 z-10" onClick={() => setShowPicker(false)} />}
+
+      {/* ── Upgrade Prompt Modal ── */}
+      {showUpgradePrompt && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111] border border-white/15 w-full max-w-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Crown size={15} className="text-[#C9A84C]" />
+                <h3 className="text-white font-medium text-sm">
+                  {showUpgradePrompt === "image_locked" ? "图像生成需要升级" :
+                   showUpgradePrompt === "image" ? "今日图像生成已达上限" :
+                   showUpgradePrompt === "premium_model" ? "高级模型需要升级" :
+                   "今日对话已达上限"}
+                </h3>
               </div>
-              <div className="max-w-[80%] flex flex-col gap-1">
-                {/* Live node indicator */}
-                {activeNodeInfo && (
-                  <div className={`flex items-center gap-1.5 text-[10px] ${activeNodeInfo.isLocal ? "text-emerald-400/60" : "text-sky-400/60"}`}>
-                    {activeNodeInfo.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
-                    <span className="animate-pulse">●</span>
-                    <span>{activeNodeInfo.isLocal ? "本地节点" : "云端"}</span>
-                    <span className="text-white/20">·</span>
-                    <span>{activeNodeInfo.name}</span>
-                    <span className="text-white/20">·</span>
-                    <span className="font-mono">{activeNodeInfo.model}</span>
-                  </div>
-                )}
-                <div className="bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">
-                  {streamingContent ? (
-                    <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
-                      <Streamdown>{streamingContent}</Streamdown>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-white/40">
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>思考中...</span>
-                    </div>
-                  )}
-                </div>
+              <button onClick={() => setShowUpgradePrompt(null)} className="text-white/30 hover:text-white/60 transition-colors text-lg leading-none">×</button>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-white/50 text-sm mb-4 leading-relaxed">
+                {showUpgradePrompt === "image_locked" && "图像生成（nano banana）仅对专业版及以上用户开放。升级后每日可生成 20 张图像，无限版不限次数。"}
+                {showUpgradePrompt === "image" && `今日图像生成次数已达上限（${mySubscription?.usage.imageGenerations}/${mySubscription?.limits.dailyImageGenerations}）。升级到无限版可不限次数生成。`}
+                {showUpgradePrompt === "premium_model" && "此模型（DeepSeek R1、GLM-4 Plus）仅对专业版及以上用户开放。升级后可使用全部高级模型。"}
+                {showUpgradePrompt === "chat" && `今日对话次数已达上限（${mySubscription?.usage.chatMessages}/${mySubscription?.limits.dailyChatMessages}）。升级专业版每日可发送 200 条消息，无限版不限次数。`}
+              </p>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="/maoai/pricing"
+                  className="w-full py-2.5 text-center text-sm bg-[#C9A84C]/15 border border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C]/25 transition-all flex items-center justify-center gap-2"
+                >
+                  <Zap size={13} />
+                  <span>查看升级方案</span>
+                </a>
+                <button
+                  onClick={() => setShowUpgradePrompt(null)}
+                  className="w-full py-2 text-center text-xs text-white/25 hover:text-white/40 transition-colors"
+                >
+                  明天再说
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Usage bar (bottom of sidebar) ── */}
+      {sidebarOpen && mySubscription && (
+        <div className="fixed bottom-0 left-0 w-[264px] border-t border-white/5 bg-[#0D0D0D] px-4 py-3 z-30">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Crown size={10} className={mySubscription.tier === "starter" ? "text-sky-400" : mySubscription.tier === "pro" ? "text-[#C9A84C]" : mySubscription.tier === "flagship" ? "text-purple-400" : "text-white/25"} />
+              <span className={`text-[10px] font-medium ${
+                mySubscription.tier === "starter" ? "text-sky-400/70" :
+                mySubscription.tier === "pro" ? "text-[#C9A84C]/70" :
+                mySubscription.tier === "flagship" ? "text-purple-400/70" :
+                "text-white/30"
+              }`}>
+                {(mySubscription.tier as string) === "free" ? "免费版" : mySubscription.tier === "starter" ? "入门版" : mySubscription.tier === "pro" ? "专业版" : "旗舰版"}
+              </span>
+            </div>
+            <a href="/maoai/pricing" className="text-[9px] text-white/20 hover:text-[#C9A84C]/60 transition-colors">
+              {(mySubscription.tier as string) === "free" ? "升级 →" : "管理"}
+            </a>
+          </div>
+          {mySubscription.limits.dailyChatMessages !== -1 && (
+            <div className="mb-1.5">
+              <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
+                <span>对话</span>
+                <span>{mySubscription.usage.chatMessages}/{mySubscription.limits.dailyChatMessages}</span>
+              </div>
+              <div className="h-0.5 bg-white/8 w-full">
+                <div
+                  className="h-0.5 bg-[#C9A84C]/50 transition-all"
+                  style={{ width: `${Math.min(100, (mySubscription.usage.chatMessages / mySubscription.limits.dailyChatMessages) * 100)}%` }}
+                />
               </div>
             </div>
           )}
-
-          <div ref={messagesEndRef} />
+          {mySubscription.limits.imageGeneration && mySubscription.limits.dailyImageGenerations !== -1 && (
+            <div>
+              <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
+                <span>图像生成</span>
+                <span>{mySubscription.usage.imageGenerations}/{mySubscription.limits.dailyImageGenerations}</span>
+              </div>
+              <div className="h-0.5 bg-white/8 w-full">
+                <div
+                  className="h-0.5 bg-purple-400/50 transition-all"
+                  style={{ width: `${Math.min(100, (mySubscription.usage.imageGenerations / mySubscription.limits.dailyImageGenerations) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+          {mySubscription.tier === "flagship" && (
+            <p className="text-[9px] text-purple-400/40 mt-1">无限制使用中</p>
+          )}
         </div>
-      </div>
-
-      {/* ── Input bar ── */}
-      <div className="border-t border-white/5 bg-[#0A0A0A]/95 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          {/* Current source indicator */}
-          <div className={`flex items-center gap-1.5 text-[10px] mb-2 ${currentOption.isLocal ? "text-emerald-400/40" : "text-sky-400/40"}`}>
-            {currentOption.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
-            <span>{currentOption.isLocal ? "本地节点" : "云端"}</span>
-            <span className="text-white/15">·</span>
-            <span>{currentOption.badge} {currentOption.name}</span>
-            {currentOption.isLocal && !(currentOption as LocalNode).isOnline && (
-              <span className="text-red-400/60 ml-1">· 离线</span>
-            )}
-          </div>
-
-          <div className="flex gap-3 items-end">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isStreaming ? "AI 正在回复中..." : "输入消息，Enter 发送，Shift+Enter 换行"}
-              disabled={isStreaming}
-              rows={1}
-              className="flex-1 bg-white/5 border border-white/10 text-white/85 text-sm px-4 py-3 resize-none focus:outline-none focus:border-[#C9A84C]/40 placeholder-white/20 disabled:opacity-50"
-              style={{ minHeight: "44px", maxHeight: "200px" }}
-              onInput={e => {
-                const t = e.target as HTMLTextAreaElement;
-                t.style.height = "auto";
-                t.style.height = Math.min(t.scrollHeight, 200) + "px";
-              }}
-            />
-            {isStreaming ? (
-              <button
-                onClick={stopStreaming}
-                className="px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs hover:bg-red-500/20 transition-all shrink-0"
-              >
-                停止
-              </button>
-            ) : (
-              <button
-                onClick={() => sendMessage(input)}
-                disabled={!input.trim()}
-                className="px-4 py-3 bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-              >
-                <Send size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Close picker on outside click */}
-      {showPicker && (
-        <div className="fixed inset-0 z-10" onClick={() => setShowPicker(false)} />
       )}
     </div>
   );

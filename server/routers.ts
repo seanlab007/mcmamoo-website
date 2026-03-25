@@ -12,7 +12,9 @@ import {
   getNodeLogs, getNodeStats,
   getContentCopies, createContentCopy, deleteContentCopy, updateContentCopyStatus,
   createMillenniumClockReservation, getMillenniumClockReservations,
+  getUserSubscription, upsertSubscription, createPaymentOrder, updatePaymentOrder, getPaymentOrders, getTodayUsage, incrementUsage,
 } from "./db";
+import { PLAN_LIMITS, PLAN_PRICES, PLAN_META, FEATURE_ROWS, PAYMENT_PROVIDERS, type PlanTier, type Currency } from "@shared/plans";
 import { invokeLLM } from "./_core/llm";
 
 // ─── Admin Guard ──────────────────────────────────────────────────────────────
@@ -24,11 +26,12 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 // ─── Model Configs ────────────────────────────────────────────────────────────
-export const MODEL_CONFIGS: Record<string, { name: string; baseUrl: string; apiKey: string; model: string; badge: string }> = {
+export const MODEL_CONFIGS: Record<string, { name: string; baseUrl: string; apiKey: string; model: string; badge: string; supportsVision?: boolean; maxTokens?: number }> = {
   "deepseek-chat": { name: "DeepSeek V3", badge: "🔵", baseUrl: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY || "", model: "deepseek-chat" },
   "deepseek-reasoner": { name: "DeepSeek R1", badge: "🧠", baseUrl: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY || "", model: "deepseek-reasoner" },
   "glm-4-flash": { name: "智谱 GLM-4 Flash", badge: "⚡", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4-flash" },
   "glm-4-plus": { name: "智谱 GLM-4 Plus", badge: "🟣", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4-plus" },
+  "glm-4v-flash": { name: "GLM-4V 视觉", badge: "👁️", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4v-flash", supportsVision: true, maxTokens: 1024 },
   "llama-3.3-70b-versatile": { name: "Groq Llama 3.3 70B", badge: "⚡", baseUrl: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY || "", model: "llama-3.3-70b-versatile" },
 };
 
@@ -142,10 +145,10 @@ export const appRouter = router({
           clearTimeout(timeout);
           const latency = Date.now() - start;
           const online = res.status < 500;
-          await updateNodePingStatus(node.id, online, latency);
+          await updateNodePingStatus(node.id as number, online, latency);
           return { online, latency };
         } catch {
-          await updateNodePingStatus(node.id, false);
+          await updateNodePingStatus(node.id as number, false);
           return { online: false, latency: null };
         }
       }),
@@ -432,6 +435,141 @@ Required structure:
           body: JSON.stringify({ status: input.status }),
         });
         if (!resp.ok) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "更新失败" });
+        return { success: true };
+      }),
+  }),
+
+  // ─── Billing & Subscriptions ──────────────────────────────────────────────────
+  billing: router({
+    // Get plan definitions (public)
+    plans: publicProcedure.query(() => ({
+      limits: PLAN_LIMITS,
+      prices: PLAN_PRICES,
+      meta: PLAN_META,
+      features: FEATURE_ROWS,
+      providers: PAYMENT_PROVIDERS,
+    })),
+
+    // Get current user's subscription and today's usage
+    mySubscription: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      const usage = await getTodayUsage(ctx.user.id);
+      const rawTier = (sub?.tier as string) ?? "free";
+      // Map legacy tier names to new three-tier system
+      const tierMap: Record<string, PlanTier> = {
+        free: "free" as any,
+        starter: "starter",
+        pro: "pro",
+        max: "flagship",
+        flagship: "flagship",
+      };
+      const tier = (tierMap[rawTier] ?? "starter") as PlanTier;
+      // Free tier: very limited, no image generation
+      const FREE_LIMITS = {
+        dailyChatMessages: 20,
+        dailyImageGenerations: 0,
+        maxConversations: 10,
+        premiumModels: false,
+        imageGeneration: false,
+        priorityQueue: false,
+        fileUpload: false,
+        brandStrategy: false,
+        accountManager: false,
+        customPersona: false,
+        apiAccess: false,
+        teamSeats: 1,
+      };
+      const limits = rawTier === "free" ? FREE_LIMITS : PLAN_LIMITS[tier];
+      return {
+        tier,
+        status: (sub?.status as string) ?? "active",
+        currentPeriodEnd: (sub?.currentPeriodEnd as string) ?? null,
+        usage: {
+          chatMessages: (usage.chatMessages as number) ?? 0,
+          imageGenerations: (usage.imageGenerations as number) ?? 0,
+        },
+        limits,
+      };
+    }),
+
+    // Get payment history
+    paymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      return getPaymentOrders(ctx.user.id);
+    }),
+
+    // Create a payment order (stub — actual payment URL filled by provider webhook)
+    createOrder: protectedProcedure
+      .input(z.object({
+        tier: z.enum(["starter", "pro", "flagship"]),
+        provider: z.enum(["alipay", "lianpay", "paypal", "stripe", "wechatpay", "manual"]),
+        currency: z.enum(["CNY", "USD"]),
+        billingCycle: z.enum(["monthly", "biannual", "annual", "lifetime"]).default("monthly"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const tierPrices = PLAN_PRICES[input.tier as PlanTier];
+        const cyclePrices = tierPrices[input.currency as Currency];
+        const pricing = cyclePrices[input.billingCycle as import("@shared/plans").BillingCycle];
+        const amount = pricing.total;
+        const order = await createPaymentOrder({
+          userId: ctx.user.id,
+          tier: input.tier,
+          provider: input.provider,
+          currency: input.currency,
+          amount: amount.toFixed(2),
+          metadata: JSON.stringify({ billingCycle: input.billingCycle, perMonth: pricing.perMonth }),
+        });
+        return {
+          orderId: (order as any).id,
+          status: "pending",
+          amount,
+          currency: input.currency,
+          paymentUrl: null,
+          message: "支付接口接入中，请联系客服完成支付",
+        };
+      }),
+
+    // Admin: manually activate a subscription (for manual payments / testing)
+    adminActivate: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        tier: z.enum(["free", "starter", "pro", "flagship"]),
+        durationDays: z.number().default(30),
+      }))
+      .mutation(async ({ input }) => {
+        const start = new Date();
+        const end = new Date(start);
+        end.setDate(end.getDate() + input.durationDays);
+        await upsertSubscription({
+          userId: input.userId,
+          tier: input.tier,
+          status: "active",
+          currentPeriodStart: start.toISOString(),
+          currentPeriodEnd: input.tier === "free" ? null : end.toISOString(),
+        });
+        return { success: true };
+      }),
+
+    // Webhook stub: called by payment provider after successful payment
+    // In production, verify signature from provider before trusting this
+    paymentWebhook: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        externalOrderId: z.string().optional(),
+        provider: z.string(),
+        status: z.enum(["paid", "failed", "refunded"]),
+      }))
+      .mutation(async ({ input }) => {
+        await updatePaymentOrder(input.orderId, {
+          status: input.status,
+          externalOrderId: input.externalOrderId,
+          paidAt: input.status === "paid" ? new Date().toISOString() : undefined,
+        });
+        // If paid, activate subscription
+        if (input.status === "paid") {
+          const orders = await getPaymentOrders(0); // will be filtered below
+          // TODO: look up order by ID to get userId and tier, then upsertSubscription
+          // This is a stub — implement full lookup when integrating real payment SDK
+        }
         return { success: true };
       }),
   }),

@@ -1,4 +1,9 @@
 import "dotenv/config";
+// Polyfill globalThis.crypto for Node.js 18 (required by jose@6+)
+import { webcrypto } from "node:crypto";
+if (!globalThis.crypto) {
+  (globalThis as any).crypto = webcrypto;
+}
 import cors from "cors";
 import express from "express";
 import { createServer } from "http";
@@ -71,7 +76,11 @@ async function startServer() {
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    try {
+      serveStatic(app);
+    } catch (e) {
+      console.warn("[serveStatic] Failed to serve static files (API-only mode):", e);
+    }
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");

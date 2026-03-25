@@ -130,7 +130,7 @@ async function streamFromNode(
 // model: cloud model ID (e.g. "deepseek-chat") or "local:<nodeId>" for local node
 // useLocal: true = admin-only, force local node routing
 aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
-  const { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId } = req.body;
+  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId } = req.body;
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -138,9 +138,37 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
-  const allMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
+  // ── Vision auto-routing: if any message contains image_url, switch to vision model ──
+  const hasImage = Array.isArray(messages) && messages.some((m: any) =>
+    Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url")
+  );
+  if (hasImage && !useLocal && !String(model).startsWith("local:")) {
+    const currentCfg = MODEL_CONFIGS[model];
+    if (!currentCfg?.supportsVision) {
+      model = "glm-4v-flash"; // auto-switch to vision model
+    }
+  }
 
-  // ── Local node routing (admin only) ──────────────────────────────────────
+  // ── Normalize image_url for GLM-4V: strip data: prefix, keep only base64 string ──
+  const normalizeMessagesForVision = (msgs: any[]) => msgs.map((m: any) => {
+    if (!Array.isArray(m.content)) return m;
+    return {
+      ...m,
+      content: m.content.map((c: any) => {
+        if (c.type === "image_url" && c.image_url?.url?.startsWith("data:")) {
+          // GLM-4V expects pure base64 without the data:image/xxx;base64, prefix
+          const base64 = c.image_url.url.split(",")[1] || c.image_url.url;
+          return { type: "image_url", image_url: { url: base64 } };
+        }
+        return c;
+      }),
+    };
+  });
+
+  const rawMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
+  const allMessages = hasImage ? normalizeMessagesForVision(rawMessages) : rawMessages;
+
+  // ── Local node routing (admin only) ────────────────────────────────────────────────────────────────────────────
   if (useLocal || (typeof model === "string" && model.startsWith("local:"))) {
     const admin = await getAdminUser(req);
     if (!admin) {
@@ -185,10 +213,21 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   if (!cfg.apiKey) { res.write(`data: ${JSON.stringify({ error: `API key not configured for model: ${model}` })}\n\n`); res.end(); return; }
 
   try {
+    // Debug: log vision request structure
+    if (hasImage) {
+      const debugMsgs = allMessages.map((m: any) => ({
+        role: m.role,
+        content: Array.isArray(m.content) ? m.content.map((c: any) => {
+          if (c.type === 'image_url') return { type: 'image_url', url_start: (c.image_url?.url || '').substring(0, 30), url_len: (c.image_url?.url || '').length };
+          return c;
+        }) : m.content
+      }));
+      console.log('[Vision Debug] model:', cfg.model, 'baseUrl:', cfg.baseUrl, 'apiKey_len:', cfg.apiKey.length, 'msgs:', JSON.stringify(debugMsgs));
+    }
     const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
-      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: 4096 }),
+      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: cfg.maxTokens || 4096 }),
     });
     if (!response.ok) {
       const errText = await response.text();
@@ -472,7 +511,35 @@ setInterval(async () => {
   } catch { /* ignore */ }
 }, 60 * 1000);
 
-// ─── Health check ─────────────────────────────────────────────────────────────
+// ─── Image Generation (nano banana) ─────────────────────────────────────────────
+// POST /api/ai/image/generate
+// Requires authentication. Calls the internal Forge ImageService (nano banana).
+aiStreamRouter.post("/image/generate", async (req: Request, res: Response) => {
+  try {
+    // Auth check — any logged-in user can generate images
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) {
+      res.status(401).json({ error: "请先登录" });
+      return;
+    }
+    const { prompt, originalImages } = req.body;
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      res.status(400).json({ error: "请提供图像描述 (prompt)" });
+      return;
+    }
+    const { generateImage } = await import("./_core/imageGeneration");
+    const result = await generateImage({
+      prompt: prompt.trim(),
+      originalImages: originalImages || [],
+    });
+    res.json({ url: result.url });
+  } catch (err: any) {
+    console.error("[Image Generate] Error:", err);
+    res.status(500).json({ error: err.message || "图像生成失败" });
+  }
+});
+
+// ─── Health check ─────────────────────────────────────────────
 aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
   const status: Record<string, any> = {};
   for (const [id, cfg] of Object.entries(MODEL_CONFIGS)) {
@@ -484,7 +551,7 @@ aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
     nodeCount = nodes.length;
     onlineCount = nodes.filter(n => n.isOnline).length;
   } catch { /* db not ready */ }
-  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: new Date().toISOString() });
+  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: new Date().toISOString(), version: "v2.2-max-tokens-fix" });
 });
 
 export default aiStreamRouter;

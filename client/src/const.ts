@@ -7,7 +7,7 @@ export const getLoginUrl = () => {
 
   // If OAuth portal URL is not configured, redirect to the local MaoAI login page
   if (!oauthPortalUrl) {
-    return "/maoai";
+    return "/maoai/login";
   }
 
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
