@@ -17,6 +17,7 @@ import MaoThinkTank from "./pages/MaoThinkTank";
 import Platform from "./pages/Platform";
 import OpenClaw from "./pages/OpenClaw";
 import MillenniumClock from "./pages/MillenniumClock";
+import Pricing from "./pages/Pricing";
 
 // ─── MaoAI 页面 ───────────────────────────────────────────────────────────────
 import MaoAILogin from "./pages/MaoAILogin";
@@ -44,6 +45,7 @@ function Router() {
       <Route path={"/platform"} component={Platform} />
       <Route path={"/openclaw"} component={OpenClaw} />
       <Route path={"/millennium-clock"} component={MillenniumClock} />
+      <Route path={"/pricing"} component={Pricing} />
 
       {/* ── MaoAI 路由 ── */}
       <Route path={"/maoai/login"} component={MaoAILogin} />

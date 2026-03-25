@@ -10,7 +10,8 @@ import { useTranslation } from "react-i18next";
 const industryItem = { label: "猫眼工业", href: "#mao-industry" };
 
 export default function Navbar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -150,9 +151,15 @@ export default function Navbar() {
               MaoAI
             </a>
             <LanguageSwitcher />
+            <a
+              href="/pricing"
+              className="ml-1 px-3 py-1.5 text-white/50 hover:text-[#C9A84C] text-xs tracking-widest uppercase transition-all duration-300 font-['DM_Mono'] whitespace-nowrap border border-transparent hover:border-[#C9A84C]/30"
+            >
+              {isEn ? 'Pricing' : '定价'}
+            </a>
             <button
               onClick={() => handleNav("#contact")}
-              className="ml-2 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
+              className="ml-1 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
             >
               {t('nav.bookConsultation')}
             </button>
@@ -224,6 +231,14 @@ export default function Navbar() {
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #C9A84C" }} />
             MaoAI 统一控制中心
+          </a>
+          <a
+            href="/pricing"
+            className="text-white/60 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ width: 8, height: 8, background: "#C9A84C", display: "inline-block" }} />
+            {isEn ? 'Pricing' : '服务定价'}
           </a>
           <button
             onClick={() => handleNav("#contact")}

@@ -125,6 +125,20 @@ export default function Services() {
           ))}
         </div>
 
+        {/* Pricing CTA */}
+        <div className="mb-12 flex items-center gap-4">
+          <a
+            href="/pricing"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#C9A84C] text-[#0A0A0A] text-sm font-bold tracking-widest uppercase hover:bg-[#D4B866] transition-colors duration-300"
+          >
+            <span className="text-[#0A0A0A]/60 text-xs">▶</span>
+            {isEn ? 'View Full Pricing' : '查看完整定价'}
+          </a>
+          <span className="text-white/30 text-sm">
+            {isEn ? 'Transparent pricing · Anchor logic · Annual plan always best value' : '透明定价 · 锚定价逻辑 · 全年套餐永远最划算'}
+          </span>
+        </div>
+
         {/* Growth models */}
         <div ref={ref3 as React.RefObject<HTMLDivElement>} className="reveal">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-8 font-['DM_Mono']">
