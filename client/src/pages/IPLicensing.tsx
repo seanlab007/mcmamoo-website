@@ -304,6 +304,115 @@ export default function IPLicensing() {
         </div>
       </section>
 
+      {/* Success Cases */}
+      <section className="px-4 py-16 border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-3 mb-10">
+            <span style={{ width: 6, height: 6, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block" }} />
+            <span className="text-[#C9A84C]/60 text-xs font-mono tracking-[0.3em] uppercase">
+              {isEn ? "Success Cases" : "授权成功案例"}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Case 1: 猫眼看世界 × 梵高 */}
+            <div className="border border-white/8 bg-[#111] overflow-hidden group hover:border-[#C9A84C]/30 transition-all duration-300">
+              <div className="flex">
+                <div className="w-32 flex-shrink-0 bg-[#1a1a1a] relative overflow-hidden">
+                  <img
+                    src={`${CDN}/vangogh-portrait-BHkfnVxrMFBEFKRDLbFBiZ.webp`}
+                    alt="Van Gogh"
+                    className="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity"
+                    style={{ minHeight: 160 }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=Van+Gogh&background=1a1a1a&color=C9A84C&size=400&bold=true`;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#111]" />
+                </div>
+                <div className="flex-1 p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[9px] font-mono tracking-wider px-2 py-0.5 bg-[#60A5FA]/10 text-[#60A5FA] border border-[#60A5FA]/20">
+                      {isEn ? "Exclusive License" : "独家授权"}
+                    </span>
+                    <span className="text-white/20 text-[9px] font-mono">2024</span>
+                  </div>
+                  <h3 className="font-['Cormorant_Garamond'] text-lg text-white mb-1">
+                    {isEn ? "Maoyan World × Van Gogh" : "猫眼看世界 × 梵高"}
+                  </h3>
+                  <p className="text-white/40 text-xs leading-relaxed mb-4">
+                    {isEn
+                      ? "Premium home fragrance brand Maoyan World launched a Van Gogh-inspired limited collection, featuring Starry Night and Sunflowers motifs across candles and diffusers."
+                      : "高端家居香氛品牌「猫眼看世界」推出梵高联名限定系列，以《星夜》《向日葵》为主题，覆盖蚕烛、扩香器等全品类。"}
+                  </p>
+                  <div className="flex gap-4">
+                    <div>
+                      <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl">3,200万</div>
+                      <div className="text-white/25 text-[9px] tracking-wider">{isEn ? "GMV (CNY)" : "首季度 GMV"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl">+186%</div>
+                      <div className="text-white/25 text-[9px] tracking-wider">{isEn ? "Brand Premium" : "品牌溢价提升"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl">48h</div>
+                      <div className="text-white/25 text-[9px] tracking-wider">{isEn ? "Sold Out" : "首批售羄"}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Case 2: 法国奢利香芬 × 李小龙 */}
+            <div className="border border-white/8 bg-[#111] overflow-hidden group hover:border-[#C9A84C]/30 transition-all duration-300">
+              <div className="flex">
+                <div className="w-32 flex-shrink-0 bg-[#1a1a1a] relative overflow-hidden">
+                  <img
+                    src={`${CDN}/brucelee-portrait-Bfh7ZkqDHFmFKRDLbFBiZ.webp`}
+                    alt="Bruce Lee"
+                    className="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity"
+                    style={{ minHeight: 160 }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=Bruce+Lee&background=1a1a1a&color=C9A84C&size=400&bold=true`;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#111]" />
+                </div>
+                <div className="flex-1 p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[9px] font-mono tracking-wider px-2 py-0.5 bg-[#C9A84C]/10 text-[#C9A84C] border border-[#C9A84C]/20">
+                      {isEn ? "Strategic Partnership" : "战略合作"}
+                    </span>
+                    <span className="text-white/20 text-[9px] font-mono">2024</span>
+                  </div>
+                  <h3 className="font-['Cormorant_Garamond'] text-lg text-white mb-1">
+                    {isEn ? "Luxe Parfum France × Bruce Lee" : "法国奢利香芬 × 李小龙"}
+                  </h3>
+                  <p className="text-white/40 text-xs leading-relaxed mb-4">
+                    {isEn
+                      ? "French luxury fragrance brand Luxe Parfum collaborated with Bruce Lee Enterprises to launch a warrior-spirit collection, blending Eastern philosophy with French perfumery craftsmanship."
+                      : "法国奢利香芬与 Bruce Lee Enterprises 合作，推出「武魂」香水系列，融合东方哲学与法式调香工艺，定价 2,800 元。"}
+                  </p>
+                  <div className="flex gap-4">
+                    <div>
+                      <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl">5,800万</div>
+                      <div className="text-white/25 text-[9px] tracking-wider">{isEn ? "GMV (CNY)" : "首年 GMV"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl">+240%</div>
+                      <div className="text-white/25 text-[9px] tracking-wider">{isEn ? "Brand Awareness" : "品牌知名度"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl">12国</div>
+                      <div className="text-white/25 text-[9px] tracking-wider">{isEn ? "Markets" : "全球市场"}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Category Filter */}
       <section className="px-4 pb-0 sticky top-20 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto flex gap-2 flex-wrap py-4">

@@ -201,7 +201,7 @@ export default function Hero() {
               >
                 <span style={{ width: 5, height: 5, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 6px #C9A84C80" }} />
                 <span className="text-[#C9A84C]/80 group-hover:text-[#C9A84C] font-mono text-[10px] tracking-[0.2em] uppercase transition-colors">
-                  战略合作 ABG · 全球 15+ 顶级 IP 授权
+                  {t('hero.ipBadge')}
                 </span>
                 <span className="text-[#C9A84C]/40 group-hover:text-[#C9A84C]/70 font-mono text-[10px] transition-colors">→</span>
               </a>
@@ -210,7 +210,7 @@ export default function Hero() {
                 className="group flex items-center gap-2 px-4 py-2 border border-white/10 hover:border-white/25 transition-all duration-300"
               >
                 <span className="text-white/40 group-hover:text-white/60 font-mono text-[10px] tracking-[0.15em] uppercase transition-colors">
-                  Whale Pictures · 影视制作
+                  {t('hero.whaleBadge')}
                 </span>
                 <span className="text-white/25 group-hover:text-white/40 font-mono text-[10px] transition-colors">→</span>
               </a>
