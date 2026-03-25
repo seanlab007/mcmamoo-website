@@ -2055,29 +2055,48 @@ Required structure:
     paymentHistory: protectedProcedure.query(async ({ ctx }) => {
       return getPaymentOrders(ctx.user.id);
     }),
-    // Create a payment order (stub — actual payment URL filled by provider webhook)
+    // Create a payment order — supports both subscription tiers and generic products
     createOrder: protectedProcedure.input(z2.object({
-      tier: z2.enum(["starter", "pro", "flagship"]),
+      // Subscription tier mode (MaoAI)
+      tier: z2.enum(["starter", "pro", "flagship"]).optional(),
+      billingCycle: z2.enum(["monthly", "biannual", "annual", "lifetime"]).optional().default("monthly"),
+      // Generic product mode (OpenClaw, MillenniumClock, MaoThinkTank, etc.)
+      productId: z2.string().optional(),
+      productName: z2.string().optional(),
+      amount: z2.number().optional(),
+      // Common fields
       provider: z2.enum(["alipay", "lianpay", "paypal", "stripe", "wechatpay", "manual"]),
-      currency: z2.enum(["CNY", "USD"]),
-      billingCycle: z2.enum(["monthly", "biannual", "annual", "lifetime"]).default("monthly")
+      currency: z2.enum(["CNY", "USD"])
     })).mutation(async ({ ctx, input }) => {
-      const tierPrices = PLAN_PRICES[input.tier];
-      const cyclePrices = tierPrices[input.currency];
-      const pricing = cyclePrices[input.billingCycle];
-      const amount = pricing.total;
+      let finalAmount;
+      let tierLabel;
+      let meta;
+      if (input.tier) {
+        const tierPrices = PLAN_PRICES[input.tier];
+        const cyclePrices = tierPrices[input.currency];
+        const pricing = cyclePrices[input.billingCycle];
+        finalAmount = pricing.total;
+        tierLabel = input.tier;
+        meta = { billingCycle: input.billingCycle, perMonth: pricing.perMonth };
+      } else if (input.productId && input.amount !== void 0) {
+        finalAmount = input.amount;
+        tierLabel = input.productId;
+        meta = { productId: input.productId, productName: input.productName };
+      } else {
+        throw new TRPCError3({ code: "BAD_REQUEST", message: "Must provide either tier or productId+amount" });
+      }
       const order = await createPaymentOrder({
         userId: ctx.user.id,
-        tier: input.tier,
+        tier: tierLabel,
         provider: input.provider,
         currency: input.currency,
-        amount: amount.toFixed(2),
-        metadata: JSON.stringify({ billingCycle: input.billingCycle, perMonth: pricing.perMonth })
+        amount: finalAmount.toFixed(2),
+        metadata: JSON.stringify(meta)
       });
       return {
-        orderId: order.id,
+        orderId: order.id ?? `ORD-${Date.now()}`,
         status: "pending",
-        amount,
+        amount: finalAmount,
         currency: input.currency,
         paymentUrl: null,
         message: "\u652F\u4ED8\u63A5\u53E3\u63A5\u5165\u4E2D\uFF0C\u8BF7\u8054\u7CFB\u5BA2\u670D\u5B8C\u6210\u652F\u4ED8"
