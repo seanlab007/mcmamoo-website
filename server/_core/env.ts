@@ -11,6 +11,7 @@ export const ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   togetherApiKey: process.env.TOGETHER_API_KEY ?? "",
+  stableHordeApiKey: process.env.STABLE_HORDE_API_KEY ?? "0000000000",
   tavilyApiKey: process.env.TAVILY_API_KEY ?? "",
   githubToken: process.env.GITHUB_TOKEN ?? "",
 };

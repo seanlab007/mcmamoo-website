@@ -1,8 +1,10 @@
 /**
  * Image generation helper
  *
- * Primary:  Together AI FLUX (requires TOGETHER_API_KEY)
- * Fallback: Internal Forge API (requires BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY)
+ * Priority order:
+ * 1. Together AI FLUX (requires TOGETHER_API_KEY + credits)
+ * 2. Stable Horde (completely free, no API key required)
+ * 3. Internal Forge API (requires BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY)
  */
 import { storagePut } from "server/storage";
 import { ENV } from "./env";
@@ -23,7 +25,7 @@ export type GenerateImageResponse = {
   url?: string;
 };
 
-// Together AI FLUX
+// ── Together AI FLUX ──────────────────────────────────────────────────────────
 async function generateImageViaTogetherAI(
   options: GenerateImageOptions
 ): Promise<GenerateImageResponse> {
@@ -38,15 +40,6 @@ async function generateImageViaTogetherAI(
     response_format: "b64_json",
     output_format: "png",
   };
-
-  if (options.originalImages && options.originalImages.length > 0) {
-    const urls = options.originalImages
-      .filter((img) => img.url)
-      .map((img) => img.url as string);
-    if (urls.length > 0) {
-      body.reference_images = urls;
-    }
-  }
 
   const response = await fetch("https://api.together.xyz/v1/images/generations", {
     method: "POST",
@@ -78,11 +71,98 @@ async function generateImageViaTogetherAI(
   }
 
   if (item.url) return { url: item.url };
-
   throw new Error("Together AI returned no image data");
 }
 
-// Forge API (legacy fallback)
+// ── Stable Horde (completely free, anonymous key) ─────────────────────────────
+async function generateImageViaStableHorde(
+  options: GenerateImageOptions
+): Promise<GenerateImageResponse> {
+  const apiKey = ENV.stableHordeApiKey || "0000000000";
+
+  // Step 1: Submit generation job
+  const submitRes = await fetch("https://stablehorde.net/api/v2/generate/async", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: apiKey,
+      "Client-Agent": "MaoAI:1.0:mcmamoo",
+    },
+    body: JSON.stringify({
+      prompt: options.prompt,
+      params: {
+        width: options.width ?? 512,
+        height: options.height ?? 512,
+        steps: options.steps ?? 20,
+        n: 1,
+        sampler_name: "k_euler_a",
+        cfg_scale: 7,
+      },
+      models: ["stable_diffusion"],
+      r2: true,
+      shared: false,
+    }),
+  });
+
+  if (!submitRes.ok) {
+    const detail = await submitRes.text().catch(() => "");
+    throw new Error(`Stable Horde submit failed (${submitRes.status}): ${detail}`);
+  }
+
+  const { id: jobId } = (await submitRes.json()) as { id: string };
+  if (!jobId) throw new Error("Stable Horde did not return a job ID");
+
+  // Step 2: Poll for completion (max 3 minutes)
+  const maxAttempts = 36;
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise((r) => setTimeout(r, 5000));
+
+    const checkRes = await fetch(`https://stablehorde.net/api/v2/generate/check/${jobId}`, {
+      headers: { "Client-Agent": "MaoAI:1.0:mcmamoo" },
+    });
+
+    if (!checkRes.ok) continue;
+
+    const check = (await checkRes.json()) as {
+      done?: boolean;
+      faulted?: boolean;
+      wait_time?: number;
+    };
+
+    if (check.faulted) throw new Error("Stable Horde generation faulted");
+    if (!check.done) continue;
+
+    // Step 3: Retrieve result
+    const statusRes = await fetch(`https://stablehorde.net/api/v2/generate/status/${jobId}`, {
+      headers: { "Client-Agent": "MaoAI:1.0:mcmamoo" },
+    });
+
+    if (!statusRes.ok) throw new Error(`Stable Horde status fetch failed (${statusRes.status})`);
+
+    const status = (await statusRes.json()) as {
+      generations?: Array<{ img: string; censored?: boolean }>;
+    };
+
+    const gen = status.generations?.[0];
+    if (!gen) throw new Error("Stable Horde returned no generations");
+
+    const imgData = gen.img;
+
+    // If it's a URL (R2 storage), return directly
+    if (imgData.startsWith("http")) {
+      return { url: imgData };
+    }
+
+    // If it's base64, upload to S3
+    const buffer = Buffer.from(imgData, "base64");
+    const { url } = await storagePut(`generated/${Date.now()}.webp`, buffer, "image/webp");
+    return { url };
+  }
+
+  throw new Error("Stable Horde generation timed out after 3 minutes");
+}
+
+// ── Forge API (legacy fallback) ───────────────────────────────────────────────
 async function generateImageViaForge(
   options: GenerateImageOptions
 ): Promise<GenerateImageResponse> {
@@ -113,17 +193,37 @@ async function generateImageViaForge(
   return { url };
 }
 
-// Main export: auto-select provider
+// ── Main export: auto-select provider ────────────────────────────────────────
 export async function generateImage(
   options: GenerateImageOptions
 ): Promise<GenerateImageResponse> {
+  // Try Together AI first (if key is set)
   if (ENV.togetherApiKey) {
-    return generateImageViaTogetherAI(options);
+    try {
+      return await generateImageViaTogetherAI(options);
+    } catch (err: any) {
+      const msg = String(err?.message || "");
+      if (msg.includes("credit") || msg.includes("Credit") || msg.includes("billing")) {
+        console.warn("[ImageGen] Together AI credit limit, falling back to Stable Horde");
+      } else {
+        throw err;
+      }
+    }
   }
+
+  // Stable Horde: completely free, no API key required
+  try {
+    return await generateImageViaStableHorde(options);
+  } catch (err: any) {
+    console.warn("[ImageGen] Stable Horde failed:", err?.message);
+  }
+
+  // Legacy Forge fallback
   if (ENV.forgeApiUrl && ENV.forgeApiKey) {
     return generateImageViaForge(options);
   }
+
   throw new Error(
-    "No image generation provider configured. Please set TOGETHER_API_KEY (recommended) or BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY."
+    "图像生成暂时不可用，请稍后重试。如需提升稳定性，请联系管理员配置 TOGETHER_API_KEY。"
   );
 }
