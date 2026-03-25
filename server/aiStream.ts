@@ -3,7 +3,7 @@ import { MODEL_CONFIGS } from "./routers";
 import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog, getNodeSkills, getAllNodeSkills, upsertNodeSkill, deleteNodeSkill, deleteAllNodeSkills, setNodeSkillEnabled } from "./db";
 import { sdk } from "./_core/sdk";
 import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
+import pdfParse from "pdf-parse";
 import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 
 const aiStreamRouter = Router();
@@ -811,9 +811,8 @@ aiStreamRouter.post("/upload", async (req: Request, res: Response) => {
     // ── PDF ──
     if (mimetype === "application/pdf" || /\.pdf$/i.test(originalname)) {
       try {
-        // pdf-parse v2: new PDFParse({ data: buffer }).getText()
-        const parser = new PDFParse({ data: buffer });
-        const result = await parser.getText();
+        // pdf-parse v1: pdfParse(buffer)
+        const result = await pdfParse(buffer);
         extractedText = result.text?.trim() || "";
         if (!extractedText) extractedText = "[PDF 内容为空或为扫描件，无法提取文字]";
         fileType = "pdf";
