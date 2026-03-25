@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
-  Wand2, Image as ImageIcon, Crown, Zap,
+  Wand2, Image as ImageIcon, Crown, Zap, Paperclip, FileText, FileJson, Table2,
 } from "lucide-react";
 import type { PlanTier } from "@shared/plans";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -64,6 +64,15 @@ type Conversation = {
 };
 
 type InputMode = "chat" | "image";
+
+type PendingFile = {
+  name: string;
+  fileType: string; // "pdf" | "docx" | "text" | "csv" | "json" | "markdown"
+  text: string;    // extracted text content
+  size: number;
+  truncated?: boolean;
+  charCount?: number;
+};
 
 // ─── Cloud models ─────────────────────────────────────────────────────────────
 const CLOUD_MODELS: CloudModel[] = [
@@ -137,11 +146,14 @@ export default function MaoAIChat() {
   const [inputMode, setInputMode] = useState<InputMode>("chat");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState<string | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docFileInputRef = useRef<HTMLInputElement>(null);
 
   // ── tRPC ────────────────────────────────────────────────────────────────────
   const utils = trpc.useUtils();
@@ -275,11 +287,66 @@ export default function MaoAIChat() {
     setPendingImages(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const removePendingFile = (idx: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDocFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    e.target.value = "";
+    setIsUploadingFile(true);
+    try {
+      for (const file of Array.from(files)) {
+        // Images go to pendingImages (base64 inline), documents go to pendingFiles
+        if (file.type.startsWith("image/")) {
+          await addImageFromFile(file);
+          continue;
+        }
+        const formData = new FormData();
+        formData.append("file", file);
+        const token = localStorage.getItem("maoai_session_token");
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const resp = await fetch(`${BACKEND_URL}/api/ai/upload`, {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: formData,
+        });
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+          throw new Error(errData.error || `上传失败 (${resp.status})`);
+        }
+        const data = await resp.json();
+        if (data.type === "image") {
+          // Server returned image as base64 data URL
+          setPendingImages(prev => [...prev, data.dataUrl]);
+        } else {
+          // Document: store extracted text
+          setPendingFiles(prev => [...prev, {
+            name: data.fileName,
+            fileType: data.fileType,
+            text: data.text,
+            size: data.size,
+            truncated: data.truncated,
+            charCount: data.charCount,
+          }]);
+        }
+      }
+    } catch (err: any) {
+      alert(`文件上传失败: ${err.message}`);
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
   const startNewChat = () => {
     setCurrentConvId(null);
     setMessages([]);
     setInput("");
     setPendingImages([]);
+    setPendingFiles([]);
     setInputMode("chat");
   };
 
@@ -437,16 +504,29 @@ export default function MaoAIChat() {
 
   // ── Send chat message ────────────────────────────────────────────────────────
   const sendMessage = async (textContent: string) => {
-    if ((!textContent.trim() && pendingImages.length === 0) || isStreaming) return;
+    if ((!textContent.trim() && pendingImages.length === 0 && pendingFiles.length === 0) || isStreaming) return;
     if (!checkChatLimit()) return;
     if (!currentOption.isLocal && !checkPremiumModel(selectedId)) return;
+
+    // Build document context system prompt from pending files
+    let docSystemPrompt = "";
+    if (pendingFiles.length > 0) {
+      const sections = pendingFiles.map(f => {
+        const typeLabel = f.fileType === "pdf" ? "PDF" : f.fileType === "docx" ? "Word 文档" : f.fileType === "csv" ? "CSV 数据" : f.fileType === "json" ? "JSON 数据" : f.fileType === "markdown" ? "Markdown 文档" : "文本文件";
+        return `【${typeLabel}：${f.name}】\n${f.text}${f.truncated ? "\n\n[文档过长，已截断至前 60000 字符]" : ""}`;
+      }).join("\n\n---\n\n");
+      docSystemPrompt = `以下是用户上传的文件内容，请根据这些内容回答用户的问题：\n\n${sections}`;
+    }
 
     let userContent: MessageContent;
     if (pendingImages.length > 0) {
       const parts: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [];
       for (const imgUrl of pendingImages) parts.push({ type: "image_url", image_url: { url: imgUrl } });
-      parts.push({ type: "text", text: textContent.trim() || "请分析这张图片" });
+      const textPart = textContent.trim() || (pendingFiles.length > 0 ? "请结合文件内容分析这张图片" : "请分析这张图片");
+      parts.push({ type: "text", text: textPart });
       userContent = parts;
+    } else if (!textContent.trim() && pendingFiles.length > 0) {
+      userContent = `请分析我上传的文件：${pendingFiles.map(f => f.name).join("、")}`;
     } else {
       userContent = textContent.trim();
     }
@@ -462,6 +542,7 @@ export default function MaoAIChat() {
     setMessages(newMessages);
     setInput("");
     setPendingImages([]);
+    setPendingFiles([]);
     setIsStreaming(true);
     setStreamingContent("");
     setActiveNodeInfo(null);
@@ -485,6 +566,9 @@ export default function MaoAIChat() {
     const bodyPayload: Record<string, any> = {
       messages: newMessages.map(m => ({ role: m.role, content: m.content })),
     };
+    if (docSystemPrompt) {
+      bodyPayload.systemPrompt = docSystemPrompt;
+    }
     if (isLocal) {
       bodyPayload.useLocal = true;
       bodyPayload.nodeId = (currentOption as LocalNode).nodeId;
@@ -588,7 +672,7 @@ export default function MaoAIChat() {
     abortRef.current?.abort();
   };
 
-  const isBusy = isStreaming || isGeneratingImage;
+  const isBusy = isStreaming || isGeneratingImage || isUploadingFile;
 
   if (loading) {
     return (
@@ -792,7 +876,7 @@ export default function MaoAIChat() {
                     {" · "}
                     <span className="text-white/50">{currentOption.badge} {currentOption.name}</span>
                   </p>
-                  <p className="text-white/20 text-xs mt-2">支持对话、图片理解（Ctrl+V 粘贴）和 AI 图像生成</p>
+                  <p className="text-white/20 text-xs mt-2">支持对话、图片理解、文件分析（PDF/Word/TXT）和 AI 图像生成</p>
                 </div>
                 {/* Chat quick prompts */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
@@ -1019,6 +1103,40 @@ export default function MaoAIChat() {
               </div>
             )}
 
+            {/* Pending document file previews (chat mode only) */}
+            {inputMode === "chat" && pendingFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {pendingFiles.map((f, idx) => {
+                  const icon = f.fileType === "pdf" ? <FileText size={12} className="text-red-400/70" /> :
+                    f.fileType === "csv" ? <Table2 size={12} className="text-green-400/70" /> :
+                    f.fileType === "json" ? <FileJson size={12} className="text-yellow-400/70" /> :
+                    <FileText size={12} className="text-sky-400/70" />;
+                  const sizeKb = Math.round(f.size / 1024);
+                  return (
+                    <div key={idx} className="relative group flex items-center gap-2 px-3 py-2 border border-sky-400/20 bg-sky-400/5 max-w-[200px]">
+                      {icon}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] text-white/60 truncate">{f.name}</p>
+                        <p className="text-[10px] text-white/25">{sizeKb}KB · {f.charCount?.toLocaleString()} 字符{f.truncated ? " · 已截断" : ""}</p>
+                      </div>
+                      <button onClick={() => removePendingFile(idx)}
+                        className="shrink-0 w-4 h-4 flex items-center justify-center text-white/20 hover:text-red-400/70 transition-colors opacity-0 group-hover:opacity-100">
+                        <X size={10} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* File uploading indicator */}
+            {isUploadingFile && (
+              <div className="flex items-center gap-2 mb-3 text-[11px] text-sky-400/60">
+                <Loader2 size={12} className="animate-spin" />
+                <span>正在解析文件...</span>
+              </div>
+            )}
+
             <div className="flex gap-2 items-end">
               {/* Image upload button (chat mode only) */}
               {inputMode === "chat" && (
@@ -1032,6 +1150,23 @@ export default function MaoAIChat() {
                     <ImagePlus size={16} />
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                  {/* Document upload button */}
+                  <button
+                    onClick={() => docFileInputRef.current?.click()}
+                    disabled={isBusy}
+                    className={`px-3 py-3 border text-xs transition-all shrink-0 ${pendingFiles.length > 0 ? "border-sky-400/50 text-sky-400 bg-sky-400/10" : "border-white/10 text-white/30 hover:border-sky-400/30 hover:text-sky-400/60"} disabled:opacity-30 disabled:cursor-not-allowed`}
+                    title="上传文件（PDF、Word、TXT、CSV、JSON）"
+                  >
+                    {isUploadingFile ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
+                  </button>
+                  <input
+                    ref={docFileInputRef}
+                    type="file"
+                    accept=".pdf,.docx,.doc,.txt,.md,.csv,.json,image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleDocFileChange}
+                  />
                 </>
               )}
               {/* Image mode icon */}
@@ -1047,9 +1182,11 @@ export default function MaoAIChat() {
                 onKeyDown={handleKeyDown}
                 placeholder={
                   isBusy
-                    ? inputMode === "image" ? "正在生成图像..." : "AI 正在回复中..."
+                    ? inputMode === "image" ? "正在生成图像..." : isUploadingFile ? "正在解析文件..." : "AI 正在回复中..."
                     : inputMode === "image"
                     ? "描述你想生成的图像，例如：赛博朋克风格的城市夜景，高清，4K..."
+                    : pendingFiles.length > 0
+                    ? `已上传 ${pendingFiles.length} 个文件，输入问题或直接发送让 AI 分析...`
                     : pendingImages.length > 0
                     ? "描述图片内容，或直接发送让 AI 分析..."
                     : "输入消息，Enter 发送，Shift+Enter 换行，Ctrl+V 粘贴截图"
@@ -1073,7 +1210,7 @@ export default function MaoAIChat() {
               ) : (
                 <button
                   onClick={handleSend}
-                  disabled={(!input.trim() && pendingImages.length === 0) || isGeneratingImage}
+                  disabled={(!input.trim() && pendingImages.length === 0 && pendingFiles.length === 0) || isGeneratingImage || isUploadingFile}
                   className={`px-4 py-3 border transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0 ${
                     inputMode === "image"
                       ? "bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20"
@@ -1089,6 +1226,12 @@ export default function MaoAIChat() {
             {inputMode === "chat" && pendingImages.length > 0 && (
               <p className="text-[10px] text-purple-400/50 mt-2 flex items-center gap-1">
                 <span>👁️</span><span>将自动使用 GLM-4V 视觉模型分析图片</span>
+              </p>
+            )}
+            {inputMode === "chat" && pendingFiles.length > 0 && pendingImages.length === 0 && (
+              <p className="text-[10px] text-sky-400/50 mt-2 flex items-center gap-1">
+                <Paperclip size={9} />
+                <span>文件内容将作为上下文提供给 AI · 支持 PDF、Word、TXT、CSV、JSON · 单文件最大 20MB</span>
               </p>
             )}
             {inputMode === "image" && (

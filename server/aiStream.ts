@@ -539,6 +539,123 @@ aiStreamRouter.post("/image/generate", async (req: Request, res: Response) => {
   }
 });
 
+// ─── File Upload & Parse ─────────────────────────────────────────────────────
+// POST /api/ai/upload
+// Accepts: multipart/form-data with field "file"
+// Returns: { type, text?, dataUrl?, fileName, fileType, size, truncated? }
+aiStreamRouter.post("/upload", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+
+    const multer = (await import("multer")).default;
+    const upload = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+      fileFilter: (_req: any, file: any, cb: any) => {
+        const ok = [
+          "image/jpeg", "image/png", "image/gif", "image/webp",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/msword",
+          "text/plain", "text/csv", "text/markdown", "application/json",
+        ];
+        if (ok.includes(file.mimetype) || /\.(txt|md|csv|json|pdf|docx|doc|png|jpg|jpeg|gif|webp)$/i.test(file.originalname)) {
+          cb(null, true);
+        } else {
+          cb(new Error(`不支持的文件类型: ${file.mimetype}`));
+        }
+      },
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      upload.single("file")(req as any, res as any, (err: any) => {
+        if (err) reject(err); else resolve();
+      });
+    });
+
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "请选择要上传的文件" }); return; }
+
+    const { originalname, mimetype, buffer, size } = file;
+
+    // ── Image: return as base64 data URL for vision model ──
+    if (mimetype.startsWith("image/")) {
+      const base64 = buffer.toString("base64");
+      res.json({
+        type: "image",
+        dataUrl: `data:${mimetype};base64,${base64}`,
+        fileName: originalname,
+        fileType: mimetype,
+        size,
+      });
+      return;
+    }
+
+    let extractedText = "";
+    let fileType = "text";
+
+    // ── PDF ──
+    if (mimetype === "application/pdf" || /\.pdf$/i.test(originalname)) {
+      try {
+        const pdfParse = (await import("pdf-parse")).default;
+        const data = await pdfParse(buffer);
+        extractedText = data.text?.trim() || "";
+        fileType = "pdf";
+      } catch (e) {
+        console.warn("[Upload] PDF parse failed:", e);
+        extractedText = "[PDF 解析失败，请尝试复制文本内容]";
+        fileType = "pdf";
+      }
+    }
+    // ── Word (.docx) ──
+    else if (
+      mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      /\.docx$/i.test(originalname)
+    ) {
+      try {
+        const mammoth = await import("mammoth");
+        const result = await mammoth.extractRawText({ buffer });
+        extractedText = result.value?.trim() || "";
+        fileType = "docx";
+      } catch (e) {
+        console.warn("[Upload] DOCX parse failed:", e);
+        extractedText = "[Word 文档解析失败]";
+        fileType = "docx";
+      }
+    }
+    // ── Plain text / CSV / JSON / Markdown ──
+    else {
+      extractedText = buffer.toString("utf-8").trim();
+      fileType = /\.csv$/i.test(originalname) ? "csv"
+        : /\.json$/i.test(originalname) ? "json"
+        : /\.md$/i.test(originalname) ? "markdown"
+        : "text";
+    }
+
+    // Truncate to ~60k chars to avoid token overflow
+    const MAX_CHARS = 60000;
+    let truncated = false;
+    if (extractedText.length > MAX_CHARS) {
+      extractedText = extractedText.slice(0, MAX_CHARS);
+      truncated = true;
+    }
+
+    res.json({
+      type: "document",
+      text: extractedText,
+      fileName: originalname,
+      fileType,
+      size,
+      truncated,
+      charCount: extractedText.length,
+    });
+  } catch (err: any) {
+    console.error("[Upload] Error:", err);
+    res.status(500).json({ error: err.message || "文件解析失败" });
+  }
+});
+
 // ─── Health check ─────────────────────────────────────────────
 aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
   const status: Record<string, any> = {};
