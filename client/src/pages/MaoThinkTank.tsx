@@ -423,8 +423,373 @@ function StrategicBriefSubscribe() {
   );
 }
 
-// ── Application Form ─────────────────────────────────────────────────────────────────────────────────
-function MaoApplicationForm() {
+// ── Think Tank Pricing Tiers ─────────────────────────────────────────────────────────────────────────────────────────
+const thinkTankPricing_zh = [
+  {
+    id: "wargame",
+    icon: "⚔",
+    title: "兵棋推演服务",
+    subtitle: "Wargame Simulation Service",
+    badge: "军事层级",
+    badgeColor: "#8B1A1A",
+    plans: [
+      {
+        name: "单次推演",
+        period: "单次",
+        price: "200",
+        unit: "万",
+        originalPrice: null,
+        highlight: false,
+        features: ["单场景兵棋推演", "推演报告与复盘", "关键决策节点分析", "战略建议摘要"],
+        cta: "预约推演",
+      },
+      {
+        name: "季度推演计划",
+        period: "3个月",
+        price: "500",
+        unit: "万",
+        originalPrice: "600万",
+        highlight: false,
+        features: ["每月一场完整推演", "多场景对抗推演", "实时态势分析支持", "季度战略研讨会", "专属分析师团队"],
+        cta: "预约和谈",
+      },
+      {
+        name: "年度战略伙伴",
+        period: "12个月",
+        price: "1500",
+        unit: "万",
+        originalPrice: "2400万",
+        highlight: true,
+        features: ["全年不限次兵棋推演", "实时战略情报支持", "重大决策实时和议", "月度战略委员会会议", "高管团队战略培训", "专属战略顾问团队"],
+        cta: "立即洽谈",
+      },
+    ],
+  },
+  {
+    id: "strategy-sandbox",
+    icon: "🏛",
+    title: "战略沙盘和分析",
+    subtitle: "Strategy Sandbox & Analysis",
+    badge: "顶级定制",
+    badgeColor: "#C9A84C",
+    plans: [
+      {
+        name: "战略诊断",
+        period: "单次",
+        price: "30",
+        unit: "万",
+        originalPrice: null,
+        highlight: false,
+        features: ["行业深度研究报告", "竞争格局分析", "趋势预判与机会识别", "战略建议摘要"],
+        cta: "预约定制",
+      },
+      {
+        name: "季度战略情报",
+        period: "3个月",
+        price: "80",
+        unit: "万",
+        originalPrice: "90万",
+        highlight: false,
+        features: ["每月战略情报简报", "行业动态实时预警", "竞争对手深度监测", "季度战略研讨会", "专属研究员支持"],
+        cta: "预约和谈",
+      },
+      {
+        name: "年度战略会员",
+        period: "12个月",
+        price: "100",
+        unit: "万",
+        originalPrice: "360万",
+        highlight: true,
+        features: ["全年战略情报订阅", "月度高管战略简报", "重大事件实时预警", "年度战略峰会参与资格", "毛智库研究成果优先获取", "不限次战略和议热线"],
+        cta: "立即加入",
+      },
+    ],
+  },
+];
+
+const thinkTankPricing_en = [
+  {
+    id: "wargame",
+    icon: "⚔",
+    title: "Wargame Simulation",
+    subtitle: "Wargame Simulation Service",
+    badge: "Military Grade",
+    badgeColor: "#8B1A1A",
+    plans: [
+      {
+        name: "Single Session",
+        period: "One-Time",
+        price: "¥2M",
+        unit: "",
+        originalPrice: null,
+        highlight: false,
+        features: ["Single-Scenario Wargame", "Debrief Report & Replay", "Key Decision Node Analysis", "Strategic Recommendations Summary"],
+        cta: "Book Session",
+      },
+      {
+        name: "Quarterly Plan",
+        period: "3 Months",
+        price: "¥5M",
+        unit: "",
+        originalPrice: "¥6M",
+        highlight: false,
+        features: ["Monthly Full Wargame", "Multi-Scenario Adversarial Simulation", "Real-Time Situation Analysis", "Quarterly Strategy Workshop", "Dedicated Analyst Team"],
+        cta: "Book Consultation",
+      },
+      {
+        name: "Annual Strategic Partner",
+        period: "12 Months",
+        price: "¥15M",
+        unit: "",
+        originalPrice: "¥24M",
+        highlight: true,
+        features: ["Unlimited Annual Wargames", "Real-Time Strategic Intelligence", "Major Decision Hotline", "Monthly Strategy Committee", "Executive Team Training", "Dedicated Advisory Team"],
+        cta: "Negotiate Now",
+      },
+    ],
+  },
+  {
+    id: "strategy-sandbox",
+    icon: "🏛",
+    title: "Strategy Sandbox & Analysis",
+    subtitle: "Strategy Sandbox & Analysis",
+    badge: "Elite Custom",
+    badgeColor: "#C9A84C",
+    plans: [
+      {
+        name: "Strategic Diagnostic",
+        period: "One-Time",
+        price: "¥300K",
+        unit: "",
+        originalPrice: null,
+        highlight: false,
+        features: ["Industry Deep Research Report", "Competitive Landscape Analysis", "Trend Forecasting & Opportunity ID", "Strategic Recommendations Summary"],
+        cta: "Book Custom",
+      },
+      {
+        name: "Quarterly Intelligence",
+        period: "3 Months",
+        price: "¥800K",
+        unit: "",
+        originalPrice: "¥900K",
+        highlight: false,
+        features: ["Monthly Strategic Intelligence Brief", "Industry Real-Time Alerts", "Competitor Deep Monitoring", "Quarterly Strategy Workshop", "Dedicated Research Support"],
+        cta: "Book Consultation",
+      },
+      {
+        name: "Annual Member",
+        period: "12 Months",
+        price: "¥1M",
+        unit: "",
+        originalPrice: "¥3.6M",
+        highlight: true,
+        features: ["Full-Year Intelligence Subscription", "Monthly Executive Brief", "Major Event Real-Time Alerts", "Annual Strategy Summit Access", "Priority Research Access", "Unlimited Consulting Hotline"],
+        cta: "Join Now",
+      },
+    ],
+  },
+];
+
+function MaoThinkTankPricing({ isEn }: { isEn: boolean }) {
+  const { ref, visible } = useReveal(0.05);
+  const tiers = isEn ? thinkTankPricing_en : thinkTankPricing_zh;
+  return (
+    <div
+      ref={ref}
+      className="py-24 px-8 md:px-20"
+      style={{
+        borderTop: "1px solid rgba(139,26,26,0.2)",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(30px)",
+        transition: "opacity 0.8s ease, transform 0.8s ease",
+      }}
+    >
+      <div className="max-w-6xl mx-auto">
+        {/* Section header */}
+        <div className="flex items-center gap-4 mb-12">
+          <div style={{ width: 32, height: 1, background: "#8B1A1A" }} />
+          <div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "#8B1A1A", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 6 }}>
+              {isEn ? "SERVICE PRICING" : "SERVICE PRICING · 服务定价"}
+            </div>
+            <h2 style={{ fontFamily: "'Noto Serif SC', serif", color: "#E8D5B7", fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 700, lineHeight: 1.3 }}>
+              {isEn ? "Choose Your Strategic Plan" : "选择适合你的战略方案"}
+            </h2>
+          </div>
+        </div>
+
+        {/* Pricing tiers */}
+        <div className="space-y-14">
+          {tiers.map((tier) => (
+            <div key={tier.id}>
+              {/* Tier header */}
+              <div className="flex items-center gap-4 mb-6">
+                <span style={{ fontSize: "1.4rem" }}>{tier.icon}</span>
+                <span
+                  className="text-xs font-bold tracking-widest uppercase px-3 py-1"
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    background: `${tier.badgeColor}18`,
+                    color: tier.badgeColor,
+                    border: `1px solid ${tier.badgeColor}40`,
+                  }}
+                >
+                  {tier.badge}
+                </span>
+                <span style={{ fontFamily: "'Noto Serif SC', serif", color: "#E8D5B7", fontSize: "1.1rem", fontWeight: 600 }}>
+                  {tier.title}
+                </span>
+                <div style={{ flex: 1, height: 1, background: "rgba(139,26,26,0.2)" }} />
+              </div>
+
+              {/* Plan cards */}
+              <div
+                className="grid md:grid-cols-3"
+                style={{ border: "1px solid rgba(139,26,26,0.25)" }}
+              >
+                {tier.plans.map((plan, idx) => (
+                  <div
+                    key={plan.name}
+                    className="relative p-7 flex flex-col"
+                    style={{
+                      background: plan.highlight ? "rgba(139,26,26,0.08)" : "rgba(232,213,183,0.02)",
+                      borderRight: idx < tier.plans.length - 1 ? "1px solid rgba(139,26,26,0.2)" : "none",
+                    }}
+                  >
+                    {/* Highlight top bar */}
+                    {plan.highlight && (
+                      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "#8B1A1A" }} />
+                    )}
+                    {plan.highlight && (
+                      <div
+                        style={{
+                          position: "absolute", top: 10, right: 10,
+                          background: "#8B1A1A",
+                          color: "#E8D5B7",
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: "0.58rem",
+                          letterSpacing: "0.15em",
+                          padding: "2px 8px",
+                        }}
+                      >
+                        {isEn ? "BEST VALUE" : "最优选择"}
+                      </div>
+                    )}
+
+                    {/* Plan name */}
+                    <div style={{ fontFamily: "'Noto Serif SC', serif", color: "#E8D5B7", fontSize: "1rem", fontWeight: 700, marginBottom: 4 }}>
+                      {plan.name}
+                    </div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.62rem", color: "rgba(232,213,183,0.4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>
+                      {plan.period}
+                    </div>
+
+                    {/* Price */}
+                    <div style={{ marginBottom: 20 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 900, color: plan.highlight ? "#8B1A1A" : "#C9A84C", lineHeight: 1 }}>
+                          {plan.price}
+                        </span>
+                        {plan.unit && (
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", color: "rgba(232,213,183,0.5)" }}>{plan.unit}</span>
+                        )}
+                      </div>
+                      {plan.originalPrice && (
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "rgba(232,213,183,0.25)", textDecoration: "line-through", marginTop: 4 }}>
+                          {isEn ? "List: " : "原价："}{plan.originalPrice}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Features */}
+                    <ul className="flex-1" style={{ listStyle: "none", padding: 0, margin: 0, marginBottom: 24 }}>
+                      {plan.features.map((f) => (
+                        <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 8, color: "rgba(232,213,183,0.65)", fontSize: "0.85rem", lineHeight: 1.6, marginBottom: 8 }}>
+                          <span style={{ color: plan.highlight ? "#8B1A1A" : "#C9A84C", fontSize: "0.7rem", flexShrink: 0, marginTop: 3 }}>✓</span>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* CTA */}
+                    <a
+                      href="#contact"
+                      style={{
+                        display: "block",
+                        textAlign: "center",
+                        padding: "12px 20px",
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: "0.7rem",
+                        letterSpacing: "0.2em",
+                        textTransform: "uppercase",
+                        textDecoration: "none",
+                        transition: "all 0.2s",
+                        background: plan.highlight ? "#8B1A1A" : "transparent",
+                        color: plan.highlight ? "#E8D5B7" : "rgba(232,213,183,0.6)",
+                        border: plan.highlight ? "none" : "1px solid rgba(139,26,26,0.4)",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={e => {
+                        if (!plan.highlight) {
+                          (e.currentTarget as HTMLAnchorElement).style.background = "rgba(139,26,26,0.15)";
+                          (e.currentTarget as HTMLAnchorElement).style.color = "#E8D5B7";
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!plan.highlight) {
+                          (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
+                          (e.currentTarget as HTMLAnchorElement).style.color = "rgba(232,213,183,0.6)";
+                        }
+                      }}
+                    >
+                      {plan.cta}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom note */}
+        <div
+          className="mt-10 pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+          style={{ borderTop: "1px solid rgba(139,26,26,0.15)" }}
+        >
+          <p style={{ color: "rgba(232,213,183,0.35)", fontSize: "0.85rem", maxWidth: 480, lineHeight: 1.7 }}>
+            {isEn
+              ? "All engagements are strictly confidential. Custom packages available for national-level and Fortune 500 clients."
+              : "所有合作信息严格保密。国家级客户与世界500强企业可洽谈定制专属方案。"}
+          </p>
+          <a
+            href="/pricing"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 24px",
+              background: "transparent",
+              color: "#C9A84C",
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "0.7rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              border: "1px solid rgba(201,168,76,0.4)",
+              textDecoration: "none",
+              transition: "all 0.2s",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isEn ? "Full Pricing Details →" : "查看完整定价 →"}
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Application Form ─────────────────────────────────────────────────────────────────────────────────────────
+function MaoApplicationForm({ isEn }: { isEn: boolean }) {
   const [form, setForm] = useState({ name: "", org: "", direction: "", detail: "" });
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -1054,6 +1419,8 @@ export default function MaoThinkTank() {
         </div>
       </div>
 
+      {/* ── Pricing Tiers ── */}
+      <MaoThinkTankPricing isEn={isEn} />
       {/* ── Application Form ── */}
       <MaoApplicationForm />
 

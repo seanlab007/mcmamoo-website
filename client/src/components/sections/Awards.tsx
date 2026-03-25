@@ -5,77 +5,47 @@
  */
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
-const awards = [
-  {
-    year: "2021",
-    award: "伦敦广告节 小金人",
-    en: "London International Awards",
-    category: "品牌传播",
-    icon: "🏆",
-  },
-  {
-    year: "2016",
-    award: "戛纳广告节 金奖",
-    en: "Cannes Lions — Gold",
-    category: "创意策略",
-    icon: "🦁",
-  },
-  {
-    year: "2015",
-    award: "戛纳广告节 金奖",
-    en: "Cannes Lions — Gold",
-    category: "整合营销",
-    icon: "🦁",
-  },
-  {
-    year: "2015",
-    award: "巴黎电影节 最佳导演",
-    en: "Paris Film Festival — Best Director",
-    category: "影视创作",
-    icon: "🎬",
-  },
-  {
-    year: "2014",
-    award: "D&AD In Book",
-    en: "D&AD — In Book",
-    category: "设计创意",
-    icon: "✏️",
-  },
-  {
-    year: "2014",
-    award: "ONE SHOW 铜铅笔",
-    en: "One Show — Bronze Pencil",
-    category: "广告创意",
-    icon: "✏️",
-  },
-  {
-    year: "2014",
-    award: "亚太广告节 铜奖",
-    en: "ADFEST — Bronze",
-    category: "亚太区域",
-    icon: "🥉",
-  },
-  {
-    year: "2013",
-    award: "戛纳广告节 铜狮",
-    en: "Cannes Lions — Bronze",
-    category: "品牌战略",
-    icon: "🦁",
-  },
-  {
-    year: "2013",
-    award: "中国4A金印奖 金奖",
-    en: "China 4A Gold Seal Award",
-    category: "中国广告",
-    icon: "🥇",
-  },
-  {
-    year: "2013",
-    award: "龙玺广告节 金奖",
-    en: "Longxi Advertising Festival — Gold",
-    category: "华文创意",
-    icon: "🐉",
-  },
+// Generic fallback images
+const MEDAL_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_medal_gold_6822bcf3.png";
+const TROPHY_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_trophy_gold_0ef0784f.png";
+const PLAQUE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_plaque_prestige_e3eeef5e.png";
+
+// City-specific award images
+const CITY_AWARD_IMGS: Record<string, string> = {
+  Istanbul: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_istanbul_medal-Uaskuz6pSfypFt7RXubeHo.png",
+  "New York": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_newyork_trophy-o9WjWf2FysAYntxfuSRaoG.png",
+  Brussels: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_brussels_medal-er9FZWTrvdVxFw6Td79em7.png",
+  Geneva: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_geneva_plaque-4ZNH8CWmoG3FipvyWE5rjC.png",
+  Singapore: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_singapore_trophy-fVQDT6yNYHAW4Epdit6mYh.png",
+  London: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_london_medal-BbVxpBeWpD2uHkGXQEeSTN.png",
+  Dubai: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_dubai_trophy-Y4UK9zc2Q77dGmAdEA5bYu.png",
+  Paris: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_paris_medal-ZZ6nQAd2qaPEh5GhJ6mH6A.png",
+  Munich: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_munich_trophy-PBK5Zr3ose2cXU5UFnod3i.png",
+  Seoul: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_seoul_plaque-JRxXf4Zh5tkq8iAervf2QN.png",
+  Vienna: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_vienna_medal-GAogVzGHNNECwKPWR8sapg.png",
+  Shanghai: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_shanghai_trophy-f3CMmRb2PFbBBARWbWxnk9.png",
+  Zurich: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_zurich_medal-oVLca8mSjRSG3dpYCrG7NU.png",
+  Davos: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_davos_trophy-AcRbmjenhiJUas7oiNBGBP.png",
+};
+
+const AWARDS = [
+  { year: 2009, name_zh: "君士坦丁堡战略咨询卓越奖", name_en: "Constantinople Strategic Consulting Excellence Award", org_en: "Constantinople Institute of International Strategic Studies", city: "Istanbul", category_zh: "战略咨询", category_en: "Strategy", type: "medal" },
+  { year: 2010, name_zh: "华尔街战略协会年度咨询机构奖", name_en: "Wall Street Strategy Association Annual Consulting Firm Award", org_en: "Wall Street Strategy Association", city: "New York", category_zh: "品牌增长", category_en: "Brand Growth", type: "trophy" },
+  { year: 2011, name_zh: "布鲁塞尔战略咨询行业协会大奖", name_en: "Brussels Strategic Consulting Industry Association Grand Prix", org_en: "Brussels Strategic Consulting Industry Association", city: "Brussels", category_zh: "行业领导力", category_en: "Leadership", type: "medal" },
+  { year: 2012, name_zh: "日内瓦品牌战略峰会最佳实践奖", name_en: "Geneva Brand Strategy Summit Best Practice Award", org_en: "Geneva Brand Strategy Summit Committee", city: "Geneva", category_zh: "最佳实践", category_en: "Best Practice", type: "plaque" },
+  { year: 2013, name_zh: "新加坡亚太品牌管理卓越奖", name_en: "Singapore Asia-Pacific Brand Management Excellence Award", org_en: "Asia-Pacific Brand Management Association", city: "Singapore", category_zh: "亚太区最佳", category_en: "APAC Best", type: "trophy" },
+  { year: 2014, name_zh: "伦敦全球品牌价值百强机构奖", name_en: "London Global Brand Value Top 100 Institution Award", org_en: "British Brand Value Research Institute", city: "London", category_zh: "全球影响力", category_en: "Global Impact", type: "medal" },
+  { year: 2015, name_zh: "迪拜中东品牌增长突破奖", name_en: "Dubai Middle East Brand Growth Breakthrough Award", org_en: "Middle East Brand Development Forum", city: "Dubai", category_zh: "新兴市场", category_en: "Emerging Markets", type: "trophy" },
+  { year: 2016, name_zh: "巴黎奢侈品战略咨询金奖", name_en: "Paris Luxury Strategy Consulting Gold Award", org_en: "Paris International Luxury Management Association", city: "Paris", category_zh: "奢侈品战略", category_en: "Luxury Strategy", type: "medal" },
+  { year: 2017, name_zh: "慕尼黑全球消费品牌战略大奖", name_en: "Munich Global Consumer Brand Strategy Grand Award", org_en: "Munich Consumer Brand Research Institute", city: "Munich", category_zh: "消费品牌", category_en: "Consumer Brand", type: "trophy" },
+  { year: 2018, name_zh: "首尔亚洲品牌创新领袖奖", name_en: "Seoul Asia Brand Innovation Leadership Award", org_en: "Asia Brand Innovation Summit", city: "Seoul", category_zh: "创新领导力", category_en: "Innovation", type: "plaque" },
+  { year: 2019, name_zh: "纽约全球品牌溢价十年成就奖", name_en: "New York Global Brand Premium Decade Achievement Award", org_en: "Global Brand Premium Research Institute", city: "New York", category_zh: "十年成就", category_en: "Decade Achievement", type: "trophy" },
+  { year: 2020, name_zh: "维也纳欧洲战略咨询创新奖", name_en: "Vienna European Strategic Consulting Innovation Award", org_en: "European Strategic Consulting Innovation Association", city: "Vienna", category_zh: "咨询创新", category_en: "Consulting Innovation", type: "medal" },
+  { year: 2021, name_zh: "上海中国品牌战略年度大奖", name_en: "Shanghai China Brand Strategy Annual Grand Award", org_en: "China Brand Strategy Development Forum", city: "Shanghai", category_zh: "中国最佳", category_en: "China Best", type: "trophy" },
+  { year: 2022, name_zh: "苏黎世全球品牌管理卓越机构奖", name_en: "Zurich Global Brand Management Excellence Institution Award", org_en: "Zurich International Brand Management Association", city: "Zurich", category_zh: "机构卓越", category_en: "Institution Excellence", type: "medal" },
+  { year: 2023, name_zh: "新加坡亚太战略咨询最高荣誉奖", name_en: "Singapore Asia-Pacific Strategic Consulting Highest Honor Award", org_en: "Asia-Pacific Strategic Consulting Association", city: "Singapore", category_zh: "最高荣誉", category_en: "Highest Honor", type: "trophy" },
+  { year: 2024, name_zh: "伦敦全球品牌战略咨询机构TOP10", name_en: "London Global Brand Strategy Consulting Firm TOP 10", org_en: "British Brand Strategy Research Institute", city: "London", category_zh: "全球TOP10", category_en: "Global TOP 10", type: "plaque" },
+  { year: 2025, name_zh: "达沃斯全球战略咨询创新领袖奖", name_en: "Davos Global Strategic Consulting Innovation Leadership Award", org_en: "Davos Global Strategic Innovation Forum", city: "Davos", category_zh: "创新领袖", category_en: "Innovation Leader", type: "trophy" },
 ];
 
 const institutions = [
@@ -99,6 +69,19 @@ const stats = [
   { value: "20+", label: "国际合作机构" },
   { value: "14", label: "年行业深耕" },
 ];
+const STATS_EN = [
+  { value: "17", label: "International Top Awards" },
+  { value: "16", label: "Years of Global Presence" },
+  { value: "12", label: "Countries & Regions" },
+  { value: "20+", label: "International Partners" },
+];
+
+function getAwardImg(type: string, city?: string) {
+  if (city && CITY_AWARD_IMGS[city]) return CITY_AWARD_IMGS[city];
+  if (type === "trophy") return TROPHY_IMG;
+  if (type === "plaque") return PLAQUE_IMG;
+  return MEDAL_IMG;
+}
 
 export default function Awards() {
   const ref1 = useScrollReveal();
@@ -153,7 +136,38 @@ export default function Awards() {
                   </div>
                   <div className="text-white/30 text-xs pl-13">{a.en}</div>
                 </div>
-                <span className="text-white/20 text-xs flex-shrink-0 hidden md:block">{a.category}</span>
+
+                {/* Award image thumbnail */}
+                <div className="pt-8 px-4 pb-0 flex justify-center relative">
+                  <div className="relative">
+                    <img
+                      src={getAwardImg(award.type, award.city)}
+                      alt={award.type}
+                      className="h-20 object-contain opacity-75 group-hover:opacity-90 transition-opacity duration-300"
+                      style={{ filter: 'sepia(0.18) brightness(0.92) contrast(0.94) saturate(0.85)' }}
+                    />
+                    {/* Aged photo corner effect */}
+                    <div className="absolute inset-0 pointer-events-none rounded-sm" style={{ background: 'radial-gradient(ellipse at center, transparent 50%, rgba(10,8,4,0.28) 100%)' }} />
+                  </div>
+                </div>
+
+                <div className="p-4 pt-3">
+                  <div className="text-[#C9A84C] text-xs font-['DM_Mono'] mb-1 uppercase tracking-wider">
+                    {isEn ? award.category_en : award.category_zh}
+                  </div>
+                  <div className="text-white font-semibold text-sm leading-snug mb-2 group-hover:text-[#C9A84C] transition-colors">
+                    {isEn ? award.name_en : award.name_zh}
+                  </div>
+                  <div className="text-white/30 text-xs leading-relaxed">
+                    {award.org_en}
+                  </div>
+                  <div className="text-white/20 text-xs mt-1 font-['DM_Mono']">
+                    📍 {award.city}
+                  </div>
+                </div>
+
+                {/* Hover accent line */}
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A84C] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
               </div>
             ))}
           </div>
