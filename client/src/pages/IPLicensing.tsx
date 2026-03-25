@@ -5,6 +5,7 @@
  */
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { trpc } from "@/lib/trpc";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -414,29 +415,8 @@ export default function IPLicensing() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="px-4 py-20 border-t border-white/5">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="text-[#C9A84C]/50 text-xs font-mono tracking-[0.3em] uppercase mb-4">
-            {isEn ? "Start Your IP Licensing Journey" : "开启 IP 授权之旅"}
-          </div>
-          <h2 className="font-['Cormorant_Garamond'] text-4xl text-white font-light mb-4">
-            {isEn ? "Find the Perfect IP for Your Brand" : "为您的品牌找到最适合的 IP"}
-          </h2>
-          <p className="text-white/40 text-sm mb-8">
-            {isEn
-              ? "Our IP licensing specialists will match your brand with the ideal global icon, negotiate terms, and manage the entire licensing process."
-              : "我们的 IP 授权专家将为您的品牌匹配最理想的全球 IP，谈判条款，并管理整个授权流程。"}
-          </p>
-          <a
-            href="/pricing"
-            className="inline-flex items-center gap-3 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] font-mono text-sm tracking-wider hover:bg-[#C9A84C]/10 transition-all duration-300"
-          >
-            <span style={{ width: 6, height: 6, background: "#C9A84C", display: "inline-block" }} />
-            {isEn ? "Book IP Licensing Consultation" : "预约 IP 授权咨询"}
-          </a>
-        </div>
-      </section>
+      {/* IP Licensing Inquiry Form */}
+      <IPInquiryForm isEn={isEn} />
 
       {/* IP Detail Modal */}
       {selectedIP && (
@@ -505,5 +485,232 @@ export default function IPLicensing() {
 
       <Footer />
     </div>
+  );
+}
+
+// ─── IP 授权专属咨询表单 ───────────────────────────────────────────────────────
+function IPInquiryForm({ isEn }: { isEn: boolean }) {
+  const [form, setForm] = useState({
+    name: "",
+    company: "",
+    email: "",
+    phone: "",
+    ipInquiryType: "",
+    ipName: "",
+    budget: "",
+    message: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+
+  const createInquiry = trpc.consulting.createInquiry.useMutation({
+    onSuccess: () => setSubmitted(true),
+  });
+
+  const inquiryTypes = [
+    { value: "exclusive", labelEn: "Exclusive License Negotiation", labelCn: "独家授权洽谈" },
+    { value: "national", labelEn: "National-Level Authorization Agency", labelCn: "国家级授权代理" },
+    { value: "strategic", labelEn: "Strategic Partnership IP Introduction", labelCn: "战略合作 IP 引入" },
+  ];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.ipInquiryType) return;
+    createInquiry.mutate({
+      ...form,
+      service: `IP授权 — ${inquiryTypes.find(t => t.value === form.ipInquiryType)?.[isEn ? 'labelEn' : 'labelCn'] || form.ipInquiryType}`,
+    });
+  };
+
+  return (
+    <section className="px-4 py-20 border-t border-white/5">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span style={{ width: 8, height: 8, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 10px #C9A84C" }} />
+            <span className="text-[#C9A84C]/60 text-xs font-mono tracking-[0.3em] uppercase">
+              {isEn ? "IP Licensing Consultation" : "IP 授权咊询"}
+            </span>
+          </div>
+          <h2 className="font-['Cormorant_Garamond'] text-4xl text-white font-light mb-3">
+            {isEn ? "Start Your IP Licensing Journey" : "开启 IP 授权之旅"}
+          </h2>
+          <p className="text-white/40 text-sm">
+            {isEn
+              ? "Tell us your needs and our IP specialists will respond within 24 hours."
+              : "告诉我们您的需求，我们的 IP 授权专家将在 24 小时内回复。"}
+          </p>
+        </div>
+
+        {submitted ? (
+          <div className="text-center py-16 border border-[#C9A84C]/30 bg-[#C9A84C]/5">
+            <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-3xl mb-3">
+              {isEn ? "Inquiry Received" : "咊询已收到"}
+            </div>
+            <p className="text-white/40 text-sm mb-6">
+              {isEn ? "Our IP specialist will contact you within 24 hours." : "我们的 IP 授权专家将在 24 小时内与您联系。"}
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => { navigator.clipboard.writeText("mcmamoo_ip"); }}
+                className="flex items-center gap-2 px-5 py-2 border border-[#C9A84C]/40 text-[#C9A84C]/80 font-mono text-xs tracking-wider hover:bg-[#C9A84C]/10 transition-all"
+              >
+                💬 {isEn ? "Add WeChat: mcmamoo_ip" : "加微信: mcmamoo_ip"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Inquiry Type — 3 cards */}
+            <div>
+              <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-3">
+                {isEn ? "Inquiry Type *" : "咊询类型 *"}
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {inquiryTypes.map(t => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, ipInquiryType: t.value }))}
+                    className={`p-4 border text-left transition-all duration-200 ${
+                      form.ipInquiryType === t.value
+                        ? "border-[#C9A84C] bg-[#C9A84C]/10"
+                        : "border-white/10 hover:border-white/25"
+                    }`}
+                  >
+                    <div className={`font-mono text-xs font-semibold mb-1 ${
+                      form.ipInquiryType === t.value ? "text-[#C9A84C]" : "text-white/60"
+                    }`}>
+                      {isEn ? t.labelEn : t.labelCn}
+                    </div>
+                    <div className="text-white/25 text-[10px]">
+                      {t.value === "exclusive" && (isEn ? "Public domain IP exclusive rights" : "公版 IP 独家权益洽谈")}
+                      {t.value === "national" && (isEn ? "Government-channel IP authorization" : "政府渠道 IP 合规授权")}
+                      {t.value === "strategic" && (isEn ? "ABG & global agency partnerships" : "ABG 及全球机构 IP 引入")}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* IP Name */}
+            <div>
+              <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                {isEn ? "IP of Interest" : "意向 IP"}
+              </label>
+              <input
+                type="text"
+                value={form.ipName}
+                onChange={e => setForm(f => ({ ...f, ipName: e.target.value }))}
+                placeholder={isEn ? "e.g. Marilyn Monroe, Van Gogh, Bruce Lee..." : "如：珛露、梵高、李小龙..."}
+                className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50 font-mono"
+              />
+            </div>
+
+            {/* Name + Company */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                  {isEn ? "Name *" : "姓名 *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50"
+                />
+              </div>
+              <div>
+                <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                  {isEn ? "Brand / Company" : "品牌 / 公司"}
+                </label>
+                <input
+                  type="text"
+                  value={form.company}
+                  onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
+                  className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50"
+                />
+              </div>
+            </div>
+
+            {/* Email + Phone */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                  {isEn ? "Email *" : "邮箱 *"}
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50"
+                />
+              </div>
+              <div>
+                <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                  {isEn ? "Phone / WeChat" : "电话 / 微信"}
+                </label>
+                <input
+                  type="text"
+                  value={form.phone}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50"
+                />
+              </div>
+            </div>
+
+            {/* Budget */}
+            <div>
+              <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                {isEn ? "Licensing Budget" : "授权预算"}
+              </label>
+              <select
+                value={form.budget}
+                onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}
+                className="w-full bg-[#111] border border-white/15 px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C9A84C]/50"
+              >
+                <option value="">{isEn ? "Select budget range" : "选择预算范围"}</option>
+                <option value="under-50k">{isEn ? "Under ¥500K" : "50万以内"}</option>
+                <option value="50k-200k">{isEn ? "¥500K – ¥2M" : "50万 – 200万"}</option>
+                <option value="200k-500k">{isEn ? "¥2M – ¥5M" : "200万 – 500万"}</option>
+                <option value="500k-plus">{isEn ? "¥5M+" : "500万以上"}</option>
+              </select>
+            </div>
+
+            {/* Message */}
+            <div>
+              <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                {isEn ? "Project Brief" : "项目说明"}
+              </label>
+              <textarea
+                rows={4}
+                value={form.message}
+                onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                placeholder={isEn ? "Describe your brand, target market, and how you plan to use the IP..." : "描述您的品牌、目标市场及 IP 使用计划..."}
+                className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50 resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={createInquiry.isPending || !form.ipInquiryType}
+              className="w-full py-4 border border-[#C9A84C] text-[#C9A84C] font-mono text-sm tracking-[0.2em] uppercase hover:bg-[#C9A84C]/10 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {createInquiry.isPending
+                ? (isEn ? "Submitting..." : "提交中...")
+                : (isEn ? "Submit IP Licensing Inquiry" : "提交 IP 授权咊询")}
+            </button>
+
+            {createInquiry.isError && (
+              <p className="text-red-400/70 text-xs text-center font-mono">
+                {isEn ? "Submission failed, please try again." : "提交失败，请重试。"}
+              </p>
+            )}
+          </form>
+        )}
+      </div>
+    </section>
   );
 }
