@@ -754,10 +754,10 @@ function MaoApplicationForm({ isEn }: { isEn: boolean }) {
                   type="button"
                   onClick={() => setPaymentProduct({
                     id: "maothink_consultation",
-                    name: isEn ? "Mao Think Tank · Strategic Consultation" : "毛智库 · 战略咋询定金",
+                    name: isEn ? "Mao Think Tank · Strategic Consultation" : "毛智库 · 战略咨询定金",
                     amount: isCNY ? 29800 : 3980,
                     currency: isCNY ? "CNY" : "USD",
-                    description: isEn ? "Initial consultation deposit · Refundable if not accepted" : "初始咋询定金 · 未通过审核全额退还",
+                    description: isEn ? "Initial consultation deposit · Refundable if not accepted" : "初始咨询定金 · 未通过审核全额退还",
                     billingLabel: isEn ? "One-time deposit" : "一次性定金",
                   })}
                   style={{
@@ -774,7 +774,7 @@ function MaoApplicationForm({ isEn }: { isEn: boolean }) {
                   onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(139,26,26,0.15)"; (e.target as HTMLButtonElement).style.color = "#E8D5B7"; }}
                   onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "transparent"; (e.target as HTMLButtonElement).style.color = "rgba(232,213,183,0.5)"; }}
                 >
-                  {isEn ? "★ PAY CONSULTATION DEPOSIT →" : "★ 支付咋询定金 →"}
+                  {isEn ? "★ PAY CONSULTATION DEPOSIT →" : "★ 支付咨询定金 →"}
                 </button>
               </form>
             )}
