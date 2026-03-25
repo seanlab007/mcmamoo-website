@@ -33,6 +33,7 @@ import AdminRouting from "./pages/AdminRouting";
 import AdminLogs from "./pages/AdminLogs";
 import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 import AdminInquiries from "./pages/AdminInquiries";
+import WhalePictures from "./pages/WhalePictures";
 
 function Router() {
   return (
@@ -64,6 +65,7 @@ function Router() {
       <Route path={"/admin/logs"} component={AdminLogs} />
       <Route path={"/admin/millennium-clock"} component={AdminMillenniumClock} />
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
+      <Route path={"/whale-pictures"} component={WhalePictures} />
 
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

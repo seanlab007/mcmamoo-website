@@ -1,6 +1,6 @@
 /**
  * AdminInquiries — 咨询线索管理后台
- * 仅管理员可访问，展示所有咨询预约记录，支持按服务类型筛选
+ * 仅管理员可访问，展示所有咨询预约记录，支持按服务类型筛选 + 状态跟进管理
  */
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -14,6 +14,17 @@ const SERVICE_LABELS: Record<string, { label: string; color: string }> = {
   "品牌设计":     { label: "品牌设计",     color: "#4FC3F7" },
   "爆品营销":     { label: "爆品营销",     color: "#e05a30" },
   "毛智库":       { label: "毛智库",       color: "#8B1A1A" },
+  // Whale Pictures services
+  "TVC广告拍摄":  { label: "TVC广告拍摄",  color: "#F59E0B" },
+  "外籍模特":     { label: "外籍模特",     color: "#EC4899" },
+  "AI短剧制作":   { label: "AI短剧制作",   color: "#06B6D4" },
+};
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  new:       { label: "新线索",  color: "#C9A84C", bg: "#C9A84C15" },
+  contacted: { label: "已联系",  color: "#4FC3F7", bg: "#4FC3F715" },
+  signed:    { label: "已签约",  color: "#40d090", bg: "#40d09015" },
+  dropped:   { label: "已放弃",  color: "#6b7280", bg: "#6b728015" },
 };
 
 const ALL_SERVICES = ["全部", ...Object.keys(SERVICE_LABELS)];
@@ -28,9 +39,16 @@ function formatDate(iso: string) {
 
 export default function AdminInquiries() {
   const { user, loading } = useAuth();
+  const utils = trpc.useUtils();
   const { data: inquiries, isLoading, refetch } = trpc.consulting.getInquiries.useQuery();
+  const updateStatus = trpc.consulting.updateStatus.useMutation({
+    onSuccess: () => utils.consulting.getInquiries.invalidate(),
+  });
+
   const [filter, setFilter] = useState("全部");
   const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editNotes, setEditNotes] = useState("");
 
   if (loading) {
     return (
@@ -53,7 +71,6 @@ export default function AdminInquiries() {
 
   const rows = (inquiries as Record<string, unknown>[] | undefined) ?? [];
 
-  // 过滤
   const filtered = rows.filter((r) => {
     const svc = (r.service_interest as string) || "";
     const matchFilter = filter === "全部" || svc === filter;
@@ -63,17 +80,21 @@ export default function AdminInquiries() {
     return matchFilter && matchSearch;
   });
 
-  // 统计
   const stats = [
-    { label: "总线索数", value: rows.length, color: "#C9A84C" },
-    { label: "品牌全案", value: rows.filter(r => r.service_interest === "品牌全案").length, color: "#C9A84C" },
-    { label: "战略咨询", value: rows.filter(r => r.service_interest === "战略咨询").length, color: "#8B5CF6" },
-    { label: "本月新增", value: rows.filter(r => {
-      const d = new Date(r.created_at as string);
-      const now = new Date();
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).length, color: "#40d090" },
+    { label: "总线索数",  value: rows.length,                                              color: "#C9A84C" },
+    { label: "新线索",    value: rows.filter(r => !r.status || r.status === "new").length, color: "#C9A84C" },
+    { label: "已联系",    value: rows.filter(r => r.status === "contacted").length,        color: "#4FC3F7" },
+    { label: "已签约",    value: rows.filter(r => r.status === "signed").length,           color: "#40d090" },
   ];
+
+  const handleStatusChange = (id: number, status: string) => {
+    updateStatus.mutate({ id, status });
+  };
+
+  const handleSaveNotes = (id: number) => {
+    updateStatus.mutate({ id, status: (rows.find(r => r.id === id)?.status as string) || "new", notes: editNotes });
+    setEditingId(null);
+  };
 
   return (
     <div className="min-h-screen bg-[#020408] text-white">
@@ -112,7 +133,6 @@ export default function AdminInquiries() {
 
         {/* Filter + Search */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          {/* 服务类型筛选 */}
           <div className="flex flex-wrap gap-2">
             {ALL_SERVICES.map((svc) => (
               <button
@@ -133,7 +153,6 @@ export default function AdminInquiries() {
               </button>
             ))}
           </div>
-          {/* 搜索框 */}
           <input
             type="text"
             placeholder="搜索姓名/公司/邮箱..."
@@ -145,9 +164,7 @@ export default function AdminInquiries() {
 
         {/* Table */}
         {isLoading ? (
-          <div className="text-center py-20 text-white/30 font-mono text-sm tracking-widest animate-pulse">
-            加载中...
-          </div>
+          <div className="text-center py-20 text-white/30 font-mono text-sm tracking-widest animate-pulse">加载中...</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 border border-white/5">
             <div className="text-white/20 font-mono text-sm tracking-widest">暂无线索记录</div>
@@ -157,7 +174,7 @@ export default function AdminInquiries() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-white/5">
-                  {["#", "姓名", "公司", "联系方式", "意向服务", "预算", "说明", "提交时间"].map((h) => (
+                  {["#", "姓名", "公司", "联系方式", "意向服务", "预算", "跟进状态", "备注", "提交时间"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-white/25 text-xs font-mono tracking-widest uppercase whitespace-nowrap">
                       {h}
                     </th>
@@ -165,15 +182,17 @@ export default function AdminInquiries() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row, i) => {
+                {filtered.map((row) => {
                   const svc = (row.service_interest as string) || "";
                   const svcMeta = SERVICE_LABELS[svc];
+                  const rowStatus = (row.status as string) || "new";
+                  const statusMeta = STATUS_CONFIG[rowStatus] || STATUS_CONFIG.new;
+                  const rowId = row.id as number;
+                  const isEditing = editingId === rowId;
+
                   return (
-                    <tr
-                      key={row.id as number}
-                      className="border-b border-white/3 hover:bg-white/2 transition-colors group"
-                    >
-                      <td className="px-4 py-4 text-white/20 text-xs font-mono">{(row.id as number)}</td>
+                    <tr key={rowId} className="border-b border-white/3 hover:bg-white/2 transition-colors">
+                      <td className="px-4 py-4 text-white/20 text-xs font-mono">{rowId}</td>
                       <td className="px-4 py-4">
                         <div className="text-white text-sm font-medium">{row.name as string}</div>
                       </td>
@@ -182,9 +201,7 @@ export default function AdminInquiries() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="text-white/70 text-xs font-mono">{row.email as string}</div>
-                        {row.phone && (
-                          <div className="text-white/40 text-xs font-mono mt-0.5">{row.phone as string}</div>
-                        )}
+                        {row.phone && <div className="text-white/40 text-xs font-mono mt-0.5">{row.phone as string}</div>}
                       </td>
                       <td className="px-4 py-4">
                         {svcMeta ? (
@@ -201,10 +218,59 @@ export default function AdminInquiries() {
                       <td className="px-4 py-4">
                         <div className="text-white/50 text-xs">{(row.budget as string) || "—"}</div>
                       </td>
+                      {/* 状态下拉 */}
+                      <td className="px-4 py-4">
+                        <select
+                          value={rowStatus}
+                          onChange={(e) => handleStatusChange(rowId, e.target.value)}
+                          className="text-xs font-mono px-2 py-1 border focus:outline-none cursor-pointer"
+                          style={{
+                            color: statusMeta.color,
+                            borderColor: `${statusMeta.color}40`,
+                            background: statusMeta.bg,
+                          }}
+                        >
+                          {Object.entries(STATUS_CONFIG).map(([val, cfg]) => (
+                            <option key={val} value={val} style={{ background: "#020408", color: cfg.color }}>
+                              {cfg.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      {/* 备注 */}
                       <td className="px-4 py-4 max-w-xs">
-                        <div className="text-white/40 text-xs leading-relaxed line-clamp-2">
-                          {(row.message as string) || "—"}
-                        </div>
+                        {isEditing ? (
+                          <div className="flex flex-col gap-1">
+                            <textarea
+                              value={editNotes}
+                              onChange={(e) => setEditNotes(e.target.value)}
+                              rows={2}
+                              className="text-xs font-mono bg-white/5 border border-white/20 text-white/70 px-2 py-1 focus:outline-none focus:border-[#C9A84C]/50 resize-none w-40"
+                              placeholder="输入备注..."
+                            />
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handleSaveNotes(rowId)}
+                                className="text-[10px] px-2 py-0.5 bg-[#C9A84C]/20 text-[#C9A84C] border border-[#C9A84C]/30 hover:bg-[#C9A84C]/30"
+                              >
+                                保存
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="text-[10px] px-2 py-0.5 bg-white/5 text-white/40 border border-white/10 hover:bg-white/10"
+                              >
+                                取消
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className="text-white/40 text-xs leading-relaxed cursor-pointer hover:text-white/70 transition-colors group"
+                            onClick={() => { setEditingId(rowId); setEditNotes((row.notes as string) || ""); }}
+                          >
+                            {(row.notes as string) || <span className="text-white/15 group-hover:text-white/30">点击添加备注...</span>}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="text-white/30 text-xs font-mono">
@@ -219,7 +285,6 @@ export default function AdminInquiries() {
           </div>
         )}
 
-        {/* Export hint */}
         <div className="mt-6 text-right">
           <span className="text-white/15 text-xs font-mono">
             显示 {filtered.length} / {rows.length} 条 · 如需导出请访问 Supabase 控制台

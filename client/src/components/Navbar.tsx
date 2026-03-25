@@ -60,6 +60,19 @@ export default function Navbar() {
     },
   ];
 
+  // 子公司入口
+  const subsidiaries = [
+    {
+      href: "/whale-pictures",
+      label: 'Whale Pictures',
+      sublabel: isEn ? 'TVC · Models · AI Drama' : 'TVC · 外模 · AI短剧',
+      color: "#F59E0B",
+      dot: "circle",
+      glow: true,
+      external: false,
+    },
+  ];
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -189,6 +202,45 @@ export default function Navbar() {
               </div>
             </div>
 
+            {/* Whale Pictures 子公司入口 */}
+            <div className="relative group">
+              <button
+                className="relative text-[#F59E0B]/80 hover:text-[#F59E0B] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
+                style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+              >
+                <span style={{ width: 6, height: 6, background: "#F59E0B", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #F59E0B" }} />
+                {isEn ? 'Subsidiaries' : '旗下子公司'}
+                <ChevronDown size={10} className="opacity-60 group-hover:opacity-100 transition-transform duration-200 group-hover:rotate-180" />
+              </button>
+              <div className="absolute top-full left-0 mt-1 w-56 bg-[#0D0D0D]/98 border border-[#F59E0B]/20 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                {subsidiaries.map((p) => (
+                  <a
+                    key={p.href}
+                    href={p.href}
+                    className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors duration-200"
+                  >
+                    <span className="mt-0.5 flex-shrink-0">
+                      <span style={{ width: 6, height: 6, background: p.color, borderRadius: "50%", display: "inline-block", marginTop: 2, boxShadow: `0 0 6px ${p.color}` }} />
+                    </span>
+                    <div>
+                      <div className="text-xs font-mono tracking-wider" style={{ color: p.color }}>{p.label}</div>
+                      <div className="text-[10px] text-white/35 mt-0.5 tracking-wide">{p.sublabel}</div>
+                    </div>
+                  </a>
+                ))}
+                <div className="border-t border-white/5 px-4 py-2">
+                  <a
+                    href="https://whalepictures.vip"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-white/30 hover:text-[#F59E0B] font-mono tracking-wider transition-colors"
+                  >
+                    whalepictures.vip ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+
             {/* 咨询服务 — 独立主入口 */}
             <a
               href="/pricing"
@@ -303,6 +355,16 @@ export default function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Whale Pictures Mobile */}
+          <a
+            href="/whale-pictures"
+            className="text-[#F59E0B]/80 hover:text-[#F59E0B] text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ width: 8, height: 8, background: "#F59E0B", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #F59E0B" }} />
+            Whale Pictures
+          </a>
 
           {/* 咨询服务 Mobile */}
           <a

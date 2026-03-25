@@ -413,3 +413,9 @@ export async function createConsultingInquiry(data: ConsultingInquiryInput) {
 export async function getConsultingInquiries() {
   return supabaseGet<Record<string, unknown>>("consulting_inquiries", "order=created_at.desc&limit=200");
 }
+
+export async function updateInquiryStatus(id: number, status: string, notes?: string) {
+  const data: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (notes !== undefined) data.notes = notes;
+  await supabasePatch("consulting_inquiries", `id=eq.${id}`, data);
+}

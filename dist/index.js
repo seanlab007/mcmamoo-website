@@ -44,6 +44,7 @@ __export(db_exports, {
   updateAiNode: () => updateAiNode,
   updateContentCopyStatus: () => updateContentCopyStatus,
   updateConversation: () => updateConversation,
+  updateInquiryStatus: () => updateInquiryStatus,
   updateNodePingStatus: () => updateNodePingStatus,
   updatePaymentOrder: () => updatePaymentOrder,
   updateRoutingRule: () => updateRoutingRule,
@@ -353,6 +354,11 @@ async function createConsultingInquiry(data) {
 }
 async function getConsultingInquiries() {
   return supabaseGet("consulting_inquiries", "order=created_at.desc&limit=200");
+}
+async function updateInquiryStatus(id, status, notes) {
+  const data = { status, updated_at: (/* @__PURE__ */ new Date()).toISOString() };
+  if (notes !== void 0) data.notes = notes;
+  await supabasePatch("consulting_inquiries", `id=eq.${id}`, data);
 }
 var SUPABASE_URL, SUPABASE_KEY;
 var init_db = __esm({
@@ -2448,6 +2454,17 @@ body{margin:0;padding:0;background:#0A0A0A;font-family:'Helvetica Neue',Arial,sa
     getInquiries: adminProcedure2.query(async () => {
       const { getConsultingInquiries: getConsultingInquiries2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       return getConsultingInquiries2();
+    }),
+    updateStatus: adminProcedure2.input((val) => {
+      const v = val;
+      if (!v.id || !v.status) throw new TRPCError3({ code: "BAD_REQUEST", message: "id \u548C status \u4E3A\u5FC5\u586B" });
+      const validStatuses = ["new", "contacted", "signed", "dropped"];
+      if (!validStatuses.includes(v.status)) throw new TRPCError3({ code: "BAD_REQUEST", message: "\u65E0\u6548\u72B6\u6001" });
+      return v;
+    }).mutation(async ({ input }) => {
+      const { updateInquiryStatus: updateInquiryStatus2 } = await Promise.resolve().then(() => (init_db(), db_exports));
+      await updateInquiryStatus2(input.id, input.status, input.notes);
+      return { success: true };
     })
   }),
   // ─── 万年钟预约 ──────────────────────────────────────────────────────────────────────────────

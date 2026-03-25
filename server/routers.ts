@@ -683,6 +683,19 @@ body{margin:0;padding:0;background:#0A0A0A;font-family:'Helvetica Neue',Arial,sa
         const { getConsultingInquiries } = await import("./db");
         return getConsultingInquiries();
       }),
+    updateStatus: adminProcedure
+      .input((val: unknown) => {
+        const v = val as { id: number; status: string; notes?: string };
+        if (!v.id || !v.status) throw new TRPCError({ code: "BAD_REQUEST", message: "id 和 status 为必填" });
+        const validStatuses = ["new", "contacted", "signed", "dropped"];
+        if (!validStatuses.includes(v.status)) throw new TRPCError({ code: "BAD_REQUEST", message: "无效状态" });
+        return v;
+      })
+      .mutation(async ({ input }) => {
+        const { updateInquiryStatus } = await import("./db");
+        await updateInquiryStatus(input.id, input.status, input.notes);
+        return { success: true };
+      }),
   }),
 
   // ─── 万年钟预约 ──────────────────────────────────────────────────────────────────────────────
