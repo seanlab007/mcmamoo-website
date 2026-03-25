@@ -13,6 +13,7 @@ import {
   getContentCopies, createContentCopy, deleteContentCopy, updateContentCopyStatus,
   createMillenniumClockReservation, getMillenniumClockReservations,
   getUserSubscription, upsertSubscription, createPaymentOrder, updatePaymentOrder, getPaymentOrders, getTodayUsage, incrementUsage,
+  getNodeSkills, setNodeSkillEnabled,
 } from "./db";
 import { PLAN_LIMITS, PLAN_PRICES, PLAN_META, FEATURE_ROWS, PAYMENT_PROVIDERS, type PlanTier, type Currency } from "@shared/plans";
 import { invokeLLM } from "./_core/llm";
@@ -153,6 +154,18 @@ export const appRouter = router({
         }
       }),
     stats: adminProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => getNodeStats(input.id)),
+    getSkills: adminProcedure
+      .input(z.object({ nodeId: z.number() }))
+      .query(async ({ input }) => {
+        const skills = await getNodeSkills(input.nodeId);
+        return { skills };
+      }),
+    toggleSkill: adminProcedure
+      .input(z.object({ nodeId: z.number(), skillId: z.string(), isEnabled: z.boolean() }))
+      .mutation(async ({ input }) => {
+        await setNodeSkillEnabled(input.nodeId, input.skillId, input.isEnabled);
+        return { success: true };
+      }),
   }),
 
   // ─── Admin: Routing Rules ────────────────────────────────────────────────────
