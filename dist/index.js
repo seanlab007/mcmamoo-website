@@ -2887,7 +2887,7 @@ function serveStatic(app) {
 import { Router } from "express";
 init_db();
 import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 
 // server/tools.ts
 import { exec } from "child_process";
