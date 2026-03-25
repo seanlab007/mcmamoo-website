@@ -3,10 +3,9 @@
 .pnpm-store/
 
 # Build outputs
-dist/public/
+dist/
 build/
 *.dist
-# Keep dist/index.js (backend build) in git for Railway deployment
 
 # Environment variables
 .env

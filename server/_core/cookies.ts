@@ -21,32 +21,25 @@ function isSecureRequest(req: Request) {
   return protoList.some(proto => proto.trim().toLowerCase() === "https");
 }
 
-/**
- * 从主机名提取根域名（用于设置跨子域 Cookie）
- * 例如: api.mcmamoo.com → .mcmamoo.com
- *       www.mcmamoo.com → .mcmamoo.com
- *       localhost → undefined
- */
-function getRootDomain(hostname: string): string | undefined {
-  if (!hostname || LOCAL_HOSTS.has(hostname) || isIpAddress(hostname)) {
-    return undefined;
-  }
-  const parts = hostname.split(".");
-  // 至少需要 2 段才能提取根域（如 mcmamoo.com）
-  if (parts.length >= 2) {
-    return `.${parts.slice(-2).join(".")}`;
-  }
-  return undefined;
-}
-
 export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  const hostname = req.hostname;
-  const domain = getRootDomain(hostname);
+  // const hostname = req.hostname;
+  // const shouldSetDomain =
+  //   hostname &&
+  //   !LOCAL_HOSTS.has(hostname) &&
+  //   !isIpAddress(hostname) &&
+  //   hostname !== "127.0.0.1" &&
+  //   hostname !== "::1";
+
+  // const domain =
+  //   shouldSetDomain && !hostname.startsWith(".")
+  //     ? `.${hostname}`
+  //     : shouldSetDomain
+  //       ? hostname
+  //       : undefined;
 
   return {
-    domain,
     httpOnly: true,
     path: "/",
     sameSite: "none",

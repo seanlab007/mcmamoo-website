@@ -959,8 +959,6 @@ var init_imageGeneration = __esm({
 
 // server/_core/index.ts
 import "dotenv/config";
-import { webcrypto } from "node:crypto";
-import cors from "cors";
 import express2 from "express";
 import { createServer } from "http";
 import net from "net";
@@ -973,15 +971,129 @@ var AXIOS_TIMEOUT_MS = 3e4;
 var UNAUTHED_ERR_MSG = "Please login (10001)";
 var NOT_ADMIN_ERR_MSG = "You do not have required permission (10002)";
 
-// server/_core/oauth.ts
-init_db();
+// server/db.ts
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/mysql2";
+
+// drizzle/schema.ts
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+var users = mysqlTable("users", {
+  /**
+   * Surrogate primary key. Auto-incremented numeric value managed by the database.
+   * Use this for relations between tables.
+   */
+  id: int("id").autoincrement().primaryKey(),
+  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
+  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  name: text("name"),
+  email: varchar("email", { length: 320 }),
+  loginMethod: varchar("loginMethod", { length: 64 }),
+  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull()
+});
+var maoApplications = mysqlTable("mao_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  organization: varchar("organization", { length: 256 }).notNull(),
+  consultType: varchar("consult_type", { length: 128 }).notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["pending", "reviewing", "approved", "rejected"]).default("pending").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+});
+var briefSubscribers = mysqlTable("brief_subscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull()
+});
+
+// server/_core/env.ts
+var ENV = {
+  appId: process.env.VITE_APP_ID ?? "",
+  cookieSecret: process.env.JWT_SECRET ?? "",
+  databaseUrl: process.env.DATABASE_URL ?? "",
+  oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
+  ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
+  isProduction: process.env.NODE_ENV === "production",
+  forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
+  forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? ""
+};
+
+// server/db.ts
+var _db = null;
+async function getDb() {
+  if (!_db && process.env.DATABASE_URL) {
+    try {
+      _db = drizzle(process.env.DATABASE_URL);
+    } catch (error) {
+      console.warn("[Database] Failed to connect:", error);
+      _db = null;
+    }
+  }
+  return _db;
+}
+async function upsertUser(user) {
+  if (!user.openId) {
+    throw new Error("User openId is required for upsert");
+  }
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot upsert user: database not available");
+    return;
+  }
+  try {
+    const values = {
+      openId: user.openId
+    };
+    const updateSet = {};
+    const textFields = ["name", "email", "loginMethod"];
+    const assignNullable = (field) => {
+      const value = user[field];
+      if (value === void 0) return;
+      const normalized = value ?? null;
+      values[field] = normalized;
+      updateSet[field] = normalized;
+    };
+    textFields.forEach(assignNullable);
+    if (user.lastSignedIn !== void 0) {
+      values.lastSignedIn = user.lastSignedIn;
+      updateSet.lastSignedIn = user.lastSignedIn;
+    }
+    if (user.role !== void 0) {
+      values.role = user.role;
+      updateSet.role = user.role;
+    } else if (user.openId === ENV.ownerOpenId) {
+      values.role = "admin";
+      updateSet.role = "admin";
+    }
+    if (!values.lastSignedIn) {
+      values.lastSignedIn = /* @__PURE__ */ new Date();
+    }
+    if (Object.keys(updateSet).length === 0) {
+      updateSet.lastSignedIn = /* @__PURE__ */ new Date();
+    }
+    await db.insert(users).values(values).onDuplicateKeyUpdate({
+      set: updateSet
+    });
+  } catch (error) {
+    console.error("[Database] Failed to upsert user:", error);
+    throw error;
+  }
+}
+async function getUserByOpenId(openId) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return void 0;
+  }
+  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  return result.length > 0 ? result[0] : void 0;
+}
 
 // server/_core/cookies.ts
-var LOCAL_HOSTS = /* @__PURE__ */ new Set(["localhost", "127.0.0.1", "::1"]);
-function isIpAddress(host) {
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
-  return host.includes(":");
-}
 function isSecureRequest(req) {
   if (req.protocol === "https") return true;
   const forwardedProto = req.headers["x-forwarded-proto"];
@@ -989,21 +1101,8 @@ function isSecureRequest(req) {
   const protoList = Array.isArray(forwardedProto) ? forwardedProto : forwardedProto.split(",");
   return protoList.some((proto) => proto.trim().toLowerCase() === "https");
 }
-function getRootDomain(hostname) {
-  if (!hostname || LOCAL_HOSTS.has(hostname) || isIpAddress(hostname)) {
-    return void 0;
-  }
-  const parts = hostname.split(".");
-  if (parts.length >= 2) {
-    return `.${parts.slice(-2).join(".")}`;
-  }
-  return void 0;
-}
 function getSessionCookieOptions(req) {
-  const hostname = req.hostname;
-  const domain = getRootDomain(hostname);
   return {
-    domain,
     httpOnly: true,
     path: "/",
     sameSite: "none",
@@ -1022,8 +1121,6 @@ var HttpError = class extends Error {
 var ForbiddenError = (msg) => new HttpError(403, msg);
 
 // server/_core/sdk.ts
-init_db();
-init_env();
 import axios from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import { SignJWT, jwtVerify } from "jose";
@@ -1205,87 +1302,24 @@ var SDKServer = class {
   async authenticateRequest(req) {
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
-    const authHeader = req.headers.authorization;
-    const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : void 0;
-    const tokenToVerify = sessionCookie || bearerToken;
-    const session = await this.verifySession(tokenToVerify);
+    const session = await this.verifySession(sessionCookie);
     if (!session) {
       throw ForbiddenError("Invalid session cookie");
     }
     const sessionUserId = session.openId;
     const signedInAt = /* @__PURE__ */ new Date();
-    const supabaseUrl = ENV.supabaseUrl;
-    const supabaseKey = process.env.SUPABASE_SERVICE_KEY || ENV.supabaseAnonKey;
-    let user = null;
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const resp = await fetch(
-          `${supabaseUrl}/rest/v1/users?openId=eq.${encodeURIComponent(sessionUserId)}&limit=1`,
-          {
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-              "Content-Type": "application/json"
-            }
-          }
-        );
-        if (resp.ok) {
-          const rows = await resp.json();
-          if (rows.length > 0) {
-            user = rows[0];
-          }
-        } else {
-          console.error("[Auth] Supabase REST lookup failed:", resp.status, await resp.text());
-        }
-      } catch (err) {
-        console.error("[Auth] Supabase REST error:", err);
-      }
-    } else {
-      user = await getUserByOpenId(sessionUserId);
-    }
+    let user = await getUserByOpenId(sessionUserId);
     if (!user) {
       try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? bearerToken ?? "");
-        if (supabaseUrl && supabaseKey) {
-          await fetch(`${supabaseUrl}/rest/v1/users`, {
-            method: "POST",
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-              "Content-Type": "application/json",
-              Prefer: "resolution=merge-duplicates,return=minimal"
-            },
-            body: JSON.stringify({
-              openId: userInfo.openId,
-              name: userInfo.name || null,
-              email: userInfo.email ?? null,
-              loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-              lastSignedIn: signedInAt.toISOString()
-            })
-          });
-          const resp2 = await fetch(
-            `${supabaseUrl}/rest/v1/users?openId=eq.${encodeURIComponent(userInfo.openId)}&limit=1`,
-            {
-              headers: {
-                apikey: supabaseKey,
-                Authorization: `Bearer ${supabaseKey}`
-              }
-            }
-          );
-          if (resp2.ok) {
-            const rows2 = await resp2.json();
-            if (rows2.length > 0) user = rows2[0];
-          }
-        } else {
-          await upsertUser({
-            openId: userInfo.openId,
-            name: userInfo.name || null,
-            email: userInfo.email ?? null,
-            loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-            lastSignedIn: signedInAt
-          });
-          user = await getUserByOpenId(userInfo.openId);
-        }
+        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
+        await upsertUser({
+          openId: userInfo.openId,
+          name: userInfo.name || null,
+          email: userInfo.email ?? null,
+          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          lastSignedIn: signedInAt
+        });
+        user = await getUserByOpenId(userInfo.openId);
       } catch (error) {
         console.error("[Auth] Failed to sync user from OAuth:", error);
         throw ForbiddenError("Failed to sync user info");
@@ -1294,22 +1328,10 @@ var SDKServer = class {
     if (!user) {
       throw ForbiddenError("User not found");
     }
-    if (supabaseUrl && supabaseKey) {
-      fetch(`${supabaseUrl}/rest/v1/users?openId=eq.${encodeURIComponent(sessionUserId)}`, {
-        method: "PATCH",
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ lastSignedIn: signedInAt.toISOString() })
-      }).catch((err) => console.error("[Auth] Failed to update lastSignedIn:", err));
-    } else {
-      await upsertUser({
-        openId: user.openId,
-        lastSignedIn: signedInAt
-      });
-    }
+    await upsertUser({
+      openId: user.openId,
+      lastSignedIn: signedInAt
+    });
     return user;
   }
 };
@@ -1356,188 +1378,90 @@ function registerOAuthRoutes(app) {
   });
 }
 
-// server/_core/supabaseAuth.ts
-var SUPABASE_URL2 = process.env.SUPABASE_URL ?? "";
-var SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
-var SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY ?? "";
-function getApiKey() {
-  return SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
-}
-async function getUserByOpenId2(openId) {
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL2}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
-    {
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json"
-      }
-    }
-  );
-  if (!resp.ok) {
-    const err = await resp.text();
-    console.error("[SupabaseREST] getUserByOpenId error:", resp.status, err);
-    return null;
+// server/_core/systemRouter.ts
+import { z } from "zod";
+
+// server/_core/notification.ts
+import { TRPCError } from "@trpc/server";
+var TITLE_MAX_LENGTH = 1200;
+var CONTENT_MAX_LENGTH = 2e4;
+var trimValue = (value) => value.trim();
+var isNonEmptyString2 = (value) => typeof value === "string" && value.trim().length > 0;
+var buildEndpointUrl = (baseUrl) => {
+  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  return new URL(
+    "webdevtoken.v1.WebDevService/SendNotification",
+    normalizedBase
+  ).toString();
+};
+var validatePayload = (input) => {
+  if (!isNonEmptyString2(input.title)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Notification title is required."
+    });
   }
-  const rows = await resp.json();
-  return rows.length > 0 ? rows[0] : null;
-}
-async function getUserByEmail(email) {
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL2}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
-    {
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json"
-      }
-    }
-  );
-  if (!resp.ok) return null;
-  const rows = await resp.json();
-  return rows.length > 0 ? rows[0] : null;
-}
-async function updateUserOpenId(id, openId, lastSignedIn) {
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL2}/rest/v1/users?id=eq.${id}`,
-    {
-      method: "PATCH",
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ openId, lastSignedIn })
-    }
-  );
-  if (!resp.ok) {
-    const err = await resp.text();
-    console.error("[SupabaseREST] updateUserOpenId error:", resp.status, err);
+  if (!isNonEmptyString2(input.content)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Notification content is required."
+    });
   }
-}
-async function upsertUser2(user) {
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL2}/rest/v1/users`,
-    {
+  const title = trimValue(input.title);
+  const content = trimValue(input.content);
+  if (title.length > TITLE_MAX_LENGTH) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Notification title must be at most ${TITLE_MAX_LENGTH} characters.`
+    });
+  }
+  if (content.length > CONTENT_MAX_LENGTH) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Notification content must be at most ${CONTENT_MAX_LENGTH} characters.`
+    });
+  }
+  return { title, content };
+};
+async function notifyOwner(payload) {
+  const { title, content } = validatePayload(payload);
+  if (!ENV.forgeApiUrl) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Notification service URL is not configured."
+    });
+  }
+  if (!ENV.forgeApiKey) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Notification service API key is not configured."
+    });
+  }
+  const endpoint = buildEndpointUrl(ENV.forgeApiUrl);
+  try {
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-        Prefer: "resolution=merge-duplicates,return=minimal"
+        accept: "application/json",
+        authorization: `Bearer ${ENV.forgeApiKey}`,
+        "content-type": "application/json",
+        "connect-protocol-version": "1"
       },
-      body: JSON.stringify(user)
+      body: JSON.stringify({ title, content })
+    });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.warn(
+        `[Notification] Failed to notify owner (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
+      );
+      return false;
     }
-  );
-  if (!resp.ok) {
-    const err = await resp.text();
-    console.error("[SupabaseREST] upsertUser error:", resp.status, err);
-    throw new Error(`Failed to upsert user: ${resp.status} ${err}`);
+    return true;
+  } catch (error) {
+    console.warn("[Notification] Error calling notification service:", error);
+    return false;
   }
 }
-function registerSupabaseAuthRoutes(app) {
-  app.post("/api/auth/email-login", async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      res.status(400).json({ error: "email and password are required" });
-      return;
-    }
-    if (!SUPABASE_URL2 || !SUPABASE_ANON_KEY) {
-      res.status(500).json({ error: "Supabase not configured" });
-      return;
-    }
-    try {
-      const authResp = await fetch(
-        `${SUPABASE_URL2}/auth/v1/token?grant_type=password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: SUPABASE_ANON_KEY
-          },
-          body: JSON.stringify({ email, password })
-        }
-      );
-      const authData = await authResp.json();
-      if (!authData.access_token || !authData.user) {
-        res.status(401).json({
-          error: authData.error_description || authData.error || "Invalid credentials"
-        });
-        return;
-      }
-      const openId = `supabase:${authData.user.id}`;
-      const userEmail = authData.user.email ?? email;
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      let existingUser = await getUserByOpenId2(openId);
-      let role = "user";
-      if (!existingUser) {
-        const userByEmail = await getUserByEmail(userEmail);
-        if (userByEmail) {
-          const userId = userByEmail.id;
-          await updateUserOpenId(userId, openId, now);
-          role = userByEmail.role ?? "user";
-          existingUser = { ...userByEmail, openId };
-        } else {
-          const ownerEmail = process.env.OWNER_EMAIL ?? "benedictashford20@gmail.com";
-          if (userEmail === ownerEmail) {
-            role = "admin";
-          }
-          await upsertUser2({
-            openId,
-            email: userEmail,
-            name: userEmail.split("@")[0],
-            loginMethod: "email",
-            lastSignedIn: now,
-            role
-          });
-        }
-      } else {
-        role = existingUser.role ?? "user";
-        const key = getApiKey();
-        await fetch(
-          `${SUPABASE_URL2}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
-          {
-            method: "PATCH",
-            headers: {
-              apikey: key,
-              Authorization: `Bearer ${key}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ lastSignedIn: now })
-          }
-        );
-      }
-      const sessionToken = await sdk.createSessionToken(openId, {
-        name: userEmail.split("@")[0],
-        expiresInMs: ONE_YEAR_MS
-      });
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      res.json({
-        success: true,
-        role,
-        redirectTo: role === "admin" ? "/admin/nodes" : "/maoai",
-        sessionToken
-        // 供前端存入 localStorage，用于跨域 Authorization header
-      });
-    } catch (error) {
-      console.error("[SupabaseAuth] Email login failed:", error);
-      res.status(500).json({ error: "Login failed" });
-    }
-  });
-}
-
-// server/routers.ts
-import { z as z2 } from "zod";
-import { TRPCError as TRPCError3 } from "@trpc/server";
-
-// server/_core/systemRouter.ts
-init_notification();
-import { z } from "zod";
 
 // server/_core/trpc.ts
 import { initTRPC, TRPCError as TRPCError2 } from "@trpc/server";
@@ -1598,435 +1522,205 @@ var systemRouter = router({
 });
 
 // server/routers.ts
-init_db();
+import { TRPCError as TRPCError3 } from "@trpc/server";
+import { z as z2 } from "zod";
 
-// shared/plans.ts
-var PLAN_LIMITS = {
-  starter: {
-    dailyChatMessages: 100,
-    dailyImageGenerations: 5,
-    maxConversations: 50,
-    premiumModels: false,
-    imageGeneration: true,
-    priorityQueue: false,
-    fileUpload: false,
-    brandStrategy: false,
-    accountManager: false,
-    customPersona: false,
-    apiAccess: false,
-    teamSeats: 1
-  },
-  pro: {
-    dailyChatMessages: 1e3,
-    dailyImageGenerations: 100,
-    maxConversations: -1,
-    premiumModels: true,
-    imageGeneration: true,
-    priorityQueue: true,
-    fileUpload: true,
-    brandStrategy: false,
-    accountManager: false,
-    customPersona: true,
-    apiAccess: true,
-    teamSeats: 3
-  },
-  flagship: {
-    dailyChatMessages: -1,
-    dailyImageGenerations: -1,
-    maxConversations: -1,
-    premiumModels: true,
-    imageGeneration: true,
-    priorityQueue: true,
-    fileUpload: true,
-    brandStrategy: true,
-    accountManager: true,
-    customPersona: true,
-    apiAccess: true,
-    teamSeats: 10
+// server/email.ts
+import nodemailer from "nodemailer";
+function getTransporter() {
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  const port = parseInt(process.env.SMTP_PORT || "587");
+  const user = process.env.SMTP_USER || "";
+  const pass = process.env.SMTP_PASS || "";
+  if (!user || !pass) {
+    throw new Error("SMTP credentials not configured. Please set SMTP_USER and SMTP_PASS in Secrets.");
   }
-};
-var PLAN_PRICES = {
-  // ── 入门版 ──────────────────────────────────────────────────────────────────
-  starter: {
-    CNY: {
-      monthly: { total: 99, perMonth: 99, months: 1, savingPct: 0 },
-      biannual: { total: 560, perMonth: 93, months: 6, savingPct: 6, anchorLabel: { zh: "\u7701 \xA534", en: "Save \xA534" } },
-      annual: { total: 980, perMonth: 82, months: 12, savingPct: 17, anchorLabel: { zh: "\u7701 \xA5208", en: "Save \xA5208" } },
-      lifetime: { total: 3980, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "\u4E00\u6B21\u4E70\u65AD", en: "One-time" } }
-    },
-    USD: {
-      monthly: { total: 13.99, perMonth: 13.99, months: 1, savingPct: 0 },
-      biannual: { total: 79.99, perMonth: 13.33, months: 6, savingPct: 5, anchorLabel: { zh: "Save $4", en: "Save $4" } },
-      annual: { total: 139.99, perMonth: 11.67, months: 12, savingPct: 17, anchorLabel: { zh: "Save $28", en: "Save $28" } },
-      lifetime: { total: 549.99, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "One-time", en: "One-time" } }
-    }
-  },
-  // ── 专业版 ──────────────────────────────────────────────────────────────────
-  pro: {
-    CNY: {
-      monthly: { total: 398, perMonth: 398, months: 1, savingPct: 0 },
-      biannual: { total: 2280, perMonth: 380, months: 6, savingPct: 5, anchorLabel: { zh: "\u7701 \xA5108", en: "Save \xA5108" } },
-      annual: { total: 3980, perMonth: 332, months: 12, savingPct: 17, anchorLabel: { zh: "\u7701 \xA5796", en: "Save \xA5796" } },
-      lifetime: { total: 15800, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "\u4E00\u6B21\u4E70\u65AD", en: "One-time" } }
-    },
-    USD: {
-      monthly: { total: 54.99, perMonth: 54.99, months: 1, savingPct: 0 },
-      biannual: { total: 319.99, perMonth: 53.33, months: 6, savingPct: 3, anchorLabel: { zh: "Save $10", en: "Save $10" } },
-      annual: { total: 549.99, perMonth: 45.83, months: 12, savingPct: 17, anchorLabel: { zh: "Save $110", en: "Save $110" } },
-      lifetime: { total: 2199.99, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "One-time", en: "One-time" } }
-    }
-  },
-  // ── 品牌全案旗舰版 ──────────────────────────────────────────────────────────
-  flagship: {
-    CNY: {
-      monthly: { total: 998, perMonth: 998, months: 1, savingPct: 0 },
-      biannual: { total: 5680, perMonth: 947, months: 6, savingPct: 5, anchorLabel: { zh: "\u7701 \xA5308", en: "Save \xA5308" } },
-      annual: { total: 9980, perMonth: 832, months: 12, savingPct: 17, anchorLabel: { zh: "\u7701 \xA51996", en: "Save \xA51996" } },
-      lifetime: { total: 39800, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "\u4E00\u6B21\u4E70\u65AD", en: "One-time" } }
-    },
-    USD: {
-      monthly: { total: 138.99, perMonth: 138.99, months: 1, savingPct: 0 },
-      biannual: { total: 799.99, perMonth: 133.33, months: 6, savingPct: 4, anchorLabel: { zh: "Save $34", en: "Save $34" } },
-      annual: { total: 1399.99, perMonth: 116.67, months: 12, savingPct: 16, anchorLabel: { zh: "Save $268", en: "Save $268" } },
-      lifetime: { total: 5599.99, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "One-time", en: "One-time" } }
-    }
-  }
-};
-var PLAN_META = {
-  starter: {
-    name: { zh: "\u5165\u95E8\u7248", en: "Starter" },
-    tagline: { zh: "\u8F7B\u677E\u4E0A\u624B AI \u521B\u4F5C", en: "Get started with AI" },
-    badge: "\u{1F431}",
-    highlighted: false,
-    accentColor: "text-sky-400",
-    accentBg: "bg-sky-400/10",
-    accentBorder: "border-sky-400/30"
-  },
-  pro: {
-    name: { zh: "\u4E13\u4E1A\u7248", en: "Pro" },
-    tagline: { zh: "\u9AD8\u9891\u4F7F\u7528 \xB7 \u5168\u6A21\u578B\u89E3\u9501", en: "Unlock all models & priority" },
-    badge: "\u26A1",
-    highlighted: true,
-    accentColor: "text-[#C9A84C]",
-    accentBg: "bg-[#C9A84C]/10",
-    accentBorder: "border-[#C9A84C]/40"
-  },
-  flagship: {
-    name: { zh: "\u54C1\u724C\u5168\u6848\u65D7\u8230\u7248", en: "Flagship" },
-    tagline: { zh: "\u65E0\u9650\u4F7F\u7528 \xB7 \u54C1\u724C\u6218\u7565 \xB7 \u4E13\u5C5E\u987E\u95EE", en: "Unlimited \xB7 Brand strategy \xB7 Dedicated manager" },
-    badge: "\u{1F451}",
-    highlighted: false,
-    accentColor: "text-purple-400",
-    accentBg: "bg-purple-500/10",
-    accentBorder: "border-purple-500/40"
-  }
-};
-var FEATURE_ROWS = [
-  // AI 对话
-  {
-    key: "chat",
-    category: "AI \u5BF9\u8BDD",
-    label: { zh: "\u6BCF\u65E5\u5BF9\u8BDD\u6B21\u6570", en: "Daily chat messages" },
-    starter: "100 \u6B21/\u5929",
-    pro: "1,000 \u6B21/\u5929",
-    flagship: "\u65E0\u9650\u5236"
-  },
-  {
-    key: "models",
-    category: "AI \u5BF9\u8BDD",
-    label: { zh: "\u57FA\u7840\u6A21\u578B\uFF08DeepSeek V3\u3001GLM-4 Flash\uFF09", en: "Basic models" },
-    starter: true,
-    pro: true,
-    flagship: true
-  },
-  {
-    key: "premium_models",
-    category: "AI \u5BF9\u8BDD",
-    label: { zh: "\u9AD8\u7EA7\u6A21\u578B\uFF08DeepSeek R1\u3001GLM-4 Plus\uFF09", en: "Premium models (R1, GLM-4+)" },
-    starter: false,
-    pro: true,
-    flagship: true
-  },
-  {
-    key: "priority",
-    category: "AI \u5BF9\u8BDD",
-    label: { zh: "\u4F18\u5148\u54CD\u5E94\u961F\u5217\uFF08\u66F4\u5FEB\u56DE\u590D\uFF09", en: "Priority response queue" },
-    starter: false,
-    pro: true,
-    flagship: true
-  },
-  // 图像生成
-  {
-    key: "image_gen",
-    category: "\u56FE\u50CF\u751F\u6210",
-    label: { zh: "nano banana \u56FE\u50CF\u751F\u6210", en: "nano banana image gen" },
-    starter: "5 \u6B21/\u5929",
-    pro: "100 \u6B21/\u5929",
-    flagship: "\u65E0\u9650\u5236"
-  },
-  // 文件与数据
-  {
-    key: "file",
-    category: "\u6587\u4EF6\u4E0E\u6570\u636E",
-    label: { zh: "\u6587\u4EF6\u4E0A\u4F20\u4E0E\u5206\u6790\uFF08PDF\u3001Word\u3001\u8868\u683C\uFF09", en: "File upload & analysis" },
-    starter: false,
-    pro: true,
-    flagship: true
-  },
-  {
-    key: "persona",
-    category: "\u6587\u4EF6\u4E0E\u6570\u636E",
-    label: { zh: "\u81EA\u5B9A\u4E49 AI \u4EBA\u8BBE / \u7CFB\u7EDF\u63D0\u793A\u8BCD", en: "Custom AI persona / system prompt" },
-    starter: false,
-    pro: true,
-    flagship: true
-  },
-  // 历史与存储
-  {
-    key: "history",
-    category: "\u5386\u53F2\u4E0E\u5B58\u50A8",
-    label: { zh: "\u5BF9\u8BDD\u5386\u53F2\u4FDD\u5B58", en: "Conversation history" },
-    starter: "\u6700\u8FD1 50 \u6761",
-    pro: "\u65E0\u9650\u5236",
-    flagship: "\u65E0\u9650\u5236"
-  },
-  // API
-  {
-    key: "api",
-    category: "API \u4E0E\u96C6\u6210",
-    label: { zh: "API \u63A5\u5165\uFF08\u5F00\u53D1\u8005\u8C03\u7528\uFF09", en: "API access" },
-    starter: false,
-    pro: true,
-    flagship: true
-  },
-  {
-    key: "seats",
-    category: "API \u4E0E\u96C6\u6210",
-    label: { zh: "\u56E2\u961F\u5E2D\u4F4D", en: "Team seats" },
-    starter: "1 \u5E2D",
-    pro: "3 \u5E2D",
-    flagship: "10 \u5E2D"
-  },
-  // 品牌服务（旗舰版专属）
-  {
-    key: "brand",
-    category: "\u54C1\u724C\u5168\u6848\u670D\u52A1",
-    label: { zh: "\u54C1\u724C\u6218\u7565 AI \u5206\u6790\u62A5\u544A", en: "Brand strategy AI reports" },
-    starter: false,
-    pro: false,
-    flagship: true
-  },
-  {
-    key: "manager",
-    category: "\u54C1\u724C\u5168\u6848\u670D\u52A1",
-    label: { zh: "\u4E13\u5C5E\u5BA2\u6237\u7ECF\u7406\uFF081v1 \u670D\u52A1\uFF09", en: "Dedicated account manager" },
-    starter: false,
-    pro: false,
-    flagship: true
-  },
-  // 支持
-  {
-    key: "support",
-    category: "\u5BA2\u670D\u652F\u6301",
-    label: { zh: "\u5BA2\u670D\u652F\u6301", en: "Customer support" },
-    starter: "\u793E\u533A\u8BBA\u575B",
-    pro: "\u90AE\u4EF6\u4F18\u5148\u54CD\u5E94",
-    flagship: "\u4E13\u5C5E 1v1 \u5FAE\u4FE1"
-  }
-];
-var PAYMENT_PROVIDERS = [
-  { id: "alipay", name: { zh: "\u652F\u4ED8\u5B9D", en: "Alipay" }, currencies: ["CNY"], available: false, color: "text-blue-400" },
-  { id: "wechatpay", name: { zh: "\u5FAE\u4FE1\u652F\u4ED8", en: "WeChat Pay" }, currencies: ["CNY"], available: false, color: "text-green-400" },
-  { id: "lianpay", name: { zh: "\u8FDE\u8FDE\u652F\u4ED8", en: "LianLian Pay" }, currencies: ["CNY", "USD"], available: false, color: "text-orange-400" },
-  { id: "paypal", name: { zh: "PayPal", en: "PayPal" }, currencies: ["USD"], available: false, color: "text-sky-400" },
-  { id: "stripe", name: { zh: "Stripe", en: "Stripe" }, currencies: ["USD"], available: false, color: "text-violet-400" }
-];
-
-// server/_core/llm.ts
-init_env();
-var ensureArray = (value) => Array.isArray(value) ? value : [value];
-var normalizeContentPart = (part) => {
-  if (typeof part === "string") {
-    return { type: "text", text: part };
-  }
-  if (part.type === "text") {
-    return part;
-  }
-  if (part.type === "image_url") {
-    return part;
-  }
-  if (part.type === "file_url") {
-    return part;
-  }
-  throw new Error("Unsupported message content part");
-};
-var normalizeMessage = (message) => {
-  const { role, name, tool_call_id } = message;
-  if (role === "tool" || role === "function") {
-    const content = ensureArray(message.content).map((part) => typeof part === "string" ? part : JSON.stringify(part)).join("\n");
-    return {
-      role,
-      name,
-      tool_call_id,
-      content
-    };
-  }
-  const contentParts = ensureArray(message.content).map(normalizeContentPart);
-  if (contentParts.length === 1 && contentParts[0].type === "text") {
-    return {
-      role,
-      name,
-      content: contentParts[0].text
-    };
-  }
-  return {
-    role,
-    name,
-    content: contentParts
-  };
-};
-var normalizeToolChoice = (toolChoice, tools) => {
-  if (!toolChoice) return void 0;
-  if (toolChoice === "none" || toolChoice === "auto") {
-    return toolChoice;
-  }
-  if (toolChoice === "required") {
-    if (!tools || tools.length === 0) {
-      throw new Error(
-        "tool_choice 'required' was provided but no tools were configured"
-      );
-    }
-    if (tools.length > 1) {
-      throw new Error(
-        "tool_choice 'required' needs a single tool or specify the tool name explicitly"
-      );
-    }
-    return {
-      type: "function",
-      function: { name: tools[0].function.name }
-    };
-  }
-  if ("name" in toolChoice) {
-    return {
-      type: "function",
-      function: { name: toolChoice.name }
-    };
-  }
-  return toolChoice;
-};
-var resolveApiUrl = () => ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0 ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions` : "https://forge.manus.im/v1/chat/completions";
-var assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
-  }
-};
-var normalizeResponseFormat = ({
-  responseFormat,
-  response_format,
-  outputSchema,
-  output_schema
-}) => {
-  const explicitFormat = responseFormat || response_format;
-  if (explicitFormat) {
-    if (explicitFormat.type === "json_schema" && !explicitFormat.json_schema?.schema) {
-      throw new Error(
-        "responseFormat json_schema requires a defined schema object"
-      );
-    }
-    return explicitFormat;
-  }
-  const schema = outputSchema || output_schema;
-  if (!schema) return void 0;
-  if (!schema.name || !schema.schema) {
-    throw new Error("outputSchema requires both name and schema");
-  }
-  return {
-    type: "json_schema",
-    json_schema: {
-      name: schema.name,
-      schema: schema.schema,
-      ...typeof schema.strict === "boolean" ? { strict: schema.strict } : {}
-    }
-  };
-};
-async function invokeLLM(params) {
-  assertApiKey();
-  const {
-    messages,
-    tools,
-    toolChoice,
-    tool_choice,
-    outputSchema,
-    output_schema,
-    responseFormat,
-    response_format
-  } = params;
-  const payload = {
-    model: "gemini-2.5-flash",
-    messages: messages.map(normalizeMessage)
-  };
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
-  const normalizedToolChoice = normalizeToolChoice(
-    toolChoice || tool_choice,
-    tools
-  );
-  if (normalizedToolChoice) {
-    payload.tool_choice = normalizedToolChoice;
-  }
-  payload.max_tokens = 32768;
-  payload.thinking = {
-    "budget_tokens": 128
-  };
-  const normalizedResponseFormat = normalizeResponseFormat({
-    responseFormat,
-    response_format,
-    outputSchema,
-    output_schema
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass }
   });
-  if (normalizedResponseFormat) {
-    payload.response_format = normalizedResponseFormat;
+}
+async function sendEmail(opts) {
+  try {
+    const transporter = getTransporter();
+    const fromName = process.env.SMTP_FROM_NAME || "\u732B\u773C\u54A8\u8BE2";
+    const fromEmail = process.env.SMTP_USER || "";
+    await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: Array.isArray(opts.to) ? opts.to.join(", ") : opts.to,
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.text
+    });
+    return true;
+  } catch (err) {
+    console.error("[Email] Send failed:", err);
+    return false;
   }
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} \u2013 ${errorText}`
+}
+async function sendBulkEmails(recipients, subject, html, text2) {
+  let success = 0;
+  let failed = 0;
+  const batchSize = 10;
+  for (let i = 0; i < recipients.length; i += batchSize) {
+    const batch = recipients.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map((email) => sendEmail({ to: email, subject, html, text: text2 }))
     );
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) success++;
+      else failed++;
+    }
+    if (i + batchSize < recipients.length) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
   }
-  return await response.json();
+  return { success, failed };
+}
+function generateContactConfirmationHtml(name, company) {
+  return `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>\u611F\u8C22\u60A8\u7684\u54A8\u8BE2\u7533\u8BF7 \u2014 \u732B\u773C\u54A8\u8BE2</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0A0A0A; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 0 auto; background: #111111; }
+    .header { background: #0A0A0A; padding: 32px 40px; border-bottom: 2px solid #C9A84C; }
+    .logo-text { color: #C9A84C; font-size: 22px; font-weight: 700; letter-spacing: 0.1em; }
+    .logo-sub { color: #ffffff55; font-size: 11px; letter-spacing: 0.2em; margin-top: 4px; }
+    .body { padding: 40px; }
+    .greeting { color: #ffffff; font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+    .content { color: #cccccc; font-size: 15px; line-height: 1.8; }
+    .highlight { color: #C9A84C; font-weight: 600; }
+    .box { background: #0A0A0A; border: 1px solid #C9A84C33; padding: 24px 28px; margin: 24px 0; }
+    .box-label { color: #C9A84C; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; }
+    .box-value { color: #ffffff; font-size: 15px; }
+    .divider { border: none; border-top: 1px solid #ffffff11; margin: 32px 0; }
+    .cta { display: inline-block; background: #C9A84C; color: #000; padding: 14px 32px; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-decoration: none; margin-top: 8px; }
+    .footer { background: #0A0A0A; padding: 24px 40px; border-top: 1px solid #ffffff11; }
+    .footer-text { color: #ffffff33; font-size: 12px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo-text">\u732B\u773C\u54A8\u8BE2</div>
+      <div class="logo-sub">MC&MAMOO BRAND MANAGEMENT</div>
+    </div>
+    <div class="body">
+      <div class="greeting">\u5C0A\u656C\u7684 ${name}\uFF0C</div>
+      <div class="content">
+        <p>\u611F\u8C22\u60A8\u5411\u732B\u773C\u54A8\u8BE2\u63D0\u4EA4\u54C1\u724C\u6218\u7565\u54A8\u8BE2\u7533\u8BF7\u3002\u6211\u4EEC\u5DF2\u6536\u5230\u60A8\u7684\u4FE1\u606F\uFF0C\u6211\u4EEC\u7684\u9996\u5E2D\u6218\u7565\u4E13\u5BB6\u56E2\u961F\u5C06\u5728 <span class="highlight">1-2\u4E2A\u5DE5\u4F5C\u65E5\u5185</span> \u4E0E\u60A8\u8054\u7CFB\u3002</p>
+        <div class="box">
+          <div class="box-label">\u60A8\u7684\u7533\u8BF7\u4FE1\u606F</div>
+          <div class="box-value">\u59D3\u540D\uFF1A${name}</div>
+          <div class="box-value" style="margin-top:6px">\u516C\u53F8\uFF1A${company}</div>
+        </div>
+        <p>\u5728\u7B49\u5F85\u671F\u95F4\uFF0C\u60A8\u53EF\u4EE5\u8BBF\u95EE\u6211\u4EEC\u7684\u5B98\u7F51\u4E86\u89E3\u66F4\u591A\u6807\u6746\u6848\u4F8B\uFF0C\u6216\u5173\u6CE8\u6211\u4EEC\u7684\u6700\u65B0\u6218\u7565\u6D1E\u5BDF\u3002</p>
+      </div>
+      <hr class="divider" />
+      <a href="https://www.mcmamoo.com" class="cta">\u67E5\u770B\u6807\u6746\u6848\u4F8B \u2192</a>
+    </div>
+    <div class="footer">
+      <div class="footer-text">
+        \u732B\u773C\u54A8\u8BE2 Mc&Mamoo Brand Management Inc.<br/>
+        \u4E0A\u6D77 \xB7 \u54C1\u724C\u663E\u8D35 \xB7 \u5229\u6DA6\u500D\u589E \xB7 \u5168\u57DF\u589E\u957F<br/>
+        \u8054\u7CFB\u7535\u8BDD\uFF1A+86 137 6459 7723
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+function generateContactAdminHtml(name, company, phone, message) {
+  return `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>\u65B0\u54A8\u8BE2\u7533\u8BF7 \u2014 \u732B\u773C\u54A8\u8BE2\u540E\u53F0</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0A0A0A; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 0 auto; background: #111111; }
+    .header { background: #0A0A0A; padding: 24px 32px; border-bottom: 2px solid #C9A84C; }
+    .title { color: #C9A84C; font-size: 18px; font-weight: 700; }
+    .body { padding: 32px; }
+    .field { margin-bottom: 16px; }
+    .label { color: #ffffff55; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px; }
+    .value { color: #ffffff; font-size: 15px; }
+    .msg { color: #cccccc; font-size: 14px; line-height: 1.7; background: #0A0A0A; padding: 16px; border-left: 2px solid #C9A84C; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header"><div class="title">\u{1F514} \u65B0\u54A8\u8BE2\u7533\u8BF7</div></div>
+    <div class="body">
+      <div class="field"><div class="label">\u59D3\u540D</div><div class="value">${name}</div></div>
+      <div class="field"><div class="label">\u516C\u53F8</div><div class="value">${company}</div></div>
+      <div class="field"><div class="label">\u8054\u7CFB\u7535\u8BDD</div><div class="value">${phone}</div></div>
+      <div class="field"><div class="label">\u54A8\u8BE2\u9700\u6C42</div><div class="msg">${message || "\uFF08\u672A\u586B\u5199\uFF09"}</div></div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+function generateNewsletterHtml(subject, content) {
+  return `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${subject}</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0A0A0A; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 0 auto; background: #111111; }
+    .header { background: #0A0A0A; padding: 32px 40px; border-bottom: 1px solid #C9A84C33; }
+    .logo-text { color: #C9A84C; font-size: 20px; font-weight: 700; letter-spacing: 0.1em; }
+    .logo-sub { color: #ffffff55; font-size: 11px; letter-spacing: 0.2em; margin-top: 4px; }
+    .body { padding: 40px; }
+    .subject { color: #C9A84C; font-size: 22px; font-weight: 700; margin-bottom: 24px; line-height: 1.4; }
+    .content { color: #cccccc; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
+    .divider { border: none; border-top: 1px solid #ffffff11; margin: 32px 0; }
+    .cta { display: inline-block; background: #C9A84C; color: #000; padding: 12px 28px; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-decoration: none; margin-top: 8px; }
+    .footer { background: #0A0A0A; padding: 24px 40px; border-top: 1px solid #ffffff11; }
+    .footer-text { color: #ffffff33; font-size: 12px; line-height: 1.6; }
+    .footer-link { color: #C9A84C55; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo-text">\u732B\u773C\u54A8\u8BE2</div>
+      <div class="logo-sub">MC&MAMOO BRAND MANAGEMENT</div>
+    </div>
+    <div class="body">
+      <div class="subject">${subject}</div>
+      <div class="content">${content.replace(/\n/g, "<br/>")}</div>
+      <hr class="divider" />
+      <a href="https://www.mcmamoo.com" class="cta">\u8BBF\u95EE\u5B98\u7F51 \u2192</a>
+    </div>
+    <div class="footer">
+      <div class="footer-text">
+        \u60A8\u6536\u5230\u6B64\u90AE\u4EF6\u662F\u56E0\u4E3A\u60A8\u8BA2\u9605\u4E86\u732B\u773C\u54A8\u8BE2\u6218\u7565\u7B80\u62A5\u3002<br/>
+        \u5982\u9700\u9000\u8BA2\uFF0C\u8BF7\u56DE\u590D\u6B64\u90AE\u4EF6\u5E76\u6CE8\u660E"\u9000\u8BA2"\u3002<br/>
+        \xA9 2025 \u732B\u773C\u54A8\u8BE2 Mc&Mamoo Brand Management Inc. \u4FDD\u7559\u6240\u6709\u6743\u5229\u3002
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
 }
 
 // server/routers.ts
-var adminProcedure2 = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin") {
-    throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
-  }
-  return next({ ctx });
-});
-var MODEL_CONFIGS = {
-  "deepseek-chat": { name: "DeepSeek V3", badge: "\u{1F535}", baseUrl: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY || "", model: "deepseek-chat" },
-  "deepseek-reasoner": { name: "DeepSeek R1", badge: "\u{1F9E0}", baseUrl: "https://api.deepseek.com/v1", apiKey: process.env.DEEPSEEK_API_KEY || "", model: "deepseek-reasoner" },
-  "glm-4-flash": { name: "\u667A\u8C31 GLM-4 Flash", badge: "\u26A1", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4-flash" },
-  "glm-4-plus": { name: "\u667A\u8C31 GLM-4 Plus", badge: "\u{1F7E3}", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4-plus" },
-  "glm-4v-flash": { name: "GLM-4V \u89C6\u89C9", badge: "\u{1F441}\uFE0F", baseUrl: "https://open.bigmodel.cn/api/paas/v4", apiKey: process.env.ZHIPU_API_KEY || "", model: "glm-4v-flash", supportsVision: true, maxTokens: 1024 },
-  "llama-3.3-70b-versatile": { name: "Groq Llama 3.3 70B", badge: "\u26A1", baseUrl: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY || "", model: "llama-3.3-70b-versatile" }
-};
-var SYSTEM_PRESETS = [
-  { id: "coding", name: "\u{1F4BB} \u7F16\u7A0B\u52A9\u624B", prompt: "\u4F60\u662F\u4E00\u4E2A\u4E13\u4E1A\u7684\u7F16\u7A0B\u52A9\u624B\u3002\u5E2E\u52A9\u7528\u6237\u7F16\u5199\u3001\u8C03\u8BD5\u3001\u4F18\u5316\u548C\u89E3\u91CA\u4EE3\u7801\u3002\u63D0\u4F9B\u6E05\u6670\u7684\u4EE3\u7801\u793A\u4F8B\uFF0C\u5E76\u89E3\u91CA\u6BCF\u4E2A\u6B65\u9AA4\u3002\u652F\u6301\u6240\u6709\u4E3B\u6D41\u7F16\u7A0B\u8BED\u8A00\u3002\u56DE\u7B54\u65F6\u4F18\u5148\u63D0\u4F9B\u53EF\u8FD0\u884C\u7684\u4EE3\u7801\u793A\u4F8B\u3002" },
-  { id: "general", name: "\u{1F916} \u901A\u7528\u5BF9\u8BDD", prompt: "\u4F60\u662F\u4E00\u4E2A\u6709\u5E2E\u52A9\u7684 AI \u52A9\u624B\u3002\u8BF7\u7528\u6E05\u6670\u3001\u51C6\u786E\u3001\u53CB\u597D\u7684\u65B9\u5F0F\u56DE\u7B54\u7528\u6237\u7684\u95EE\u9898\u3002" },
-  { id: "chinese", name: "\u{1F1E8}\u{1F1F3} \u4E2D\u6587\u52A9\u624B", prompt: "\u4F60\u662F\u4E00\u4E2A\u4E13\u4E1A\u7684\u4E2D\u6587 AI \u52A9\u624B\u3002\u8BF7\u59CB\u7EC8\u7528\u4E2D\u6587\u56DE\u7B54\uFF0C\u8BED\u8A00\u8868\u8FBE\u8981\u81EA\u7136\u6D41\u7545\uFF0C\u7B26\u5408\u4E2D\u6587\u4E60\u60EF\u3002" },
-  { id: "analyst", name: "\u{1F4CA} \u6570\u636E\u5206\u6790\u5E08", prompt: "\u4F60\u662F\u4E00\u4E2A\u6570\u636E\u5206\u6790\u4E13\u5BB6\u3002\u5E2E\u52A9\u7528\u6237\u5206\u6790\u6570\u636E\u3001\u89E3\u8BFB\u7EDF\u8BA1\u7ED3\u679C\u3001\u63D0\u4F9B\u6570\u636E\u53EF\u89C6\u5316\u5EFA\u8BAE\uFF0C\u5E76\u7ED9\u51FA\u57FA\u4E8E\u6570\u636E\u7684\u51B3\u7B56\u5EFA\u8BAE\u3002" },
-  { id: "writer", name: "\u270D\uFE0F \u5199\u4F5C\u52A9\u624B", prompt: "\u4F60\u662F\u4E00\u4E2A\u4E13\u4E1A\u7684\u5199\u4F5C\u52A9\u624B\u3002\u5E2E\u52A9\u7528\u6237\u64B0\u5199\u3001\u6DA6\u8272\u548C\u6539\u8FDB\u5404\u7C7B\u6587\u7AE0\uFF0C\u5305\u62EC\u6280\u672F\u6587\u6863\u3001\u5546\u4E1A\u62A5\u544A\u3001\u521B\u610F\u5199\u4F5C\u7B49\u3002" }
-];
 var appRouter = router({
   system: systemRouter,
   auth: router({
@@ -2433,224 +2127,173 @@ Required structure:
       };
       const limits = rawTier === "free" ? FREE_LIMITS : PLAN_LIMITS[tier];
       return {
-        tier,
-        status: sub?.status ?? "active",
-        currentPeriodEnd: sub?.currentPeriodEnd ?? null,
-        usage: {
-          chatMessages: usage.chatMessages ?? 0,
-          imageGenerations: usage.imageGenerations ?? 0
-        },
-        limits
+        success: true
       };
-    }),
-    // Get payment history
-    paymentHistory: protectedProcedure.query(async ({ ctx }) => {
-      return getPaymentOrders(ctx.user.id);
-    }),
-    // Create a payment order — supports both subscription tiers and generic products
-    createOrder: protectedProcedure.input(z2.object({
-      // Subscription tier mode (MaoAI)
-      tier: z2.enum(["starter", "pro", "flagship"]).optional(),
-      billingCycle: z2.enum(["monthly", "biannual", "annual", "lifetime"]).optional().default("monthly"),
-      // Generic product mode (OpenClaw, MillenniumClock, MaoThinkTank, etc.)
-      productId: z2.string().optional(),
-      productName: z2.string().optional(),
-      amount: z2.number().optional(),
-      // Common fields
-      provider: z2.enum(["alipay", "lianpay", "paypal", "stripe", "wechatpay", "manual"]),
-      currency: z2.enum(["CNY", "USD"])
-    })).mutation(async ({ ctx, input }) => {
-      let finalAmount;
-      let tierLabel;
-      let meta;
-      if (input.tier) {
-        const tierPrices = PLAN_PRICES[input.tier];
-        const cyclePrices = tierPrices[input.currency];
-        const pricing = cyclePrices[input.billingCycle];
-        finalAmount = pricing.total;
-        tierLabel = input.tier;
-        meta = { billingCycle: input.billingCycle, perMonth: pricing.perMonth };
-      } else if (input.productId && input.amount !== void 0) {
-        finalAmount = input.amount;
-        tierLabel = input.productId;
-        meta = { productId: input.productId, productName: input.productName };
-      } else {
-        throw new TRPCError3({ code: "BAD_REQUEST", message: "Must provide either tier or productId+amount" });
-      }
-      const order = await createPaymentOrder({
-        userId: ctx.user.id,
-        tier: tierLabel,
-        provider: input.provider,
-        currency: input.currency,
-        amount: finalAmount.toFixed(2),
-        metadata: JSON.stringify(meta)
-      });
-      return {
-        orderId: order.id ?? `ORD-${Date.now()}`,
-        status: "pending",
-        amount: finalAmount,
-        currency: input.currency,
-        paymentUrl: null,
-        message: "\u652F\u4ED8\u63A5\u53E3\u63A5\u5165\u4E2D\uFF0C\u8BF7\u8054\u7CFB\u5BA2\u670D\u5B8C\u6210\u652F\u4ED8"
-      };
-    }),
-    // Admin: manually activate a subscription (for manual payments / testing)
-    adminActivate: adminProcedure2.input(z2.object({
-      userId: z2.number(),
-      tier: z2.enum(["free", "starter", "pro", "flagship"]),
-      durationDays: z2.number().default(30)
-    })).mutation(async ({ input }) => {
-      const start = /* @__PURE__ */ new Date();
-      const end = new Date(start);
-      end.setDate(end.getDate() + input.durationDays);
-      await upsertSubscription({
-        userId: input.userId,
-        tier: input.tier,
-        status: "active",
-        currentPeriodStart: start.toISOString(),
-        currentPeriodEnd: input.tier === "free" ? null : end.toISOString()
-      });
-      return { success: true };
-    }),
-    // Webhook stub: called by payment provider after successful payment
-    // In production, verify signature from provider before trusting this
-    paymentWebhook: publicProcedure.input(z2.object({
-      orderId: z2.number(),
-      externalOrderId: z2.string().optional(),
-      provider: z2.string(),
-      status: z2.enum(["paid", "failed", "refunded"])
-    })).mutation(async ({ input }) => {
-      await updatePaymentOrder(input.orderId, {
-        status: input.status,
-        externalOrderId: input.externalOrderId,
-        paidAt: input.status === "paid" ? (/* @__PURE__ */ new Date()).toISOString() : void 0
-      });
-      if (input.status === "paid") {
-        const orders = await getPaymentOrders(0);
-      }
-      return { success: true };
     })
   }),
-  // ─── 咨询服务预约 ──────────────────────────────────────────────────────────────────────────────
-  consulting: router({
-    createInquiry: publicProcedure.input((val) => {
-      const v = val;
-      if (!v.name || !v.email) throw new TRPCError3({ code: "BAD_REQUEST", message: "\u5FC5\u586B\u5B57\u6BB5\u4E0D\u80FD\u4E3A\u7A7A" });
-      return v;
-    }).mutation(async ({ input }) => {
-      const { createConsultingInquiry: createConsultingInquiry2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const inquiry = await createConsultingInquiry2(input);
-      try {
-        const { notifyOwner: notifyOwner2 } = await Promise.resolve().then(() => (init_notification(), notification_exports));
-        await notifyOwner2({
-          title: `\u{1F514} \u54A8\u8BE2\u670D\u52A1\u65B0\u7EBF\u7D22: ${input.name}${input.company ? ` (${input.company})` : ""} \u2014 ${input.service || "\u672A\u6307\u5B9A\u670D\u52A1"}`,
-          content: `\u59D3\u540D: ${input.name}
-\u516C\u53F8: ${input.company || "\u672A\u586B\u5199"}
-\u90AE\u7BB1: ${input.email}
-\u7535\u8BDD: ${input.phone || "\u672A\u586B\u5199"}
-\u610F\u5411\u670D\u52A1: ${input.service || "\u672A\u6307\u5B9A"}
-\u9884\u7B97: ${input.budget || "\u672A\u586B\u5199"}
-\u8BF4\u660E: ${input.message || "\u65E0"}`
+  // Contact form submission with email notification
+  contact: router({
+    submit: publicProcedure.input(
+      z2.object({
+        name: z2.string().min(1).max(128),
+        company: z2.string().min(1).max(256),
+        phone: z2.string().min(1).max(64),
+        message: z2.string().max(2e3).optional(),
+        email: z2.string().email().optional()
+      })
+    ).mutation(async ({ input }) => {
+      const adminEmail = process.env.SMTP_USER || "";
+      if (input.email) {
+        const confirmHtml = generateContactConfirmationHtml(input.name, input.company);
+        await sendEmail({
+          to: input.email,
+          subject: `\u611F\u8C22\u60A8\u7684\u54A8\u8BE2\u7533\u8BF7 \u2014 \u732B\u773C\u54A8\u8BE2`,
+          html: confirmHtml,
+          text: `\u5C0A\u656C\u7684 ${input.name}\uFF0C\u611F\u8C22\u60A8\u5411\u732B\u773C\u54A8\u8BE2\u63D0\u4EA4\u54A8\u8BE2\u7533\u8BF7\u3002\u6211\u4EEC\u5C06\u5728 1-2 \u4E2A\u5DE5\u4F5C\u65E5\u5185\u4E0E\u60A8\u8054\u7CFB\u3002`
         });
-      } catch (e) {
-        console.warn("[consulting] Manus \u901A\u77E5\u5931\u8D25:", e);
       }
-      try {
-        const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_email(), email_exports));
-        const adminHtml = `
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="UTF-8"/><title>\u65B0\u54A8\u8BE2\u7EBF\u7D22 \u2014 \u732B\u773C\u589E\u957F\u5F15\u64CE</title>
-<style>
-body{margin:0;padding:0;background:#0A0A0A;font-family:'Helvetica Neue',Arial,sans-serif;}
-.wrapper{max-width:600px;margin:0 auto;background:#111111;}
-.header{background:#0A0A0A;padding:24px 32px;border-bottom:2px solid #C9A84C;}
-.title{color:#C9A84C;font-size:18px;font-weight:700;}
-.badge{display:inline-block;background:#C9A84C;color:#000;font-size:11px;font-weight:700;padding:3px 10px;letter-spacing:0.1em;margin-left:10px;}
-.body{padding:32px;}
-.field{margin-bottom:16px;border-bottom:1px solid #ffffff0d;padding-bottom:16px;}
-.label{color:#C9A84C;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px;}
-.value{color:#ffffff;font-size:15px;}
-.msg{color:#cccccc;font-size:14px;line-height:1.7;background:#0A0A0A;padding:16px;border-left:3px solid #C9A84C;margin-top:6px;}
-.footer{background:#0A0A0A;padding:20px 32px;border-top:1px solid #ffffff11;color:#ffffff33;font-size:12px;}
-</style></head>
-<body>
-<div class="wrapper">
-  <div class="header"><div class="title">\u{1F514} \u65B0\u54A8\u8BE2\u7EBF\u7D22<span class="badge">NEW LEAD</span></div></div>
-  <div class="body">
-    <div class="field"><div class="label">\u59D3\u540D</div><div class="value">${input.name}</div></div>
-    <div class="field"><div class="label">\u516C\u53F8</div><div class="value">${input.company || "\uFF08\u672A\u586B\u5199\uFF09"}</div></div>
-    <div class="field"><div class="label">\u90AE\u7BB1</div><div class="value"><a href="mailto:${input.email}" style="color:#C9A84C">${input.email}</a></div></div>
-    <div class="field"><div class="label">\u7535\u8BDD</div><div class="value">${input.phone || "\uFF08\u672A\u586B\u5199\uFF09"}</div></div>
-    <div class="field"><div class="label">\u610F\u5411\u670D\u52A1</div><div class="value">${input.service || "\uFF08\u672A\u6307\u5B9A\uFF09"}</div></div>
-    <div class="field"><div class="label">\u9884\u7B97\u8303\u56F4</div><div class="value">${input.budget || "\uFF08\u672A\u586B\u5199\uFF09"}</div></div>
-    <div class="field"><div class="label">\u8865\u5145\u8BF4\u660E</div><div class="msg">${input.message || "\uFF08\u65E0\uFF09"}</div></div>
-  </div>
-  <div class="footer">\u732B\u773C\u589E\u957F\u5F15\u64CE \xB7 www.mcmamoo.com \xB7 \u8BF7\u5728 1-2 \u4E2A\u5DE5\u4F5C\u65E5\u5185\u8DDF\u8FDB\u6B64\u7EBF\u7D22</div>
-</div>
-</body></html>`;
-        await sendEmail2({
-          to: "sean_lab@163.com",
-          subject: `[\u732B\u773C\u54A8\u8BE2\u7EBF\u7D22] ${input.name}${input.company ? ` \xB7 ${input.company}` : ""} \u2014 ${input.service || "\u54A8\u8BE2\u9884\u7EA6"}`,
+      if (adminEmail) {
+        const adminHtml = generateContactAdminHtml(
+          input.name,
+          input.company,
+          input.phone,
+          input.message ?? ""
+        );
+        await sendEmail({
+          to: adminEmail,
+          subject: `\u732B\u773C\u54A8\u8BE2\u65B0\u54A8\u8BE2\u7533\u8BF7\uFF1A${input.name} / ${input.company}`,
           html: adminHtml
         });
-      } catch (e) {
-        console.warn("[consulting] \u7EBF\u7D22\u90AE\u4EF6\u53D1\u9001\u5931\u8D25:", e);
       }
-      try {
-        const { sendEmail: sendEmail2, generateContactConfirmationHtml: generateContactConfirmationHtml2 } = await Promise.resolve().then(() => (init_email(), email_exports));
-        await sendEmail2({
-          to: input.email,
-          subject: `\u611F\u8C22\u60A8\u7684\u54A8\u8BE2\u7533\u8BF7 \u2014 \u732B\u773C\u589E\u957F\u5F15\u64CE Mc&Mamoo`,
-          html: generateContactConfirmationHtml2(input.name, input.company || "")
-        });
-      } catch (e) {
-        console.warn("[consulting] \u7528\u6237\u786E\u8BA4\u90AE\u4EF6\u53D1\u9001\u5931\u8D25:", e);
-      }
-      return { success: true, id: inquiry?.id };
-    }),
-    getInquiries: adminProcedure2.query(async () => {
-      const { getConsultingInquiries: getConsultingInquiries2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      return getConsultingInquiries2();
-    }),
-    updateStatus: adminProcedure2.input((val) => {
-      const v = val;
-      if (!v.id || !v.status) throw new TRPCError3({ code: "BAD_REQUEST", message: "id \u548C status \u4E3A\u5FC5\u586B" });
-      const validStatuses = ["new", "contacted", "signed", "dropped"];
-      if (!validStatuses.includes(v.status)) throw new TRPCError3({ code: "BAD_REQUEST", message: "\u65E0\u6548\u72B6\u6001" });
-      return v;
-    }).mutation(async ({ input }) => {
-      const { updateInquiryStatus: updateInquiryStatus2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      await updateInquiryStatus2(input.id, input.status, input.notes);
+      await notifyOwner({
+        title: `\u65B0\u54A8\u8BE2\u7533\u8BF7\uFF1A${input.company}`,
+        content: `\u59D3\u540D\uFF1A${input.name}
+\u516C\u53F8\uFF1A${input.company}
+\u7535\u8BDD\uFF1A${input.phone}
+\u9700\u6C42\uFF1A${input.message ?? "\uFF08\u65E0\uFF09"}`
+      });
       return { success: true };
     })
   }),
-  // ─── 万年钟预约 ──────────────────────────────────────────────────────────────────────────────
-  millenniumClock: router({
-    createReservation: publicProcedure.input((val) => {
-      const v = val;
-      if (!v.name || !v.email || !v.intent) throw new TRPCError3({ code: "BAD_REQUEST", message: "\u5FC5\u586B\u5B57\u6BB5\u4E0D\u80FD\u4E3A\u7A7A" });
-      return v;
-    }).mutation(async ({ input, ctx }) => {
-      const reservation = await createMillenniumClockReservation(input);
-      try {
-        const { notifyOwner: notifyOwner2 } = await Promise.resolve().then(() => (init_notification(), notification_exports));
-        await notifyOwner2({
-          title: `\u4E07\u5E74\u949F\u65B0\u9884\u7EA6: ${input.name} (${input.intent})`,
-          content: `\u59D3\u540D: ${input.name}
-\u673A\u6784: ${input.company || "\u672A\u586B\u5199"}
-\u90AE\u7BB1: ${input.email}
-\u7535\u8BDD: ${input.phone || "\u672A\u586B\u5199"}
-\u610F\u5411: ${input.intent}
-\u8BF4\u660E: ${input.message || "\u65E0"}`
-        });
-      } catch (e) {
-        console.warn("[millenniumClock] \u90AE\u4EF6\u901A\u77E5\u5931\u8D25:", e);
+  // Mao Think Tank consultation application
+  mao: router({
+    submitApplication: publicProcedure.input(
+      z2.object({
+        name: z2.string().min(1).max(128),
+        organization: z2.string().min(1).max(256),
+        consultType: z2.string().min(1).max(128),
+        description: z2.string().max(2e3).optional()
+      })
+    ).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new Error("Database unavailable");
       }
-      return { success: true, id: reservation?.id };
+      await db.insert(maoApplications).values({
+        name: input.name,
+        organization: input.organization,
+        consultType: input.consultType,
+        description: input.description ?? null,
+        status: "pending"
+      });
+      await notifyOwner({
+        title: `\u65B0\u6BDB\u667A\u5E93\u54A8\u8BE2\u7533\u8BF7\uFF1A${input.organization}`,
+        content: `\u7533\u8BF7\u4EBA\uFF1A${input.name}
+\u673A\u6784\uFF1A${input.organization}
+\u54A8\u8BE2\u65B9\u5411\uFF1A${input.consultType}
+\u8BF4\u660E\uFF1A${input.description ?? "\uFF08\u65E0\uFF09"}`
+      });
+      return { success: true };
     }),
-    getReservations: adminProcedure2.query(async () => {
-      return getMillenniumClockReservations();
+    // Admin: list all applications (protected - admin only)
+    listApplications: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u8BBF\u95EE" });
+      }
+      const db = await getDb();
+      if (!db) return [];
+      const results = await db.select().from(maoApplications).orderBy(maoApplications.createdAt);
+      return results;
+    }),
+    // Subscribe to strategic brief
+    subscribeBrief: publicProcedure.input(
+      z2.object({
+        email: z2.string().email()
+      })
+    ).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+      await db.insert(briefSubscribers).values({
+        email: input.email
+      }).onDuplicateKeyUpdate({ set: { email: input.email } });
+      await notifyOwner({
+        title: "\u65B0\u6218\u7565\u7B80\u62A5\u8BA2\u9605",
+        content: `\u90AE\u7BB1\uFF1A${input.email} \u5DF2\u8BA2\u9605\u6BDB\u667A\u5E93\u6218\u7565\u7B80\u62A5`
+      });
+      return { success: true };
+    }),
+    // Admin: list all subscribers (protected - admin only)
+    listSubscribers: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u8BBF\u95EE" });
+      }
+      const db = await getDb();
+      if (!db) return [];
+      const results = await db.select().from(briefSubscribers).orderBy(briefSubscribers.createdAt);
+      return results;
+    }),
+    // Admin: update application status (protected - admin only)
+    updateApplicationStatus: protectedProcedure.input(
+      z2.object({
+        id: z2.number().int().positive(),
+        status: z2.enum(["pending", "approved", "rejected", "reviewing"])
+      })
+    ).mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
+      }
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+      const { eq: eq2 } = await import("drizzle-orm");
+      await db.update(maoApplications).set({ status: input.status }).where(eq2(maoApplications.id, input.id));
+      return { success: true };
+    }),
+    // Admin: update application notes (protected - admin only)
+    updateApplicationNotes: protectedProcedure.input(
+      z2.object({
+        id: z2.number().int().positive(),
+        notes: z2.string().max(2e3)
+      })
+    ).mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
+      }
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+      const { eq: eq2 } = await import("drizzle-orm");
+      await db.update(maoApplications).set({ notes: input.notes }).where(eq2(maoApplications.id, input.id));
+      return { success: true };
+    }),
+    // Admin: send newsletter to all subscribers (protected - admin only)
+    sendNewsletter: protectedProcedure.input(
+      z2.object({
+        subject: z2.string().min(1).max(256),
+        content: z2.string().min(1).max(1e4)
+      })
+    ).mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
+      }
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+      const subscribers = await db.select().from(briefSubscribers);
+      if (subscribers.length === 0) {
+        return { success: true, sent: 0, failed: 0, message: "\u6682\u65E0\u8BA2\u9605\u8005" };
+      }
+      const emails = subscribers.map((s) => s.email);
+      const html = generateNewsletterHtml(input.subject, input.content);
+      const { success, failed } = await sendBulkEmails(emails, input.subject, html, input.content);
+      return { success: true, sent: success, failed, message: `\u5DF2\u53D1\u9001 ${success} \u5C01\uFF0C\u5931\u8D25 ${failed} \u5C01` };
     })
   })
 });
@@ -2672,174 +2315,22 @@ async function createContext(opts) {
 
 // server/_core/vite.ts
 import express from "express";
-import fs2 from "fs";
+import fs from "fs";
 import { nanoid } from "nanoid";
-import path2 from "path";
-import { fileURLToPath as fileURLToPath2 } from "url";
+import path from "path";
+import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
-
-// vite.config.ts
-import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
-import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
-var __filename = typeof import.meta.url === "string" ? fileURLToPath(import.meta.url) : process.argv[1];
-var __dirname_safe = path.dirname(__filename);
-var PROJECT_ROOT = (typeof import.meta.dirname === "string" ? import.meta.dirname : null) ?? __dirname_safe;
-var LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
-var MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024;
-var TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6);
-function ensureLogDir() {
-  if (!fs.existsSync(LOG_DIR)) {
-    fs.mkdirSync(LOG_DIR, { recursive: true });
-  }
-}
-function trimLogFile(logPath, maxSize) {
-  try {
-    if (!fs.existsSync(logPath) || fs.statSync(logPath).size <= maxSize) {
-      return;
-    }
-    const lines = fs.readFileSync(logPath, "utf-8").split("\n");
-    const keptLines = [];
-    let keptBytes = 0;
-    const targetSize = TRIM_TARGET_BYTES;
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const lineBytes = Buffer.byteLength(`${lines[i]}
-`, "utf-8");
-      if (keptBytes + lineBytes > targetSize) break;
-      keptLines.unshift(lines[i]);
-      keptBytes += lineBytes;
-    }
-    fs.writeFileSync(logPath, keptLines.join("\n"), "utf-8");
-  } catch {
-  }
-}
-function writeToLogFile(source, entries) {
-  if (entries.length === 0) return;
-  ensureLogDir();
-  const logPath = path.join(LOG_DIR, `${source}.log`);
-  const lines = entries.map((entry) => {
-    const ts = (/* @__PURE__ */ new Date()).toISOString();
-    return `[${ts}] ${JSON.stringify(entry)}`;
-  });
-  fs.appendFileSync(logPath, `${lines.join("\n")}
-`, "utf-8");
-  trimLogFile(logPath, MAX_LOG_SIZE_BYTES);
-}
-function vitePluginManusDebugCollector() {
-  return {
-    name: "manus-debug-collector",
-    transformIndexHtml(html) {
-      if (process.env.NODE_ENV === "production") {
-        return html;
-      }
-      return {
-        html,
-        tags: [
-          {
-            tag: "script",
-            attrs: {
-              src: "/__manus__/debug-collector.js",
-              defer: true
-            },
-            injectTo: "head"
-          }
-        ]
-      };
-    },
-    configureServer(server) {
-      server.middlewares.use("/__manus__/logs", (req, res, next) => {
-        if (req.method !== "POST") {
-          return next();
-        }
-        const handlePayload = (payload) => {
-          if (payload.consoleLogs?.length > 0) {
-            writeToLogFile("browserConsole", payload.consoleLogs);
-          }
-          if (payload.networkRequests?.length > 0) {
-            writeToLogFile("networkRequests", payload.networkRequests);
-          }
-          if (payload.sessionEvents?.length > 0) {
-            writeToLogFile("sessionReplay", payload.sessionEvents);
-          }
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ success: true }));
-        };
-        const reqBody = req.body;
-        if (reqBody && typeof reqBody === "object") {
-          try {
-            handlePayload(reqBody);
-          } catch (e) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ success: false, error: String(e) }));
-          }
-          return;
-        }
-        let body = "";
-        req.on("data", (chunk) => {
-          body += chunk.toString();
-        });
-        req.on("end", () => {
-          try {
-            const payload = JSON.parse(body);
-            handlePayload(payload);
-          } catch (e) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ success: false, error: String(e) }));
-          }
-        });
-      });
-    }
-  };
-}
-var plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
-var vite_config_default = defineConfig({
-  plugins,
-  resolve: {
-    alias: {
-      "@": path.resolve(PROJECT_ROOT, "client", "src"),
-      "@shared": path.resolve(PROJECT_ROOT, "shared"),
-      "@assets": path.resolve(PROJECT_ROOT, "attached_assets")
-    }
-  },
-  envDir: path.resolve(PROJECT_ROOT),
-  root: path.resolve(PROJECT_ROOT, "client"),
-  publicDir: path.resolve(PROJECT_ROOT, "client", "public"),
-  build: {
-    outDir: path.resolve(PROJECT_ROOT, "dist/public"),
-    emptyOutDir: true
-  },
-  server: {
-    host: true,
-    allowedHosts: [
-      ".manuspre.computer",
-      ".manus.computer",
-      ".manus-asia.computer",
-      ".manuscomputer.ai",
-      ".manusvm.computer",
-      "localhost",
-      "127.0.0.1"
-    ],
-    fs: {
-      strict: true,
-      deny: ["**/.*"]
-    }
-  }
-});
-
-// server/_core/vite.ts
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = path.dirname(__filename);
 async function setupVite(app, server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true
   };
+  const viteConfig = await import("../../vite.config").then((m) => m.default || m);
   const vite = await createViteServer({
-    ...vite_config_default,
+    ...viteConfig,
     configFile: false,
     server: serverOptions,
     appType: "custom"
@@ -2848,14 +2339,13 @@ async function setupVite(app, server) {
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
     try {
-      const __dir = typeof import.meta.dirname === "string" ? import.meta.dirname : path2.dirname(fileURLToPath2(import.meta.url));
-      const clientTemplate = path2.resolve(
-        __dir,
+      const clientTemplate = path.resolve(
+        __dirname,
         "../..",
         "client",
         "index.html"
       );
-      let template = await fs2.promises.readFile(clientTemplate, "utf-8");
+      let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
@@ -2869,21 +2359,19 @@ async function setupVite(app, server) {
   });
 }
 function serveStatic(app) {
-  const distPath = path2.resolve(process.cwd(), "dist", "public");
-  if (!fs2.existsSync(distPath)) {
-    console.warn(
-      `[serveStatic] Build directory not found: ${distPath}. Running in API-only mode.`
+  const distPath = process.env.NODE_ENV === "development" ? path.resolve(__dirname, "../..", "dist", "public") : path.resolve(__dirname, "public");
+  if (!fs.existsSync(distPath)) {
+    console.error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
-    return;
   }
-  console.log(`[serveStatic] Serving static files from: ${distPath}`);
   app.use(express.static(distPath));
   app.use("*", (_req, res) => {
-    res.sendFile(path2.resolve(distPath, "index.html"));
+    res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
 
-// server/aiStream.ts
+// server/aiNodes.ts
 import { Router } from "express";
 init_db();
 import mammoth from "mammoth";
@@ -3293,199 +2781,74 @@ async function getAdminUser(req) {
   } catch {
     return null;
   }
+  return { url, key };
 }
-async function selectNode(preferPaid, onlyLocal, onlyCloud) {
-  try {
-    const nodes = await getAiNodes(true);
-    if (!nodes || nodes.length === 0) return null;
-    const rules = await getRoutingRules();
-    const defaultRule = rules.find((r) => r.isDefault && r.isActive) || rules.find((r) => r.isActive);
-    let candidates = nodes.filter((n) => n.isOnline !== false && n.isActive !== false);
-    if (candidates.length === 0) candidates = nodes;
-    if (onlyLocal) candidates = candidates.filter((n) => n.isLocal);
-    if (onlyCloud) candidates = candidates.filter((n) => !n.isLocal);
-    if (candidates.length === 0) return null;
-    if (defaultRule) {
-      if (defaultRule.mode === "paid" || preferPaid === true) {
-        const paid = candidates.filter((n) => n.isPaid);
-        if (paid.length > 0) candidates = paid;
-      } else if (defaultRule.mode === "free" || preferPaid === false) {
-        const free = candidates.filter((n) => !n.isPaid);
-        if (free.length > 0) candidates = free;
-      } else if (defaultRule.mode === "manual" && defaultRule.nodeIds) {
-        const ids = defaultRule.nodeIds.split(",").map((s) => parseInt(s.trim())).filter(Boolean);
-        const ordered = ids.map((id) => candidates.find((n) => n.id === id)).filter(Boolean);
-        if (ordered.length > 0) candidates = ordered;
-      }
-      if (defaultRule.loadBalance === "round_robin") {
-        return candidates[Math.floor(Math.random() * candidates.length)];
-      } else if (defaultRule.loadBalance === "least_latency") {
-        const withLatency = candidates.filter((n) => n.lastPingMs);
-        if (withLatency.length > 0) {
-          return withLatency.reduce((a, b) => (a.lastPingMs || 9999) < (b.lastPingMs || 9999) ? a : b);
-        }
-      }
-    }
-    return candidates.sort((a, b) => a.priority - b.priority)[0];
-  } catch {
-    return null;
-  }
-}
-async function streamFromNode(node, messages, res, model, sendNodeInfo) {
-  const effectiveModel = node.modelId || model || "gpt-3.5-turbo";
-  const start = Date.now();
-  if (sendNodeInfo) {
-    res.write(`data: ${JSON.stringify({
-      nodeInfo: {
-        id: node.id,
-        name: node.name,
-        model: effectiveModel,
-        isLocal: !!node.isLocal
-      }
-    })}
-
-`);
-  }
-  try {
-    const response = await fetch(`${node.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...node.apiKey ? { Authorization: `Bearer ${node.apiKey}` } : {}
-      },
-      body: JSON.stringify({ model: effectiveModel, messages, stream: true, max_tokens: 4096 })
-    });
-    if (!response.ok) {
-      const errText = await response.text();
-      await createNodeLog({ nodeId: node.id, model: effectiveModel, status: "error", latencyMs: Date.now() - start, errorMessage: `HTTP ${response.status}: ${errText.slice(0, 200)}` });
-      return { success: false };
-    }
-    const reader = response.body?.getReader();
-    if (!reader) return { success: false };
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let totalTokens = 0;
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed === "data: [DONE]") {
-          if (trimmed === "data: [DONE]") res.write("data: [DONE]\n\n");
-          continue;
-        }
-        if (trimmed.startsWith("data: ")) {
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            const delta = json.choices?.[0]?.delta?.content;
-            if (delta !== void 0 && delta !== null) {
-              res.write(`data: ${JSON.stringify({ content: delta })}
-
-`);
-              totalTokens += delta.length;
-            }
-            if (json.usage?.total_tokens) totalTokens = json.usage.total_tokens;
-          } catch {
-          }
-        }
-      }
-    }
-    await createNodeLog({ nodeId: node.id, model: effectiveModel, status: "success", latencyMs: Date.now() - start, completionTokens: totalTokens });
-    return { success: true };
-  } catch (err) {
-    await createNodeLog({ nodeId: node.id, model: effectiveModel, status: "error", latencyMs: Date.now() - start, errorMessage: err.message });
-    return { success: false };
-  }
-}
-aiStreamRouter.post("/chat/stream", async (req, res) => {
-  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId } = req.body;
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no");
-  res.flushHeaders();
-  const hasImage = Array.isArray(messages) && messages.some(
-    (m) => Array.isArray(m.content) && m.content.some((c) => c.type === "image_url")
-  );
-  if (hasImage && !useLocal && !String(model).startsWith("local:")) {
-    const currentCfg = MODEL_CONFIGS[model];
-    if (!currentCfg?.supportsVision) {
-      model = "glm-4v-flash";
-    }
-  }
-  const normalizeMessagesForVision = (msgs) => msgs.map((m) => {
-    if (!Array.isArray(m.content)) return m;
-    return {
-      ...m,
-      content: m.content.map((c) => {
-        if (c.type === "image_url" && c.image_url?.url?.startsWith("data:")) {
-          const base64 = c.image_url.url.split(",")[1] || c.image_url.url;
-          return { type: "image_url", image_url: { url: base64 } };
-        }
-        return c;
-      })
-    };
+async function sbFetch(path2, options = {}, prefer) {
+  const { url, key } = getSupabaseConfig();
+  const headers = {
+    "Content-Type": "application/json",
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    ...options.headers
+  };
+  if (prefer) headers["Prefer"] = prefer;
+  const res = await globalThis.fetch(`${url}/rest/v1${path2}`, {
+    ...options,
+    headers
   });
-  const rawMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
-  const allMessages = hasImage ? normalizeMessagesForVision(rawMessages) : rawMessages;
-  if (useLocal || typeof model === "string" && model.startsWith("local:")) {
-    const admin = await getAdminUser(req);
-    if (!admin) {
-      res.write(`data: ${JSON.stringify({ error: "\u672C\u5730\u8282\u70B9\u4EC5\u9650\u7BA1\u7406\u5458\u4F7F\u7528" })}
-
-`);
-      res.end();
-      return;
-    }
-    let targetNode = null;
-    if (requestedNodeId) {
-      targetNode = await getAiNodeById(Number(requestedNodeId));
-    } else if (typeof model === "string" && model.startsWith("local:")) {
-      const id = parseInt(model.slice(6));
-      if (!isNaN(id)) targetNode = await getAiNodeById(id);
-    }
-    if (!targetNode) {
-      targetNode = await selectNode(preferPaid, true, false);
-    }
-    if (!targetNode) {
-      res.write(`data: ${JSON.stringify({ error: "\u6CA1\u6709\u53EF\u7528\u7684\u672C\u5730\u8282\u70B9\uFF0C\u8BF7\u5148\u6CE8\u518C\u672C\u5730\u8282\u70B9" })}
-
-`);
-      res.end();
-      return;
-    }
-    const result = await streamFromNode(targetNode, allMessages, res, void 0, true);
-    if (!result.success) {
-      res.write(`data: ${JSON.stringify({ error: `\u672C\u5730\u8282\u70B9 "${targetNode.name}" \u8C03\u7528\u5931\u8D25` })}
-
-`);
-    }
-    res.end();
+  let data;
+  const text2 = await res.text();
+  try {
+    data = text2 ? JSON.parse(text2) : null;
+  } catch {
+    data = text2;
+  }
+  return { ok: res.ok, status: res.status, data };
+}
+function verifyNodeToken(token) {
+  const expected = process.env.NODE_REGISTRATION_TOKEN || process.env.OPENCLAW_GATEWAY_TOKEN || "";
+  if (!expected) {
+    console.warn("[aiNodes] NODE_REGISTRATION_TOKEN \u672A\u914D\u7F6E\uFF0C\u8DF3\u8FC7 token \u9A8C\u8BC1\uFF08\u4EC5\u5F00\u53D1\u6A21\u5F0F\uFF09");
+    return true;
+  }
+  return token === expected;
+}
+function computeChecksum(skills) {
+  const sorted = [...skills].sort((a, b) => a.id.localeCompare(b.id));
+  const raw = sorted.map((s) => `${s.id}:${s.version ?? "1.0.0"}`).join("|");
+  return "sha256:" + crypto.createHash("sha256").update(raw).digest("hex").slice(0, 8);
+}
+function toSkillRow(nodeId, s) {
+  return {
+    nodeId,
+    skillId: s.id,
+    name: s.name,
+    version: s.version ?? "1.0.0",
+    description: s.description ?? null,
+    triggers: s.triggers ?? [],
+    category: s.category ?? "custom",
+    isActive: s.isActive !== false
+  };
+}
+async function markOfflineNodes() {
+  try {
+    const cutoff = new Date(Date.now() - 9e4).toISOString();
+    await sbFetch(
+      `/ai_nodes?isOnline=eq.true&lastHeartbeatAt=lt.${encodeURIComponent(cutoff)}`,
+      { method: "PATCH", body: JSON.stringify({ isOnline: false }) }
+    );
+  } catch {
+  }
+}
+setInterval(markOfflineNodes, 3e4);
+aiNodesRouter.post("/node/register", async (req, res) => {
+  const body = req.body;
+  if (!verifyNodeToken(body.token)) {
+    res.status(401).json({ success: false, error: "Invalid token" });
     return;
   }
-  const cfg = MODEL_CONFIGS[model];
-  if (cfg) {
-    res.write(`data: ${JSON.stringify({
-      nodeInfo: { id: null, name: cfg.name, model: cfg.model, isLocal: false, badge: cfg.badge }
-    })}
-
-`);
-  }
-  if (!cfg) {
-    res.write(`data: ${JSON.stringify({ error: `Unknown model: ${model}` })}
-
-`);
-    res.end();
-    return;
-  }
-  if (!cfg.apiKey) {
-    res.write(`data: ${JSON.stringify({ error: `API key not configured for model: ${model}` })}
-
-`);
-    res.end();
+  if (!body.name || !body.baseUrl) {
+    res.status(400).json({ success: false, error: "name and baseUrl are required" });
     return;
   }
   const { enableTools = true } = req.body;
@@ -3695,19 +3058,16 @@ aiStreamRouter.post("/v1/chat/completions", async (req, res) => {
         res.end();
         return;
       }
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        res.write(decoder.decode(value, { stream: true }));
-      }
-      res.end();
-    } else {
-      const data = await upstream.json();
-      res.json(data);
+      nodeId = rows[0].id;
     }
-    if (targetNode) {
-      await createNodeLog({ nodeId: targetNode.id, model: backendModel, status: "success", latencyMs: Date.now() - start });
+    if (body.skills && body.skills.length > 0 && nodeId) {
+      await sbFetch(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
+      const skillRows = body.skills.map((s) => toSkillRow(nodeId, s));
+      await sbFetch(
+        `/node_skills`,
+        { method: "POST", body: JSON.stringify(skillRows) },
+        "return=minimal"
+      );
     }
   } catch (err) {
     console.error("[OpenAI Compat] Error:", err);
@@ -3984,10 +3344,9 @@ aiStreamRouter.post("/image/generate", async (req, res) => {
       prompt: prompt.trim(),
       originalImages: originalImages || []
     });
-    res.json({ url: result.url });
-  } catch (err) {
-    console.error("[Image Generate] Error:", err);
-    res.status(500).json({ error: err.message || "\u56FE\u50CF\u751F\u6210\u5931\u8D25" });
+  } catch (error) {
+    console.error("[aiNodes] register error:", error);
+    res.status(500).json({ success: false, error: String(error) });
   }
 });
 aiStreamRouter.post("/upload", async (req, res) => {
@@ -4113,21 +3472,525 @@ aiStreamRouter.get("/status", async (_req, res) => {
   for (const [id, cfg] of Object.entries(MODEL_CONFIGS)) {
     status[id] = { name: cfg.name, configured: !!cfg.apiKey, badge: cfg.badge };
   }
-  let nodeCount = 0, onlineCount = 0;
   try {
-    const nodes = await getAiNodes();
-    nodeCount = nodes.length;
-    onlineCount = nodes.filter((n) => n.isOnline).length;
-  } catch {
+    const existing = await sbFetch(
+      `/ai_nodes?id=eq.${body.nodeId}&select=id,skillsChecksum`
+    );
+    const rows = existing.data;
+    if (!rows || rows.length === 0) {
+      res.json({ success: true, needsReregister: true });
+      return;
+    }
+    await sbFetch(
+      `/ai_nodes?id=eq.${body.nodeId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          isOnline: true,
+          lastHeartbeatAt: (/* @__PURE__ */ new Date()).toISOString(),
+          lastPingAt: (/* @__PURE__ */ new Date()).toISOString()
+        })
+      }
+    );
+    const needsSkillSync = body.skillsChecksum !== void 0 && rows[0].skillsChecksum !== body.skillsChecksum;
+    res.json({ success: true, needsSkillSync });
+  } catch (error) {
+    console.error("[aiNodes] heartbeat error:", error);
+    res.status(500).json({ success: false, error: String(error) });
   }
-  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "v2.2-max-tokens-fix" });
 });
-var aiStream_default = aiStreamRouter;
+aiNodesRouter.post("/node/deregister", async (req, res) => {
+  const body = req.body;
+  if (!verifyNodeToken(body.token)) {
+    res.status(401).json({ success: false, error: "Invalid token" });
+    return;
+  }
+  try {
+    await sbFetch(
+      `/ai_nodes?id=eq.${body.nodeId}`,
+      { method: "PATCH", body: JSON.stringify({ isOnline: false }) }
+    );
+    console.log(`[aiNodes] \u8282\u70B9\u5DF2\u6CE8\u9500: id=${body.nodeId}`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+});
+aiNodesRouter.post("/node/skills/sync", async (req, res) => {
+  const body = req.body;
+  if (!verifyNodeToken(body.token)) {
+    res.status(401).json({ success: false, error: "Invalid token" });
+    return;
+  }
+  if (!body.skills || body.skills.length === 0) {
+    res.status(400).json({ success: false, error: "skills array is required" });
+    return;
+  }
+  try {
+    if (body.action === "delete") {
+      for (const s of body.skills) {
+        await sbFetch(
+          `/node_skills?nodeId=eq.${body.nodeId}&skillId=eq.${encodeURIComponent(s.id)}`,
+          { method: "DELETE" }
+        );
+      }
+    } else {
+      for (const s of body.skills) {
+        const row = toSkillRow(body.nodeId, s);
+        await sbFetch(
+          `/node_skills`,
+          { method: "POST", body: JSON.stringify(row) },
+          "resolution=merge-duplicates"
+        );
+      }
+    }
+    const allSkillsRes = await sbFetch(
+      `/node_skills?nodeId=eq.${body.nodeId}&select=skillId,version`
+    );
+    const allSkills = allSkillsRes.data;
+    const newChecksum = computeChecksum(
+      allSkills.map((s) => ({ id: s.skillId, version: s.version }))
+    );
+    await sbFetch(
+      `/ai_nodes?id=eq.${body.nodeId}`,
+      { method: "PATCH", body: JSON.stringify({ skillsChecksum: newChecksum }) }
+    );
+    res.json({ success: true, checksum: newChecksum, count: allSkills.length });
+  } catch (error) {
+    console.error("[aiNodes] skills/sync error:", error);
+    res.status(500).json({ success: false, error: String(error) });
+  }
+});
+aiNodesRouter.get("/node/list", async (_req, res) => {
+  try {
+    const nodesRes = await sbFetch("/ai_nodes?isLocal=eq.true&select=*&order=createdAt.asc");
+    const nodes = nodesRes.data ?? [];
+    const skillsRes = await sbFetch(
+      `/node_skills?nodeId=in.(${nodes.map((n) => n.id).join(",") || "0"})`
+    );
+    const allSkills = skillsRes.data;
+    const result = nodes.map((node) => ({
+      ...node,
+      token: void 0,
+      // 不暴露 token
+      skills: allSkills.filter((s) => s.nodeId === node.id)
+    }));
+    res.json({ nodes: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+});
+aiNodesRouter.post("/skill/invoke", async (req, res) => {
+  const { nodeId, skillId, params, requestId, timeout: timeoutMs = 3e4 } = req.body;
+  try {
+    const nodeRes = await sbFetch(
+      `/ai_nodes?id=eq.${nodeId}&isOnline=eq.true&select=*`
+    );
+    const nodes = nodeRes.data;
+    if (!nodes || nodes.length === 0) {
+      res.status(404).json({ success: false, error: "\u8282\u70B9\u4E0D\u5728\u7EBF\u6216\u4E0D\u5B58\u5728" });
+      return;
+    }
+    const node = nodes[0];
+    const invokeUrl = `${node.baseUrl}/skill/invoke`;
+    const fetchPromise = globalThis.fetch(invokeUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${node.token}`
+      },
+      body: JSON.stringify({ skillId, params, requestId, timeout: timeoutMs })
+    });
+    const timeoutPromise = new Promise(
+      (_, reject) => setTimeout(() => reject(new Error("\u6280\u80FD\u8C03\u7528\u8D85\u65F6")), timeoutMs)
+    );
+    const fetchResponse = await Promise.race([fetchPromise, timeoutPromise]);
+    const data = await fetchResponse.json();
+    res.status(fetchResponse.status).json(data);
+  } catch (error) {
+    console.error("[aiNodes] skill/invoke error:", error);
+    res.status(500).json({ success: false, error: String(error) });
+  }
+});
+aiNodesRouter.post("/skill/match", async (req, res) => {
+  const { message } = req.body;
+  if (!message) {
+    res.status(400).json({ success: false, error: "message is required" });
+    return;
+  }
+  try {
+    const nodesRes = await sbFetch(
+      "/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id"
+    );
+    const onlineNodes = nodesRes.data;
+    if (onlineNodes.length === 0) {
+      res.json({ matched: [] });
+      return;
+    }
+    const nodeIds = onlineNodes.map((n) => n.id);
+    const skillsRes = await sbFetch(
+      `/node_skills?nodeId=in.(${nodeIds.join(",")})&isActive=eq.true&select=*`
+    );
+    const skills = skillsRes.data;
+    const msgLower = message.toLowerCase();
+    const matched = skills.filter((skill) => {
+      const triggers = skill.triggers ?? [];
+      return triggers.some((t2) => msgLower.includes(t2.toLowerCase()));
+    });
+    res.json({ matched });
+  } catch (error) {
+    console.error("[aiNodes] skill/match error:", error);
+    res.status(500).json({ success: false, error: String(error) });
+  }
+});
+
+// server/chat.ts
+import { Router as Router2 } from "express";
+var chatRouter = Router2();
+function sbHeaders() {
+  const url = process.env.SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_KEY || "";
+  return {
+    url,
+    headers: {
+      "Content-Type": "application/json",
+      apikey: key,
+      Authorization: `Bearer ${key}`
+    }
+  };
+}
+async function sbGet(path2) {
+  const { url, headers } = sbHeaders();
+  const res = await fetch(`${url}/rest/v1${path2}`, { headers });
+  const text2 = await res.text();
+  return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
+}
+async function sbPost(path2, body, prefer) {
+  const { url, headers } = sbHeaders();
+  const h = { ...headers };
+  if (prefer) h["Prefer"] = prefer;
+  const res = await fetch(`${url}/rest/v1${path2}`, {
+    method: "POST",
+    headers: h,
+    body: JSON.stringify(body)
+  });
+  const text2 = await res.text();
+  return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
+}
+async function sbDelete(path2) {
+  const { url, headers } = sbHeaders();
+  const res = await fetch(`${url}/rest/v1${path2}`, { method: "DELETE", headers });
+  return { ok: res.ok, status: res.status };
+}
+async function sbPatch(path2, body) {
+  const { url, headers } = sbHeaders();
+  const res = await fetch(`${url}/rest/v1${path2}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body)
+  });
+  const text2 = await res.text();
+  return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
+}
+async function webSearch(query) {
+  const apiKey = process.env.TAVILY_API_KEY;
+  if (!apiKey) return "";
+  try {
+    const res = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        search_depth: "basic",
+        max_results: 5,
+        include_answer: true
+      })
+    });
+    if (!res.ok) return "";
+    const json2 = await res.json();
+    const answer = json2.answer || "";
+    const results = (json2.results || []).slice(0, 3).map((r) => `[${r.title}](${r.url})
+${r.content?.slice(0, 300)}`).join("\n\n");
+    return `\u3010\u8054\u7F51\u641C\u7D22\u7ED3\u679C\u3011
+${answer ? `\u6458\u8981\uFF1A${answer}
+
+` : ""}${results}`;
+  } catch {
+    return "";
+  }
+}
+function needsSearch(text2) {
+  const patterns = [
+    /今天|今日|现在|最新|最近|当前|实时/,
+    /\d{4}年|\d+月\d+日/,
+    /新闻|资讯|行情|价格|股价/,
+    /搜索|查一下|找一下|帮我查/,
+    /latest|current|today|recent|news/i
+  ];
+  return patterns.some((p) => p.test(text2));
+}
+var MODEL_MAP = {
+  // ── DeepSeek ──────────────────────────────────────────────────────────────
+  "deepseek-chat": { provider: "deepseek", apiModel: "deepseek-chat", label: "DeepSeek Chat", maxTokens: 4096 },
+  "deepseek-reasoner": { provider: "deepseek", apiModel: "deepseek-reasoner", label: "DeepSeek Reasoner", maxTokens: 8192 },
+  // ── Groq（极速）────────────────────────────────────────────────────────────
+  "llama-3.3-70b": { provider: "groq", apiModel: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Groq)", maxTokens: 4096 },
+  "llama-3.1-8b": { provider: "groq", apiModel: "llama-3.1-8b-instant", label: "Llama 3.1 8B (Groq)", maxTokens: 4096 },
+  "gemma2-9b": { provider: "groq", apiModel: "gemma2-9b-it", label: "Gemma2 9B (Groq)", maxTokens: 4096 },
+  // ── 智谱 GLM ───────────────────────────────────────────────────────────────
+  "glm-4-flash": { provider: "zhipu", apiModel: "glm-4-flash", label: "GLM-4 Flash", maxTokens: 4096 },
+  "glm-4-plus": { provider: "zhipu", apiModel: "glm-4-plus", label: "GLM-4 Plus", maxTokens: 4096 },
+  "glm-4-air": { provider: "zhipu", apiModel: "glm-4-air", label: "GLM-4 Air", maxTokens: 4096 },
+  "glm-z1-flash": { provider: "zhipu", apiModel: "glm-z1-flash", label: "GLM-Z1 Flash", maxTokens: 4096 }
+};
+var DEFAULT_MODEL = "deepseek-chat";
+var ZHIPU_BASE = "https://open.bigmodel.cn/api/paas/v4";
+var DEEPSEEK_BASE = "https://api.deepseek.com/v1";
+var GROQ_BASE = "https://api.groq.com/openai/v1";
+function getProviderConfig(provider) {
+  switch (provider) {
+    case "deepseek":
+      return { base: DEEPSEEK_BASE, key: process.env.DEEPSEEK_API_KEY || "" };
+    case "groq":
+      return { base: GROQ_BASE, key: process.env.GROQ_API_KEY || "" };
+    case "zhipu":
+    default:
+      return { base: ZHIPU_BASE, key: process.env.ZHIPU_API_KEY || "" };
+  }
+}
+function zhipuHeaders() {
+  const key = process.env.ZHIPU_API_KEY || "";
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${key}`
+  };
+}
+chatRouter.get("/models", (_req, res) => {
+  const list = Object.entries(MODEL_MAP).map(([id, cfg]) => ({
+    id,
+    label: cfg.label,
+    provider: cfg.provider
+  }));
+  res.json(list);
+});
+function getUserId(req) {
+  const auth = req.headers["x-user-id"];
+  if (auth && typeof auth === "string") return auth;
+  const cookie = req.cookies?.["mao-session"];
+  if (cookie) return `session:${cookie.slice(0, 32)}`;
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || "anon";
+  return `anon:${ip}`;
+}
+chatRouter.post("/conversations", async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    const { title = "\u65B0\u5BF9\u8BDD", model = "glm-4-flash" } = req.body || {};
+    const r = await sbPost(
+      "/conversations?select=id,title,model,created_at,updated_at",
+      { user_id: userId, title, model },
+      "return=representation"
+    );
+    if (!r.ok) return res.status(500).json({ error: "\u521B\u5EFA\u5BF9\u8BDD\u5931\u8D25" });
+    const conv = Array.isArray(r.data) ? r.data[0] : r.data;
+    res.json(conv);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+chatRouter.get("/conversations", async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    const r = await sbGet(
+      `/conversations?user_id=eq.${encodeURIComponent(userId)}&order=updated_at.desc&limit=50&select=id,title,model,created_at,updated_at`
+    );
+    if (!r.ok) return res.status(500).json({ error: "\u83B7\u53D6\u5BF9\u8BDD\u5217\u8868\u5931\u8D25" });
+    res.json(r.data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+chatRouter.delete("/conversations/:id", async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    await sbDelete(`/conversations?id=eq.${req.params.id}&user_id=eq.${encodeURIComponent(userId)}`);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+chatRouter.patch("/conversations/:id/title", async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    const { title } = req.body;
+    if (!title) return res.status(400).json({ error: "title \u5FC5\u586B" });
+    await sbPatch(
+      `/conversations?id=eq.${req.params.id}&user_id=eq.${encodeURIComponent(userId)}`,
+      { title }
+    );
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+chatRouter.get("/conversations/:id/messages", async (req, res) => {
+  try {
+    const r = await sbGet(
+      `/messages?conversation_id=eq.${req.params.id}&order=created_at.asc&select=id,role,content,metadata,created_at`
+    );
+    if (!r.ok) return res.status(500).json({ error: "\u83B7\u53D6\u6D88\u606F\u5931\u8D25" });
+    res.json(r.data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+chatRouter.post("/send", async (req, res) => {
+  const { conversationId, message, model = DEFAULT_MODEL, useSearch = false } = req.body;
+  if (!conversationId || !message) {
+    return res.status(400).json({ error: "conversationId \u548C message \u5FC5\u586B" });
+  }
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.flushHeaders();
+  const sendEvent = (event, data) => {
+    res.write(`event: ${event}
+data: ${JSON.stringify(data)}
+
+`);
+  };
+  try {
+    const historyR = await sbGet(
+      `/messages?conversation_id=eq.${conversationId}&order=created_at.asc&limit=20&select=role,content`
+    );
+    const history = historyR.data || [];
+    let searchContext = "";
+    if (useSearch || needsSearch(message)) {
+      sendEvent("status", { text: "\u6B63\u5728\u8054\u7F51\u641C\u7D22..." });
+      searchContext = await webSearch(message);
+    }
+    await sbPost("/messages", {
+      conversation_id: conversationId,
+      role: "user",
+      content: message,
+      metadata: {}
+    });
+    const systemPrompt = `\u4F60\u662F\u6BDBAI\uFF08MaoAI\uFF09\uFF0C\u4E00\u4E2A\u4EE5\u4E2D\u56FD\u6218\u7565\u601D\u7EF4\u548C\u5168\u7403\u89C6\u91CE\u4E3A\u6838\u5FC3\u7684AI\u52A9\u624B\u3002\u4F60\u64C5\u957F\u6218\u7565\u5206\u6790\u3001\u5546\u4E1A\u6D1E\u5BDF\u548C\u524D\u6CBF\u4FE1\u606F\u6574\u5408\u3002\u8BF7\u7528\u4E2D\u6587\u56DE\u7B54\uFF0C\u4FDD\u6301\u4E13\u4E1A\u3001\u6DF1\u523B\u3001\u6709\u6D1E\u89C1\u3002${searchContext ? `
+
+${searchContext}` : ""}`;
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...history.slice(-18),
+      { role: "user", content: message }
+    ];
+    const modelCfg = MODEL_MAP[model] || MODEL_MAP[DEFAULT_MODEL];
+    const { base, key } = getProviderConfig(modelCfg.provider);
+    if (!key) {
+      sendEvent("error", { text: `${modelCfg.provider.toUpperCase()} API Key \u672A\u914D\u7F6E` });
+      return res.end();
+    }
+    sendEvent("model", { provider: modelCfg.provider, label: modelCfg.label });
+    const llmRes = await fetch(`${base}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: modelCfg.apiModel,
+        messages,
+        stream: true,
+        temperature: 0.7,
+        max_tokens: modelCfg.maxTokens
+      })
+    });
+    if (!llmRes.ok || !llmRes.body) {
+      const errText = await llmRes.text();
+      sendEvent("error", { text: `\u6A21\u578B\u8C03\u7528\u5931\u8D25 [${modelCfg.provider}]: ${errText}` });
+      return res.end();
+    }
+    let fullContent = "";
+    const reader = llmRes.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      const lines = chunk.split("\n");
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const payload = line.slice(6).trim();
+        if (payload === "[DONE]") continue;
+        try {
+          const json2 = JSON.parse(payload);
+          const delta = json2.choices?.[0]?.delta?.content || "";
+          if (delta) {
+            fullContent += delta;
+            sendEvent("delta", { text: delta });
+          }
+        } catch {
+        }
+      }
+    }
+    if (fullContent) {
+      await sbPost("/messages", {
+        conversation_id: conversationId,
+        role: "assistant",
+        content: fullContent,
+        metadata: searchContext ? { searched: true } : {}
+      });
+    }
+    if (history.length === 0 && fullContent) {
+      const titleText = message.slice(0, 30).trim();
+      await sbPatch(
+        `/conversations?id=eq.${conversationId}`,
+        { title: titleText || "\u65B0\u5BF9\u8BDD" }
+      );
+      sendEvent("title", { text: titleText || "\u65B0\u5BF9\u8BDD" });
+    }
+    sendEvent("done", { text: "" });
+    res.end();
+  } catch (e) {
+    sendEvent("error", { text: e.message });
+    res.end();
+  }
+});
+chatRouter.post("/image-gen", async (req, res) => {
+  const { prompt, conversationId } = req.body;
+  if (!prompt) return res.status(400).json({ error: "prompt \u5FC5\u586B" });
+  const apiKey = process.env.ZHIPU_API_KEY || "";
+  if (!apiKey) return res.status(500).json({ error: "ZHIPU_API_KEY \u672A\u914D\u7F6E" });
+  try {
+    const r = await fetch(`${ZHIPU_BASE}/images/generations`, {
+      method: "POST",
+      headers: zhipuHeaders(),
+      body: JSON.stringify({
+        model: "cogview-3-flash",
+        prompt
+      })
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      return res.status(500).json({ error: `\u56FE\u7247\u751F\u6210\u5931\u8D25: ${err}` });
+    }
+    const json2 = await r.json();
+    const imageUrl = json2.data?.[0]?.url || "";
+    if (conversationId && imageUrl) {
+      await sbPost("/messages", {
+        conversation_id: conversationId,
+        role: "assistant",
+        content: `![\u751F\u6210\u56FE\u7247](${imageUrl})`,
+        metadata: { type: "image", imageUrl, prompt }
+      });
+    }
+    res.json({ url: imageUrl });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // server/_core/index.ts
-if (!globalThis.crypto) {
-  globalThis.crypto = webcrypto;
-}
 function isPortAvailable(port) {
   return new Promise((resolve) => {
     const server = net.createServer();
@@ -4148,24 +4011,11 @@ async function findAvailablePort(startPort = 3e3) {
 async function startServer() {
   const app = express2();
   const server = createServer(app);
-  app.use(cors({
-    origin: [
-      "https://mcmamoo-website.pages.dev",
-      "https://www.mcmamoo.com",
-      "https://mcmamoo.com",
-      "https://api.mcmamoo.com",
-      /\.mcmamoo-website\.pages\.dev$/,
-      /\.mcmamoo\.com$/
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
-  }));
   app.use(express2.json({ limit: "50mb" }));
   app.use(express2.urlencoded({ limit: "50mb", extended: true }));
   registerOAuthRoutes(app);
-  registerSupabaseAuthRoutes(app);
-  app.use("/api/ai", aiStream_default);
+  app.use("/api/ai", aiNodesRouter);
+  app.use("/api/chat", chatRouter);
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -4176,11 +4026,7 @@ async function startServer() {
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
-    try {
-      serveStatic(app);
-    } catch (e) {
-      console.warn("[serveStatic] Failed to serve static files (API-only mode):", e);
-    }
+    serveStatic(app);
   }
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);

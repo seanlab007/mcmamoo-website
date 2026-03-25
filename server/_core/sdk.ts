@@ -257,16 +257,10 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Support both Cookie and Authorization Bearer header (for cross-origin scenarios)
+    // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
-
-    // Check Authorization header as fallback
-    const authHeader = req.headers.authorization;
-    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
-
-    const tokenToVerify = sessionCookie || bearerToken;
-    const session = await this.verifySession(tokenToVerify);
+    const session = await this.verifySession(sessionCookie);
 
     if (!session) {
       throw ForbiddenError("Invalid session cookie");
@@ -274,85 +268,20 @@ class SDKServer {
 
     const sessionUserId = session.openId;
     const signedInAt = new Date();
-
-    // Use Supabase REST API to look up user (avoids PostgreSQL direct connection issues)
-    const supabaseUrl = ENV.supabaseUrl;
-    const supabaseKey = process.env.SUPABASE_SERVICE_KEY || ENV.supabaseAnonKey;
-    let user: User | null = null;
-
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const resp = await fetch(
-          `${supabaseUrl}/rest/v1/users?openId=eq.${encodeURIComponent(sessionUserId)}&limit=1`,
-          {
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (resp.ok) {
-          const rows = await resp.json() as Record<string, unknown>[];
-          if (rows.length > 0) {
-            user = rows[0] as unknown as User;
-          }
-        } else {
-          console.error("[Auth] Supabase REST lookup failed:", resp.status, await resp.text());
-        }
-      } catch (err) {
-        console.error("[Auth] Supabase REST error:", err);
-      }
-    } else {
-      // Fallback to Drizzle ORM if Supabase not configured
-      user = await db.getUserByOpenId(sessionUserId);
-    }
+    let user = await db.getUserByOpenId(sessionUserId);
 
     // If user not in DB, sync from OAuth server automatically
     if (!user) {
       try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? bearerToken ?? "");
-        if (supabaseUrl && supabaseKey) {
-          await fetch(`${supabaseUrl}/rest/v1/users`, {
-            method: "POST",
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-              "Content-Type": "application/json",
-              Prefer: "resolution=merge-duplicates,return=minimal",
-            },
-            body: JSON.stringify({
-              openId: userInfo.openId,
-              name: userInfo.name || null,
-              email: userInfo.email ?? null,
-              loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-              lastSignedIn: signedInAt.toISOString(),
-            }),
-          });
-          // Re-fetch user
-          const resp2 = await fetch(
-            `${supabaseUrl}/rest/v1/users?openId=eq.${encodeURIComponent(userInfo.openId)}&limit=1`,
-            {
-              headers: {
-                apikey: supabaseKey,
-                Authorization: `Bearer ${supabaseKey}`,
-              },
-            }
-          );
-          if (resp2.ok) {
-            const rows2 = await resp2.json() as Record<string, unknown>[];
-            if (rows2.length > 0) user = rows2[0] as unknown as User;
-          }
-        } else {
-          await db.upsertUser({
-            openId: userInfo.openId,
-            name: userInfo.name || null,
-            email: userInfo.email ?? null,
-            loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-            lastSignedIn: signedInAt,
-          });
-          user = await db.getUserByOpenId(userInfo.openId);
-        }
+        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
+        await db.upsertUser({
+          openId: userInfo.openId,
+          name: userInfo.name || null,
+          email: userInfo.email ?? null,
+          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          lastSignedIn: signedInAt,
+        });
+        user = await db.getUserByOpenId(userInfo.openId);
       } catch (error) {
         console.error("[Auth] Failed to sync user from OAuth:", error);
         throw ForbiddenError("Failed to sync user info");
@@ -363,23 +292,10 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    // Update lastSignedIn via Supabase REST API
-    if (supabaseUrl && supabaseKey) {
-      fetch(`${supabaseUrl}/rest/v1/users?openId=eq.${encodeURIComponent(sessionUserId)}`, {
-        method: "PATCH",
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ lastSignedIn: signedInAt.toISOString() }),
-      }).catch(err => console.error("[Auth] Failed to update lastSignedIn:", err));
-    } else {
-      await db.upsertUser({
-        openId: user.openId,
-        lastSignedIn: signedInAt,
-      });
-    }
+    await db.upsertUser({
+      openId: user.openId,
+      lastSignedIn: signedInAt,
+    });
 
     return user;
   }

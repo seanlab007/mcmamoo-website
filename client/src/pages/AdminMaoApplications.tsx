@@ -1,18 +1,12 @@
-/*
+/**
  * AdminMaoApplications — 毛智库申请管理后台
  * 仅管理员可访问，查看和管理所有战略咨询申请
  * Features: 详情弹窗、备注、状态管理
- * Migrated: tRPC → Supabase direct
  */
-import { useState, useEffect } from "react";
-import {
-  adminListApplications,
-  adminUpdateApplicationStatus,
-  adminUpdateApplicationNotes,
-} from "@/lib/supabase";
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
-
-const ADMIN_PASSWORD = "maoyan2024admin";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending:   { label: "待审核",  color: "#C9A84C" },
@@ -33,74 +27,41 @@ type Application = {
   id: number;
   name: string;
   organization: string;
-  consult_type: string;
+  consultType: string;
   description: string | null;
   status: "pending" | "reviewing" | "approved" | "rejected";
   notes: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export default function AdminMaoApplications() {
-  const [authed, setAuthed] = useState(false);
-  const [pw, setPw] = useState("");
-  const [pwErr, setPwErr] = useState("");
-
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, loading } = useAuth();
   const [filter, setFilter] = useState<string>("all");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [notesInput, setNotesInput] = useState<string>("");
   const [savingNotes, setSavingNotes] = useState(false);
 
-  const fetchApplications = async () => {
-    setIsLoading(true);
-    try {
-      const data = await adminListApplications();
-      setApplications(data ?? []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: applications, isLoading, refetch } = trpc.mao.listApplications.useQuery(
+    undefined,
+    { enabled: !!user && user.role === "admin" }
+  );
 
-  useEffect(() => {
-    if (authed) fetchApplications();
-  }, [authed]);
+  const updateStatus = trpc.mao.updateApplicationStatus.useMutation({
+    onMutate: ({ id }: { id: number }) => setUpdatingId(id),
+    onSettled: () => { setUpdatingId(null); refetch(); },
+  });
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pw === ADMIN_PASSWORD) {
-      setAuthed(true);
-      setPwErr("");
-    } else {
-      setPwErr("密码错误");
-    }
-  };
-
-  const handleUpdateStatus = async (id: number, status: string) => {
-    setUpdatingId(id);
-    try {
-      await adminUpdateApplicationStatus(id, status);
-      await fetchApplications();
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const handleSaveNotes = async () => {
-    if (!selectedApp) return;
-    setSavingNotes(true);
-    try {
-      await adminUpdateApplicationNotes(selectedApp.id, notesInput);
-      await fetchApplications();
-      setSelectedApp({ ...selectedApp, notes: notesInput });
-    } finally {
+  const updateNotes = trpc.mao.updateApplicationNotes.useMutation({
+    onSettled: () => {
       setSavingNotes(false);
-    }
-  };
+      refetch();
+      if (selectedApp) {
+        setSelectedApp({ ...selectedApp, notes: notesInput });
+      }
+    },
+  });
 
   const openDetail = (app: Application) => {
     setSelectedApp(app);
@@ -112,31 +73,13 @@ export default function AdminMaoApplications() {
     setNotesInput("");
   };
 
-  // ── Login gate ────────────────────────────────────────────────────────────
-  if (!authed) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 16, width: 280 }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", color: "#C9A84C", letterSpacing: "0.2em", fontSize: "0.7rem", textAlign: "center" }}>
-            ADMIN — 毛智库管理后台
-          </div>
-          <input
-            type="password"
-            value={pw}
-            onChange={e => setPw(e.target.value)}
-            placeholder="管理员密码"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(201,168,76,0.3)", color: "#F5F0E8", padding: "10px 14px", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", outline: "none" }}
-          />
-          {pwErr && <div style={{ color: "#8B1A1A", fontSize: "0.65rem", fontFamily: "'DM Mono', monospace" }}>{pwErr}</div>}
-          <button type="submit" style={{ background: "#8B1A1A", color: "#E8D5B7", border: "none", padding: "10px", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.1em", cursor: "pointer" }}>
-            登录
-          </button>
-        </form>
-      </div>
-    );
-  }
+  const handleSaveNotes = () => {
+    if (!selectedApp) return;
+    setSavingNotes(true);
+    updateNotes.mutate({ id: selectedApp.id, notes: notesInput });
+  };
 
-  if (isLoading) {
+  if (loading || isLoading) {
     return (
       <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ fontFamily: "'DM Mono', monospace", color: "rgba(201,168,76,0.6)", letterSpacing: "0.2em", fontSize: "0.7rem" }}>
@@ -146,15 +89,30 @@ export default function AdminMaoApplications() {
     );
   }
 
-  const filtered = applications.filter(a =>
+  if (!user || user.role !== "admin") {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0A0A0A", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", color: "#8B1A1A", letterSpacing: "0.2em", fontSize: "0.75rem" }}>
+          ACCESS DENIED — 仅限管理员
+        </div>
+        <Link href="/">
+          <a style={{ fontFamily: "'DM Mono', monospace", color: "rgba(201,168,76,0.6)", fontSize: "0.65rem", letterSpacing: "0.15em", textDecoration: "none" }}>
+            ← 返回首页
+          </a>
+        </Link>
+      </div>
+    );
+  }
+
+  const filtered = (applications ?? []).filter(a =>
     filter === "all" ? true : a.status === filter
   );
 
   const counts = {
-    all:      applications.length,
-    pending:  applications.filter(a => a.status === "pending").length,
-    approved: applications.filter(a => a.status === "approved").length,
-    rejected: applications.filter(a => a.status === "rejected").length,
+    all:      applications?.length ?? 0,
+    pending:  applications?.filter(a => a.status === "pending").length ?? 0,
+    approved: applications?.filter(a => a.status === "approved").length ?? 0,
+    rejected: applications?.filter(a => a.status === "rejected").length ?? 0,
   };
 
   return (
@@ -186,11 +144,16 @@ export default function AdminMaoApplications() {
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <Link href="/admin/subscribers">
             <a style={{ fontFamily: "'DM Mono', monospace", color: "rgba(201,168,76,0.5)", fontSize: "0.6rem", letterSpacing: "0.12em", textDecoration: "none", border: "1px solid rgba(201,168,76,0.2)", padding: "6px 12px" }}>
-              订阅者列表 →
+              订阅者 →
+            </a>
+          </Link>
+          <Link href="/admin/ai-nodes">
+            <a style={{ fontFamily: "'DM Mono', monospace", color: "rgba(201,168,76,0.5)", fontSize: "0.6rem", letterSpacing: "0.12em", textDecoration: "none", border: "1px solid rgba(201,168,76,0.2)", padding: "6px 12px" }}>
+              AI 节点 →
             </a>
           </Link>
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.1em" }}>
-            ADMIN
+            {user.name} · ADMIN
           </div>
         </div>
       </div>
@@ -240,66 +203,111 @@ export default function AdminMaoApplications() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {filtered.map((app) => {
-              const statusInfo = STATUS_LABELS[app.status] ?? { label: app.status, color: "#C9A84C" };
-              const isUpdating = updatingId === app.id;
+              const statusInfo = STATUS_LABELS[app.status] ?? STATUS_LABELS.pending;
               return (
                 <div
                   key={app.id}
                   style={{
+                    background: "rgba(255,255,255,0.02)",
                     border: "1px solid rgba(139,26,26,0.2)",
-                    padding: "20px 24px",
-                    background: "rgba(255,255,255,0.01)",
-                    display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20,
-                    flexWrap: "wrap",
+                    borderLeft: `3px solid ${statusInfo.color}`,
+                    padding: "24px 28px",
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr auto",
+                    gap: 20,
+                    alignItems: "start",
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                      <span style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "1rem", color: "#F5F0E8", fontWeight: 700 }}>
-                        {app.name}
-                      </span>
-                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: statusInfo.color, border: `1px solid ${statusInfo.color}44`, padding: "2px 8px", letterSpacing: "0.1em" }}>
-                        {statusInfo.label}
-                      </span>
+                  {/* Applicant info */}
+                  <div>
+                    <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "1rem", color: "#F5F0E8", fontWeight: 600, marginBottom: 4 }}>
+                      {app.name}
                     </div>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "rgba(245,240,232,0.5)", marginBottom: 4 }}>
-                      {app.organization} · {DIRECTION_LABELS[app.consult_type] ?? app.consult_type}
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.7)", letterSpacing: "0.08em" }}>
+                      {app.organization}
                     </div>
-                    {app.description && (
-                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "rgba(245,240,232,0.4)", marginTop: 4, lineHeight: 1.6 }}>
-                        {app.description}
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "rgba(245,240,232,0.3)", marginTop: 6 }}>
+                      {new Date(app.createdAt).toLocaleString("zh-CN")}
+                    </div>
+                    {app.notes && (
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "rgba(74,144,217,0.7)", marginTop: 6, letterSpacing: "0.05em" }}>
+                        📝 有备注
                       </div>
                     )}
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "rgba(245,240,232,0.25)", marginTop: 8, letterSpacing: "0.1em" }}>
-                      {new Date(app.created_at).toLocaleString("zh-CN")}
+                  </div>
+
+                  {/* Direction */}
+                  <div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "rgba(245,240,232,0.4)", letterSpacing: "0.1em", marginBottom: 6, textTransform: "uppercase" }}>
+                      咨询方向
+                    </div>
+                    <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "0.85rem", color: "rgba(245,240,232,0.8)" }}>
+                      {DIRECTION_LABELS[app.consultType] ?? app.consultType}
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  {/* Message */}
+                  <div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "rgba(245,240,232,0.4)", letterSpacing: "0.1em", marginBottom: 6, textTransform: "uppercase" }}>
+                      简要说明
+                    </div>
+                    <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "0.8rem", color: "rgba(245,240,232,0.65)", lineHeight: 1.6, maxHeight: 60, overflow: "hidden" }}>
+                      {app.description || "—"}
+                    </div>
+                  </div>
+
+                  {/* Status + Actions */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+                    <div style={{
+                      fontFamily: "'DM Mono', monospace", fontSize: "0.6rem",
+                      color: statusInfo.color, letterSpacing: "0.12em",
+                      border: `1px solid ${statusInfo.color}44`,
+                      padding: "4px 10px",
+                    }}>
+                      {statusInfo.label}
+                    </div>
+                    {/* Detail button */}
                     <button
-                      onClick={() => openDetail(app)}
-                      style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.7)", border: "1px solid rgba(201,168,76,0.2)", padding: "6px 12px", background: "transparent", cursor: "pointer", letterSpacing: "0.1em" }}
+                      onClick={() => openDetail(app as Application)}
+                      style={{
+                        fontFamily: "'DM Mono', monospace", fontSize: "0.55rem",
+                        color: "rgba(201,168,76,0.7)", border: "1px solid rgba(201,168,76,0.25)",
+                        background: "transparent", padding: "6px 12px",
+                        cursor: "pointer", letterSpacing: "0.1em",
+                      }}
                     >
-                      详情
+                      详情 / 备注
                     </button>
-                    {Object.keys(STATUS_LABELS).filter(s => s !== app.status).map(s => (
-                      <button
-                        key={s}
-                        disabled={isUpdating}
-                        onClick={() => handleUpdateStatus(app.id, s)}
-                        style={{
-                          fontFamily: "'DM Mono', monospace", fontSize: "0.6rem",
-                          color: STATUS_LABELS[s].color,
-                          border: `1px solid ${STATUS_LABELS[s].color}44`,
-                          padding: "6px 12px", background: "transparent",
-                          cursor: isUpdating ? "not-allowed" : "pointer",
-                          opacity: isUpdating ? 0.5 : 1,
-                          letterSpacing: "0.1em",
-                        }}
-                      >
-                        → {STATUS_LABELS[s].label}
-                      </button>
-                    ))}
+                    {app.status === "pending" && (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          disabled={updatingId === app.id}
+                          onClick={() => updateStatus.mutate({ id: app.id, status: "approved" })}
+                          style={{
+                            fontFamily: "'DM Mono', monospace", fontSize: "0.55rem",
+                            color: "#27AE60", border: "1px solid #27AE6066",
+                            background: "transparent", padding: "6px 12px",
+                            cursor: "pointer", letterSpacing: "0.1em",
+                            opacity: updatingId === app.id ? 0.5 : 1,
+                          }}
+                        >
+                          批准
+                        </button>
+                        <button
+                          disabled={updatingId === app.id}
+                          onClick={() => updateStatus.mutate({ id: app.id, status: "rejected" })}
+                          style={{
+                            fontFamily: "'DM Mono', monospace", fontSize: "0.55rem",
+                            color: "#8B1A1A", border: "1px solid #8B1A1A66",
+                            background: "transparent", padding: "6px 12px",
+                            cursor: "pointer", letterSpacing: "0.1em",
+                            opacity: updatingId === app.id ? 0.5 : 1,
+                          }}
+                        >
+                          拒绝
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -308,47 +316,175 @@ export default function AdminMaoApplications() {
         )}
       </div>
 
-      {/* Detail modal */}
+      {/* Detail Modal */}
       {selectedApp && (
         <div
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
-          onClick={closeDetail}
+          style={{
+            position: "fixed", inset: 0, zIndex: 100,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeDetail(); }}
         >
-          <div
-            style={{ background: "#0D0D0D", border: "1px solid rgba(139,26,26,0.4)", padding: 32, maxWidth: 560, width: "100%", maxHeight: "80vh", overflowY: "auto" }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "#8B1A1A", letterSpacing: "0.2em", marginBottom: 16 }}>DETAIL — #{selectedApp.id}</div>
-            <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "1.2rem", color: "#F5F0E8", fontWeight: 700, marginBottom: 8 }}>{selectedApp.name}</div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "rgba(245,240,232,0.5)", marginBottom: 16 }}>
-              {selectedApp.organization} · {DIRECTION_LABELS[selectedApp.consult_type] ?? selectedApp.consult_type}
-            </div>
-            {selectedApp.description && (
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "rgba(245,240,232,0.6)", lineHeight: 1.8, marginBottom: 20, padding: "12px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                {selectedApp.description}
+          <div style={{
+            background: "#111111",
+            border: "1px solid rgba(139,26,26,0.4)",
+            borderTop: `3px solid ${STATUS_LABELS[selectedApp.status]?.color ?? "#C9A84C"}`,
+            width: "100%", maxWidth: 680,
+            maxHeight: "90vh", overflowY: "auto",
+            padding: "36px 40px",
+          }}>
+            {/* Modal header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+              <div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "#8B1A1A", letterSpacing: "0.2em", marginBottom: 6 }}>
+                  APPLICATION DETAIL
+                </div>
+                <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "1.3rem", color: "#F5F0E8", fontWeight: 700 }}>
+                  {selectedApp.name}
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "rgba(201,168,76,0.7)", marginTop: 4 }}>
+                  {selectedApp.organization}
+                </div>
               </div>
-            )}
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.15em", marginBottom: 8 }}>NOTES / 跟进记录</div>
-              <textarea
-                value={notesInput}
-                onChange={e => setNotesInput(e.target.value)}
-                rows={4}
-                style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,76,0.2)", color: "#F5F0E8", padding: "10px 12px", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", resize: "vertical", outline: "none", boxSizing: "border-box" }}
-                placeholder="记录跟进情况..."
-              />
-            </div>
-            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-              <button onClick={closeDetail} style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(245,240,232,0.4)", border: "1px solid rgba(255,255,255,0.1)", padding: "8px 16px", background: "transparent", cursor: "pointer" }}>
+              <button
+                onClick={closeDetail}
+                style={{
+                  background: "transparent", border: "1px solid rgba(255,255,255,0.1)",
+                  color: "rgba(245,240,232,0.5)", cursor: "pointer",
+                  fontFamily: "'DM Mono', monospace", fontSize: "0.65rem",
+                  padding: "6px 14px", letterSpacing: "0.1em",
+                }}
+              >
                 关闭
               </button>
-              <button
-                onClick={handleSaveNotes}
-                disabled={savingNotes}
-                style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "#E8D5B7", background: "#8B1A1A", border: "none", padding: "8px 16px", cursor: savingNotes ? "not-allowed" : "pointer", opacity: savingNotes ? 0.6 : 1 }}
-              >
-                {savingNotes ? "保存中..." : "保存备注"}
-              </button>
+            </div>
+
+            {/* Info grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+              <div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 6, textTransform: "uppercase" }}>
+                  咨询方向
+                </div>
+                <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: "0.9rem", color: "#F5F0E8" }}>
+                  {DIRECTION_LABELS[selectedApp.consultType] ?? selectedApp.consultType}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 6, textTransform: "uppercase" }}>
+                  当前状态
+                </div>
+                <div style={{
+                  display: "inline-block",
+                  fontFamily: "'DM Mono', monospace", fontSize: "0.65rem",
+                  color: STATUS_LABELS[selectedApp.status]?.color ?? "#C9A84C",
+                  border: `1px solid ${STATUS_LABELS[selectedApp.status]?.color ?? "#C9A84C"}44`,
+                  padding: "4px 12px",
+                }}>
+                  {STATUS_LABELS[selectedApp.status]?.label ?? selectedApp.status}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 6, textTransform: "uppercase" }}>
+                  申请时间
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", color: "rgba(245,240,232,0.6)" }}>
+                  {new Date(selectedApp.createdAt).toLocaleString("zh-CN")}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 6, textTransform: "uppercase" }}>
+                  更新时间
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", color: "rgba(245,240,232,0.6)" }}>
+                  {new Date(selectedApp.updatedAt).toLocaleString("zh-CN")}
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            {selectedApp.description && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 8, textTransform: "uppercase" }}>
+                  申请说明
+                </div>
+                <div style={{
+                  fontFamily: "'Noto Serif SC', serif", fontSize: "0.9rem",
+                  color: "rgba(245,240,232,0.75)", lineHeight: 1.8,
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                  padding: "16px 20px",
+                }}>
+                  {selectedApp.description}
+                </div>
+              </div>
+            )}
+
+            {/* Status actions */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 10, textTransform: "uppercase" }}>
+                更改状态
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {(["pending", "reviewing", "approved", "rejected"] as const).map((s) => (
+                  <button
+                    key={s}
+                    disabled={selectedApp.status === s || updatingId === selectedApp.id}
+                    onClick={() => {
+                      updateStatus.mutate({ id: selectedApp.id, status: s });
+                      setSelectedApp({ ...selectedApp, status: s });
+                    }}
+                    style={{
+                      fontFamily: "'DM Mono', monospace", fontSize: "0.6rem",
+                      color: selectedApp.status === s ? STATUS_LABELS[s].color : "rgba(245,240,232,0.4)",
+                      border: `1px solid ${selectedApp.status === s ? STATUS_LABELS[s].color + "66" : "rgba(255,255,255,0.1)"}`,
+                      background: selectedApp.status === s ? `${STATUS_LABELS[s].color}15` : "transparent",
+                      padding: "8px 16px", cursor: selectedApp.status === s ? "default" : "pointer",
+                      letterSpacing: "0.1em", transition: "all 0.2s",
+                    }}
+                  >
+                    {STATUS_LABELS[s].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.5rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", marginBottom: 8, textTransform: "uppercase" }}>
+                内部备注
+              </div>
+              <textarea
+                value={notesInput}
+                onChange={(e) => setNotesInput(e.target.value)}
+                placeholder="添加跟进记录、内部备注..."
+                rows={5}
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "rgba(245,240,232,0.8)",
+                  fontFamily: "'Noto Serif SC', serif", fontSize: "0.85rem",
+                  lineHeight: 1.7, padding: "14px 16px",
+                  resize: "vertical", outline: "none",
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                <button
+                  disabled={savingNotes}
+                  onClick={handleSaveNotes}
+                  style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: "0.6rem",
+                    color: savingNotes ? "rgba(201,168,76,0.4)" : "#C9A84C",
+                    border: "1px solid rgba(201,168,76,0.4)",
+                    background: "transparent", padding: "10px 24px",
+                    cursor: savingNotes ? "default" : "pointer",
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  {savingNotes ? "保存中..." : "保存备注"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

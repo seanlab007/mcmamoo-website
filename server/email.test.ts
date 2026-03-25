@@ -18,7 +18,7 @@ describe("generateNewsletterHtml", () => {
 
   it("should include brand name", () => {
     const html = generateNewsletterHtml("主题", "内容");
-    expect(html).toContain("猫眼增长引擎");
+    expect(html).toContain("猫眼咨询");
   });
 
   it("should include unsubscribe notice", () => {
@@ -56,7 +56,7 @@ describe("generateContactConfirmationHtml", () => {
 
   it("should include brand name", () => {
     const html = generateContactConfirmationHtml("张三", "ABC公司");
-    expect(html).toContain("猫眼增长引擎");
+    expect(html).toContain("猫眼咨询");
   });
 
   it("should include response time promise", () => {
