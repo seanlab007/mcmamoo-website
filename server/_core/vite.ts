@@ -4,7 +4,7 @@ import { type Server } from "http";
 import { nanoid } from "nanoid";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import viteConfig from "../../vite.config";
+// vite.config is loaded dynamically to avoid loading tailwindcss in production
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -13,6 +13,7 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true as const,
   };
 
+  const viteConfig = await import("../../vite.config").then(m => m.default || m);
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
