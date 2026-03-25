@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "home": "Ana Sayfa",
+    "about": "Hakkımızda",
+    "kol": "KOL",
+    "services": "Hizmetler",
+    "cases": "Vakalar",
+    "awards": "Ödüller",
+    "contact": "İletişim",
+    "bookConsultation": "Danışma Rezervasyonu",
+    "maoIndustry": "Mao Industry",
+    "maoIndustryHome": "Sanayi Ana Sayfa",
+    "millenniumClock": "Milenyum Saati",
+    "cooperation": "Ortaklık"
+  },
+  "hero": {
+    "label": "Küresel Premium Marka Yönetimi",
+    "subtitle": "Marka Karınızı Katlayın",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Markaları premium yapın · Karı katlayın · Tüm kanallarda büyüyün",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Marka Tanısı Rezervasyonu",
+    "cta2": "Küresel Vakaları Görüntüle",
+    "ipBadge": "Stratejik Ortak ABG · 15+ Küresel IP Lisansı",
+    "whaleBadge": "Whale Pictures · Film Yapımı"
+  },
+  "about": {
+    "title": "Hakkımızda",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo, Chicago ve Şanghay merkezli, Dark Matter Capital tarafından desteklenen uluslararası bir premium marka yönetim firmasıdır.",
+    "mission": "Misyon",
+    "missionText": "Her değerli markanın daha fazla insana ulaşmasını sağlamak",
+    "vision": "Vizyon",
+    "visionText": "Dünyanın en güvenilir marka büyüme ortağı olmak",
+    "values": "Değerler",
+    "valuesText": "Dürüstlük · Yenilik · Karşılıklı Başarı"
+  },
+  "services": {
+    "title": "Temel Hizmetler",
+    "subtitle": "Omnichannel Büyüme Çözümleri",
+    "brand": "Marka Stratejisi",
+    "brandDesc": "Konumlandırmadan görsel sisteme, farklılaştırılmış marka varlıkları oluşturma",
+    "digital": "Dijital Pazarlama",
+    "digitalDesc": "Hedef kitlelere hassas ulaşım için entegre omnichannel pazarlama",
+    "kol": "KOL Pazarlama",
+    "kolDesc": "Entegre içerik dağıtımı ve dönüşüm ile üst düzey influencer matrisi",
+    "growth": "Büyüme Danışmanlığı",
+    "growthDesc": "Sürekli GMV atılımları için veri odaklı büyüme stratejileri"
+  },
+  "maoIndustry": {
+    "title": "Mao Industry",
+    "subtitle": "Endüstriyel Teknoloji Bölümü",
+    "description": "Geleceğe yönelik endüstriyel teknoloji portföyü — ay enerjisinden savunma üretimine.",
+    "helium3": "Ay Helyum-3 Enerjisi",
+    "helium3Desc": "Dünya'ya temiz füzyon enerjisi sağlamak için ay He-3 kaynakları araştırma ve çıkarımında öncü",
+    "tokamak": "Tokamak Cihazı Ar-Ge",
+    "tokamakDesc": "Yeni nesil manyetik hapsedilmiş füzyon cihazlarının bağımsız geliştirilmesi",
+    "military": "Savunma Üretimi",
+    "militaryDesc": "Yüksek hassasiyetli savunma bileşenleri üretimi ve sistem entegrasyonu",
+    "partners": "Stratejik Ortaklar",
+    "cooperationTitle": "Stratejik Ortaklık Başvurusu",
+    "cooperationDesc": "Mao Industry ile stratejik işbirliğine ilgi duyuyorsanız lütfen aşağıdaki bilgileri doldurun."
+  },
+  "millenniumClock": {
+    "title": "Milenyum Saati",
+    "subtitle": "Her 10.000 yılda bir tik",
+    "description": "Düşünür Sean DAI tarafından icat edilmiş, insanlığı ultra uzun vadeli düşünmeye hatırlatmak için tasarlanmış bir saat.",
+    "inventor": "Mucit",
+    "inventorName": "Sean DAI",
+    "reserve": "Rezervasyon / Satın Alma Sorgusu",
+    "reserveDesc": "Bilgilerinizi doldurun, sizinle iletişime geçeceğiz"
+  },
+  "contact": {
+    "title": "Bize Ulaşın",
+    "subtitle": "Marka Büyüme Yolculuğunuza Başlayın",
+    "name": "Ad",
+    "email": "E-posta",
+    "company": "Şirket",
+    "message": "Mesaj",
+    "submit": "Gönder",
+    "phone": "Telefon",
+    "address": "Adres"
+  },
+  "footer": {
+    "rights": "Tüm hakları saklıdır",
+    "privacy": "Gizlilik Politikası",
+    "terms": "Hizmet Koşulları"
+  },
+  "common": {
+    "learnMore": "Daha fazla bilgi",
+    "contactUs": "Bize ulaşın",
+    "viewAll": "Tümünü görüntüle",
+    "back": "Geri",
+    "submit": "Gönder",
+    "cancel": "İptal",
+    "loading": "Yükleniyor...",
+    "success": "Başarıyla gönderildi",
+    "error": "Gönderme başarısız, lütfen tekrar deneyin"
+  }
+}
