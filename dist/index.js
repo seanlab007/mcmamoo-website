@@ -18,6 +18,7 @@ __export(db_exports, {
   createMessage: () => createMessage,
   createMillenniumClockReservation: () => createMillenniumClockReservation,
   createNodeLog: () => createNodeLog,
+  createPaymentOrder: () => createPaymentOrder,
   createRoutingRule: () => createRoutingRule,
   deleteAiNode: () => deleteAiNode,
   deleteContentCopy: () => deleteContentCopy,
@@ -32,13 +33,19 @@ __export(db_exports, {
   getMillenniumClockReservations: () => getMillenniumClockReservations,
   getNodeLogs: () => getNodeLogs,
   getNodeStats: () => getNodeStats,
+  getPaymentOrders: () => getPaymentOrders,
   getRoutingRules: () => getRoutingRules,
+  getTodayUsage: () => getTodayUsage,
   getUserByOpenId: () => getUserByOpenId,
+  getUserSubscription: () => getUserSubscription,
+  incrementUsage: () => incrementUsage,
   updateAiNode: () => updateAiNode,
   updateContentCopyStatus: () => updateContentCopyStatus,
   updateConversation: () => updateConversation,
   updateNodePingStatus: () => updateNodePingStatus,
+  updatePaymentOrder: () => updatePaymentOrder,
   updateRoutingRule: () => updateRoutingRule,
+  upsertSubscription: () => upsertSubscription,
   upsertUser: () => upsertUser
 });
 function getHeaders() {
@@ -244,6 +251,92 @@ async function createMillenniumClockReservation(data) {
 async function getMillenniumClockReservations() {
   return supabaseGet("millennium_clock_reservations", "order=createdAt.desc&limit=200");
 }
+async function getUserSubscription(userId) {
+  const rows = await supabaseGet(
+    "subscriptions",
+    `userId=eq.${userId}&status=eq.active&order=createdAt.desc&limit=1`
+  );
+  return rows[0] ?? null;
+}
+async function upsertSubscription(data) {
+  const existing = await supabaseGet(
+    "subscriptions",
+    `userId=eq.${data.userId}&limit=1`
+  );
+  if (existing.length > 0) {
+    await supabasePatch("subscriptions", `userId=eq.${data.userId}`, {
+      tier: data.tier,
+      status: data.status ?? "active",
+      currentPeriodStart: data.currentPeriodStart ?? (/* @__PURE__ */ new Date()).toISOString(),
+      currentPeriodEnd: data.currentPeriodEnd ?? null,
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  } else {
+    await supabaseInsert("subscriptions", {
+      userId: data.userId,
+      tier: data.tier,
+      status: data.status ?? "active",
+      currentPeriodStart: data.currentPeriodStart ?? (/* @__PURE__ */ new Date()).toISOString(),
+      currentPeriodEnd: data.currentPeriodEnd ?? null,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  }
+}
+async function createPaymentOrder(data) {
+  return supabaseInsert("payment_orders", {
+    ...data,
+    status: "pending",
+    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  });
+}
+async function updatePaymentOrder(id, data) {
+  await supabasePatch("payment_orders", `id=eq.${id}`, {
+    ...data,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  });
+}
+async function getPaymentOrders(userId) {
+  return supabaseGet(
+    "payment_orders",
+    `userId=eq.${userId}&order=createdAt.desc&limit=50`
+  );
+}
+function todayStr() {
+  return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+}
+async function getTodayUsage(userId) {
+  const date = todayStr();
+  const rows = await supabaseGet(
+    "usage_records",
+    `userId=eq.${userId}&date=eq.${date}&limit=1`
+  );
+  return rows[0] ?? { userId, date, chatMessages: 0, imageGenerations: 0 };
+}
+async function incrementUsage(userId, field) {
+  const date = todayStr();
+  const existing = await supabaseGet(
+    "usage_records",
+    `userId=eq.${userId}&date=eq.${date}&limit=1`
+  );
+  if (existing.length > 0) {
+    const current = existing[0][field] ?? 0;
+    await supabasePatch("usage_records", `userId=eq.${userId}&date=eq.${date}`, {
+      [field]: current + 1,
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  } else {
+    await supabaseInsert("usage_records", {
+      userId,
+      date,
+      chatMessages: field === "chatMessages" ? 1 : 0,
+      imageGenerations: field === "imageGenerations" ? 1 : 0,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  }
+}
 var SUPABASE_URL, SUPABASE_KEY;
 var init_db = __esm({
   "server/db.ts"() {
@@ -364,6 +457,119 @@ var init_notification = __esm({
       }
       return { title, content };
     };
+  }
+});
+
+// server/storage.ts
+function getStorageConfig() {
+  const baseUrl = ENV.forgeApiUrl;
+  const apiKey = ENV.forgeApiKey;
+  if (!baseUrl || !apiKey) {
+    throw new Error(
+      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
+    );
+  }
+  return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
+}
+function buildUploadUrl(baseUrl, relKey) {
+  const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
+  url.searchParams.set("path", normalizeKey(relKey));
+  return url;
+}
+function ensureTrailingSlash(value) {
+  return value.endsWith("/") ? value : `${value}/`;
+}
+function normalizeKey(relKey) {
+  return relKey.replace(/^\/+/, "");
+}
+function toFormData(data, contentType, fileName) {
+  const blob = typeof data === "string" ? new Blob([data], { type: contentType }) : new Blob([data], { type: contentType });
+  const form = new FormData();
+  form.append("file", blob, fileName || "file");
+  return form;
+}
+function buildAuthHeaders(apiKey) {
+  return { Authorization: `Bearer ${apiKey}` };
+}
+async function storagePut(relKey, data, contentType = "application/octet-stream") {
+  const { baseUrl, apiKey } = getStorageConfig();
+  const key = normalizeKey(relKey);
+  const uploadUrl = buildUploadUrl(baseUrl, key);
+  const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    headers: buildAuthHeaders(apiKey),
+    body: formData
+  });
+  if (!response.ok) {
+    const message = await response.text().catch(() => response.statusText);
+    throw new Error(
+      `Storage upload failed (${response.status} ${response.statusText}): ${message}`
+    );
+  }
+  const url = (await response.json()).url;
+  return { key, url };
+}
+var init_storage = __esm({
+  "server/storage.ts"() {
+    "use strict";
+    init_env();
+  }
+});
+
+// server/_core/imageGeneration.ts
+var imageGeneration_exports = {};
+__export(imageGeneration_exports, {
+  generateImage: () => generateImage
+});
+async function generateImage(options) {
+  if (!ENV.forgeApiUrl) {
+    throw new Error("BUILT_IN_FORGE_API_URL is not configured");
+  }
+  if (!ENV.forgeApiKey) {
+    throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
+  }
+  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
+  const fullUrl = new URL(
+    "images.v1.ImageService/GenerateImage",
+    baseUrl
+  ).toString();
+  const response = await fetch(fullUrl, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      "connect-protocol-version": "1",
+      authorization: `Bearer ${ENV.forgeApiKey}`
+    },
+    body: JSON.stringify({
+      prompt: options.prompt,
+      original_images: options.originalImages || []
+    })
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(
+      `Image generation request failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
+    );
+  }
+  const result = await response.json();
+  const base64Data = result.image.b64Json;
+  const buffer = Buffer.from(base64Data, "base64");
+  const { url } = await storagePut(
+    `generated/${Date.now()}.png`,
+    buffer,
+    result.image.mimeType
+  );
+  return {
+    url
+  };
+}
+var init_imageGeneration = __esm({
+  "server/_core/imageGeneration.ts"() {
+    "use strict";
+    init_storage();
+    init_env();
   }
 });
 
@@ -1010,6 +1216,248 @@ var systemRouter = router({
 // server/routers.ts
 init_db();
 
+// shared/plans.ts
+var PLAN_LIMITS = {
+  starter: {
+    dailyChatMessages: 100,
+    dailyImageGenerations: 5,
+    maxConversations: 50,
+    premiumModels: false,
+    imageGeneration: true,
+    priorityQueue: false,
+    fileUpload: false,
+    brandStrategy: false,
+    accountManager: false,
+    customPersona: false,
+    apiAccess: false,
+    teamSeats: 1
+  },
+  pro: {
+    dailyChatMessages: 1e3,
+    dailyImageGenerations: 100,
+    maxConversations: -1,
+    premiumModels: true,
+    imageGeneration: true,
+    priorityQueue: true,
+    fileUpload: true,
+    brandStrategy: false,
+    accountManager: false,
+    customPersona: true,
+    apiAccess: true,
+    teamSeats: 3
+  },
+  flagship: {
+    dailyChatMessages: -1,
+    dailyImageGenerations: -1,
+    maxConversations: -1,
+    premiumModels: true,
+    imageGeneration: true,
+    priorityQueue: true,
+    fileUpload: true,
+    brandStrategy: true,
+    accountManager: true,
+    customPersona: true,
+    apiAccess: true,
+    teamSeats: 10
+  }
+};
+var PLAN_PRICES = {
+  // ── 入门版 ──────────────────────────────────────────────────────────────────
+  starter: {
+    CNY: {
+      monthly: { total: 99, perMonth: 99, months: 1, savingPct: 0 },
+      biannual: { total: 560, perMonth: 93, months: 6, savingPct: 6, anchorLabel: { zh: "\u7701 \xA534", en: "Save \xA534" } },
+      annual: { total: 980, perMonth: 82, months: 12, savingPct: 17, anchorLabel: { zh: "\u7701 \xA5208", en: "Save \xA5208" } },
+      lifetime: { total: 3980, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "\u4E00\u6B21\u4E70\u65AD", en: "One-time" } }
+    },
+    USD: {
+      monthly: { total: 13.99, perMonth: 13.99, months: 1, savingPct: 0 },
+      biannual: { total: 79.99, perMonth: 13.33, months: 6, savingPct: 5, anchorLabel: { zh: "Save $4", en: "Save $4" } },
+      annual: { total: 139.99, perMonth: 11.67, months: 12, savingPct: 17, anchorLabel: { zh: "Save $28", en: "Save $28" } },
+      lifetime: { total: 549.99, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "One-time", en: "One-time" } }
+    }
+  },
+  // ── 专业版 ──────────────────────────────────────────────────────────────────
+  pro: {
+    CNY: {
+      monthly: { total: 398, perMonth: 398, months: 1, savingPct: 0 },
+      biannual: { total: 2280, perMonth: 380, months: 6, savingPct: 5, anchorLabel: { zh: "\u7701 \xA5108", en: "Save \xA5108" } },
+      annual: { total: 3980, perMonth: 332, months: 12, savingPct: 17, anchorLabel: { zh: "\u7701 \xA5796", en: "Save \xA5796" } },
+      lifetime: { total: 15800, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "\u4E00\u6B21\u4E70\u65AD", en: "One-time" } }
+    },
+    USD: {
+      monthly: { total: 54.99, perMonth: 54.99, months: 1, savingPct: 0 },
+      biannual: { total: 319.99, perMonth: 53.33, months: 6, savingPct: 3, anchorLabel: { zh: "Save $10", en: "Save $10" } },
+      annual: { total: 549.99, perMonth: 45.83, months: 12, savingPct: 17, anchorLabel: { zh: "Save $110", en: "Save $110" } },
+      lifetime: { total: 2199.99, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "One-time", en: "One-time" } }
+    }
+  },
+  // ── 品牌全案旗舰版 ──────────────────────────────────────────────────────────
+  flagship: {
+    CNY: {
+      monthly: { total: 998, perMonth: 998, months: 1, savingPct: 0 },
+      biannual: { total: 5680, perMonth: 947, months: 6, savingPct: 5, anchorLabel: { zh: "\u7701 \xA5308", en: "Save \xA5308" } },
+      annual: { total: 9980, perMonth: 832, months: 12, savingPct: 17, anchorLabel: { zh: "\u7701 \xA51996", en: "Save \xA51996" } },
+      lifetime: { total: 39800, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "\u4E00\u6B21\u4E70\u65AD", en: "One-time" } }
+    },
+    USD: {
+      monthly: { total: 138.99, perMonth: 138.99, months: 1, savingPct: 0 },
+      biannual: { total: 799.99, perMonth: 133.33, months: 6, savingPct: 4, anchorLabel: { zh: "Save $34", en: "Save $34" } },
+      annual: { total: 1399.99, perMonth: 116.67, months: 12, savingPct: 16, anchorLabel: { zh: "Save $268", en: "Save $268" } },
+      lifetime: { total: 5599.99, perMonth: 0, months: 0, savingPct: 0, anchorLabel: { zh: "One-time", en: "One-time" } }
+    }
+  }
+};
+var PLAN_META = {
+  starter: {
+    name: { zh: "\u5165\u95E8\u7248", en: "Starter" },
+    tagline: { zh: "\u8F7B\u677E\u4E0A\u624B AI \u521B\u4F5C", en: "Get started with AI" },
+    badge: "\u{1F431}",
+    highlighted: false,
+    accentColor: "text-sky-400",
+    accentBg: "bg-sky-400/10",
+    accentBorder: "border-sky-400/30"
+  },
+  pro: {
+    name: { zh: "\u4E13\u4E1A\u7248", en: "Pro" },
+    tagline: { zh: "\u9AD8\u9891\u4F7F\u7528 \xB7 \u5168\u6A21\u578B\u89E3\u9501", en: "Unlock all models & priority" },
+    badge: "\u26A1",
+    highlighted: true,
+    accentColor: "text-[#C9A84C]",
+    accentBg: "bg-[#C9A84C]/10",
+    accentBorder: "border-[#C9A84C]/40"
+  },
+  flagship: {
+    name: { zh: "\u54C1\u724C\u5168\u6848\u65D7\u8230\u7248", en: "Flagship" },
+    tagline: { zh: "\u65E0\u9650\u4F7F\u7528 \xB7 \u54C1\u724C\u6218\u7565 \xB7 \u4E13\u5C5E\u987E\u95EE", en: "Unlimited \xB7 Brand strategy \xB7 Dedicated manager" },
+    badge: "\u{1F451}",
+    highlighted: false,
+    accentColor: "text-purple-400",
+    accentBg: "bg-purple-500/10",
+    accentBorder: "border-purple-500/40"
+  }
+};
+var FEATURE_ROWS = [
+  // AI 对话
+  {
+    key: "chat",
+    category: "AI \u5BF9\u8BDD",
+    label: { zh: "\u6BCF\u65E5\u5BF9\u8BDD\u6B21\u6570", en: "Daily chat messages" },
+    starter: "100 \u6B21/\u5929",
+    pro: "1,000 \u6B21/\u5929",
+    flagship: "\u65E0\u9650\u5236"
+  },
+  {
+    key: "models",
+    category: "AI \u5BF9\u8BDD",
+    label: { zh: "\u57FA\u7840\u6A21\u578B\uFF08DeepSeek V3\u3001GLM-4 Flash\uFF09", en: "Basic models" },
+    starter: true,
+    pro: true,
+    flagship: true
+  },
+  {
+    key: "premium_models",
+    category: "AI \u5BF9\u8BDD",
+    label: { zh: "\u9AD8\u7EA7\u6A21\u578B\uFF08DeepSeek R1\u3001GLM-4 Plus\uFF09", en: "Premium models (R1, GLM-4+)" },
+    starter: false,
+    pro: true,
+    flagship: true
+  },
+  {
+    key: "priority",
+    category: "AI \u5BF9\u8BDD",
+    label: { zh: "\u4F18\u5148\u54CD\u5E94\u961F\u5217\uFF08\u66F4\u5FEB\u56DE\u590D\uFF09", en: "Priority response queue" },
+    starter: false,
+    pro: true,
+    flagship: true
+  },
+  // 图像生成
+  {
+    key: "image_gen",
+    category: "\u56FE\u50CF\u751F\u6210",
+    label: { zh: "nano banana \u56FE\u50CF\u751F\u6210", en: "nano banana image gen" },
+    starter: "5 \u6B21/\u5929",
+    pro: "100 \u6B21/\u5929",
+    flagship: "\u65E0\u9650\u5236"
+  },
+  // 文件与数据
+  {
+    key: "file",
+    category: "\u6587\u4EF6\u4E0E\u6570\u636E",
+    label: { zh: "\u6587\u4EF6\u4E0A\u4F20\u4E0E\u5206\u6790\uFF08PDF\u3001Word\u3001\u8868\u683C\uFF09", en: "File upload & analysis" },
+    starter: false,
+    pro: true,
+    flagship: true
+  },
+  {
+    key: "persona",
+    category: "\u6587\u4EF6\u4E0E\u6570\u636E",
+    label: { zh: "\u81EA\u5B9A\u4E49 AI \u4EBA\u8BBE / \u7CFB\u7EDF\u63D0\u793A\u8BCD", en: "Custom AI persona / system prompt" },
+    starter: false,
+    pro: true,
+    flagship: true
+  },
+  // 历史与存储
+  {
+    key: "history",
+    category: "\u5386\u53F2\u4E0E\u5B58\u50A8",
+    label: { zh: "\u5BF9\u8BDD\u5386\u53F2\u4FDD\u5B58", en: "Conversation history" },
+    starter: "\u6700\u8FD1 50 \u6761",
+    pro: "\u65E0\u9650\u5236",
+    flagship: "\u65E0\u9650\u5236"
+  },
+  // API
+  {
+    key: "api",
+    category: "API \u4E0E\u96C6\u6210",
+    label: { zh: "API \u63A5\u5165\uFF08\u5F00\u53D1\u8005\u8C03\u7528\uFF09", en: "API access" },
+    starter: false,
+    pro: true,
+    flagship: true
+  },
+  {
+    key: "seats",
+    category: "API \u4E0E\u96C6\u6210",
+    label: { zh: "\u56E2\u961F\u5E2D\u4F4D", en: "Team seats" },
+    starter: "1 \u5E2D",
+    pro: "3 \u5E2D",
+    flagship: "10 \u5E2D"
+  },
+  // 品牌服务（旗舰版专属）
+  {
+    key: "brand",
+    category: "\u54C1\u724C\u5168\u6848\u670D\u52A1",
+    label: { zh: "\u54C1\u724C\u6218\u7565 AI \u5206\u6790\u62A5\u544A", en: "Brand strategy AI reports" },
+    starter: false,
+    pro: false,
+    flagship: true
+  },
+  {
+    key: "manager",
+    category: "\u54C1\u724C\u5168\u6848\u670D\u52A1",
+    label: { zh: "\u4E13\u5C5E\u5BA2\u6237\u7ECF\u7406\uFF081v1 \u670D\u52A1\uFF09", en: "Dedicated account manager" },
+    starter: false,
+    pro: false,
+    flagship: true
+  },
+  // 支持
+  {
+    key: "support",
+    category: "\u5BA2\u670D\u652F\u6301",
+    label: { zh: "\u5BA2\u670D\u652F\u6301", en: "Customer support" },
+    starter: "\u793E\u533A\u8BBA\u575B",
+    pro: "\u90AE\u4EF6\u4F18\u5148\u54CD\u5E94",
+    flagship: "\u4E13\u5C5E 1v1 \u5FAE\u4FE1"
+  }
+];
+var PAYMENT_PROVIDERS = [
+  { id: "alipay", name: { zh: "\u652F\u4ED8\u5B9D", en: "Alipay" }, currencies: ["CNY"], available: false, color: "text-blue-400" },
+  { id: "wechatpay", name: { zh: "\u5FAE\u4FE1\u652F\u4ED8", en: "WeChat Pay" }, currencies: ["CNY"], available: false, color: "text-green-400" },
+  { id: "lianpay", name: { zh: "\u8FDE\u8FDE\u652F\u4ED8", en: "LianLian Pay" }, currencies: ["CNY", "USD"], available: false, color: "text-orange-400" },
+  { id: "paypal", name: { zh: "PayPal", en: "PayPal" }, currencies: ["USD"], available: false, color: "text-sky-400" },
+  { id: "stripe", name: { zh: "Stripe", en: "Stripe" }, currencies: ["USD"], available: false, color: "text-violet-400" }
+];
+
 // server/_core/llm.ts
 init_env();
 var ensureArray = (value) => Array.isArray(value) ? value : [value];
@@ -1551,6 +1999,124 @@ Required structure:
         body: JSON.stringify({ status: input.status })
       });
       if (!resp.ok) throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "\u66F4\u65B0\u5931\u8D25" });
+      return { success: true };
+    })
+  }),
+  // ─── Billing & Subscriptions ──────────────────────────────────────────────────
+  billing: router({
+    // Get plan definitions (public)
+    plans: publicProcedure.query(() => ({
+      limits: PLAN_LIMITS,
+      prices: PLAN_PRICES,
+      meta: PLAN_META,
+      features: FEATURE_ROWS,
+      providers: PAYMENT_PROVIDERS
+    })),
+    // Get current user's subscription and today's usage
+    mySubscription: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      const usage = await getTodayUsage(ctx.user.id);
+      const rawTier = sub?.tier ?? "free";
+      const tierMap = {
+        free: "free",
+        starter: "starter",
+        pro: "pro",
+        max: "flagship",
+        flagship: "flagship"
+      };
+      const tier = tierMap[rawTier] ?? "starter";
+      const FREE_LIMITS = {
+        dailyChatMessages: 20,
+        dailyImageGenerations: 0,
+        maxConversations: 10,
+        premiumModels: false,
+        imageGeneration: false,
+        priorityQueue: false,
+        fileUpload: false,
+        brandStrategy: false,
+        accountManager: false,
+        customPersona: false,
+        apiAccess: false,
+        teamSeats: 1
+      };
+      const limits = rawTier === "free" ? FREE_LIMITS : PLAN_LIMITS[tier];
+      return {
+        tier,
+        status: sub?.status ?? "active",
+        currentPeriodEnd: sub?.currentPeriodEnd ?? null,
+        usage: {
+          chatMessages: usage.chatMessages ?? 0,
+          imageGenerations: usage.imageGenerations ?? 0
+        },
+        limits
+      };
+    }),
+    // Get payment history
+    paymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      return getPaymentOrders(ctx.user.id);
+    }),
+    // Create a payment order (stub — actual payment URL filled by provider webhook)
+    createOrder: protectedProcedure.input(z2.object({
+      tier: z2.enum(["starter", "pro", "flagship"]),
+      provider: z2.enum(["alipay", "lianpay", "paypal", "stripe", "wechatpay", "manual"]),
+      currency: z2.enum(["CNY", "USD"]),
+      billingCycle: z2.enum(["monthly", "biannual", "annual", "lifetime"]).default("monthly")
+    })).mutation(async ({ ctx, input }) => {
+      const tierPrices = PLAN_PRICES[input.tier];
+      const cyclePrices = tierPrices[input.currency];
+      const pricing = cyclePrices[input.billingCycle];
+      const amount = pricing.total;
+      const order = await createPaymentOrder({
+        userId: ctx.user.id,
+        tier: input.tier,
+        provider: input.provider,
+        currency: input.currency,
+        amount: amount.toFixed(2),
+        metadata: JSON.stringify({ billingCycle: input.billingCycle, perMonth: pricing.perMonth })
+      });
+      return {
+        orderId: order.id,
+        status: "pending",
+        amount,
+        currency: input.currency,
+        paymentUrl: null,
+        message: "\u652F\u4ED8\u63A5\u53E3\u63A5\u5165\u4E2D\uFF0C\u8BF7\u8054\u7CFB\u5BA2\u670D\u5B8C\u6210\u652F\u4ED8"
+      };
+    }),
+    // Admin: manually activate a subscription (for manual payments / testing)
+    adminActivate: adminProcedure2.input(z2.object({
+      userId: z2.number(),
+      tier: z2.enum(["free", "starter", "pro", "flagship"]),
+      durationDays: z2.number().default(30)
+    })).mutation(async ({ input }) => {
+      const start = /* @__PURE__ */ new Date();
+      const end = new Date(start);
+      end.setDate(end.getDate() + input.durationDays);
+      await upsertSubscription({
+        userId: input.userId,
+        tier: input.tier,
+        status: "active",
+        currentPeriodStart: start.toISOString(),
+        currentPeriodEnd: input.tier === "free" ? null : end.toISOString()
+      });
+      return { success: true };
+    }),
+    // Webhook stub: called by payment provider after successful payment
+    // In production, verify signature from provider before trusting this
+    paymentWebhook: publicProcedure.input(z2.object({
+      orderId: z2.number(),
+      externalOrderId: z2.string().optional(),
+      provider: z2.string(),
+      status: z2.enum(["paid", "failed", "refunded"])
+    })).mutation(async ({ input }) => {
+      await updatePaymentOrder(input.orderId, {
+        status: input.status,
+        externalOrderId: input.externalOrderId,
+        paidAt: input.status === "paid" ? (/* @__PURE__ */ new Date()).toISOString() : void 0
+      });
+      if (input.status === "paid") {
+        const orders = await getPaymentOrders(0);
+      }
       return { success: true };
     })
   }),
@@ -2315,6 +2881,29 @@ setInterval(async () => {
   } catch {
   }
 }, 60 * 1e3);
+aiStreamRouter.post("/image/generate", async (req, res) => {
+  try {
+    const user = await sdk.authenticateRequest(req);
+    if (!user) {
+      res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
+      return;
+    }
+    const { prompt, originalImages } = req.body;
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      res.status(400).json({ error: "\u8BF7\u63D0\u4F9B\u56FE\u50CF\u63CF\u8FF0 (prompt)" });
+      return;
+    }
+    const { generateImage: generateImage2 } = await Promise.resolve().then(() => (init_imageGeneration(), imageGeneration_exports));
+    const result = await generateImage2({
+      prompt: prompt.trim(),
+      originalImages: originalImages || []
+    });
+    res.json({ url: result.url });
+  } catch (err) {
+    console.error("[Image Generate] Error:", err);
+    res.status(500).json({ error: err.message || "\u56FE\u50CF\u751F\u6210\u5931\u8D25" });
+  }
+});
 aiStreamRouter.get("/status", async (_req, res) => {
   const status = {};
   for (const [id, cfg] of Object.entries(MODEL_CONFIGS)) {

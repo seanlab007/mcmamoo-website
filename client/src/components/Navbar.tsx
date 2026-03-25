@@ -157,6 +157,12 @@ export default function Navbar() {
             >
               {isEn ? 'Pricing' : '定价'}
             </a>
+            <a
+              href="/press"
+              className="ml-1 px-3 py-1.5 text-white/50 hover:text-[#C9A84C] text-xs tracking-widest uppercase transition-all duration-300 font-['DM_Mono'] whitespace-nowrap border border-transparent hover:border-[#C9A84C]/30"
+            >
+              {isEn ? 'Press' : '新闻'}
+            </a>
             <button
               onClick={() => handleNav("#contact")}
               className="ml-1 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
@@ -239,6 +245,14 @@ export default function Navbar() {
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", display: "inline-block" }} />
             {isEn ? 'Pricing' : '服务定价'}
+          </a>
+          <a
+            href="/press"
+            className="text-white/60 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ width: 8, height: 8, background: "#C9A84C", display: "inline-block" }} />
+            {isEn ? 'Press' : '新闻稿'}
           </a>
           <button
             onClick={() => handleNav("#contact")}
