@@ -747,14 +747,14 @@ export default function Pricing() {
       {/* Hero */}
       <section className="pt-32 pb-16 border-b border-white/5">
         <div className="container">
-          <div className="section-label mb-4">Pricing</div>
+          <div className="section-label mb-4">Services</div>
           <h1 className="font-['Noto_Serif_SC'] text-white text-5xl md:text-6xl font-bold mb-6 leading-tight">
-            {isEn ? "Service Pricing" : "服务定价"}
+            {isEn ? "Consulting Services" : "咨询服务"}
           </h1>
           <p className="text-white/50 text-lg max-w-2xl leading-relaxed mb-10">
             {isEn
-              ? "All pricing is transparent. Every plan is designed with anchor pricing logic — the annual plan is always the smartest choice."
-              : "所有定价透明公开。每个套餐均采用锚定价逻辑设计 — 全年套餐永远是最明智的选择。"}
+              ? "Mc&Mamoo provides premium brand strategy consulting services. Choose the engagement model that best fits your growth stage."
+              : "Mc&Mamoo 提供顶级品牌战略咨询服务。选择最适合您增长阶段的合作模式。"}
           </p>
 
           {/* 快速导航 */}
@@ -776,37 +776,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* 锚定价说明 */}
-      <section className="py-12 border-b border-white/5 bg-[#C9A84C]/3">
-        <div className="container">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2">
-              <h2 className="text-[#C9A84C] font-['Noto_Serif_SC'] text-xl font-bold mb-3">
-                {isEn ? "The Anchor Pricing Logic" : "锚定价逻辑"}
-              </h2>
-              <p className="text-white/60 text-sm leading-relaxed">
-                {isEn
-                  ? "Every service uses anchor pricing: a high single-month rate, a mid-range 6-month plan, and an annual plan that makes the math obvious. Clients who calculate carefully always choose the annual plan — because it's genuinely the best value."
-                  : "每项服务均采用锚定价设计：单月价格高、半年价格中、全年价格最划算。理性计算的客户永远会选择全年套餐 — 因为它确实是最优选择。"}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 justify-center">
-              <div className="flex items-center gap-3 text-sm">
-                <span className="w-3 h-3 bg-white/20 flex-shrink-0" />
-                <span className="text-white/40">{isEn ? "Single Month — Anchor (High)" : "单月 — 锚定价（高）"}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="w-3 h-3 bg-white/40 flex-shrink-0" />
-                <span className="text-white/50">{isEn ? "6 Months — Mid Range" : "半年 — 中间价"}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="w-3 h-3 bg-[#C9A84C] flex-shrink-0" />
-                <span className="text-[#C9A84C] font-semibold">{isEn ? "Annual — Best Value (Recommended)" : "全年 — 最划算（推荐）"}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* 所有服务定价 */}
       {services.map((service) => (

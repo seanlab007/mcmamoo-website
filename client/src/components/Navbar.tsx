@@ -155,7 +155,7 @@ export default function Navbar() {
               href="/pricing"
               className="ml-1 px-3 py-1.5 text-white/50 hover:text-[#C9A84C] text-xs tracking-widest uppercase transition-all duration-300 font-['DM_Mono'] whitespace-nowrap border border-transparent hover:border-[#C9A84C]/30"
             >
-              {isEn ? 'Pricing' : '定价'}
+              {isEn ? 'Services' : '咨询服务'}
             </a>
             <a
               href="/press"
@@ -244,7 +244,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", display: "inline-block" }} />
-            {isEn ? 'Pricing' : '服务定价'}
+            {isEn ? 'Services' : '咨询服务'}
           </a>
           <a
             href="/press"
