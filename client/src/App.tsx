@@ -16,6 +16,7 @@ import AdminSubscribers from "./pages/AdminSubscribers";
 import AdminAiNodes from "./pages/AdminAiNodes";
 import Platform from "./pages/Platform";
 import Chat from "./pages/Chat";
+import Notes from "./pages/Notes";
 import WechatFloat from "./components/WechatFloat";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
       <Route path={"/admin/ai-nodes"} component={AdminAiNodes} />
       <Route path={"/platform"} component={Platform} />
       <Route path={"/chat"} component={Chat} />
+      <Route path={"/notes"} component={Notes} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

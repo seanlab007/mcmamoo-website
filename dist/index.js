@@ -1,3 +1,173 @@
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// vite.config.ts
+var vite_config_exports = {};
+__export(vite_config_exports, {
+  default: () => vite_config_default
+});
+import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import fs from "node:fs";
+import path from "node:path";
+import { defineConfig } from "vite";
+import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+function ensureLogDir() {
+  if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+  }
+}
+function trimLogFile(logPath, maxSize) {
+  try {
+    if (!fs.existsSync(logPath) || fs.statSync(logPath).size <= maxSize) {
+      return;
+    }
+    const lines = fs.readFileSync(logPath, "utf-8").split("\n");
+    const keptLines = [];
+    let keptBytes = 0;
+    const targetSize = TRIM_TARGET_BYTES;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const lineBytes = Buffer.byteLength(`${lines[i]}
+`, "utf-8");
+      if (keptBytes + lineBytes > targetSize) break;
+      keptLines.unshift(lines[i]);
+      keptBytes += lineBytes;
+    }
+    fs.writeFileSync(logPath, keptLines.join("\n"), "utf-8");
+  } catch {
+  }
+}
+function writeToLogFile(source, entries) {
+  if (entries.length === 0) return;
+  ensureLogDir();
+  const logPath = path.join(LOG_DIR, `${source}.log`);
+  const lines = entries.map((entry) => {
+    const ts = (/* @__PURE__ */ new Date()).toISOString();
+    return `[${ts}] ${JSON.stringify(entry)}`;
+  });
+  fs.appendFileSync(logPath, `${lines.join("\n")}
+`, "utf-8");
+  trimLogFile(logPath, MAX_LOG_SIZE_BYTES);
+}
+function vitePluginManusDebugCollector() {
+  return {
+    name: "manus-debug-collector",
+    transformIndexHtml(html) {
+      if (process.env.NODE_ENV === "production") {
+        return html;
+      }
+      return {
+        html,
+        tags: [
+          {
+            tag: "script",
+            attrs: {
+              src: "/__manus__/debug-collector.js",
+              defer: true
+            },
+            injectTo: "head"
+          }
+        ]
+      };
+    },
+    configureServer(server) {
+      server.middlewares.use("/__manus__/logs", (req, res, next) => {
+        if (req.method !== "POST") {
+          return next();
+        }
+        const handlePayload = (payload) => {
+          if (payload.consoleLogs?.length > 0) {
+            writeToLogFile("browserConsole", payload.consoleLogs);
+          }
+          if (payload.networkRequests?.length > 0) {
+            writeToLogFile("networkRequests", payload.networkRequests);
+          }
+          if (payload.sessionEvents?.length > 0) {
+            writeToLogFile("sessionReplay", payload.sessionEvents);
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: true }));
+        };
+        const reqBody = req.body;
+        if (reqBody && typeof reqBody === "object") {
+          try {
+            handlePayload(reqBody);
+          } catch (e) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ success: false, error: String(e) }));
+          }
+          return;
+        }
+        let body = "";
+        req.on("data", (chunk) => {
+          body += chunk.toString();
+        });
+        req.on("end", () => {
+          try {
+            const payload = JSON.parse(body);
+            handlePayload(payload);
+          } catch (e) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ success: false, error: String(e) }));
+          }
+        });
+      });
+    }
+  };
+}
+var PROJECT_ROOT, LOG_DIR, MAX_LOG_SIZE_BYTES, TRIM_TARGET_BYTES, plugins, vite_config_default;
+var init_vite_config = __esm({
+  "vite.config.ts"() {
+    "use strict";
+    PROJECT_ROOT = import.meta.dirname;
+    LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
+    MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024;
+    TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6);
+    plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+    vite_config_default = defineConfig({
+      plugins,
+      resolve: {
+        alias: {
+          "@": path.resolve(import.meta.dirname, "client", "src"),
+          "@shared": path.resolve(import.meta.dirname, "shared"),
+          "@assets": path.resolve(import.meta.dirname, "attached_assets")
+        }
+      },
+      envDir: path.resolve(import.meta.dirname),
+      root: path.resolve(import.meta.dirname, "client"),
+      publicDir: path.resolve(import.meta.dirname, "client", "public"),
+      build: {
+        outDir: path.resolve(import.meta.dirname, "dist/public"),
+        emptyOutDir: true
+      },
+      server: {
+        host: true,
+        allowedHosts: [
+          ".manuspre.computer",
+          ".manus.computer",
+          ".manus-asia.computer",
+          ".manuscomputer.ai",
+          ".manusvm.computer",
+          "localhost",
+          "127.0.0.1"
+        ],
+        fs: {
+          strict: true,
+          deny: ["**/.*"]
+        }
+      }
+    });
+  }
+});
+
 // server/_core/index.ts
 import "dotenv/config";
 import express2 from "express";
@@ -958,20 +1128,20 @@ async function createContext(opts) {
 
 // server/_core/vite.ts
 import express from "express";
-import fs from "fs";
+import fs2 from "fs";
 import { nanoid } from "nanoid";
-import path from "path";
+import path2 from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
+var __dirname = path2.dirname(__filename);
 async function setupVite(app, server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true
   };
-  const viteConfig = await import("../../vite.config").then((m) => m.default || m);
+  const viteConfig = await Promise.resolve().then(() => (init_vite_config(), vite_config_exports)).then((m) => m.default || m);
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
@@ -982,13 +1152,13 @@ async function setupVite(app, server) {
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
     try {
-      const clientTemplate = path.resolve(
+      const clientTemplate = path2.resolve(
         __dirname,
         "../..",
         "client",
         "index.html"
       );
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      let template = await fs2.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
@@ -1002,15 +1172,15 @@ async function setupVite(app, server) {
   });
 }
 function serveStatic(app) {
-  const distPath = process.env.NODE_ENV === "development" ? path.resolve(__dirname, "../..", "dist", "public") : path.resolve(__dirname, "public");
-  if (!fs.existsSync(distPath)) {
+  const distPath = process.env.NODE_ENV === "development" ? path2.resolve(__dirname, "../..", "dist", "public") : path2.resolve(__dirname, "public");
+  if (!fs2.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
   app.use(express.static(distPath));
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.sendFile(path2.resolve(distPath, "index.html"));
   });
 }
 
@@ -1026,7 +1196,7 @@ function getSupabaseConfig() {
   }
   return { url, key };
 }
-async function sbFetch(path2, options = {}, prefer) {
+async function sbFetch(path3, options = {}, prefer) {
   const { url, key } = getSupabaseConfig();
   const headers = {
     "Content-Type": "application/json",
@@ -1035,7 +1205,7 @@ async function sbFetch(path2, options = {}, prefer) {
     ...options.headers
   };
   if (prefer) headers["Prefer"] = prefer;
-  const res = await globalThis.fetch(`${url}/rest/v1${path2}`, {
+  const res = await globalThis.fetch(`${url}/rest/v1${path3}`, {
     ...options,
     headers
   });
@@ -1361,17 +1531,17 @@ function sbHeaders() {
     }
   };
 }
-async function sbGet(path2) {
+async function sbGet(path3) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, { headers });
+  const res = await fetch(`${url}/rest/v1${path3}`, { headers });
   const text2 = await res.text();
   return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
 }
-async function sbPost(path2, body, prefer) {
+async function sbPost(path3, body, prefer) {
   const { url, headers } = sbHeaders();
   const h = { ...headers };
   if (prefer) h["Prefer"] = prefer;
-  const res = await fetch(`${url}/rest/v1${path2}`, {
+  const res = await fetch(`${url}/rest/v1${path3}`, {
     method: "POST",
     headers: h,
     body: JSON.stringify(body)
@@ -1379,14 +1549,14 @@ async function sbPost(path2, body, prefer) {
   const text2 = await res.text();
   return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
 }
-async function sbDelete(path2) {
+async function sbDelete(path3) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, { method: "DELETE", headers });
+  const res = await fetch(`${url}/rest/v1${path3}`, { method: "DELETE", headers });
   return { ok: res.ok, status: res.status };
 }
-async function sbPatch(path2, body) {
+async function sbPatch(path3, body) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, {
+  const res = await fetch(`${url}/rest/v1${path3}`, {
     method: "PATCH",
     headers,
     body: JSON.stringify(body)
@@ -1692,6 +1862,208 @@ chatRouter.post("/image-gen", async (req, res) => {
   }
 });
 
+// server/notes.ts
+import { Router as Router3 } from "express";
+var notesRouter = Router3();
+function getSupabaseConfig2() {
+  const url = process.env.SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_KEY || "";
+  if (!url || !key) throw new Error("SUPABASE_URL \u6216 SUPABASE_SERVICE_KEY \u672A\u914D\u7F6E");
+  return { url, key };
+}
+async function sbFetch2(path3, options = {}, prefer) {
+  const { url, key } = getSupabaseConfig2();
+  const headers = {
+    "Content-Type": "application/json",
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    ...options.headers
+  };
+  if (prefer) headers["Prefer"] = prefer;
+  const res = await globalThis.fetch(`${url}/rest/v1${path3}`, { ...options, headers });
+  let data;
+  const text2 = await res.text();
+  try {
+    data = text2 ? JSON.parse(text2) : null;
+  } catch {
+    data = text2;
+  }
+  return { ok: res.ok, status: res.status, data };
+}
+var ADMIN_TOKEN = process.env.NODE_REGISTRATION_TOKEN || "maoai-node-reg-2026-secret-workbuddy";
+function requireAdmin(req, res, next) {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : req.query.token;
+  if (token === ADMIN_TOKEN) return next();
+  const sessionCookie = req.cookies?.session || req.headers["x-session"] || "";
+  if (sessionCookie) return next();
+  return res.status(401).json({ error: "\u672A\u6388\u6743\uFF0C\u8BF7\u63D0\u4F9B\u7BA1\u7406\u5458 token" });
+}
+var tableInitialized = false;
+async function ensureTable() {
+  if (tableInitialized) return;
+  const check = await sbFetch2("/notes?limit=1");
+  if (check.status !== 404) {
+    tableInitialized = true;
+    return;
+  }
+  const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
+  if (!accessToken) {
+    console.warn("[notes] notes \u8868\u4E0D\u5B58\u5728\uFF0C\u4E14\u672A\u914D\u7F6E SUPABASE_ACCESS_TOKEN\uFF0C\u8DF3\u8FC7\u81EA\u52A8\u5EFA\u8868");
+    return;
+  }
+  const { url } = getSupabaseConfig2();
+  const projectRef = url.replace("https://", "").split(".")[0];
+  const sql = `
+    CREATE TABLE IF NOT EXISTS notes (
+      id          BIGSERIAL PRIMARY KEY,
+      title       TEXT NOT NULL DEFAULT '',
+      content     TEXT NOT NULL DEFAULT '',
+      tags        TEXT[] NOT NULL DEFAULT '{}',
+      is_pinned   BOOLEAN NOT NULL DEFAULT FALSE,
+      is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+      color       TEXT DEFAULT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS notes_tags_idx ON notes USING GIN (tags);
+    CREATE INDEX IF NOT EXISTS notes_updated_at_idx ON notes (updated_at DESC);
+    CREATE INDEX IF NOT EXISTS notes_is_pinned_idx ON notes (is_pinned);
+    CREATE INDEX IF NOT EXISTS notes_is_archived_idx ON notes (is_archived);
+    CREATE OR REPLACE FUNCTION update_notes_updated_at()
+    RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $$ LANGUAGE plpgsql;
+    DROP TRIGGER IF EXISTS notes_updated_at_trigger ON notes;
+    CREATE TRIGGER notes_updated_at_trigger BEFORE UPDATE ON notes FOR EACH ROW EXECUTE FUNCTION update_notes_updated_at();
+  `;
+  const r = await globalThis.fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ query: sql })
+  });
+  if (r.ok) {
+    console.log("[notes] notes \u8868\u521B\u5EFA\u6210\u529F");
+    tableInitialized = true;
+  } else {
+    const t2 = await r.text();
+    console.error("[notes] \u5EFA\u8868\u5931\u8D25:", t2.slice(0, 200));
+  }
+}
+notesRouter.post("/init", requireAdmin, async (req, res) => {
+  tableInitialized = false;
+  await ensureTable();
+  const check = await sbFetch2("/notes?limit=1");
+  if (check.status === 200 || check.status === 206) {
+    return res.json({ success: true, message: "notes \u8868\u5DF2\u5C31\u7EEA" });
+  }
+  return res.status(500).json({ error: "\u5EFA\u8868\u5931\u8D25\uFF0C\u8BF7\u624B\u52A8\u5728 Supabase SQL \u7F16\u8F91\u5668\u6267\u884C\u5EFA\u8868\u8BED\u53E5" });
+});
+notesRouter.get("/", requireAdmin, async (req, res) => {
+  await ensureTable();
+  const { q, tag, archived, pinned, limit = "50", offset = "0" } = req.query;
+  let path3 = `/notes?order=is_pinned.desc,updated_at.desc&limit=${limit}&offset=${offset}`;
+  if (archived === "true") {
+    path3 += "&is_archived=eq.true";
+  } else {
+    path3 += "&is_archived=eq.false";
+  }
+  if (pinned === "true") path3 += "&is_pinned=eq.true";
+  if (tag) path3 += `&tags=cs.{${encodeURIComponent(tag)}}`;
+  const result = await sbFetch2(path3, {
+    headers: { "Range-Unit": "items", Range: `${offset}-${parseInt(offset) + parseInt(limit) - 1}` }
+  }, "count=exact");
+  if (!result.ok) return res.status(result.status).json({ error: result.data });
+  let data = result.data;
+  if (q && Array.isArray(data)) {
+    const keyword = q.toLowerCase();
+    data = data.filter(
+      (n) => n.title?.toLowerCase().includes(keyword) || n.content?.toLowerCase().includes(keyword) || n.tags?.some((t2) => t2.toLowerCase().includes(keyword))
+    );
+  }
+  return res.json({ notes: data || [], total: Array.isArray(data) ? data.length : 0 });
+});
+notesRouter.post("/", requireAdmin, async (req, res) => {
+  await ensureTable();
+  const { title = "", content = "", tags = [], color = null } = req.body;
+  const result = await sbFetch2("/notes", {
+    method: "POST",
+    body: JSON.stringify({ title, content, tags, color })
+  }, "return=representation");
+  if (!result.ok) return res.status(result.status).json({ error: result.data });
+  const rows = result.data;
+  return res.status(201).json(rows?.[0] || {});
+});
+notesRouter.get("/:id", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const result = await sbFetch2(`/notes?id=eq.${id}&limit=1`);
+  if (!result.ok) return res.status(result.status).json({ error: result.data });
+  const rows = result.data;
+  if (!rows?.length) return res.status(404).json({ error: "\u7B14\u8BB0\u4E0D\u5B58\u5728" });
+  return res.json(rows[0]);
+});
+notesRouter.patch("/:id", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { title, content, tags, color, is_pinned, is_archived } = req.body;
+  const patch = {};
+  if (title !== void 0) patch.title = title;
+  if (content !== void 0) patch.content = content;
+  if (tags !== void 0) patch.tags = tags;
+  if (color !== void 0) patch.color = color;
+  if (is_pinned !== void 0) patch.is_pinned = is_pinned;
+  if (is_archived !== void 0) patch.is_archived = is_archived;
+  const result = await sbFetch2(`/notes?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch)
+  }, "return=representation");
+  if (!result.ok) return res.status(result.status).json({ error: result.data });
+  const rows = result.data;
+  return res.json(rows?.[0] || {});
+});
+notesRouter.delete("/:id", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const result = await sbFetch2(`/notes?id=eq.${id}`, { method: "DELETE" }, "return=minimal");
+  if (!result.ok) return res.status(result.status).json({ error: result.data });
+  return res.status(204).send();
+});
+notesRouter.get("/tags/all", requireAdmin, async (req, res) => {
+  await ensureTable();
+  const result = await sbFetch2("/notes?select=tags&is_archived=eq.false&limit=1000");
+  if (!result.ok) return res.status(result.status).json({ error: result.data });
+  const rows = result.data;
+  const tagSet = /* @__PURE__ */ new Set();
+  rows?.forEach((n) => n.tags?.forEach((t2) => tagSet.add(t2)));
+  return res.json({ tags: Array.from(tagSet).sort() });
+});
+notesRouter.patch("/:id/pin", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const current = await sbFetch2(`/notes?id=eq.${id}&select=is_pinned&limit=1`);
+  if (!current.ok) return res.status(current.status).json({ error: current.data });
+  const rows = current.data;
+  if (!rows?.length) return res.status(404).json({ error: "\u7B14\u8BB0\u4E0D\u5B58\u5728" });
+  const newPinned = !rows[0].is_pinned;
+  const result = await sbFetch2(`/notes?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_pinned: newPinned })
+  }, "return=representation");
+  if (!result.ok) return res.status(result.status).json({ error: result.data });
+  const updated = result.data;
+  return res.json(updated?.[0] || {});
+});
+notesRouter.patch("/:id/archive", requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const current = await sbFetch2(`/notes?id=eq.${id}&select=is_archived&limit=1`);
+  if (!current.ok) return res.status(current.status).json({ error: current.data });
+  const rows = current.data;
+  if (!rows?.length) return res.status(404).json({ error: "\u7B14\u8BB0\u4E0D\u5B58\u5728" });
+  const newArchived = !rows[0].is_archived;
+  const result = await sbFetch2(`/notes?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_archived: newArchived })
+  }, "return=representation");
+  if (!result.ok) return res.status(result.status).json({ error: result.data });
+  const updated = result.data;
+  return res.json(updated?.[0] || {});
+});
+
 // server/_core/index.ts
 function isPortAvailable(port) {
   return new Promise((resolve) => {
@@ -1717,6 +2089,7 @@ async function startServer() {
   app.use(express2.urlencoded({ limit: "50mb", extended: true }));
   registerOAuthRoutes(app);
   app.use("/api/ai", aiNodesRouter);
+  app.use("/api/notes", notesRouter);
   app.use("/api/chat", chatRouter);
   app.use(
     "/api/trpc",
