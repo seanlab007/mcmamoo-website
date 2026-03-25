@@ -1,19 +1,20 @@
 /*
  * Navbar — 猫眼增长引擎官网导航
  * Design: 透明渐变 → 深色固定导航，金色 hover 线条
+ * 导航结构：主导航 | 猫眼工业▾ | AI 产品▾ | 咨询服务 | 新闻稿 | 预约咨询
  */
 import { useState, useEffect } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 
-const industryItem = { label: "猫眼工业", href: "#mao-industry" };
-
 export default function Navbar() {
   const { t, i18n } = useTranslation();
   const isEn = i18n.language !== 'zh';
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileAiOpen, setMobileAiOpen] = useState(false);
+  const [mobileIndustryOpen, setMobileIndustryOpen] = useState(false);
 
   const navItems = [
     { label: t('nav.about'), href: "#about" },
@@ -22,6 +23,41 @@ export default function Navbar() {
     { label: t('nav.cases'), href: "#global-cases" },
     { label: t('nav.awards'), href: "#awards" },
     { label: t('nav.contact'), href: "#contact" },
+  ];
+
+  // AI 产品下拉菜单项
+  const aiProducts = [
+    {
+      href: "/maoai/login",
+      label: isEn ? 'MaoAI' : 'MaoAI',
+      sublabel: isEn ? 'AI Strategy Assistant' : 'AI 战略助手',
+      color: "#C9A84C",
+      dot: "circle",
+      glow: true,
+    },
+    {
+      href: "/platform",
+      label: isEn ? 'Ops Platform' : '运营平台',
+      sublabel: isEn ? 'Content Automation' : 'AI 内容自动化',
+      color: "#40d090",
+      dot: "circle",
+      glow: true,
+    },
+    {
+      href: "/openclaw",
+      label: isEn ? 'Claw AI' : '小龙虾 AI',
+      sublabel: isEn ? 'AI Marketing Engine' : 'AI 营销引擎',
+      color: "#e05a30",
+      dot: "emoji",
+      emoji: "🦞",
+    },
+    {
+      href: "/maothink",
+      label: isEn ? 'Mao Think Tank' : '毛智库',
+      sublabel: isEn ? 'Strategic Intelligence' : '战略智库平台',
+      color: "#8B1A1A",
+      dot: "diamond",
+    },
   ];
 
   useEffect(() => {
@@ -69,7 +105,7 @@ export default function Navbar() {
           </a>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-5">
             {navItems.map((item) => (
               <button
                 key={item.href}
@@ -83,7 +119,7 @@ export default function Navbar() {
             {/* 猫眼工业 下拉菜单 */}
             <div className="relative group">
               <button
-                onClick={() => handleNav(industryItem.href)}
+                onClick={() => handleNav("#mao-industry")}
                 className="relative text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
                 style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
               >
@@ -118,66 +154,61 @@ export default function Navbar() {
               </div>
             </div>
 
+            {/* AI 产品 下拉菜单 — 合并所有 AI/平台产品 */}
+            <div className="relative group">
+              <button
+                className="relative text-[#C9A84C]/80 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
+                style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+              >
+                <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #C9A84C" }} />
+                {isEn ? 'AI Products' : 'AI 产品'}
+                <ChevronDown size={10} className="opacity-60 group-hover:opacity-100 transition-transform duration-200 group-hover:rotate-180" />
+              </button>
+              <div className="absolute top-full left-0 mt-1 w-56 bg-[#0D0D0D]/98 border border-[#C9A84C]/20 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                {aiProducts.map((p, i) => (
+                  <a
+                    key={p.href}
+                    href={p.href}
+                    className={`flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors duration-200 ${i < aiProducts.length - 1 ? 'border-b border-white/5' : ''}`}
+                  >
+                    <span className="mt-0.5 flex-shrink-0">
+                      {p.dot === 'emoji' ? (
+                        <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>{p.emoji}</span>
+                      ) : p.dot === 'diamond' ? (
+                        <span style={{ width: 6, height: 6, background: p.color, transform: "rotate(45deg)", display: "inline-block", marginTop: 2 }} />
+                      ) : (
+                        <span style={{ width: 6, height: 6, background: p.color, borderRadius: "50%", display: "inline-block", marginTop: 2, boxShadow: p.glow ? `0 0 6px ${p.color}` : undefined }} />
+                      )}
+                    </span>
+                    <div>
+                      <div className="text-xs font-mono tracking-wider" style={{ color: p.color }}>{p.label}</div>
+                      <div className="text-[10px] text-white/35 mt-0.5 tracking-wide">{p.sublabel}</div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* 咨询服务 — 独立主入口 */}
             <a
-              href="/maothink"
-              className="relative text-[#8B1A1A] hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
+              href="/pricing"
+              className="relative text-white/80 hover:text-[#C9A84C] text-sm tracking-wide transition-all duration-300 py-1 px-3 border border-[#C9A84C]/40 hover:border-[#C9A84C]/80 hover:bg-[#C9A84C]/8 flex items-center gap-1.5 whitespace-nowrap"
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
-              <span style={{ width: 6, height: 6, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0 }} />
-              {isEn ? 'Mao Think Tank' : '毛智库'}
+              <span style={{ width: 5, height: 5, background: '#C9A84C', display: 'inline-block' }} />
+              {isEn ? 'Consulting' : '咨询服务'}
             </a>
+
+            {/* 新闻稿 */}
             <a
-              href="/platform"
-              className="relative text-[#40d090]/80 hover:text-[#40d090] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
+              href="/press"
+              className="relative text-white/50 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 whitespace-nowrap"
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
-              <span style={{ width: 6, height: 6, background: "#40d090", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #40d090" }} />
-              {isEn ? 'Ops Platform' : '运营平台'}
-            </a>
-            <a
-              href="/openclaw"
-              className="relative text-[#e05a30]/80 hover:text-[#e05a30] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
-            >
-              <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>🦞</span>
-              {isEn ? 'Claw AI' : '小龙虾 AI'}
-            </a>
-            <a
-              href="/maoai/login"
-              className="relative text-[#C9A84C] hover:text-[#E8D5A0] text-sm tracking-wide transition-all duration-300 py-1 px-3 border border-[#C9A84C]/40 hover:border-[#C9A84C]/80 hover:bg-[#C9A84C]/10 flex items-center gap-1.5 whitespace-nowrap"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
-            >
-              <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px #C9A84C", flexShrink: 0 }} />
-              MaoAI
+              {isEn ? 'Press' : '新闻稿'}
             </a>
 
             <LanguageSwitcher />
-
-            {/* 更多 下拉菜单（咨询服务 + 新闻稿） */}
-            <div className="relative ml-1 group">
-              <button
-                className="flex items-center gap-1 px-3 py-1.5 text-white/50 hover:text-[#C9A84C] text-xs tracking-widest uppercase transition-all duration-300 font-['DM_Mono'] whitespace-nowrap border border-transparent hover:border-[#C9A84C]/30"
-              >
-                {isEn ? 'More' : '更多'}
-                <ChevronDown size={10} className="opacity-60 group-hover:opacity-100 transition-transform duration-200 group-hover:rotate-180" />
-              </button>
-              <div className="absolute right-0 top-full mt-1 w-44 bg-[#0D0D0D] border border-white/10 shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
-                <a
-                  href="/pricing"
-                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-white/5 text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors border-b border-white/5"
-                >
-                  <span style={{ width: 5, height: 5, background: '#C9A84C', display: 'inline-block' }} />
-                  {isEn ? 'Consulting' : '咨询服务'}
-                </a>
-                <a
-                  href="/press"
-                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-white/5 text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors"
-                >
-                  <span style={{ width: 5, height: 5, background: '#C9A84C', display: 'inline-block' }} />
-                  {isEn ? 'Press' : '新闻稿'}
-                </a>
-              </div>
-            </div>
 
             <button
               onClick={() => handleNav("#contact")}
@@ -203,7 +234,7 @@ export default function Navbar() {
           menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="flex flex-col items-center justify-center h-full gap-8 overflow-y-auto py-8">
+        <div className="flex flex-col items-center justify-center h-full gap-6 overflow-y-auto py-8">
           {navItems.map((item, i) => (
             <button
               key={item.href}
@@ -214,62 +245,85 @@ export default function Navbar() {
               {item.label}
             </button>
           ))}
-          <button
-            onClick={() => handleNav(industryItem.href)}
-            className="text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-xl transition-colors duration-300 flex items-center gap-2"
-            style={{ fontFamily: "'DM Mono', monospace" }}
-          >
-            <span style={{ width: 8, height: 8, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 8px #4FC3F7" }} />
-            {isEn ? 'Mc Industry' : '猫眼工业'}
-          </button>
-          <a
-            href="/maothink"
-            className="text-[#8B1A1A] hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
-            style={{ fontFamily: "'DM Mono', monospace" }}
-          >
-            <span style={{ width: 8, height: 8, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block" }} />
-            {isEn ? 'Mao Think Tank' : '毛智库'}
-          </a>
-          <a
-            href="/platform"
-            className="text-[#40d090]/80 hover:text-[#40d090] text-xl transition-colors duration-300 flex items-center gap-2"
-            style={{ fontFamily: "'DM Mono', monospace" }}
-          >
-            <span style={{ width: 8, height: 8, background: "#40d090", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #40d090" }} />
-            {isEn ? 'Ops Platform' : '运营平台'}
-          </a>
-          <a
-            href="/openclaw"
-            className="text-[#e05a30]/80 hover:text-[#e05a30] text-xl transition-colors duration-300 flex items-center gap-2"
-            style={{ fontFamily: "'DM Mono', monospace" }}
-          >
-            <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>🦞</span>
-            {isEn ? 'Claw AI' : '小龙虾 AI'}
-          </a>
-          <a
-            href="/maoai/login"
-            className="text-[#C9A84C] hover:text-[#E8D5A0] text-xl transition-colors duration-300 flex items-center gap-2 px-4 py-2 border border-[#C9A84C]/40 hover:bg-[#C9A84C]/10"
-            style={{ fontFamily: "'DM Mono', monospace" }}
-          >
-            <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #C9A84C" }} />
-            MaoAI
-          </a>
+
+          {/* 猫眼工业 Mobile */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => setMobileIndustryOpen(!mobileIndustryOpen)}
+              className="text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-xl transition-colors duration-300 flex items-center gap-2"
+              style={{ fontFamily: "'DM Mono', monospace" }}
+            >
+              <span style={{ width: 8, height: 8, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 8px #4FC3F7" }} />
+              {isEn ? 'Mc Industry' : '猫眼工业'}
+              <ChevronDown size={14} className={`transition-transform duration-200 ${mobileIndustryOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {mobileIndustryOpen && (
+              <div className="flex flex-col items-center gap-2 mt-1">
+                <a href="#mao-industry" onClick={(e) => { e.preventDefault(); handleNav("#mao-industry"); setMenuOpen(false); }}
+                  className="text-[#4FC3F7]/60 hover:text-[#4FC3F7] text-sm font-mono tracking-wider">
+                  {isEn ? 'Industry Overview' : '工业板块首页'}
+                </a>
+                <a href="/millennium-clock" className="text-white/50 hover:text-[#C9A84C] text-sm font-mono tracking-wider">
+                  {isEn ? 'Millennium Clock' : '万年钟'}
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* AI 产品 Mobile — 折叠展开 */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => setMobileAiOpen(!mobileAiOpen)}
+              className="text-[#C9A84C]/80 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
+              style={{ fontFamily: "'DM Mono', monospace" }}
+            >
+              <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #C9A84C" }} />
+              {isEn ? 'AI Products' : 'AI 产品'}
+              <ChevronDown size={14} className={`transition-transform duration-200 ${mobileAiOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {mobileAiOpen && (
+              <div className="flex flex-col items-center gap-3 mt-1 border border-[#C9A84C]/10 px-6 py-4">
+                {aiProducts.map((p) => (
+                  <a
+                    key={p.href}
+                    href={p.href}
+                    className="flex items-center gap-2 text-base font-mono tracking-wider transition-colors duration-200"
+                    style={{ color: p.color }}
+                  >
+                    {p.dot === 'emoji' ? (
+                      <span style={{ fontSize: "1rem" }}>{p.emoji}</span>
+                    ) : p.dot === 'diamond' ? (
+                      <span style={{ width: 7, height: 7, background: p.color, transform: "rotate(45deg)", display: "inline-block" }} />
+                    ) : (
+                      <span style={{ width: 7, height: 7, background: p.color, borderRadius: "50%", display: "inline-block", boxShadow: p.glow ? `0 0 6px ${p.color}` : undefined }} />
+                    )}
+                    {p.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 咨询服务 Mobile */}
           <a
             href="/pricing"
-            className="text-white/60 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
+            className="text-white/80 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2 px-5 py-2 border border-[#C9A84C]/40 hover:border-[#C9A84C]/80"
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", display: "inline-block" }} />
             {isEn ? 'Consulting' : '咨询服务'}
           </a>
+
+          {/* 新闻稿 Mobile */}
           <a
             href="/press"
-            className="text-white/60 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
+            className="text-white/50 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", display: "inline-block" }} />
             {isEn ? 'Press' : '新闻稿'}
           </a>
+
           <button
             onClick={() => handleNav("#contact")}
             className="mt-4 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] text-lg hover:bg-[#C9A84C]/10 transition-all duration-300"

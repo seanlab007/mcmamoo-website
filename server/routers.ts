@@ -608,15 +608,74 @@ Required structure:
       .mutation(async ({ input }) => {
         const { createConsultingInquiry } = await import("./db");
         const inquiry = await createConsultingInquiry(input);
+
+        // 1. Manus 内置通知（Manus 平台推送）
         try {
           const { notifyOwner } = await import("./_core/notification");
           await notifyOwner({
-            title: `咨询服务新预约: ${input.name}${input.company ? ` (${input.company})` : ''} — ${input.service || '未指定服务'}`,
+            title: `🔔 咨询服务新线索: ${input.name}${input.company ? ` (${input.company})` : ''} — ${input.service || '未指定服务'}`,
             content: `姓名: ${input.name}\n公司: ${input.company || '未填写'}\n邮箱: ${input.email}\n电话: ${input.phone || '未填写'}\n意向服务: ${input.service || '未指定'}\n预算: ${input.budget || '未填写'}\n说明: ${input.message || '无'}`,
           });
         } catch (e) {
-          console.warn("[consulting] 通知失败:", e);
+          console.warn("[consulting] Manus 通知失败:", e);
         }
+
+        // 2. 发送线索邮件到 sean_lab@163.com
+        try {
+          const { sendEmail } = await import("./email");
+          const adminHtml = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"/><title>新咨询线索 — 猫眼增长引擎</title>
+<style>
+body{margin:0;padding:0;background:#0A0A0A;font-family:'Helvetica Neue',Arial,sans-serif;}
+.wrapper{max-width:600px;margin:0 auto;background:#111111;}
+.header{background:#0A0A0A;padding:24px 32px;border-bottom:2px solid #C9A84C;}
+.title{color:#C9A84C;font-size:18px;font-weight:700;}
+.badge{display:inline-block;background:#C9A84C;color:#000;font-size:11px;font-weight:700;padding:3px 10px;letter-spacing:0.1em;margin-left:10px;}
+.body{padding:32px;}
+.field{margin-bottom:16px;border-bottom:1px solid #ffffff0d;padding-bottom:16px;}
+.label{color:#C9A84C;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px;}
+.value{color:#ffffff;font-size:15px;}
+.msg{color:#cccccc;font-size:14px;line-height:1.7;background:#0A0A0A;padding:16px;border-left:3px solid #C9A84C;margin-top:6px;}
+.footer{background:#0A0A0A;padding:20px 32px;border-top:1px solid #ffffff11;color:#ffffff33;font-size:12px;}
+</style></head>
+<body>
+<div class="wrapper">
+  <div class="header"><div class="title">🔔 新咨询线索<span class="badge">NEW LEAD</span></div></div>
+  <div class="body">
+    <div class="field"><div class="label">姓名</div><div class="value">${input.name}</div></div>
+    <div class="field"><div class="label">公司</div><div class="value">${input.company || '（未填写）'}</div></div>
+    <div class="field"><div class="label">邮箱</div><div class="value"><a href="mailto:${input.email}" style="color:#C9A84C">${input.email}</a></div></div>
+    <div class="field"><div class="label">电话</div><div class="value">${input.phone || '（未填写）'}</div></div>
+    <div class="field"><div class="label">意向服务</div><div class="value">${input.service || '（未指定）'}</div></div>
+    <div class="field"><div class="label">预算范围</div><div class="value">${input.budget || '（未填写）'}</div></div>
+    <div class="field"><div class="label">补充说明</div><div class="msg">${input.message || '（无）'}</div></div>
+  </div>
+  <div class="footer">猫眼增长引擎 · www.mcmamoo.com · 请在 1-2 个工作日内跟进此线索</div>
+</div>
+</body></html>`;
+          await sendEmail({
+            to: "sean_lab@163.com",
+            subject: `[猫眼咨询线索] ${input.name}${input.company ? ` · ${input.company}` : ''} — ${input.service || '咨询预约'}`,
+            html: adminHtml,
+          });
+        } catch (e) {
+          console.warn("[consulting] 线索邮件发送失败:", e);
+        }
+
+        // 3. 给用户发送确认邮件
+        try {
+          const { sendEmail, generateContactConfirmationHtml } = await import("./email");
+          await sendEmail({
+            to: input.email,
+            subject: `感谢您的咨询申请 — 猫眼增长引擎 Mc&Mamoo`,
+            html: generateContactConfirmationHtml(input.name, input.company || ''),
+          });
+        } catch (e) {
+          console.warn("[consulting] 用户确认邮件发送失败:", e);
+        }
+
         return { success: true, id: (inquiry as { id: number })?.id };
       }),
     getInquiries: adminProcedure

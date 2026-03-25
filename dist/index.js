@@ -341,13 +341,18 @@ async function incrementUsage(userId, field) {
 }
 async function createConsultingInquiry(data) {
   return supabaseInsert("consulting_inquiries", {
-    ...data,
-    status: "new",
-    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    name: data.name,
+    company: data.company,
+    email: data.email,
+    phone: data.phone,
+    service_interest: data.service,
+    budget: data.budget,
+    message: data.message,
+    created_at: (/* @__PURE__ */ new Date()).toISOString()
   });
 }
 async function getConsultingInquiries() {
-  return supabaseGet("consulting_inquiries", "order=createdAt.desc&limit=200");
+  return supabaseGet("consulting_inquiries", "order=created_at.desc&limit=200");
 }
 var SUPABASE_URL, SUPABASE_KEY;
 var init_db = __esm({
@@ -469,6 +474,214 @@ var init_notification = __esm({
       }
       return { title, content };
     };
+  }
+});
+
+// server/email.ts
+var email_exports = {};
+__export(email_exports, {
+  generateContactAdminHtml: () => generateContactAdminHtml,
+  generateContactConfirmationHtml: () => generateContactConfirmationHtml,
+  generateNewsletterHtml: () => generateNewsletterHtml,
+  sendBulkEmails: () => sendBulkEmails,
+  sendEmail: () => sendEmail
+});
+import nodemailer from "nodemailer";
+function getTransporter() {
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  const port = parseInt(process.env.SMTP_PORT || "587");
+  const user = process.env.SMTP_USER || "";
+  const pass = process.env.SMTP_PASS || "";
+  if (!user || !pass) {
+    throw new Error("SMTP credentials not configured. Please set SMTP_USER and SMTP_PASS in Secrets.");
+  }
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass }
+  });
+}
+async function sendEmail(opts) {
+  try {
+    const transporter = getTransporter();
+    const fromName = process.env.SMTP_FROM_NAME || "\u732B\u773C\u589E\u957F\u5F15\u64CE";
+    const fromEmail = process.env.SMTP_USER || "";
+    await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: Array.isArray(opts.to) ? opts.to.join(", ") : opts.to,
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.text
+    });
+    return true;
+  } catch (err) {
+    console.error("[Email] Send failed:", err);
+    return false;
+  }
+}
+async function sendBulkEmails(recipients, subject, html, text) {
+  let success = 0;
+  let failed = 0;
+  const batchSize = 10;
+  for (let i = 0; i < recipients.length; i += batchSize) {
+    const batch = recipients.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map((email) => sendEmail({ to: email, subject, html, text }))
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) success++;
+      else failed++;
+    }
+    if (i + batchSize < recipients.length) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  return { success, failed };
+}
+function generateContactConfirmationHtml(name, company) {
+  return `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>\u611F\u8C22\u60A8\u7684\u54A8\u8BE2\u7533\u8BF7 \u2014 \u732B\u773C\u589E\u957F\u5F15\u64CE</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0A0A0A; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 0 auto; background: #111111; }
+    .header { background: #0A0A0A; padding: 32px 40px; border-bottom: 2px solid #C9A84C; }
+    .logo-text { color: #C9A84C; font-size: 22px; font-weight: 700; letter-spacing: 0.1em; }
+    .logo-sub { color: #ffffff55; font-size: 11px; letter-spacing: 0.2em; margin-top: 4px; }
+    .body { padding: 40px; }
+    .greeting { color: #ffffff; font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+    .content { color: #cccccc; font-size: 15px; line-height: 1.8; }
+    .highlight { color: #C9A84C; font-weight: 600; }
+    .box { background: #0A0A0A; border: 1px solid #C9A84C33; padding: 24px 28px; margin: 24px 0; }
+    .box-label { color: #C9A84C; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; }
+    .box-value { color: #ffffff; font-size: 15px; }
+    .divider { border: none; border-top: 1px solid #ffffff11; margin: 32px 0; }
+    .cta { display: inline-block; background: #C9A84C; color: #000; padding: 14px 32px; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-decoration: none; margin-top: 8px; }
+    .footer { background: #0A0A0A; padding: 24px 40px; border-top: 1px solid #ffffff11; }
+    .footer-text { color: #ffffff33; font-size: 12px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo-text">\u732B\u773C\u589E\u957F\u5F15\u64CE</div>
+      <div class="logo-sub">MC&MAMOO BRAND MANAGEMENT</div>
+    </div>
+    <div class="body">
+      <div class="greeting">\u5C0A\u656C\u7684 ${name}\uFF0C</div>
+      <div class="content">
+        <p>\u611F\u8C22\u60A8\u5411\u732B\u773C\u589E\u957F\u5F15\u64CE\u63D0\u4EA4\u54C1\u724C\u6218\u7565\u54A8\u8BE2\u7533\u8BF7\u3002\u6211\u4EEC\u5DF2\u6536\u5230\u60A8\u7684\u4FE1\u606F\uFF0C\u6211\u4EEC\u7684\u9996\u5E2D\u6218\u7565\u4E13\u5BB6\u56E2\u961F\u5C06\u5728 <span class="highlight">1-2\u4E2A\u5DE5\u4F5C\u65E5\u5185</span> \u4E0E\u60A8\u8054\u7CFB\u3002</p>
+        <div class="box">
+          <div class="box-label">\u60A8\u7684\u7533\u8BF7\u4FE1\u606F</div>
+          <div class="box-value">\u59D3\u540D\uFF1A${name}</div>
+          <div class="box-value" style="margin-top:6px">\u516C\u53F8\uFF1A${company}</div>
+        </div>
+        <p>\u5728\u7B49\u5F85\u671F\u95F4\uFF0C\u60A8\u53EF\u4EE5\u8BBF\u95EE\u6211\u4EEC\u7684\u5B98\u7F51\u4E86\u89E3\u66F4\u591A\u6807\u6746\u6848\u4F8B\uFF0C\u6216\u5173\u6CE8\u6211\u4EEC\u7684\u6700\u65B0\u6218\u7565\u6D1E\u5BDF\u3002</p>
+      </div>
+      <hr class="divider" />
+      <a href="https://www.mcmamoo.com" class="cta">\u67E5\u770B\u6807\u6746\u6848\u4F8B \u2192</a>
+    </div>
+    <div class="footer">
+      <div class="footer-text">
+        \u732B\u773C\u589E\u957F\u5F15\u64CE Mc&Mamoo Brand Management Inc.<br/>
+        \u4E0A\u6D77 \xB7 \u54C1\u724C\u663E\u8D35 \xB7 \u5229\u6DA6\u500D\u589E \xB7 \u5168\u57DF\u589E\u957F<br/>
+        \u8054\u7CFB\u7535\u8BDD\uFF1A+86 137 6459 7723
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+function generateContactAdminHtml(name, company, phone, message) {
+  return `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>\u65B0\u54A8\u8BE2\u7533\u8BF7 \u2014 \u732B\u773C\u589E\u957F\u5F15\u64CE\u540E\u53F0</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0A0A0A; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 0 auto; background: #111111; }
+    .header { background: #0A0A0A; padding: 24px 32px; border-bottom: 2px solid #C9A84C; }
+    .title { color: #C9A84C; font-size: 18px; font-weight: 700; }
+    .body { padding: 32px; }
+    .field { margin-bottom: 16px; }
+    .label { color: #ffffff55; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px; }
+    .value { color: #ffffff; font-size: 15px; }
+    .msg { color: #cccccc; font-size: 14px; line-height: 1.7; background: #0A0A0A; padding: 16px; border-left: 2px solid #C9A84C; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header"><div class="title">\u{1F514} \u65B0\u54A8\u8BE2\u7533\u8BF7</div></div>
+    <div class="body">
+      <div class="field"><div class="label">\u59D3\u540D</div><div class="value">${name}</div></div>
+      <div class="field"><div class="label">\u516C\u53F8</div><div class="value">${company}</div></div>
+      <div class="field"><div class="label">\u8054\u7CFB\u7535\u8BDD</div><div class="value">${phone}</div></div>
+      <div class="field"><div class="label">\u54A8\u8BE2\u9700\u6C42</div><div class="msg">${message || "\uFF08\u672A\u586B\u5199\uFF09"}</div></div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+function generateNewsletterHtml(subject, content) {
+  return `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${subject}</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0A0A0A; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 0 auto; background: #111111; }
+    .header { background: #0A0A0A; padding: 32px 40px; border-bottom: 1px solid #C9A84C33; }
+    .logo-text { color: #C9A84C; font-size: 20px; font-weight: 700; letter-spacing: 0.1em; }
+    .logo-sub { color: #ffffff55; font-size: 11px; letter-spacing: 0.2em; margin-top: 4px; }
+    .body { padding: 40px; }
+    .subject { color: #C9A84C; font-size: 22px; font-weight: 700; margin-bottom: 24px; line-height: 1.4; }
+    .content { color: #cccccc; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
+    .divider { border: none; border-top: 1px solid #ffffff11; margin: 32px 0; }
+    .cta { display: inline-block; background: #C9A84C; color: #000; padding: 12px 28px; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-decoration: none; margin-top: 8px; }
+    .footer { background: #0A0A0A; padding: 24px 40px; border-top: 1px solid #ffffff11; }
+    .footer-text { color: #ffffff33; font-size: 12px; line-height: 1.6; }
+    .footer-link { color: #C9A84C55; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo-text">\u732B\u773C\u589E\u957F\u5F15\u64CE</div>
+      <div class="logo-sub">MC&MAMOO BRAND MANAGEMENT</div>
+    </div>
+    <div class="body">
+      <div class="subject">${subject}</div>
+      <div class="content">${content.replace(/\n/g, "<br/>")}</div>
+      <hr class="divider" />
+      <a href="https://www.mcmamoo.com" class="cta">\u8BBF\u95EE\u5B98\u7F51 \u2192</a>
+    </div>
+    <div class="footer">
+      <div class="footer-text">
+        \u60A8\u6536\u5230\u6B64\u90AE\u4EF6\u662F\u56E0\u4E3A\u60A8\u8BA2\u9605\u4E86\u732B\u773C\u589E\u957F\u5F15\u64CE\u6218\u7565\u7B80\u62A5\u3002<br/>
+        \u5982\u9700\u9000\u8BA2\uFF0C\u8BF7\u56DE\u590D\u6B64\u90AE\u4EF6\u5E76\u6CE8\u660E"\u9000\u8BA2"\u3002<br/>
+        \xA9 2025 \u732B\u773C\u589E\u957F\u5F15\u64CE Mc&Mamoo Brand Management Inc. \u4FDD\u7559\u6240\u6709\u6743\u5229\u3002
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+var init_email = __esm({
+  "server/email.ts"() {
+    "use strict";
   }
 });
 
@@ -2163,7 +2376,7 @@ Required structure:
       try {
         const { notifyOwner: notifyOwner2 } = await Promise.resolve().then(() => (init_notification(), notification_exports));
         await notifyOwner2({
-          title: `\u54A8\u8BE2\u670D\u52A1\u65B0\u9884\u7EA6: ${input.name}${input.company ? ` (${input.company})` : ""} \u2014 ${input.service || "\u672A\u6307\u5B9A\u670D\u52A1"}`,
+          title: `\u{1F514} \u54A8\u8BE2\u670D\u52A1\u65B0\u7EBF\u7D22: ${input.name}${input.company ? ` (${input.company})` : ""} \u2014 ${input.service || "\u672A\u6307\u5B9A\u670D\u52A1"}`,
           content: `\u59D3\u540D: ${input.name}
 \u516C\u53F8: ${input.company || "\u672A\u586B\u5199"}
 \u90AE\u7BB1: ${input.email}
@@ -2173,7 +2386,59 @@ Required structure:
 \u8BF4\u660E: ${input.message || "\u65E0"}`
         });
       } catch (e) {
-        console.warn("[consulting] \u901A\u77E5\u5931\u8D25:", e);
+        console.warn("[consulting] Manus \u901A\u77E5\u5931\u8D25:", e);
+      }
+      try {
+        const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_email(), email_exports));
+        const adminHtml = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"/><title>\u65B0\u54A8\u8BE2\u7EBF\u7D22 \u2014 \u732B\u773C\u589E\u957F\u5F15\u64CE</title>
+<style>
+body{margin:0;padding:0;background:#0A0A0A;font-family:'Helvetica Neue',Arial,sans-serif;}
+.wrapper{max-width:600px;margin:0 auto;background:#111111;}
+.header{background:#0A0A0A;padding:24px 32px;border-bottom:2px solid #C9A84C;}
+.title{color:#C9A84C;font-size:18px;font-weight:700;}
+.badge{display:inline-block;background:#C9A84C;color:#000;font-size:11px;font-weight:700;padding:3px 10px;letter-spacing:0.1em;margin-left:10px;}
+.body{padding:32px;}
+.field{margin-bottom:16px;border-bottom:1px solid #ffffff0d;padding-bottom:16px;}
+.label{color:#C9A84C;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px;}
+.value{color:#ffffff;font-size:15px;}
+.msg{color:#cccccc;font-size:14px;line-height:1.7;background:#0A0A0A;padding:16px;border-left:3px solid #C9A84C;margin-top:6px;}
+.footer{background:#0A0A0A;padding:20px 32px;border-top:1px solid #ffffff11;color:#ffffff33;font-size:12px;}
+</style></head>
+<body>
+<div class="wrapper">
+  <div class="header"><div class="title">\u{1F514} \u65B0\u54A8\u8BE2\u7EBF\u7D22<span class="badge">NEW LEAD</span></div></div>
+  <div class="body">
+    <div class="field"><div class="label">\u59D3\u540D</div><div class="value">${input.name}</div></div>
+    <div class="field"><div class="label">\u516C\u53F8</div><div class="value">${input.company || "\uFF08\u672A\u586B\u5199\uFF09"}</div></div>
+    <div class="field"><div class="label">\u90AE\u7BB1</div><div class="value"><a href="mailto:${input.email}" style="color:#C9A84C">${input.email}</a></div></div>
+    <div class="field"><div class="label">\u7535\u8BDD</div><div class="value">${input.phone || "\uFF08\u672A\u586B\u5199\uFF09"}</div></div>
+    <div class="field"><div class="label">\u610F\u5411\u670D\u52A1</div><div class="value">${input.service || "\uFF08\u672A\u6307\u5B9A\uFF09"}</div></div>
+    <div class="field"><div class="label">\u9884\u7B97\u8303\u56F4</div><div class="value">${input.budget || "\uFF08\u672A\u586B\u5199\uFF09"}</div></div>
+    <div class="field"><div class="label">\u8865\u5145\u8BF4\u660E</div><div class="msg">${input.message || "\uFF08\u65E0\uFF09"}</div></div>
+  </div>
+  <div class="footer">\u732B\u773C\u589E\u957F\u5F15\u64CE \xB7 www.mcmamoo.com \xB7 \u8BF7\u5728 1-2 \u4E2A\u5DE5\u4F5C\u65E5\u5185\u8DDF\u8FDB\u6B64\u7EBF\u7D22</div>
+</div>
+</body></html>`;
+        await sendEmail2({
+          to: "sean_lab@163.com",
+          subject: `[\u732B\u773C\u54A8\u8BE2\u7EBF\u7D22] ${input.name}${input.company ? ` \xB7 ${input.company}` : ""} \u2014 ${input.service || "\u54A8\u8BE2\u9884\u7EA6"}`,
+          html: adminHtml
+        });
+      } catch (e) {
+        console.warn("[consulting] \u7EBF\u7D22\u90AE\u4EF6\u53D1\u9001\u5931\u8D25:", e);
+      }
+      try {
+        const { sendEmail: sendEmail2, generateContactConfirmationHtml: generateContactConfirmationHtml2 } = await Promise.resolve().then(() => (init_email(), email_exports));
+        await sendEmail2({
+          to: input.email,
+          subject: `\u611F\u8C22\u60A8\u7684\u54A8\u8BE2\u7533\u8BF7 \u2014 \u732B\u773C\u589E\u957F\u5F15\u64CE Mc&Mamoo`,
+          html: generateContactConfirmationHtml2(input.name, input.company || "")
+        });
+      } catch (e) {
+        console.warn("[consulting] \u7528\u6237\u786E\u8BA4\u90AE\u4EF6\u53D1\u9001\u5931\u8D25:", e);
       }
       return { success: true, id: inquiry?.id };
     }),

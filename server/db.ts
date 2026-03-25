@@ -400,11 +400,16 @@ export interface ConsultingInquiryInput {
 }
 export async function createConsultingInquiry(data: ConsultingInquiryInput) {
   return supabaseInsert<Record<string, unknown>>("consulting_inquiries", {
-    ...data,
-    status: "new",
-    createdAt: new Date().toISOString(),
+    name: data.name,
+    company: data.company,
+    email: data.email,
+    phone: data.phone,
+    service_interest: data.service,
+    budget: data.budget,
+    message: data.message,
+    created_at: new Date().toISOString(),
   });
 }
 export async function getConsultingInquiries() {
-  return supabaseGet<Record<string, unknown>>("consulting_inquiries", "order=createdAt.desc&limit=200");
+  return supabaseGet<Record<string, unknown>>("consulting_inquiries", "order=created_at.desc&limit=200");
 }
