@@ -158,26 +158,6 @@ export default function About() {
           </div>
         </div>
 
-        {/* Transition bridge — leads to IP Licensing */}
-        <div className="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <p className="text-white/25 text-[10px] font-mono tracking-[0.3em] uppercase mb-2">
-              {isEn ? "Our Exclusive Resource Advantage" : "我们的独家资源优势"}
-            </p>
-            <p className="text-white/55 font-['Cormorant_Garamond'] text-xl md:text-2xl font-light">
-              {isEn
-                ? "Beyond strategy — we bring the world’s most iconic IPs to your brand."
-                : "超越战略本身，我们将全球最具影响力的 IP 资源带到你的品牌。"}
-            </p>
-          </div>
-          <button
-            onClick={() => document.querySelector('#ip-licensing')?.scrollIntoView({ behavior: 'smooth' })}
-            className="flex-shrink-0 flex items-center gap-2 text-[#C9A84C]/50 hover:text-[#C9A84C] font-mono text-xs tracking-wider transition-colors duration-300"
-          >
-            <span style={{ width: 5, height: 5, background: 'currentColor', transform: 'rotate(45deg)', display: 'inline-block' }} />
-            {isEn ? "Explore IP Licensing ↓" : "探索 IP 授权资源 ↓"}
-          </button>
-        </div>
       </div>
     </section>
   );
