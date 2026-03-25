@@ -511,7 +511,35 @@ setInterval(async () => {
   } catch { /* ignore */ }
 }, 60 * 1000);
 
-// ─── Health check ─────────────────────────────────────────────────────────────
+// ─── Image Generation (nano banana) ─────────────────────────────────────────────
+// POST /api/ai/image/generate
+// Requires authentication. Calls the internal Forge ImageService (nano banana).
+aiStreamRouter.post("/image/generate", async (req: Request, res: Response) => {
+  try {
+    // Auth check — any logged-in user can generate images
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) {
+      res.status(401).json({ error: "请先登录" });
+      return;
+    }
+    const { prompt, originalImages } = req.body;
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      res.status(400).json({ error: "请提供图像描述 (prompt)" });
+      return;
+    }
+    const { generateImage } = await import("./_core/imageGeneration");
+    const result = await generateImage({
+      prompt: prompt.trim(),
+      originalImages: originalImages || [],
+    });
+    res.json({ url: result.url });
+  } catch (err: any) {
+    console.error("[Image Generate] Error:", err);
+    res.status(500).json({ error: err.message || "图像生成失败" });
+  }
+});
+
+// ─── Health check ─────────────────────────────────────────────
 aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
   const status: Record<string, any> = {};
   for (const [id, cfg] of Object.entries(MODEL_CONFIGS)) {
