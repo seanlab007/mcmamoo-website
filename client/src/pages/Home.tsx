@@ -2,7 +2,7 @@
  * Home Page — 猫眼增长引擎官网首页
  * Design: 暗夜金融极简主义 — 深黑底色 + 猫眼金点缀
  * Theme: 品牌显贵 · 利润倍增 · 全域增长
- * Sections: Hero → InternationalRecognition → BusinessDivision → About → Methodology → KOL → Services → MaoIndustry → Cases → GlobalCases → Awards → Team → Contact → Footer
+ * Sections: Hero → InternationalRecognition → BusinessDivision → About → Methodology → KOL → Services → MaoIndustry → Cases → GlobalCases → Awards → IPAndWhale → Team → Contact → Footer
  */
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/sections/Hero";
@@ -18,6 +18,7 @@ import Awards from "@/components/sections/Awards";
 import Team from "@/components/sections/Team";
 import Contact from "@/components/sections/Contact";
 import MaoIndustry from "@/components/sections/MaoIndustry";
+import IPAndWhale from "@/components/sections/IPAndWhale";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -35,6 +36,7 @@ export default function Home() {
       <Cases />
       <GlobalCases />
       <Awards />
+      <IPAndWhale />
       <Team />
       <Contact />
       <Footer />

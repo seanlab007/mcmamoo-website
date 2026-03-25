@@ -37,13 +37,13 @@ export default function Footer() {
                 <path d="M18 5 L20.5 12 L18 19 L15.5 12 Z" stroke="#C9A84C" strokeWidth="1" fill="#C9A84C" fillOpacity="0.15"/>
               </svg>
               <span className="text-[#C9A84C] font-['Cormorant_Garamond'] font-semibold text-base tracking-wide">
-                {isEn ? "Mc&Mamoo Growth Engine" : "Mc&Mamoo Brand Management Inc."}
+                Mc&Mamoo Growth Engine
               </span>
             </div>
             <p className="text-white/30 text-xs tracking-wide">
               {isEn
-                ? "Maoyan Enterprise Development (Shanghai) Co., Ltd. · Global #1 New Consumer Brand Management Company"
-                : "猫眼企业发展（上海）有限公司 · 全球新消费第一品牌管理公司"}
+                ? "Maoyan Enterprise Development (Shanghai) Co., Ltd. · Global #1 New Consumer Growth Engine"
+                : "猫眼企业发展（上海）有限公司 · 全球新消费第一增长引擎"}
             </p>
           </div>
 
@@ -67,7 +67,7 @@ export default function Footer() {
           <p className="text-white/20 text-xs">
             {isEn
               ? "©2024 Mc&Mamoo Growth Engine. Maoyan Enterprise Development (Shanghai) Co., Ltd. All Rights Reserved."
-              : "©2024 Mc&Mamoo Brand Management Inc. 猫眼企业发展（上海）有限公司 版权所有"}
+              : "©2024 Mc&Mamoo Growth Engine. 猫眼企业发展（上海）有限公司 版权所有"}
           </p>
           <p className="text-white/20 text-xs font-['DM_Mono']">
             www.mcmamoo.com
