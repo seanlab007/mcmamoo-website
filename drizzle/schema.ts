@@ -222,3 +222,19 @@ export const millenniumClockReservations = pgTable("millennium_clock_reservation
 });
 export type MillenniumClockReservation = typeof millenniumClockReservations.$inferSelect;
 export type InsertMillenniumClockReservation = typeof millenniumClockReservations.$inferInsert;
+
+// ─── 咨询服务预约表 ──────────────────────────────────────────────────────────────────────────────
+export const consultingInquiries = pgTable("consulting_inquiries", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  company: varchar("company", { length: 256 }),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 64 }),
+  service: varchar("service", { length: 128 }),
+  budget: varchar("budget", { length: 64 }),
+  message: text("message"),
+  status: varchar("status", { length: 32 }).notNull().default("new"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ConsultingInquiry = typeof consultingInquiries.$inferSelect;
+export type InsertConsultingInquiry = typeof consultingInquiries.$inferInsert;

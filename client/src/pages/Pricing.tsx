@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { trpc } from "@/lib/trpc";
 
 // ─── 定价数据 ─────────────────────────────────────────────────────────────────
 
@@ -19,7 +20,6 @@ const pricingData_zh = {
     title: "品牌全案战略咨询",
     subtitle: "Full-Case Brand Strategy",
     desc: "从企业战略到爆品打造，构建第一品牌的完整方法论体系",
-    anchor: "全年最划算 — 单月仅需 40 万",
     plans: [
       {
         name: "尝鲜体验",
@@ -28,7 +28,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: null,
         perMonth: "98万/月",
-        tag: null,
         highlight: false,
         features: ["品牌诊断报告（1次）", "战略方向建议书", "竞品分析报告", "1次高管战略会议", "基础定位策划"],
         cta: "预约体验",
@@ -40,7 +39,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "588万",
         perMonth: "63.3万/月",
-        tag: "省208万",
         highlight: false,
         features: ["品牌全案战略规划", "爆品视觉锤设计", "猫眼符号系统", "每月战略复盘会议", "品类战略规划", "6次高管深度咨询"],
         cta: "预约咨询",
@@ -52,7 +50,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "1176万",
         perMonth: "40万/月",
-        tag: "最划算 · 省696万",
         highlight: true,
         features: ["企业战略方针制定", "第一品牌战略规划", "战略配称方案设计", "品类战略规划", "品牌定位策划", "爆品视觉锤设计", "猫眼符号系统", "每月战略复盘 + 季度高管峰会", "全年不限次战略咨询", "专属战略顾问团队"],
         cta: "立即签约",
@@ -68,7 +65,6 @@ const pricingData_zh = {
     title: "战略咨询全案",
     subtitle: "Strategic Consulting Suite",
     desc: "毛智库深度介入，为企业提供3年战略护航，打造行业第一品牌",
-    anchor: "3年全案 — 等于每年仅需 1667 万",
     plans: [
       {
         name: "战略诊断",
@@ -77,7 +73,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: null,
         perMonth: null,
-        tag: null,
         highlight: false,
         features: ["企业战略全面诊断", "竞争格局深度分析", "增长机会识别报告", "战略路线图建议", "高管汇报（1次）"],
         cta: "预约诊断",
@@ -89,7 +84,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "2400万",
         perMonth: "166.7万/月",
-        tag: "省400万",
         highlight: false,
         features: ["全年战略规划与执行陪跑", "月度战略委员会会议", "重大决策实时咨询", "行业情报与趋势预判", "竞争对手动态监测", "高管团队战略培训"],
         cta: "预约咨询",
@@ -101,7 +95,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "7200万",
         perMonth: "138.9万/月",
-        tag: "最划算 · 省2200万",
         highlight: true,
         features: ["3年战略护航全程陪跑", "企业战略委员会席位", "行业第一品牌打造方案", "全球战略布局规划", "资本运作战略建议", "高管团队战略能力建设", "毛智库专属研究支持", "国际机构对接资源", "不限次战略咨询", "年度战略峰会主办"],
         cta: "立即洽谈",
@@ -117,7 +110,6 @@ const pricingData_zh = {
     title: "猫眼自动内容平台",
     subtitle: "Mc&Mamoo Content Engine",
     desc: "AI驱动的全域内容自动化生产系统，覆盖小红书/抖音/微博/视频号",
-    anchor: "年付最省 — 相当于每月仅需 1.25 万",
     plans: [
       {
         name: "入门版",
@@ -126,7 +118,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: null,
         perMonth: "2.98万/月",
-        tag: null,
         highlight: false,
         features: ["每月50条AI内容生产", "2个平台账号管理", "基础数据分析报告", "内容日历规划", "人工审核服务"],
         cta: "免费试用14天",
@@ -138,7 +129,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "11.8万",
         perMonth: "9.8万/月",
-        tag: "最受欢迎",
         highlight: true,
         features: ["每月200条AI内容生产", "6个平台账号管理", "深度数据分析 + 竞品监测", "爆款预测模型", "KOL内容协同", "专属内容策略师", "A/B测试优化"],
         cta: "立即开通",
@@ -150,7 +140,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "117.6万",
         perMonth: "1.25万/月",
-        tag: "年付最省 · 省102.6万",
         highlight: false,
         features: ["无限AI内容生产", "全平台账号管理（不限数量）", "实时爆款监测与预警", "自动发布与排期", "全域数据大屏", "专属AI训练（品牌声音定制）", "优先技术支持", "季度内容战略复盘"],
         cta: "预约演示",
@@ -166,7 +155,6 @@ const pricingData_zh = {
     title: "品牌设计",
     subtitle: "Brand Design System",
     desc: "从品牌符号到全域视觉体系，打造令消费者一眼记住的品牌形象",
-    anchor: "全案设计 — 等于每项仅需 3 万",
     plans: [
       {
         name: "品牌基础包",
@@ -175,7 +163,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: null,
         perMonth: null,
-        tag: null,
         highlight: false,
         features: ["品牌Logo设计（3套方案）", "品牌色彩系统", "字体规范手册", "名片/信封/工牌设计", "基础VI手册"],
         cta: "立即咨询",
@@ -187,7 +174,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "80万",
         perMonth: null,
-        tag: "省22万",
         highlight: true,
         features: ["品牌战略定位研究", "品牌Logo + 视觉锤设计", "猫眼符号系统", "完整VI规范手册", "包装设计（主SKU）", "电商视觉体系（主图/详情页）", "线下物料设计", "品牌故事与文案体系"],
         cta: "预约提案",
@@ -199,7 +185,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "55万",
         perMonth: null,
-        tag: "含开发交付",
         highlight: false,
         features: ["品牌官网策划与设计", "响应式开发（PC+移动端）", "18语言国际化", "SEO基础优化", "CMS内容管理系统", "3个月免费维护"],
         cta: "预约咨询",
@@ -215,7 +200,6 @@ const pricingData_zh = {
     title: "爆品营销策划",
     subtitle: "Hero Product Marketing",
     desc: "从爆品定义到全域引爆，构建可复制的爆品打造方法论",
-    anchor: "全年陪跑 — 等于每月仅需 25 万",
     plans: [
       {
         name: "单品爆品策划",
@@ -224,7 +208,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: null,
         perMonth: null,
-        tag: null,
         highlight: false,
         features: ["爆品核心价值提炼", "爆品蜂窝15模型诊断", "上市传播策略", "KOL种草矩阵规划", "首发活动策划方案"],
         cta: "立即咨询",
@@ -236,7 +219,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "144万",
         perMonth: "42.7万/月",
-        tag: "省16万",
         highlight: false,
         features: ["季度爆品战略规划", "3款爆品全案策划", "KOL/KOC矩阵执行", "全域内容种草", "实时数据监测与优化", "月度复盘会议"],
         cta: "预约咨询",
@@ -248,7 +230,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "576万",
         perMonth: "25万/月",
-        tag: "最划算 · 省276万",
         highlight: true,
         features: ["全年爆品战略规划", "不限数量爆品策划", "品牌360°领导力构建", "IP打造与情感共振", "全球KOL资源（2万+）", "跨境电商策略", "私域流量运营", "全年数据大屏监测", "专属爆品顾问团队"],
         cta: "立即签约",
@@ -264,7 +245,6 @@ const pricingData_zh = {
     title: "毛智库",
     subtitle: "Mao Think Tank",
     desc: "中国极少数具备全球战略影响力的民间智库，深度参与重大战略决策",
-    anchor: "年度会员 — 等于每月仅需 8.3 万",
     plans: [
       {
         name: "战略研究报告",
@@ -273,7 +253,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: null,
         perMonth: null,
-        tag: null,
         highlight: false,
         features: ["行业深度研究报告", "竞争格局分析", "趋势预判与机会识别", "战略建议摘要", "高管汇报（1次）"],
         cta: "预约定制",
@@ -285,7 +264,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "90万",
         perMonth: "26.7万/月",
-        tag: "省10万",
         highlight: false,
         features: ["每月战略情报简报", "行业动态实时预警", "竞争对手深度监测", "季度战略研讨会", "专属研究员支持"],
         cta: "预约咨询",
@@ -297,7 +275,6 @@ const pricingData_zh = {
         unit: "万",
         originalPrice: "360万",
         perMonth: "8.3万/月",
-        tag: "最划算 · 省260万",
         highlight: true,
         features: ["全年战略情报订阅", "月度高管战略简报", "重大事件实时预警", "年度战略峰会参与资格", "毛智库研究成果优先获取", "国际机构对接机会", "专属战略研究员", "不限次战略咨询热线"],
         cta: "立即加入",
@@ -315,7 +292,6 @@ const pricingData_en = {
     title: "Full-Case Brand Strategy",
     subtitle: "Full-Case Brand Strategy",
     desc: "From corporate strategy to hero product creation — the complete methodology for building the #1 brand",
-    anchor: "Annual Plan — Only ¥400K/month",
     plans: [
       {
         name: "Starter",
@@ -324,7 +300,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: null,
         perMonth: "¥980K/mo",
-        tag: null,
         highlight: false,
         features: ["Brand Diagnostic Report (1x)", "Strategic Direction Proposal", "Competitor Analysis", "1 Executive Strategy Session", "Basic Positioning Plan"],
         cta: "Book a Session",
@@ -336,7 +311,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥5.88M",
         perMonth: "¥633K/mo",
-        tag: "Save ¥2.08M",
         highlight: false,
         features: ["Full Brand Strategy Plan", "Hero Product Visual Hammer", "Mc&Mamoo Symbol System", "Monthly Strategy Reviews", "Category Strategy Planning", "6 Executive Deep-Dive Sessions"],
         cta: "Book Consultation",
@@ -348,7 +322,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥11.76M",
         perMonth: "¥400K/mo",
-        tag: "Best Value · Save ¥6.96M",
         highlight: true,
         features: ["Corporate Strategy Formulation", "#1 Brand Strategic Planning", "Strategic Alignment Design", "Category Strategy Planning", "Brand Positioning", "Hero Product Visual Hammer", "Mc&Mamoo Symbol System", "Monthly Reviews + Quarterly Summits", "Unlimited Strategic Consulting", "Dedicated Strategy Advisory Team"],
         cta: "Sign Now",
@@ -362,7 +335,6 @@ const pricingData_en = {
     title: "Strategic Consulting Suite",
     subtitle: "Strategic Consulting Suite",
     desc: "Mao Think Tank deep engagement — 3-year strategic partnership to build the industry's #1 brand",
-    anchor: "3-Year Suite — Only ¥1.39M/month",
     plans: [
       {
         name: "Strategic Diagnostic",
@@ -371,7 +343,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: null,
         perMonth: null,
-        tag: null,
         highlight: false,
         features: ["Full Enterprise Strategy Audit", "Competitive Landscape Analysis", "Growth Opportunity Report", "Strategic Roadmap", "Executive Presentation (1x)"],
         cta: "Book Diagnostic",
@@ -383,7 +354,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥24M",
         perMonth: "¥1.67M/mo",
-        tag: "Save ¥4M",
         highlight: false,
         features: ["Full-Year Strategy Execution Support", "Monthly Strategy Committee", "Real-Time Decision Consulting", "Industry Intelligence & Foresight", "Competitor Monitoring", "Executive Strategy Training"],
         cta: "Book Consultation",
@@ -395,7 +365,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥72M",
         perMonth: "¥1.39M/mo",
-        tag: "Best Value · Save ¥22M",
         highlight: true,
         features: ["3-Year Strategy Execution Partnership", "Strategy Committee Seat", "#1 Brand Building Blueprint", "Global Strategy Planning", "Capital Strategy Advisory", "Executive Capability Building", "Mao Think Tank Research Access", "International Institution Connections", "Unlimited Strategy Consulting", "Annual Strategy Summit Hosting"],
         cta: "Negotiate Now",
@@ -409,7 +378,6 @@ const pricingData_en = {
     title: "Mc&Mamoo Content Engine",
     subtitle: "Mc&Mamoo Content Engine",
     desc: "AI-driven automated content production across Xiaohongshu, Douyin, Weibo, and Video Channels",
-    anchor: "Annual Plan — Only ¥12.5K/month",
     plans: [
       {
         name: "Starter",
@@ -418,7 +386,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: null,
         perMonth: "¥29.8K/mo",
-        tag: null,
         highlight: false,
         features: ["50 AI-generated posts/month", "2 platform accounts", "Basic analytics report", "Content calendar planning", "Human review service"],
         cta: "14-Day Free Trial",
@@ -430,7 +397,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥118K",
         perMonth: "¥98K/mo",
-        tag: "Most Popular",
         highlight: true,
         features: ["200 AI-generated posts/month", "6 platform accounts", "Deep analytics + competitor monitoring", "Viral prediction model", "KOL content collaboration", "Dedicated content strategist", "A/B testing optimization"],
         cta: "Get Started",
@@ -442,7 +408,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥1.176M",
         perMonth: "¥12.5K/mo",
-        tag: "Best Annual Value · Save ¥1.026M",
         highlight: false,
         features: ["Unlimited AI content production", "All platforms (unlimited accounts)", "Real-time viral monitoring", "Auto-publish & scheduling", "Full-domain data dashboard", "Custom AI voice training", "Priority technical support", "Quarterly content strategy review"],
         cta: "Book Demo",
@@ -456,7 +421,6 @@ const pricingData_en = {
     title: "Brand Design System",
     subtitle: "Brand Design System",
     desc: "From brand symbols to full visual identity — create a brand image consumers remember instantly",
-    anchor: "Full Design Suite — Only ¥30K per deliverable",
     plans: [
       {
         name: "Brand Essentials",
@@ -465,7 +429,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: null,
         perMonth: null,
-        tag: null,
         highlight: false,
         features: ["Brand Logo Design (3 concepts)", "Brand Color System", "Typography Manual", "Business Cards / Envelopes / Badges", "Basic VI Manual"],
         cta: "Inquire Now",
@@ -477,7 +440,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥800K",
         perMonth: null,
-        tag: "Save ¥220K",
         highlight: true,
         features: ["Brand Strategy Research", "Logo + Visual Hammer Design", "Mc&Mamoo Symbol System", "Complete VI Manual", "Packaging Design (Main SKU)", "E-commerce Visual System", "Offline Materials Design", "Brand Story & Copywriting System"],
         cta: "Book Proposal",
@@ -489,7 +451,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥550K",
         perMonth: null,
-        tag: "Includes Development",
         highlight: false,
         features: ["Brand Website Strategy & Design", "Responsive Development (PC + Mobile)", "18-Language Internationalization", "Basic SEO Optimization", "CMS Content Management", "3-Month Free Maintenance"],
         cta: "Book Consultation",
@@ -503,7 +464,6 @@ const pricingData_en = {
     title: "Hero Product Marketing",
     subtitle: "Hero Product Marketing",
     desc: "From defining hero products to full-channel ignition — a replicable hero product methodology",
-    anchor: "Annual Retainer — Only ¥250K/month",
     plans: [
       {
         name: "Single Product Launch",
@@ -512,7 +472,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: null,
         perMonth: null,
-        tag: null,
         highlight: false,
         features: ["Hero Product Core Value Extraction", "Honeycomb-15 Model Audit", "Launch Communication Strategy", "KOL Seeding Matrix Plan", "Launch Event Strategy"],
         cta: "Inquire Now",
@@ -524,7 +483,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥1.44M",
         perMonth: "¥427K/mo",
-        tag: "Save ¥160K",
         highlight: false,
         features: ["Quarterly Hero Product Strategy", "3 Full-Case Product Plans", "KOL/KOC Matrix Execution", "Full-Channel Content Seeding", "Real-Time Data Monitoring", "Monthly Review Sessions"],
         cta: "Book Consultation",
@@ -536,7 +494,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥5.76M",
         perMonth: "¥250K/mo",
-        tag: "Best Value · Save ¥2.76M",
         highlight: true,
         features: ["Full-Year Hero Product Strategy", "Unlimited Product Plans", "Brand 360° Leadership Building", "IP Building & Emotional Resonance", "Global KOL Network (20,000+)", "Cross-Border E-commerce Strategy", "Private Domain Operations", "Full-Year Data Dashboard", "Dedicated Hero Product Advisory Team"],
         cta: "Sign Now",
@@ -550,7 +507,6 @@ const pricingData_en = {
     title: "Mao Think Tank",
     subtitle: "Mao Think Tank",
     desc: "One of China's few private think tanks with global strategic influence — deeply involved in major strategic decisions",
-    anchor: "Annual Membership — Only ¥83K/month",
     plans: [
       {
         name: "Research Report",
@@ -559,7 +515,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: null,
         perMonth: null,
-        tag: null,
         highlight: false,
         features: ["Industry Deep Research Report", "Competitive Landscape Analysis", "Trend Foresight & Opportunity ID", "Strategic Recommendations", "Executive Presentation (1x)"],
         cta: "Commission Report",
@@ -571,7 +526,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥900K",
         perMonth: "¥267K/mo",
-        tag: "Save ¥100K",
         highlight: false,
         features: ["Monthly Strategic Intelligence Brief", "Real-Time Industry Alerts", "Competitor Deep Monitoring", "Quarterly Strategy Workshop", "Dedicated Research Analyst"],
         cta: "Book Consultation",
@@ -583,7 +537,6 @@ const pricingData_en = {
         unit: "",
         originalPrice: "¥3.6M",
         perMonth: "¥83K/mo",
-        tag: "Best Value · Save ¥2.6M",
         highlight: true,
         features: ["Full-Year Intelligence Subscription", "Monthly Executive Strategy Brief", "Major Event Real-Time Alerts", "Annual Strategy Summit Access", "Priority Research Access", "International Institution Connections", "Dedicated Research Analyst", "Unlimited Strategy Hotline"],
         cta: "Join Now",
@@ -603,19 +556,6 @@ function PricingCard({ plan, currency, isEn }: { plan: any; currency: string; is
           : "border-white/10 bg-white/[0.02] hover:border-white/25"
       }`}
     >
-      {/* 推荐标签 */}
-      {plan.tag && (
-        <div
-          className={`absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-bold tracking-widest uppercase whitespace-nowrap ${
-            plan.highlight
-              ? "bg-[#C9A84C] text-[#0A0A0A]"
-              : "bg-white/10 text-white/70 border border-white/20"
-          }`}
-        >
-          {plan.tag}
-        </div>
-      )}
-
       {/* 套餐名 & 周期 */}
       <div className="mb-6">
         <div className="text-white/40 text-xs tracking-widest uppercase font-['DM_Mono'] mb-1">{plan.period}</div>
@@ -623,43 +563,42 @@ function PricingCard({ plan, currency, isEn }: { plan: any; currency: string; is
           {plan.name}
         </h3>
       </div>
-
       {/* 价格 */}
-      <div className="mb-2">
-        <div className="flex items-baseline gap-1">
-          {!isEn && <span className="text-white/60 text-lg">¥</span>}
-          <span className={`text-4xl font-bold font-['DM_Mono'] ${plan.highlight ? "text-[#C9A84C]" : "text-white"}`}>
-            {plan.price}
-          </span>
-          {!isEn && plan.unit && <span className="text-white/60 text-lg">{plan.unit}</span>}
+      <div className="mb-6">
+        <div className="flex items-baseline gap-1 flex-wrap">
+          {isEn ? (
+            <span className={`text-3xl font-bold font-['DM_Mono'] ${plan.highlight ? "text-[#C9A84C]" : "text-white"}`}>
+              {plan.price}
+            </span>
+          ) : (
+            <>
+              <span className="text-white/40 text-sm font-['DM_Mono']">¥</span>
+              <span className={`text-3xl font-bold font-['DM_Mono'] ${plan.highlight ? "text-[#C9A84C]" : "text-white"}`}>
+                {plan.price}
+              </span>
+              <span className="text-white/40 text-sm">{plan.unit}</span>
+            </>
+          )}
         </div>
         {plan.originalPrice && (
-          <div className="text-white/30 text-sm line-through mt-1 font-['DM_Mono']">
-            {isEn ? "" : "¥"}{plan.originalPrice}
+          <div className="text-white/25 text-xs line-through mt-1 font-['DM_Mono']">
+            {isEn ? plan.originalPrice : `原价 ${plan.originalPrice}`}
           </div>
         )}
-        {plan.perMonth && (
-          <div className="text-white/40 text-xs mt-1 font-['DM_Mono']">≈ {plan.perMonth}</div>
-        )}
       </div>
-
-      {/* 分割线 */}
-      <div className={`h-px my-6 ${plan.highlight ? "bg-[#C9A84C]/30" : "bg-white/10"}`} />
-
       {/* 功能列表 */}
-      <ul className="space-y-3 flex-1 mb-8">
+      <ul className="space-y-2.5 mb-8 flex-1">
         {plan.features.map((f: string) => (
-          <li key={f} className="flex items-start gap-2.5 text-sm text-white/70">
-            <span className={`mt-0.5 text-xs flex-shrink-0 ${plan.highlight ? "text-[#C9A84C]" : "text-white/40"}`}>✦</span>
-            {f}
+          <li key={f} className="flex items-start gap-2 text-sm text-white/55">
+            <span className={`mt-0.5 text-xs shrink-0 ${plan.highlight ? "text-[#C9A84C]" : "text-white/30"}`}>▸</span>
+            <span>{f}</span>
           </li>
         ))}
       </ul>
-
-      {/* CTA 按钮 */}
+      {/* CTA */}
       <a
-        href="#contact"
-        onClick={(e) => { e.preventDefault(); document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" }); }}
+        href="/#contact"
+        onClick={(e) => { e.preventDefault(); window.location.href = "/#contact"; }}
         className={`block text-center py-3.5 px-6 text-sm font-semibold tracking-widest uppercase transition-all duration-300 ${
           plan.highlight
             ? "bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866]"
@@ -690,11 +629,6 @@ function ServiceSection({ data, isEn }: { data: any; isEn: boolean }) {
             {data.title}
           </h2>
           <p className="text-white/50 text-base max-w-2xl leading-relaxed mb-4">{data.desc}</p>
-          {/* 锚定价提示 */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 border border-[#C9A84C]/30 bg-[#C9A84C]/5">
-            <span className="text-[#C9A84C] text-xs">▶</span>
-            <span className="text-[#C9A84C] text-sm font-semibold">{data.anchor}</span>
-          </div>
         </div>
 
         {/* 定价卡片 */}
@@ -702,6 +636,134 @@ function ServiceSection({ data, isEn }: { data: any; isEn: boolean }) {
           {data.plans.map((plan: any) => (
             <PricingCard key={plan.name} plan={plan} currency="¥" isEn={isEn} />
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── 预约咨询表单组件 ──────────────────────────────────────────────────────────────────────────────
+function ConsultingForm({ isEn }: { isEn: boolean }) {
+  const [form, setForm] = useState({ name: "", company: "", email: "", phone: "", service: "", budget: "", message: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const createInquiry = trpc.consulting.createInquiry.useMutation({
+    onSuccess: () => setSubmitted(true),
+    onError: (e) => setError(e.message),
+  });
+
+  const services_zh = ["品牌全案战略咨询", "战略咨询全案", "猫眼自动内容平台", "品牌设计", "爆品营销策划", "毛智库"];
+  const services_en = ["Full-Case Brand Strategy", "Strategic Consulting Suite", "Mc&Mamoo Content Engine", "Brand Design", "Hero Product Marketing", "Mao Think Tank"];
+  const budgets_zh = ["—— 选择预算范围 ——", "100万以内", "100-500万", "500-2000万", "2000万以上"];
+  const budgets_en = ["-- Select Budget --", "Under \u00a51M", "\u00a51M - \u00a55M", "\u00a55M - \u00a520M", "Above \u00a520M"];
+
+  const inputCls = "w-full bg-white/5 border border-white/10 text-white placeholder-white/30 px-4 py-3 text-sm focus:outline-none focus:border-[#C9A84C]/60 transition-colors";
+  const labelCls = "block text-white/50 text-xs font-['DM_Mono'] tracking-widest uppercase mb-2";
+
+  if (submitted) {
+    return (
+      <section className="py-24 border-t border-white/5">
+        <div className="container">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="text-[#C9A84C] text-5xl mb-6">✓</div>
+            <h2 className="font-['Noto_Serif_SC'] text-white text-3xl font-bold mb-4">
+              {isEn ? "Inquiry Received" : "咨询已收到"}
+            </h2>
+            <p className="text-white/50 leading-relaxed">
+              {isEn
+                ? "Our strategy team will contact you within 24 hours to schedule your consultation."
+                : "我们的战略团队将在 24 小时内与您联系，安排咨询时间。"}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-24 border-t border-white/5">
+      <div className="container">
+        <div className="max-w-3xl mx-auto">
+          <div className="section-label mb-4">{isEn ? "Get Started" : "预约咨询"}</div>
+          <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
+            {isEn ? "Book a Strategy Session" : "预约战略咨询"}
+          </h2>
+          <p className="text-white/40 mb-12 text-lg leading-relaxed">
+            {isEn
+              ? "Tell us about your brand and goals. Our senior strategists will respond within 24 hours."
+              : "告诉我们您的品牌和目标，我们的高级战略顾问将在 24 小时内回复。"}
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 姓名 */}
+            <div>
+              <label className={labelCls}>{isEn ? "Name *" : "姓名 *"}</label>
+              <input className={inputCls} placeholder={isEn ? "Your full name" : "您的姓名"}
+                value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            {/* 公司 */}
+            <div>
+              <label className={labelCls}>{isEn ? "Company" : "公司名称"}</label>
+              <input className={inputCls} placeholder={isEn ? "Your company" : "您的公司"}
+                value={form.company} onChange={e => setForm(f => ({ ...f, company: e.target.value }))} />
+            </div>
+            {/* 邮箱 */}
+            <div>
+              <label className={labelCls}>{isEn ? "Email *" : "邮箱 *"}</label>
+              <input className={inputCls} type="email" placeholder={isEn ? "your@email.com" : "您的邮箱"}
+                value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            {/* 电话 */}
+            <div>
+              <label className={labelCls}>{isEn ? "Phone" : "联系电话"}</label>
+              <input className={inputCls} placeholder={isEn ? "+86 / International" : "手机号码"}
+                value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+            </div>
+            {/* 意向服务 */}
+            <div>
+              <label className={labelCls}>{isEn ? "Service of Interest" : "意向服务"}</label>
+              <select className={inputCls} value={form.service} onChange={e => setForm(f => ({ ...f, service: e.target.value }))}>
+                <option value="">{isEn ? "-- Select Service --" : "-- 选择服务 --"}</option>
+                {(isEn ? services_en : services_zh).map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            {/* 预算 */}
+            <div>
+              <label className={labelCls}>{isEn ? "Annual Budget" : "年度预算"}</label>
+              <select className={inputCls} value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}>
+                {(isEn ? budgets_en : budgets_zh).map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+            {/* 说明 */}
+            <div className="md:col-span-2">
+              <label className={labelCls}>{isEn ? "Tell Us More" : "补充说明"}</label>
+              <textarea className={`${inputCls} resize-none`} rows={4}
+                placeholder={isEn ? "Briefly describe your brand, challenges, and goals..." : "简述您的品牌、面临的挑战和目标…"}
+                value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
+            </div>
+          </div>
+
+          {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
+
+          <div className="mt-8 flex items-center gap-6">
+            <button
+              onClick={() => {
+                if (!form.name || !form.email) { setError(isEn ? "Name and email are required." : "姓名和邮箱为必填项。"); return; }
+                setError("");
+                createInquiry.mutate(form);
+              }}
+              disabled={createInquiry.isPending}
+              className="px-10 py-4 bg-[#C9A84C] text-[#0A0A0A] font-bold tracking-widest uppercase text-sm hover:bg-[#D4B866] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {createInquiry.isPending
+                ? (isEn ? "Submitting..." : "提交中…")
+                : (isEn ? "Submit Inquiry" : "提交咨询")}
+            </button>
+            <p className="text-white/30 text-xs font-['DM_Mono']">
+              {isEn ? "Response within 24 hours · Strictly confidential" : "24小时内回复 · 信息严格保密"}
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -783,26 +845,14 @@ export default function Pricing() {
         <ServiceSection key={service.id} data={service} isEn={isEn} />
       ))}
 
-      {/* 底部 CTA */}
-      <section className="py-24">
+      {/* 预约咨询表单 */}
+      <ConsultingForm isEn={isEn} />
+      {/* 底部小字 */}
+      <section className="py-10">
         <div className="container text-center">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="font-['Noto_Serif_SC'] text-white text-3xl md:text-4xl font-bold mb-4">
-              {isEn ? "Not sure which plan fits you?" : "不确定哪个套餐适合你？"}
-            </h2>
-            <p className="text-white/50 mb-8 leading-relaxed">
-              {isEn
-                ? "Book a free 30-minute strategy consultation. We'll recommend the right plan based on your brand stage, goals, and budget."
-                : "预约30分钟免费战略咨询，我们根据你的品牌阶段、目标和预算，推荐最适合的方案。"}
-            </p>
-            <a
-              href="#contact"
-              onClick={(e) => { e.preventDefault(); window.location.href = "/#contact"; }}
-              className="inline-block px-10 py-4 bg-[#C9A84C] text-[#0A0A0A] font-bold tracking-widest uppercase text-sm hover:bg-[#D4B866] transition-colors duration-300"
-            >
-              {isEn ? "Book Free Consultation" : "预约免费咨询"}
-            </a>
-          </div>
+          <p className="text-white/20 text-xs font-['DM_Mono'] tracking-widest uppercase">
+            {isEn ? "All engagements begin with a confidential strategy session" : "所有合作均始于一场保密战略会议"}
+          </p>
         </div>
       </section>
 

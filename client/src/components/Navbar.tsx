@@ -2,8 +2,8 @@
  * Navbar — 猫眼增长引擎官网导航
  * Design: 透明渐变 → 深色固定导航，金色 hover 线条
  */
-import { useState, useEffect, useRef } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 
@@ -52,10 +52,9 @@ export default function Navbar() {
             onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
             className="flex items-center gap-3 group"
           >
-            {/* Cat-eye logo from business card */}
             <img
               src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_eye_logo_1a9f9467.png"
-              alt="猫眼咋询 Logo"
+              alt="猫眼咨询 Logo"
               className="h-10 w-auto object-contain"
               style={{ filter: 'drop-shadow(0 0 6px rgba(201,168,76,0.5))' }}
             />
@@ -64,7 +63,7 @@ export default function Navbar() {
                 Mc&amp;Mamoo
               </div>
               <div className="text-white/40 text-[9px] tracking-[0.2em] uppercase leading-none mt-0.5">
-                Brand Management
+                {isEn ? 'Growth Engine' : '增长引擎'}
               </div>
             </div>
           </a>
@@ -80,6 +79,7 @@ export default function Navbar() {
                 {item.label}
               </button>
             ))}
+
             {/* 猫眼工业 下拉菜单 */}
             <div className="relative group">
               <button
@@ -88,10 +88,9 @@ export default function Navbar() {
                 style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
               >
                 <span style={{ width: 6, height: 6, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #4FC3F7" }} />
-                猫眼工业
+                {isEn ? 'Mc Industry' : '猫眼工业'}
                 <span className="text-[#4FC3F7]/40 text-[0.6rem] ml-0.5">▾</span>
               </button>
-              {/* 下拉菜单 */}
               <div className="absolute top-full left-0 mt-1 w-44 bg-[#0A0A0A]/98 border border-[#4FC3F7]/20 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 <a
                   href="#mao-industry"
@@ -99,14 +98,14 @@ export default function Navbar() {
                   className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#4FC3F7] hover:bg-[#4FC3F7]/5 text-xs font-mono tracking-wider transition-colors duration-200 border-b border-white/5"
                 >
                   <span style={{ width: 4, height: 4, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block" }} />
-                  工业板块首页
+                  {isEn ? 'Industry Overview' : '工业板块首页'}
                 </a>
                 <a
                   href="/millennium-clock"
                   className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 text-xs font-mono tracking-wider transition-colors duration-200 border-b border-white/5"
                 >
                   <span style={{ width: 4, height: 4, background: "#C9A84C", borderRadius: "50%", display: "inline-block" }} />
-                  万年钟详情页
+                  {isEn ? 'Millennium Clock' : '万年钟详情页'}
                 </a>
                 <a
                   href="#contact"
@@ -114,17 +113,18 @@ export default function Navbar() {
                   className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 text-xs font-mono tracking-wider transition-colors duration-200"
                 >
                   <span style={{ width: 4, height: 4, background: "#C9A84C", display: "inline-block" }} />
-                  合作咨询
+                  {isEn ? 'Inquire' : '合作咨询'}
                 </a>
               </div>
             </div>
+
             <a
               href="/maothink"
               className="relative text-[#8B1A1A] hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
               <span style={{ width: 6, height: 6, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0 }} />
-              毛智库
+              {isEn ? 'Mao Think Tank' : '毛智库'}
             </a>
             <a
               href="/platform"
@@ -132,7 +132,7 @@ export default function Navbar() {
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
               <span style={{ width: 6, height: 6, background: "#40d090", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #40d090" }} />
-              运营平台
+              {isEn ? 'Ops Platform' : '运营平台'}
             </a>
             <a
               href="/openclaw"
@@ -140,7 +140,7 @@ export default function Navbar() {
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
               <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>🦞</span>
-              小龙虾 AI
+              {isEn ? 'Claw AI' : '小龙虾 AI'}
             </a>
             <a
               href="/maoai/login"
@@ -150,19 +150,35 @@ export default function Navbar() {
               <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px #C9A84C", flexShrink: 0 }} />
               MaoAI
             </a>
+
             <LanguageSwitcher />
-            <a
-              href="/pricing"
-              className="ml-1 px-3 py-1.5 text-white/50 hover:text-[#C9A84C] text-xs tracking-widest uppercase transition-all duration-300 font-['DM_Mono'] whitespace-nowrap border border-transparent hover:border-[#C9A84C]/30"
-            >
-              {isEn ? 'Services' : '咨询服务'}
-            </a>
-            <a
-              href="/press"
-              className="ml-1 px-3 py-1.5 text-white/50 hover:text-[#C9A84C] text-xs tracking-widest uppercase transition-all duration-300 font-['DM_Mono'] whitespace-nowrap border border-transparent hover:border-[#C9A84C]/30"
-            >
-              {isEn ? 'Press' : '新闻'}
-            </a>
+
+            {/* 更多 下拉菜单（咨询服务 + 新闻稿） */}
+            <div className="relative ml-1 group">
+              <button
+                className="flex items-center gap-1 px-3 py-1.5 text-white/50 hover:text-[#C9A84C] text-xs tracking-widest uppercase transition-all duration-300 font-['DM_Mono'] whitespace-nowrap border border-transparent hover:border-[#C9A84C]/30"
+              >
+                {isEn ? 'More' : '更多'}
+                <ChevronDown size={10} className="opacity-60 group-hover:opacity-100 transition-transform duration-200 group-hover:rotate-180" />
+              </button>
+              <div className="absolute right-0 top-full mt-1 w-44 bg-[#0D0D0D] border border-white/10 shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
+                <a
+                  href="/pricing"
+                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-white/5 text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors border-b border-white/5"
+                >
+                  <span style={{ width: 5, height: 5, background: '#C9A84C', display: 'inline-block' }} />
+                  {isEn ? 'Consulting' : '咨询服务'}
+                </a>
+                <a
+                  href="/press"
+                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-white/5 text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors"
+                >
+                  <span style={{ width: 5, height: 5, background: '#C9A84C', display: 'inline-block' }} />
+                  {isEn ? 'Press' : '新闻稿'}
+                </a>
+              </div>
+            </div>
+
             <button
               onClick={() => handleNav("#contact")}
               className="ml-1 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
@@ -187,7 +203,7 @@ export default function Navbar() {
           menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="flex flex-col items-center justify-center h-full gap-8">
+        <div className="flex flex-col items-center justify-center h-full gap-8 overflow-y-auto py-8">
           {navItems.map((item, i) => (
             <button
               key={item.href}
@@ -204,7 +220,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 8px #4FC3F7" }} />
-            猫眼工业
+            {isEn ? 'Mc Industry' : '猫眼工业'}
           </button>
           <a
             href="/maothink"
@@ -212,7 +228,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block" }} />
-            毛智库
+            {isEn ? 'Mao Think Tank' : '毛智库'}
           </a>
           <a
             href="/platform"
@@ -220,7 +236,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#40d090", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #40d090" }} />
-            运营平台
+            {isEn ? 'Ops Platform' : '运营平台'}
           </a>
           <a
             href="/openclaw"
@@ -228,7 +244,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>🦞</span>
-            小龙虾 AI
+            {isEn ? 'Claw AI' : '小龙虾 AI'}
           </a>
           <a
             href="/maoai/login"
@@ -236,7 +252,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #C9A84C" }} />
-            MaoAI 统一控制中心
+            MaoAI
           </a>
           <a
             href="/pricing"
@@ -244,7 +260,7 @@ export default function Navbar() {
             style={{ fontFamily: "'DM Mono', monospace" }}
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", display: "inline-block" }} />
-            {isEn ? 'Services' : '咨询服务'}
+            {isEn ? 'Consulting' : '咨询服务'}
           </a>
           <a
             href="/press"

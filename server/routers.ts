@@ -597,7 +597,36 @@ Required structure:
       }),
   }),
 
-  // ─── 万年钟预约 ────────────────────────────────────────────────────────────────────────
+  // ─── 咨询服务预约 ──────────────────────────────────────────────────────────────────────────────
+  consulting: router({
+    createInquiry: publicProcedure
+      .input((val: unknown) => {
+        const v = val as { name: string; company?: string; email: string; phone?: string; service?: string; budget?: string; message?: string };
+        if (!v.name || !v.email) throw new TRPCError({ code: "BAD_REQUEST", message: "必填字段不能为空" });
+        return v;
+      })
+      .mutation(async ({ input }) => {
+        const { createConsultingInquiry } = await import("./db");
+        const inquiry = await createConsultingInquiry(input);
+        try {
+          const { notifyOwner } = await import("./_core/notification");
+          await notifyOwner({
+            title: `咨询服务新预约: ${input.name}${input.company ? ` (${input.company})` : ''} — ${input.service || '未指定服务'}`,
+            content: `姓名: ${input.name}\n公司: ${input.company || '未填写'}\n邮箱: ${input.email}\n电话: ${input.phone || '未填写'}\n意向服务: ${input.service || '未指定'}\n预算: ${input.budget || '未填写'}\n说明: ${input.message || '无'}`,
+          });
+        } catch (e) {
+          console.warn("[consulting] 通知失败:", e);
+        }
+        return { success: true, id: (inquiry as { id: number })?.id };
+      }),
+    getInquiries: adminProcedure
+      .query(async () => {
+        const { getConsultingInquiries } = await import("./db");
+        return getConsultingInquiries();
+      }),
+  }),
+
+  // ─── 万年钟预约 ──────────────────────────────────────────────────────────────────────────────
   millenniumClock: router({
     createReservation: publicProcedure
       .input((val: unknown) => {
@@ -612,7 +641,7 @@ Required structure:
           const { notifyOwner } = await import("./_core/notification");
           await notifyOwner({
             title: `万年钟新预约: ${input.name} (${input.intent})`,
-            content: `姓名: ${input.name}\n机构: ${input.company || '未填写'}\n邮筱: ${input.email}\n电话: ${input.phone || '未填写'}\n意向: ${input.intent}\n说明: ${input.message || '无'}`,
+            content: `姓名: ${input.name}\n机构: ${input.company || '未填写'}\n邮箱: ${input.email}\n电话: ${input.phone || '未填写'}\n意向: ${input.intent}\n说明: ${input.message || '无'}`,
           });
         } catch (e) {
           console.warn("[millenniumClock] 邮件通知失败:", e);

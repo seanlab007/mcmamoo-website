@@ -387,3 +387,24 @@ export async function incrementUsage(userId: number, field: "chatMessages" | "im
     });
   }
 }
+
+// ─── 咨询服务预约 ──────────────────────────────────────────────────────────────────────────────
+export interface ConsultingInquiryInput {
+  name: string;
+  company?: string;
+  email: string;
+  phone?: string;
+  service?: string;
+  budget?: string;
+  message?: string;
+}
+export async function createConsultingInquiry(data: ConsultingInquiryInput) {
+  return supabaseInsert<Record<string, unknown>>("consulting_inquiries", {
+    ...data,
+    status: "new",
+    createdAt: new Date().toISOString(),
+  });
+}
+export async function getConsultingInquiries() {
+  return supabaseGet<Record<string, unknown>>("consulting_inquiries", "order=createdAt.desc&limit=200");
+}

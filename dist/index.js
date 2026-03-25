@@ -13,6 +13,7 @@ var db_exports = {};
 __export(db_exports, {
   clearMessages: () => clearMessages,
   createAiNode: () => createAiNode,
+  createConsultingInquiry: () => createConsultingInquiry,
   createContentCopy: () => createContentCopy,
   createConversation: () => createConversation,
   createMessage: () => createMessage,
@@ -26,6 +27,7 @@ __export(db_exports, {
   deleteRoutingRule: () => deleteRoutingRule,
   getAiNodeById: () => getAiNodeById,
   getAiNodes: () => getAiNodes,
+  getConsultingInquiries: () => getConsultingInquiries,
   getContentCopies: () => getContentCopies,
   getConversations: () => getConversations,
   getDefaultRoutingRule: () => getDefaultRoutingRule,
@@ -336,6 +338,16 @@ async function incrementUsage(userId, field) {
       updatedAt: (/* @__PURE__ */ new Date()).toISOString()
     });
   }
+}
+async function createConsultingInquiry(data) {
+  return supabaseInsert("consulting_inquiries", {
+    ...data,
+    status: "new",
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+  });
+}
+async function getConsultingInquiries() {
+  return supabaseGet("consulting_inquiries", "order=createdAt.desc&limit=200");
 }
 var SUPABASE_URL, SUPABASE_KEY;
 var init_db = __esm({
@@ -2139,7 +2151,38 @@ Required structure:
       return { success: true };
     })
   }),
-  // ─── 万年钟预约 ────────────────────────────────────────────────────────────────────────
+  // ─── 咨询服务预约 ──────────────────────────────────────────────────────────────────────────────
+  consulting: router({
+    createInquiry: publicProcedure.input((val) => {
+      const v = val;
+      if (!v.name || !v.email) throw new TRPCError3({ code: "BAD_REQUEST", message: "\u5FC5\u586B\u5B57\u6BB5\u4E0D\u80FD\u4E3A\u7A7A" });
+      return v;
+    }).mutation(async ({ input }) => {
+      const { createConsultingInquiry: createConsultingInquiry2 } = await Promise.resolve().then(() => (init_db(), db_exports));
+      const inquiry = await createConsultingInquiry2(input);
+      try {
+        const { notifyOwner: notifyOwner2 } = await Promise.resolve().then(() => (init_notification(), notification_exports));
+        await notifyOwner2({
+          title: `\u54A8\u8BE2\u670D\u52A1\u65B0\u9884\u7EA6: ${input.name}${input.company ? ` (${input.company})` : ""} \u2014 ${input.service || "\u672A\u6307\u5B9A\u670D\u52A1"}`,
+          content: `\u59D3\u540D: ${input.name}
+\u516C\u53F8: ${input.company || "\u672A\u586B\u5199"}
+\u90AE\u7BB1: ${input.email}
+\u7535\u8BDD: ${input.phone || "\u672A\u586B\u5199"}
+\u610F\u5411\u670D\u52A1: ${input.service || "\u672A\u6307\u5B9A"}
+\u9884\u7B97: ${input.budget || "\u672A\u586B\u5199"}
+\u8BF4\u660E: ${input.message || "\u65E0"}`
+        });
+      } catch (e) {
+        console.warn("[consulting] \u901A\u77E5\u5931\u8D25:", e);
+      }
+      return { success: true, id: inquiry?.id };
+    }),
+    getInquiries: adminProcedure2.query(async () => {
+      const { getConsultingInquiries: getConsultingInquiries2 } = await Promise.resolve().then(() => (init_db(), db_exports));
+      return getConsultingInquiries2();
+    })
+  }),
+  // ─── 万年钟预约 ──────────────────────────────────────────────────────────────────────────────
   millenniumClock: router({
     createReservation: publicProcedure.input((val) => {
       const v = val;
@@ -2153,7 +2196,7 @@ Required structure:
           title: `\u4E07\u5E74\u949F\u65B0\u9884\u7EA6: ${input.name} (${input.intent})`,
           content: `\u59D3\u540D: ${input.name}
 \u673A\u6784: ${input.company || "\u672A\u586B\u5199"}
-\u90AE\u7B71: ${input.email}
+\u90AE\u7BB1: ${input.email}
 \u7535\u8BDD: ${input.phone || "\u672A\u586B\u5199"}
 \u610F\u5411: ${input.intent}
 \u8BF4\u660E: ${input.message || "\u65E0"}`
