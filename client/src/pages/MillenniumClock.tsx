@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
+import PaymentModal, { type PaymentProduct } from "@/components/PaymentModal";
 
 const OG_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/millennium-clock-og_9be09803.jpg";
@@ -98,6 +99,8 @@ export default function MillenniumClock() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showFounderModal, setShowFounderModal] = useState(false);
+  const [paymentProduct, setPaymentProduct] = useState<PaymentProduct | null>(null);
+  const isCNY = typeof navigator !== "undefined" && navigator.language.startsWith("zh");
 
   const timeline = isEn ? timelineData.en : timelineData.zh;
   const specs = isEn ? specsData.en : specsData.zh;
@@ -479,6 +482,23 @@ export default function MillenniumClock() {
                 className="w-full py-4 bg-[#C9A84C] text-black font-bold tracking-widest uppercase text-sm hover:bg-[#E8D5A0] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
                 {submitting ? (isEn ? "Submitting..." : "提交中...") : (isEn ? "Submit Inquiry →" : "提交意向 →")}
               </button>
+              {/* Purchase CTA — shown when intent is purchase */}
+              {formData.intent === "purchase" && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentProduct({
+                    id: "millennium_clock_purchase",
+                    name: isEn ? "Millennium Clock · Purchase Inquiry" : "代言万年钟 · 购买定金",
+                    amount: isCNY ? 9800 : 1380,
+                    currency: isCNY ? "CNY" : "USD",
+                    description: isEn ? "Deposit to confirm custom order" : "定金确认定制订单，余款面议后支付",
+                    billingLabel: isEn ? "One-time deposit" : "一次性定金",
+                  })}
+                  className="w-full py-3 border border-[#4FC3F7]/30 text-[#4FC3F7]/80 text-sm font-mono tracking-widest uppercase hover:bg-[#4FC3F7]/10 hover:border-[#4FC3F7]/60 transition-all duration-300"
+                >
+                  {isEn ? "★ Pay Deposit to Confirm Order →" : "★ 支付定金确认订单 →"}
+                </button>
+              )}
               {submitError && (
                 <p className="text-red-400 text-xs text-center font-mono bg-red-400/10 border border-red-400/20 px-4 py-2">{submitError}</p>
               )}
@@ -501,6 +521,18 @@ export default function MillenniumClock() {
           </div>
         </div>
       </footer>
+
+      {/* ── Payment Modal ─────────────────────────────────────────────────── */}
+      {paymentProduct && (
+        <PaymentModal
+          open={!!paymentProduct}
+          onClose={() => setPaymentProduct(null)}
+          product={paymentProduct}
+          onSuccess={(orderId) => {
+            console.log("MillenniumClock order:", orderId);
+          }}
+        />
+      )}
     </div>
   );
 }
