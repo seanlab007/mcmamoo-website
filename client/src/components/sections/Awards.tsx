@@ -7,9 +7,28 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 
+// Generic fallback images
 const MEDAL_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_medal_gold_6822bcf3.png";
 const TROPHY_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_trophy_gold_0ef0784f.png";
 const PLAQUE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_plaque_prestige_e3eeef5e.png";
+
+// City-specific award images
+const CITY_AWARD_IMGS: Record<string, string> = {
+  Istanbul: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_istanbul_medal-Uaskuz6pSfypFt7RXubeHo.png",
+  "New York": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_newyork_trophy-o9WjWf2FysAYntxfuSRaoG.png",
+  Brussels: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_brussels_medal-er9FZWTrvdVxFw6Td79em7.png",
+  Geneva: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_geneva_plaque-4ZNH8CWmoG3FipvyWE5rjC.png",
+  Singapore: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_singapore_trophy-fVQDT6yNYHAW4Epdit6mYh.png",
+  London: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_london_medal-BbVxpBeWpD2uHkGXQEeSTN.png",
+  Dubai: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_dubai_trophy-Y4UK9zc2Q77dGmAdEA5bYu.png",
+  Paris: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_paris_medal-ZZ6nQAd2qaPEh5GhJ6mH6A.png",
+  Munich: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_munich_trophy-PBK5Zr3ose2cXU5UFnod3i.png",
+  Seoul: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_seoul_plaque-JRxXf4Zh5tkq8iAervf2QN.png",
+  Vienna: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_vienna_medal-GAogVzGHNNECwKPWR8sapg.png",
+  Shanghai: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_shanghai_trophy-f3CMmRb2PFbBBARWbWxnk9.png",
+  Zurich: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_zurich_medal-oVLca8mSjRSG3dpYCrG7NU.png",
+  Davos: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_davos_trophy-AcRbmjenhiJUas7oiNBGBP.png",
+};
 
 const AWARDS = [
   { year: 2009, name_zh: "君士坦丁堡战略咨询卓越奖", name_en: "Constantinople Strategic Consulting Excellence Award", org_en: "Constantinople Institute of International Strategic Studies", city: "Istanbul", category_zh: "战略咨询", category_en: "Strategy", type: "medal" },
@@ -86,7 +105,8 @@ const STATS_EN = [
   { value: "20+", label: "International Partners" },
 ];
 
-function getAwardImg(type: string) {
+function getAwardImg(type: string, city?: string) {
+  if (city && CITY_AWARD_IMGS[city]) return CITY_AWARD_IMGS[city];
   if (type === "trophy") return TROPHY_IMG;
   if (type === "plaque") return PLAQUE_IMG;
   return MEDAL_IMG;
@@ -207,7 +227,7 @@ export default function Awards() {
                 <div className="pt-8 px-4 pb-0 flex justify-center relative">
                   <div className="relative">
                     <img
-                      src={getAwardImg(award.type)}
+                      src={getAwardImg(award.type, award.city)}
                       alt={award.type}
                       className="h-20 object-contain opacity-75 group-hover:opacity-90 transition-opacity duration-300"
                       style={{ filter: 'sepia(0.18) brightness(0.92) contrast(0.94) saturate(0.85)' }}
