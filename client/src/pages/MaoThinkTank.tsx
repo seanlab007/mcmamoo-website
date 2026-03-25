@@ -8,6 +8,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
 import { subscribeBrief, submitMaoApplication } from "@/lib/supabase";
 import { useTranslation } from "react-i18next";
+import PaymentModal, { type PaymentProduct } from "@/components/PaymentModal";
 
 const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/maothink-hero-mJvZ3PuQkyhYspYTZQbG3W.webp";
 
@@ -497,6 +498,8 @@ function MaoApplicationForm({ isEn }: { isEn: boolean }) {
   const [errorMsg, setErrorMsg] = useState("");
   const { ref, visible } = useReveal(0.1);
   const [loading, setLoading] = useState(false);
+  const [paymentProduct, setPaymentProduct] = useState<PaymentProduct | null>(null);
+  const isCNY = typeof navigator !== "undefined" && navigator.language.startsWith("zh");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -746,7 +749,42 @@ function MaoApplicationForm({ isEn }: { isEn: boolean }) {
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.58rem", color: "rgba(232,213,183,0.25)", letterSpacing: "0.08em", textAlign: "center" }}>
                   {isEn ? "ALL SUBMISSIONS ARE STRICTLY CLASSIFIED" : "所有申请信息严格保密 · ALL SUBMISSIONS ARE CLASSIFIED"}
                 </p>
+                {/* Consultation fee CTA */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentProduct({
+                    id: "maothink_consultation",
+                    name: isEn ? "Mao Think Tank · Strategic Consultation" : "毛智库 · 战略咋询定金",
+                    amount: isCNY ? 29800 : 3980,
+                    currency: isCNY ? "CNY" : "USD",
+                    description: isEn ? "Initial consultation deposit · Refundable if not accepted" : "初始咋询定金 · 未通过审核全额退还",
+                    billingLabel: isEn ? "One-time deposit" : "一次性定金",
+                  })}
+                  style={{
+                    width: "100%", padding: "12px 24px", marginTop: 8,
+                    background: "transparent",
+                    color: "rgba(232,213,183,0.5)",
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.15em",
+                    border: "1px solid rgba(139,26,26,0.4)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(139,26,26,0.15)"; (e.target as HTMLButtonElement).style.color = "#E8D5B7"; }}
+                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "transparent"; (e.target as HTMLButtonElement).style.color = "rgba(232,213,183,0.5)"; }}
+                >
+                  {isEn ? "★ PAY CONSULTATION DEPOSIT →" : "★ 支付咋询定金 →"}
+                </button>
               </form>
+            )}
+            {paymentProduct && (
+              <PaymentModal
+                open={!!paymentProduct}
+                onClose={() => setPaymentProduct(null)}
+                product={paymentProduct}
+                onSuccess={(orderId) => console.log("MaoThinkTank order:", orderId)}
+              />
             )}
           </div>
         </div>

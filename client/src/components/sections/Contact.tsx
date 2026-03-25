@@ -8,6 +8,7 @@ import { Phone, Globe, Mail, MapPin, Loader2, CheckCircle2 } from "lucide-react"
 import { submitContact } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import PaymentModal, { type PaymentProduct } from "@/components/PaymentModal";
 
 const CONTACT_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/contact-bg-8krYjvmedEVGPfhYr9X7Co.webp";
 
@@ -19,6 +20,8 @@ export default function Contact() {
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
   const [isPending, setIsPending] = useState(false);
+  const [paymentProduct, setPaymentProduct] = useState<PaymentProduct | null>(null);
+  const isCNY = typeof navigator !== "undefined" && navigator.language.startsWith("zh");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,14 +211,39 @@ export default function Contact() {
                       {isEn ? "Submitting..." : "提交中..."}
                     </>
                   ) : (
-                    isEn ? "Submit Consultation Request" : "提交咨询申请"
+                    isEn ? "Submit Consultation Request" : "提交咋询申请"
                   )}
+                </button>
+                {/* Brand consultation payment CTA */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentProduct({
+                    id: "brand_consultation",
+                    name: isEn ? "Brand Strategy Consultation · Deposit" : "品牌全案咋询 · 定金",
+                    amount: isCNY ? 9800 : 1380,
+                    currency: isCNY ? "CNY" : "USD",
+                    description: isEn ? "Deposit to lock consultation slot" : "定金锁定咋询名额，余款面议后支付",
+                    billingLabel: isEn ? "One-time deposit" : "一次性定金",
+                  })}
+                  className="w-full py-3 border border-[#C9A84C]/25 text-[#C9A84C]/60 text-xs tracking-widest uppercase hover:border-[#C9A84C]/50 hover:text-[#C9A84C]/90 hover:bg-[#C9A84C]/5 transition-all duration-300"
+                >
+                  {isEn ? "★ Pay Deposit to Lock Consultation Slot →" : "★ 支付定金锁定咋询名额 →"}
                 </button>
               </form>
             )}
           </div>
         </div>
       </div>
+
+      {/* ── Payment Modal ─────────────────────────────────────────────────── */}
+      {paymentProduct && (
+        <PaymentModal
+          open={!!paymentProduct}
+          onClose={() => setPaymentProduct(null)}
+          product={paymentProduct}
+          onSuccess={(orderId) => console.log("Contact order:", orderId)}
+        />
+      )}
     </section>
   );
 }

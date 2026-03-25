@@ -10,6 +10,7 @@ import {
   BadgeCheck, AlertCircle,
 } from "lucide-react";
 import { getOpenClawPlans } from "@/lib/supabase";
+import PaymentModal, { type PaymentProduct } from "@/components/PaymentModal";
 
 const OPENCLAW_URL = import.meta.env.VITE_OPENCLAW_URL || "http://localhost:18789";
 
@@ -117,6 +118,8 @@ export default function OpenClaw() {
   const [plans, setPlans] = useState<typeof FALLBACK_PLANS>(FALLBACK_PLANS);
   const [plansLoading, setPlansLoading] = useState(true);
   const [plansError, setPlansError] = useState(false);
+  const [paymentProduct, setPaymentProduct] = useState<PaymentProduct | null>(null);
+  const isCNY = typeof navigator !== "undefined" && navigator.language.startsWith("zh");
 
   // Load plans from Supabase on mount
   useEffect(() => {
@@ -141,11 +144,31 @@ export default function OpenClaw() {
   }, []);
 
   const handleLaunch = (planId: string) => {
+    if (planId === "free") {
+      window.open(OPENCLAW_URL, "_blank");
+      return;
+    }
     if (planId === "team") {
       window.location.href = "/#contact";
       return;
     }
-    window.open(OPENCLAW_URL, "_blank");
+    // Paid plan: show payment modal
+    const plan = plans.find(p => p.id === planId);
+    if (!plan) return;
+    const isYearly = billingCycle === "yearly";
+    const amount = isYearly ? plan.price_yearly : plan.price_monthly;
+    if (amount === 0) {
+      window.open(OPENCLAW_URL, "_blank");
+      return;
+    }
+    setPaymentProduct({
+      id: `openclaw_${planId}_${billingCycle}`,
+      name: `小龙虾 AI ${plan.name_zh}`,
+      amount,
+      currency: isCNY ? "CNY" : "USD",
+      description: isYearly ? `年付 · 节省 $${(plan.price_monthly * 12 - plan.price_yearly).toFixed(0)}` : "按月付",
+      billingLabel: isYearly ? `$${(plan.price_yearly / 12).toFixed(1)}/月均摄` : `$${plan.price_monthly}/月`,
+    });
   };
 
   return (
@@ -464,6 +487,18 @@ export default function OpenClaw() {
           <ExternalLink size={14} />
         </a>
       </section>
+
+      {/* ── Payment Modal ─────────────────────────────────────────────────── */}
+      {paymentProduct && (
+        <PaymentModal
+          open={!!paymentProduct}
+          onClose={() => setPaymentProduct(null)}
+          product={paymentProduct}
+          onSuccess={(orderId) => {
+            console.log("OpenClaw order created:", orderId);
+          }}
+        />
+      )}
     </div>
   );
 }

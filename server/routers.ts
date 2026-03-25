@@ -497,31 +497,54 @@ Required structure:
       return getPaymentOrders(ctx.user.id);
     }),
 
-    // Create a payment order (stub — actual payment URL filled by provider webhook)
+    // Create a payment order — supports both subscription tiers and generic products
     createOrder: protectedProcedure
       .input(z.object({
-        tier: z.enum(["starter", "pro", "flagship"]),
+        // Subscription tier mode (MaoAI)
+        tier: z.enum(["starter", "pro", "flagship"]).optional(),
+        billingCycle: z.enum(["monthly", "biannual", "annual", "lifetime"]).optional().default("monthly"),
+        // Generic product mode (OpenClaw, MillenniumClock, MaoThinkTank, etc.)
+        productId: z.string().optional(),
+        productName: z.string().optional(),
+        amount: z.number().optional(),
+        // Common fields
         provider: z.enum(["alipay", "lianpay", "paypal", "stripe", "wechatpay", "manual"]),
         currency: z.enum(["CNY", "USD"]),
-        billingCycle: z.enum(["monthly", "biannual", "annual", "lifetime"]).default("monthly"),
       }))
       .mutation(async ({ ctx, input }) => {
-        const tierPrices = PLAN_PRICES[input.tier as PlanTier];
-        const cyclePrices = tierPrices[input.currency as Currency];
-        const pricing = cyclePrices[input.billingCycle as import("@shared/plans").BillingCycle];
-        const amount = pricing.total;
+        let finalAmount: number;
+        let tierLabel: string;
+        let meta: Record<string, unknown>;
+
+        if (input.tier) {
+          // Subscription tier mode
+          const tierPrices = PLAN_PRICES[input.tier as PlanTier];
+          const cyclePrices = tierPrices[input.currency as Currency];
+          const pricing = cyclePrices[input.billingCycle as import("@shared/plans").BillingCycle];
+          finalAmount = pricing.total;
+          tierLabel = input.tier;
+          meta = { billingCycle: input.billingCycle, perMonth: pricing.perMonth };
+        } else if (input.productId && input.amount !== undefined) {
+          // Generic product mode
+          finalAmount = input.amount;
+          tierLabel = input.productId;
+          meta = { productId: input.productId, productName: input.productName };
+        } else {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Must provide either tier or productId+amount" });
+        }
+
         const order = await createPaymentOrder({
           userId: ctx.user.id,
-          tier: input.tier,
+          tier: tierLabel,
           provider: input.provider,
           currency: input.currency,
-          amount: amount.toFixed(2),
-          metadata: JSON.stringify({ billingCycle: input.billingCycle, perMonth: pricing.perMonth }),
+          amount: finalAmount.toFixed(2),
+          metadata: JSON.stringify(meta),
         });
         return {
-          orderId: (order as any).id,
+          orderId: (order as any).id ?? `ORD-${Date.now()}`,
           status: "pending",
-          amount,
+          amount: finalAmount,
           currency: input.currency,
           paymentUrl: null,
           message: "支付接口接入中，请联系客服完成支付",
