@@ -2,6 +2,9 @@ import { Router, Request, Response } from "express";
 import { MODEL_CONFIGS } from "./routers";
 import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog } from "./db";
 import { sdk } from "./_core/sdk";
+import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
+import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 
 const aiStreamRouter = Router();
 
@@ -212,6 +215,15 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   if (!cfg) { res.write(`data: ${JSON.stringify({ error: `Unknown model: ${model}` })}\n\n`); res.end(); return; }
   if (!cfg.apiKey) { res.write(`data: ${JSON.stringify({ error: `API key not configured for model: ${model}` })}\n\n`); res.end(); return; }
 
+  // ── Determine tool access ─────────────────────────────────────────────────
+  // Check if user is admin for extended tool access
+  const { enableTools = true } = req.body;
+  const adminUser = await getAdminUser(req);
+  const toolDefs = enableTools ? (adminUser ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS) : [];
+  // Vision models don't support function calling
+  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 &&
+    (model === "deepseek-chat" || model === "glm-4-plus" || model === "glm-4-flash");
+
   try {
     // Debug: log vision request structure
     if (hasImage) {
@@ -224,38 +236,149 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
       }));
       console.log('[Vision Debug] model:', cfg.model, 'baseUrl:', cfg.baseUrl, 'apiKey_len:', cfg.apiKey.length, 'msgs:', JSON.stringify(debugMsgs));
     }
-    const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
-      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: cfg.maxTokens || 4096 }),
-    });
-    if (!response.ok) {
-      const errText = await response.text();
-      res.write(`data: ${JSON.stringify({ error: `API Error ${response.status}: ${errText}` })}\n\n`);
-      res.end(); return;
-    }
-    const reader = response.body?.getReader();
-    if (!reader) { res.write(`data: ${JSON.stringify({ error: "No response body" })}\n\n`); res.end(); return; }
-    const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed === "data: [DONE]") { if (trimmed === "data: [DONE]") res.write("data: [DONE]\n\n"); continue; }
-        if (trimmed.startsWith("data: ")) {
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            const delta = json.choices?.[0]?.delta?.content;
-            if (delta !== undefined && delta !== null) res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
-          } catch { /* skip */ }
+
+    // ── Function Calling Loop ─────────────────────────────────────────────────
+    // Supports up to 8 rounds of tool calls before forcing final answer
+    const conversationMessages = [...allMessages];
+    const MAX_TOOL_ROUNDS = 8;
+
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      // Build request body
+      const requestBody: any = {
+        model: cfg.model,
+        messages: conversationMessages,
+        max_tokens: cfg.maxTokens || 4096,
+        stream: true
+      };
+
+      // Add tools on first rounds (not on final forced answer)
+      if (supportsTools && round < MAX_TOOL_ROUNDS - 1) {
+        requestBody.tools = toolDefs;
+        requestBody.tool_choice = "auto";
+      }
+
+      const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        res.write(`data: ${JSON.stringify({ error: `API Error ${response.status}: ${errText}` })}\n\n`);
+        res.end(); return;
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) { res.write(`data: ${JSON.stringify({ error: "No response body" })}\n\n`); res.end(); return; }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantContent = "";
+      let toolCallsAccum: Record<string, { id: string; name: string; arguments: string }> = {};
+      let finishReason = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === "data: [DONE]") continue;
+          if (trimmed.startsWith("data: ")) {
+            try {
+              const json = JSON.parse(trimmed.slice(6));
+              const choice = json.choices?.[0];
+              if (!choice) continue;
+
+              // Capture finish reason
+              if (choice.finish_reason) finishReason = choice.finish_reason;
+
+              const delta = choice.delta;
+              if (!delta) continue;
+
+              // Stream text content to client
+              if (delta.content !== undefined && delta.content !== null) {
+                assistantContent += delta.content;
+                res.write(`data: ${JSON.stringify({ content: delta.content })}\n\n`);
+              }
+
+              // Accumulate tool calls (streamed in chunks)
+              if (delta.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  const idx = String(tc.index ?? 0);
+                  if (!toolCallsAccum[idx]) {
+                    toolCallsAccum[idx] = { id: tc.id || "", name: tc.function?.name || "", arguments: "" };
+                  }
+                  if (tc.id) toolCallsAccum[idx].id = tc.id;
+                  if (tc.function?.name) toolCallsAccum[idx].name = tc.function.name;
+                  if (tc.function?.arguments) toolCallsAccum[idx].arguments += tc.function.arguments;
+                }
+              }
+            } catch { /* skip */ }
+          }
         }
       }
+
+      const toolCalls = Object.values(toolCallsAccum);
+
+      // ── No tool calls → final answer, done ───────────────────────────────
+      if (toolCalls.length === 0 || finishReason === "stop") {
+        res.write("data: [DONE]\n\n");
+        res.end();
+        return;
+      }
+
+      // ── Tool calls detected → execute each tool ───────────────────────────
+      // Add assistant message with tool_calls to conversation
+      conversationMessages.push({
+        role: "assistant",
+        content: assistantContent || null,
+        tool_calls: toolCalls.map(tc => ({
+          id: tc.id,
+          type: "function",
+          function: { name: tc.name, arguments: tc.arguments }
+        }))
+      } as any);
+
+      // Execute each tool and collect results
+      for (const tc of toolCalls) {
+        let args: Record<string, any> = {};
+        try { args = JSON.parse(tc.arguments); } catch { args = {}; }
+
+        // Notify frontend: tool is being called
+        res.write(`data: ${JSON.stringify({
+          toolCall: { id: tc.id, name: tc.name, args }
+        })}\n\n`);
+
+        const result = await executeTool(tc.name, args, !!adminUser);
+
+        // Notify frontend: tool result received
+        res.write(`data: ${JSON.stringify({
+          toolResult: {
+            id: tc.id,
+            name: tc.name,
+            success: result.success,
+            output: result.output.slice(0, 500) // preview for frontend
+          }
+        })}\n\n`);
+
+        // Add tool result to conversation
+        conversationMessages.push({
+          role: "tool",
+          tool_call_id: tc.id,
+          content: result.success
+            ? result.output.slice(0, 8000) // limit context size
+            : `工具执行失败: ${result.error}`
+        } as any);
+      }
+
+      // Continue loop → AI will process tool results and either answer or call more tools
     }
+
+    // Reached max rounds without final answer
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err: any) {
@@ -536,6 +659,145 @@ aiStreamRouter.post("/image/generate", async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error("[Image Generate] Error:", err);
     res.status(500).json({ error: err.message || "图像生成失败" });
+  }
+});
+
+// ─── File Upload & Parse ─────────────────────────────────────────────────────
+// POST /api/ai/upload
+// Accepts: multipart/form-data with field "file"
+// Returns: { type, text?, dataUrl?, fileName, fileType, size, truncated? }
+aiStreamRouter.post("/upload", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+
+    const multer = (await import("multer")).default;
+    const upload = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+      fileFilter: (_req: any, file: any, cb: any) => {
+        const ok = [
+          "image/jpeg", "image/png", "image/gif", "image/webp",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/msword",
+          "text/plain", "text/csv", "text/markdown", "application/json",
+        ];
+        if (ok.includes(file.mimetype) || /\.(txt|md|csv|json|pdf|docx|doc|png|jpg|jpeg|gif|webp)$/i.test(file.originalname)) {
+          cb(null, true);
+        } else {
+          cb(new Error(`不支持的文件类型: ${file.mimetype}`));
+        }
+      },
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      upload.single("file")(req as any, res as any, (err: any) => {
+        if (err) reject(err); else resolve();
+      });
+    });
+
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "请选择要上传的文件" }); return; }
+
+    const { originalname, mimetype, buffer, size } = file;
+
+    // ── Image: return as base64 data URL for vision model ──
+    if (mimetype.startsWith("image/")) {
+      const base64 = buffer.toString("base64");
+      res.json({
+        type: "image",
+        dataUrl: `data:${mimetype};base64,${base64}`,
+        fileName: originalname,
+        fileType: mimetype,
+        size,
+      });
+      return;
+    }
+
+    let extractedText = "";
+    let fileType = "text";
+
+    // ── PDF ──
+    if (mimetype === "application/pdf" || /\.pdf$/i.test(originalname)) {
+      try {
+        // pdf-parse v2: new PDFParse({ data: buffer }).getText()
+        const parser = new PDFParse({ data: buffer });
+        const result = await parser.getText();
+        extractedText = result.text?.trim() || "";
+        if (!extractedText) extractedText = "[PDF 内容为空或为扫描件，无法提取文字]";
+        fileType = "pdf";
+      } catch (e: any) {
+        console.warn("[Upload] PDF parse failed:", e?.message);
+        extractedText = `[PDF 解析失败: ${e?.message || "未知错误"}，请尝试复制文本内容]`;
+        fileType = "pdf";
+      }
+    }
+    // ── Word (.docx) ──
+    else if (
+      mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      /\.docx$/i.test(originalname)
+    ) {
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        extractedText = result.value?.trim() || "";
+        if (!extractedText) extractedText = "[Word 文档内容为空]";
+        fileType = "docx";
+        if (result.messages?.length > 0) {
+          console.log("[Upload] DOCX warnings:", result.messages.map((m: any) => m.message).join("; "));
+        }
+      } catch (e: any) {
+        console.warn("[Upload] DOCX parse failed:", e?.message);
+        extractedText = `[Word 文档解析失败: ${e?.message || "未知错误"}]`;
+        fileType = "docx";
+      }
+    }
+    // ── Word (.doc 旧格式) ──
+    else if (
+      mimetype === "application/msword" ||
+      /\.doc$/i.test(originalname)
+    ) {
+      // mammoth 主要支持 .docx，对旧版 .doc 尝试解析，失败时给出明确提示
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        extractedText = result.value?.trim() || "";
+        if (!extractedText) extractedText = "[旧版 .doc 格式内容为空，建议另存为 .docx 后重新上传]";
+        fileType = "doc";
+      } catch (e: any) {
+        console.warn("[Upload] DOC parse failed:", e?.message);
+        extractedText = `[旧版 .doc 格式暂不支持自动解析，请在 Word 中另存为 .docx 格式后重新上传]`;
+        fileType = "doc";
+      }
+    }
+    // ── Plain text / CSV / JSON / Markdown ──
+    else {
+      extractedText = buffer.toString("utf-8").trim();
+      fileType = /\.csv$/i.test(originalname) ? "csv"
+        : /\.json$/i.test(originalname) ? "json"
+        : /\.md$/i.test(originalname) ? "markdown"
+        : "text";
+    }
+
+    // Truncate to ~60k chars to avoid token overflow
+    const MAX_CHARS = 60000;
+    let truncated = false;
+    if (extractedText.length > MAX_CHARS) {
+      extractedText = extractedText.slice(0, MAX_CHARS);
+      truncated = true;
+    }
+
+    res.json({
+      type: "document",
+      text: extractedText,
+      fileName: originalname,
+      fileType,
+      size,
+      truncated,
+      charCount: extractedText.length,
+    });
+  } catch (err: any) {
+    console.error("[Upload] Error:", err);
+    res.status(500).json({ error: err.message || "文件解析失败" });
   }
 });
 
