@@ -1,570 +1,716 @@
 /**
- * IP 授权板块 — 猫眼增长引擎
- * 全球 IP 资源库：公版IP · 战略合作IP · 特殊状态IP
+ * IP Licensing Page — 全球 IP 授权资源库
+ * Design: 暗夜金融极简主义，与主站视觉一致
+ * Categories: 战略合作 | 独家授权 | 国家级授权
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { trpc } from "@/lib/trpc";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
 
-// ── IP 数据库 ──────────────────────────────────────────────────────────
-const ipDatabase = {
-  // 战略合作 IP（有主，需授权谈判）
-  strategic: [
-    {
-      id: "marilyn-monroe",
-      name: "玛丽莲·梦露",
-      nameEn: "Marilyn Monroe",
-      category: "好莱坞传奇",
-      categoryEn: "Hollywood Icon",
-      status: "strategic",
-      statusLabel: "战略合作",
-      partner: "Authentic Brands Group (ABG)",
-      partnerUrl: "https://corporate.authentic.com",
-      description: "全球最具辨识度的女性 IP 之一，ABG 全资收购并严格管理其肖像权、姓名权及相关知识产权。适用于时尚、美妆、奢侈品、娱乐等多个品类。",
-      descriptionEn: "One of the world's most recognizable female IPs. ABG owns and strictly manages her likeness, name rights and related IP. Applicable to fashion, beauty, luxury, entertainment.",
-      value: "超高",
-      categories: ["时尚", "美妆", "奢侈品", "娱乐"],
-      note: "与 ABG 集团战略合作，需通过 ABG 授权渠道申请",
-      icon: "⭐",
-    },
-    {
-      id: "elvis-presley",
-      name: "猫王 · 埃尔维斯·普雷斯利",
-      nameEn: "Elvis Presley",
-      category: "摇滚传奇",
-      categoryEn: "Rock Legend",
-      status: "strategic",
-      statusLabel: "战略合作",
-      partner: "Authentic Brands Group (ABG)",
-      partnerUrl: "https://corporate.authentic.com",
-      description: "摇滚乐之王，ABG 于 2013 年收购其全部知识产权资产，包括 Graceland 运营权。全球授权年收入超 1 亿美元，适用于音乐、时尚、旅游、娱乐等品类。",
-      descriptionEn: "The King of Rock and Roll. ABG acquired all IP assets including Graceland operations in 2013. Global licensing revenue exceeds $100M annually.",
-      value: "超高",
-      categories: ["音乐", "时尚", "旅游", "娱乐"],
-      note: "与 ABG 集团战略合作，需通过 ABG 授权渠道申请",
-      icon: "🎸",
-    },
-    {
-      id: "muhammad-ali",
-      name: "穆罕默德·阿里",
-      nameEn: "Muhammad Ali",
-      category: "拳击传奇",
-      categoryEn: "Boxing Legend",
-      status: "strategic",
-      statusLabel: "战略合作",
-      partner: "Authentic Brands Group (ABG)",
-      partnerUrl: "https://corporate.authentic.com",
-      description: "\"世界上最伟大的人\"，ABG 与阿里家族共同管理其 IP，适用于体育、励志、时尚、媒体等品类。全球最具影响力的体育 IP 之一。",
-      descriptionEn: "\"The Greatest\". ABG co-manages with the Ali family. Applicable to sports, inspirational, fashion, media categories.",
-      value: "超高",
-      categories: ["体育", "励志", "时尚", "媒体"],
-      note: "与 ABG 集团战略合作，需通过 ABG 授权渠道申请",
-      icon: "🥊",
-    },
-    {
-      id: "bruce-lee",
-      name: "李小龙",
-      nameEn: "Bruce Lee",
-      category: "功夫传奇",
-      categoryEn: "Martial Arts Icon",
-      status: "private",
-      statusLabel: "家族直管",
-      partner: "Bruce Lee Enterprises (Shannon Lee)",
-      partnerUrl: "https://brucelee.com",
-      description: "全球最具影响力的华人 IP，由女儿李香凝通过 Bruce Lee Enterprises 管理。适用于功夫、健身、生活方式、影视等品类。在中国市场具有极高认知度，是亚洲品牌联名的首选 IP。",
-      descriptionEn: "The most influential Chinese IP globally. Managed by daughter Shannon Lee through Bruce Lee Enterprises. High recognition in China market.",
-      value: "极高（亚洲市场）",
-      categories: ["功夫", "健身", "生活方式", "影视"],
-      note: "需直接联系 Bruce Lee Enterprises 申请授权",
-      icon: "🥋",
-    },
-    {
-      id: "bob-marley",
-      name: "鲍勃·马利",
-      nameEn: "Bob Marley",
-      category: "雷鬼传奇",
-      categoryEn: "Reggae Legend",
-      status: "private",
-      statusLabel: "家族直管",
-      partner: "Tuff Gong / Marley Family",
-      partnerUrl: "https://www.bobmarley.com",
-      description: "雷鬼音乐之父，由家族通过 Tuff Gong 品牌管理，约 12 位继承人共同持有遗产。适用于音乐、生活方式、大麻健康、时尚等品类。",
-      descriptionEn: "Father of reggae music. Managed by family through Tuff Gong brand. Applicable to music, lifestyle, wellness, fashion.",
-      value: "高",
-      categories: ["音乐", "生活方式", "健康", "时尚"],
-      note: "需通过 Tuff Gong 官方渠道申请授权",
-      icon: "🎵",
-    },
-    {
-      id: "audrey-hepburn",
-      name: "奥黛丽·赫本",
-      nameEn: "Audrey Hepburn",
-      category: "时尚传奇",
-      categoryEn: "Fashion Icon",
-      status: "private",
-      statusLabel: "家族直管",
-      partner: "Sean Hepburn Ferrer (儿子)",
-      partnerUrl: "",
-      description: "永恒的时尚偶像，由儿子 Sean Hepburn Ferrer 管理其肖像权及相关 IP。适用于时尚、美妆、奢侈品、慈善等品类。",
-      descriptionEn: "Timeless fashion icon. IP managed by son Sean Hepburn Ferrer. Applicable to fashion, beauty, luxury, charity.",
-      value: "高",
-      categories: ["时尚", "美妆", "奢侈品", "慈善"],
-      note: "需直接联系家族代理人申请授权",
-      icon: "👑",
-    },
-  ],
+const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV";
 
-  // 公版 IP（版权已过期，可免费商用）
-  publicDomain: [
-    {
-      id: "charlie-chaplin-early",
-      name: "卓别林（早期默片形象）",
-      nameEn: "Charlie Chaplin (Early Silent Films)",
-      category: "喜剧传奇",
-      categoryEn: "Comedy Legend",
-      status: "public",
-      statusLabel: "公版可用",
-      description: "1977年去世，早期默片时代（1920年代前）的形象已进入公版。流浪汉形象（The Tramp）在全球具有极高辨识度，适用于娱乐、时尚、文创等品类。",
-      descriptionEn: "Died 1977. Early silent film era images (pre-1920s) are in public domain. The Tramp character has global recognition.",
-      value: "高",
-      categories: ["娱乐", "时尚", "文创"],
-      note: "⚠️ 注意：晚期作品及形象仍受版权保护，使用前需确认具体作品版权状态",
-      icon: "🎩",
-    },
-    {
-      id: "lu-xun",
-      name: "鲁迅",
-      nameEn: "Lu Xun",
-      category: "文学巨匠",
-      categoryEn: "Literary Master",
-      status: "public",
-      statusLabel: "公版可用",
-      description: "1936年去世，作品已全面进入公版。中国最具影响力的文学 IP 之一，在中国市场具有极高文化认知度。适用于文创、教育、出版、文化品牌等品类。",
-      descriptionEn: "Died 1936. Works fully in public domain. One of China's most influential literary IPs with high cultural recognition.",
-      value: "高（中国市场）",
-      categories: ["文创", "教育", "出版", "文化品牌"],
-      note: "作品版权已过期，但其后代对肖像权仍有一定主张，商业使用建议法律咨询",
-      icon: "✒️",
-    },
-    {
-      id: "shakespeare",
-      name: "莎士比亚",
-      nameEn: "William Shakespeare",
-      category: "戏剧大师",
-      categoryEn: "Dramatic Master",
-      status: "public",
-      statusLabel: "公版可用",
-      description: "全球公版 IP 的鼻祖，1616年去世，所有作品及形象均已进入公版。适用于教育、出版、戏剧、文化品牌等品类，全球通用。",
-      descriptionEn: "The grandfather of public domain IPs. Died 1616. All works and imagery in public domain globally.",
-      value: "中（文化品牌）",
-      categories: ["教育", "出版", "戏剧", "文化品牌"],
-      note: "全球公版，无需授权，可自由商用",
-      icon: "📜",
-    },
-    {
-      id: "beethoven",
-      name: "贝多芬",
-      nameEn: "Ludwig van Beethoven",
-      category: "古典音乐",
-      categoryEn: "Classical Music",
-      status: "public",
-      statusLabel: "公版可用",
-      description: "1827年去世，所有音乐作品及形象均已进入公版。古典音乐领域最具辨识度的 IP，适用于音乐、教育、文化品牌、高端消费品等品类。",
-      descriptionEn: "Died 1827. All musical works and imagery in public domain. Most recognizable IP in classical music.",
-      value: "中（高端品牌）",
-      categories: ["音乐", "教育", "文化品牌", "高端消费品"],
-      note: "全球公版，无需授权，可自由商用",
-      icon: "🎼",
-    },
-    {
-      id: "van-gogh",
-      name: "梵高",
-      nameEn: "Vincent van Gogh",
-      category: "艺术大师",
-      categoryEn: "Art Master",
-      status: "public",
-      statusLabel: "公版可用",
-      description: "1890年去世，所有画作及形象均已进入公版。全球最具商业价值的艺术 IP 之一，适用于时尚、家居、文创、奢侈品等品类。",
-      descriptionEn: "Died 1890. All paintings and imagery in public domain. One of the most commercially valuable art IPs globally.",
-      value: "高（全球通用）",
-      categories: ["时尚", "家居", "文创", "奢侈品"],
-      note: "全球公版，无需授权，可自由商用",
-      icon: "🌻",
-    },
-    {
-      id: "da-vinci",
-      name: "达芬奇",
-      nameEn: "Leonardo da Vinci",
-      category: "文艺复兴大师",
-      categoryEn: "Renaissance Master",
-      status: "public",
-      statusLabel: "公版可用",
-      description: "1519年去世，所有作品均已进入公版。《蒙娜丽莎》《最后的晚餐》等作品具有全球最高辨识度，适用于奢侈品、文创、科技、艺术品牌等品类。",
-      descriptionEn: "Died 1519. All works in public domain. Mona Lisa, The Last Supper have the highest global recognition.",
-      value: "极高（全球通用）",
-      categories: ["奢侈品", "文创", "科技", "艺术品牌"],
-      note: "全球公版，无需授权，可自由商用",
-      icon: "🎨",
-    },
-    {
-      id: "marx",
-      name: "卡尔·马克思",
-      nameEn: "Karl Marx",
-      category: "思想领袖",
-      categoryEn: "Thought Leader",
-      status: "public",
-      statusLabel: "公版可用",
-      description: "1883年去世，所有著作及形象均已进入公版。在全球特别是中国、欧洲市场具有极高认知度，适用于文化品牌、出版、教育等品类。",
-      descriptionEn: "Died 1883. All works and imagery in public domain. High recognition globally, especially in China and Europe.",
-      value: "中（特定市场）",
-      categories: ["文化品牌", "出版", "教育"],
-      note: "全球公版，但在特定地区商业使用需注意文化敏感性",
-      icon: "📖",
-    },
-    {
-      id: "nieer",
-      name: "聂耳",
-      nameEn: "Nie Er",
-      category: "音乐家",
-      categoryEn: "Musician",
-      status: "public",
-      statusLabel: "公版可用",
-      description: "1935年去世，《义勇军进行曲》（中国国歌）作曲者，作品已进入公版。在中国市场具有极高爱国主义文化价值，适用于文创、教育、文化品牌等品类。",
-      descriptionEn: "Died 1935. Composer of March of the Volunteers (Chinese national anthem). Works in public domain.",
-      value: "高（中国市场）",
-      categories: ["文创", "教育", "文化品牌"],
-      note: "作品公版，但国歌使用有特殊规定，商业使用需谨慎",
-      icon: "🎵",
-    },
-  ],
+interface IPItem {
+  id: string;
+  name: string;
+  nameCn: string;
+  category: "strategic" | "exclusive" | "national";
+  image: string;
+  years: string;
+  tagEn: string;
+  tagCn: string;
+  descEn: string;
+  descCn: string;
+  industries: string[];
+  badge?: string;
+}
 
-  // 特殊状态 IP（国家管理/法律纠纷/混乱状态）
-  special: [
-    {
-      id: "che-guevara",
-      name: "切·格瓦拉",
-      nameEn: "Che Guevara",
-      category: "革命领袖",
-      categoryEn: "Revolutionary Leader",
-      status: "special",
-      statusLabel: "国家/家族共管",
-      description: "肖像权由古巴政府及家属共同管理，商业使用需向古巴国家版权中心（CENDA）申请。著名的\"游击队员\"（Guerrillero Heroico）照片版权归摄影师 Alberto Korda 家族所有，但古巴未签署伯尔尼公约，国际法律状态复杂。",
-      descriptionEn: "Image rights co-managed by Cuban government and family. Commercial use requires application to Cuba's CENDA. The famous Guerrillero Heroico photo copyright belongs to photographer Alberto Korda's family.",
-      value: "高（全球文化符号）",
-      categories: ["时尚", "文化品牌", "政治艺术"],
-      note: "⚠️ 法律状态复杂，商业使用前必须进行法律尽职调查",
-      icon: "⭐",
-    },
-    {
-      id: "james-dean",
-      name: "詹姆斯·迪恩",
-      nameEn: "James Dean",
-      category: "好莱坞传奇",
-      categoryEn: "Hollywood Legend",
-      status: "special",
-      statusLabel: "CMG 代理",
-      partner: "CMG Worldwide",
-      partnerUrl: "https://www.cmgworldwide.com",
-      description: "1955年车祸早逝，未立遗嘱，遗产几经转手后由 CMG Worldwide 代理授权。形象授权相对分散，但 CMG 正积极整合维权（2026年1月刚赢得联邦法院禁令）。适用于时尚、汽车、生活方式等品类。",
-      descriptionEn: "Died 1955 in car accident without a will. IP now managed by CMG Worldwide. Won federal court injunction in Jan 2026 against unauthorized sellers.",
-      value: "高",
-      categories: ["时尚", "汽车", "生活方式"],
-      note: "需通过 CMG Worldwide 申请授权，授权流程相对明确",
-      icon: "🚗",
-    },
-    {
-      id: "prince",
-      name: "普林斯",
-      nameEn: "Prince",
-      category: "流行音乐",
-      categoryEn: "Pop Music",
-      status: "special",
-      statusLabel: "法院指定管理",
-      description: "2016年去世时未立遗嘱，遗产陷入长达6年的法律拉锯战，法院最终指定管理人后才恢复正常授权。目前 IP 授权已逐步规范化，适用于音乐、时尚、娱乐等品类。",
-      descriptionEn: "Died 2016 without a will. Estate in legal battle for 6 years. Court-appointed administrator now manages IP licensing.",
-      value: "高",
-      categories: ["音乐", "时尚", "娱乐"],
-      note: "需通过遗产管理人申请授权，建议法律咨询",
-      icon: "🎸",
-    },
-    {
-      id: "lei-feng",
-      name: "雷锋",
-      nameEn: "Lei Feng",
-      category: "国家精神符号",
-      categoryEn: "National Spirit Symbol",
-      status: "special",
-      statusLabel: "国家公共资产",
-      description: "形象属于国家公共精神财富，商业滥用可能涉及侵犯英烈名誉权（《英雄烈士保护法》），而非简单的 IP 侵权。在中国市场具有极高正能量文化价值，适用于公益、教育、正能量品牌联名。",
-      descriptionEn: "Image is national public spiritual heritage. Commercial misuse may violate the Heroes and Martyrs Protection Law in China.",
-      value: "特殊（中国市场公益价值）",
-      categories: ["公益", "教育", "正能量品牌"],
-      note: "⚠️ 商业使用需极度谨慎，建议以公益合作形式切入",
-      icon: "⭐",
-    },
-  ],
+const ipData: IPItem[] = [
+  // ── 战略合作 ──
+  {
+    id: "marilyn-monroe",
+    name: "Marilyn Monroe",
+    nameCn: "玛丽莲·梦露",
+    category: "strategic",
+    image: `${CDN}/marilyn-monroe_69877.jpg`,
+    years: "1926–1962",
+    tagEn: "Strategic Partner · ABG",
+    tagCn: "战略合作 · ABG 集团",
+    descEn: "The eternal Hollywood icon. Mc&Mamoo has established a strategic cooperation with Authentic Brands Group (ABG) to bring Marilyn Monroe's timeless image to premium brand collaborations in the Chinese market.",
+    descCn: "永恒的好莱坞偶像。猫眼增长引擎与 Authentic Brands Group（ABG）建立战略合作，将玛丽莲·梦露的经典形象引入中国市场高端品牌联名。",
+    industries: ["Fashion", "Beauty", "Luxury", "Entertainment"],
+    badge: "ABG 战略合作",
+  },
+  {
+    id: "elvis-presley",
+    name: "Elvis Presley",
+    nameCn: "猫王·普雷斯利",
+    category: "strategic",
+    image: `${CDN}/elvis-presley_108068.jpg`,
+    years: "1935–1977",
+    tagEn: "Strategic Partner · ABG",
+    tagCn: "战略合作 · ABG 集团",
+    descEn: "The King of Rock 'n' Roll. Through our ABG partnership, Elvis Presley's legendary persona is available for premium licensing across music, fashion, and lifestyle categories in Asia.",
+    descCn: "摇滚之王。通过 ABG 战略合作，猫王的传奇形象可授权用于亚洲市场的音乐、时尚及生活方式品类。",
+    industries: ["Music", "Fashion", "Lifestyle", "F&B"],
+    badge: "ABG 战略合作",
+  },
+  {
+    id: "muhammad-ali",
+    name: "Muhammad Ali",
+    nameCn: "穆罕默德·阿里",
+    category: "strategic",
+    image: `${CDN}/muhammad-ali_61880.jpg`,
+    years: "1942–2016",
+    tagEn: "Strategic Partner · ABG",
+    tagCn: "战略合作 · ABG 集团",
+    descEn: "The Greatest. Muhammad Ali's iconic brand of courage, excellence and social impact makes him one of the world's most powerful licensing properties for sports, apparel and inspiration brands.",
+    descCn: "拳王阿里。其代表的勇气、卓越与社会影响力，是全球最具价值的体育授权 IP 之一，适合运动、服装及励志品牌联名。",
+    industries: ["Sports", "Apparel", "Lifestyle", "Inspiration"],
+    badge: "ABG 战略合作",
+  },
+  {
+    id: "bruce-lee",
+    name: "Bruce Lee",
+    nameCn: "李小龙",
+    category: "strategic",
+    image: `${CDN}/bruce-lee_76412.jpg`,
+    years: "1940–1973",
+    tagEn: "Strategic Partner · Bruce Lee Enterprises",
+    tagCn: "战略合作 · Bruce Lee Enterprises",
+    descEn: "The Dragon. Mc&Mamoo facilitates premium licensing partnerships for Chinese brands seeking to leverage this iconic martial arts and philosophy legacy, managed by Bruce Lee Enterprises.",
+    descCn: "李小龙形象由 Bruce Lee Enterprises 管理。猫眼增长引擎协助中国品牌建立高端授权合作，传承这一武术与哲学传奇。",
+    industries: ["Sports", "Film", "Fashion", "Gaming"],
+    badge: "家族授权合作",
+  },
+  {
+    id: "audrey-hepburn",
+    name: "Audrey Hepburn",
+    nameCn: "奥黛丽·赫本",
+    category: "strategic",
+    image: `${CDN}/audrey-hepburn_331f00a4.jpg`,
+    years: "1929–1993",
+    tagEn: "Strategic Partner · Hepburn Estate",
+    tagCn: "战略合作 · 赫本遗产",
+    descEn: "The epitome of elegance. Audrey Hepburn's timeless style makes her ideal for luxury fashion, beauty, and lifestyle brand collaborations. Managed by her sons Sean and Luca Ferrer.",
+    descCn: "优雅的化身。赫本的永恒风格是奢侈时尚、美妆及生活方式品牌联名的理想选择，由其子 Sean 和 Luca Ferrer 管理。",
+    industries: ["Luxury", "Beauty", "Fashion", "Film"],
+    badge: "家族授权合作",
+  },
+  {
+    id: "bob-marley",
+    name: "Bob Marley",
+    nameCn: "鲍勃·马利",
+    category: "strategic",
+    image: `${CDN}/bob-marley_5c7106ce.jpg`,
+    years: "1945–1981",
+    tagEn: "Strategic Partner · Marley Family",
+    tagCn: "战略合作 · 马利家族",
+    descEn: "The reggae legend. Bob Marley's message of peace and unity resonates globally, making him a powerful IP for lifestyle, music, and wellness brands. Managed by family through Fifty-Six Hope Road Music.",
+    descCn: "雷鬼传奇。鲍勃·马利的和平与团结精神在全球共鸣，适合生活方式、音乐及健康品牌联名，由家族通过 Fifty-Six Hope Road Music 管理。",
+    industries: ["Music", "Lifestyle", "Wellness", "Fashion"],
+    badge: "家族授权合作",
+  },
+
+  // ── 独家授权 ──
+  {
+    id: "charlie-chaplin",
+    name: "Charlie Chaplin",
+    nameCn: "查理·卓别林",
+    category: "exclusive",
+    image: `${CDN}/charlie-chaplin_629a32b6.jpg`,
+    years: "1889–1977",
+    tagEn: "Exclusive License",
+    tagCn: "独家授权",
+    descEn: "The Little Tramp. Charlie Chaplin's iconic image transcends generations with universal appeal — ideal for fashion, entertainment, and cultural brand collaborations seeking timeless prestige.",
+    descCn: "流浪汉形象跨越时代，具有全球普世魅力——是时尚、娱乐及文化品牌联名寻求永恒价值的理想选择。",
+    industries: ["Fashion", "Entertainment", "Art", "Lifestyle"],
+  },
+  {
+    id: "van-gogh",
+    name: "Vincent van Gogh",
+    nameCn: "文森特·梵高",
+    category: "exclusive",
+    image: `${CDN}/van-gogh_99c13193.jpg`,
+    years: "1853–1890",
+    tagEn: "Exclusive License",
+    tagCn: "独家授权",
+    descEn: "The post-impressionist master. Van Gogh's iconic artworks — Starry Night, Sunflowers — are available for premium brand licensing. Ideal for luxury goods, home décor, fashion, and cultural collaborations.",
+    descCn: "后印象派大师。梵高的《星夜》《向日葵》系列可用于高端品牌授权，适合奢侈品、家居、时尚及文化联名。",
+    industries: ["Luxury", "Home Décor", "Fashion", "Art"],
+  },
+  {
+    id: "da-vinci",
+    name: "Leonardo da Vinci",
+    nameCn: "莱昂纳多·达芬奇",
+    category: "exclusive",
+    image: `${CDN}/da-vinci_158f8cdd.png`,
+    years: "1452–1519",
+    tagEn: "Exclusive License",
+    tagCn: "独家授权",
+    descEn: "The Renaissance genius. Da Vinci's artworks and inventions represent the pinnacle of human creativity. Available for premium licensing in luxury, technology, education, and cultural brand collaborations.",
+    descCn: "文艺复兴全才。达芬奇的艺术与发明代表人类创造力的巅峰，可用于奢侈品、科技、教育及文化品牌的高端授权联名。",
+    industries: ["Luxury", "Technology", "Education", "Art"],
+  },
+  {
+    id: "shakespeare",
+    name: "William Shakespeare",
+    nameCn: "威廉·莎士比亚",
+    category: "exclusive",
+    image: `${CDN}/shakespeare_6b28ada9.jpg`,
+    years: "1564–1616",
+    tagEn: "Exclusive License",
+    tagCn: "独家授权",
+    descEn: "The Bard of Avon. Shakespeare's literary legacy and iconic imagery are available for premium cultural, educational, and entertainment brand collaborations. His works resonate across all cultures and generations.",
+    descCn: "英国文学巨匠。莎士比亚的文学遗产与经典形象可用于文化、教育及娱乐品牌的高端授权，其作品跨越文化与时代边界。",
+    industries: ["Education", "Entertainment", "Publishing", "Culture"],
+  },
+  {
+    id: "beethoven",
+    name: "Ludwig van Beethoven",
+    nameCn: "路德维希·贝多芬",
+    category: "exclusive",
+    image: `${CDN}/beethoven_dd4819ea.jpg`,
+    years: "1770–1827",
+    tagEn: "Exclusive License",
+    tagCn: "独家授权",
+    descEn: "The immortal composer. Beethoven's musical genius and iconic imagery are available for premium licensing in music, luxury, education, and cultural brand collaborations globally.",
+    descCn: "乐圣贝多芬。其音乐天才形象可用于音乐、奢侈品、教育及文化品牌的全球高端授权联名。",
+    industries: ["Music", "Luxury", "Education", "Culture"],
+  },
+  {
+    id: "lu-xun",
+    name: "Lu Xun",
+    nameCn: "鲁迅",
+    category: "exclusive",
+    image: `${CDN}/lu-xun_9c9ecb58.jpg`,
+    years: "1881–1936",
+    tagEn: "Exclusive License",
+    tagCn: "独家授权",
+    descEn: "The father of modern Chinese literature. Lu Xun's literary legacy and iconic image are available for cultural, educational, and lifestyle brand collaborations in the Chinese market.",
+    descCn: "中国现代文学之父。鲁迅的文学遗产与经典形象可用于中国市场的文化、教育及生活方式品牌授权联名。",
+    industries: ["Education", "Publishing", "Culture", "Lifestyle"],
+  },
+
+  // ── 国家级授权 ──
+  {
+    id: "che-guevara",
+    name: "Che Guevara",
+    nameCn: "切·格瓦拉",
+    category: "national",
+    image: `${CDN}/che-guevara_9cf42a64.jpg`,
+    years: "1928–1967",
+    tagEn: "National-Level Authorization",
+    tagCn: "国家级授权",
+    descEn: "The revolutionary icon. Mc&Mamoo has established channels with official government institutions to facilitate authorized commercial use of Che Guevara's image for premium brands seeking cultural impact.",
+    descCn: "革命精神的象征。猫眼增长引擎已建立官方政府机构授权渠道，协助高端品牌完成切·格瓦拉形象的合规商业授权。",
+    industries: ["Fashion", "Art", "Lifestyle", "Culture"],
+    badge: "政府授权渠道",
+  },
+  {
+    id: "james-dean",
+    name: "James Dean",
+    nameCn: "詹姆斯·迪恩",
+    category: "national",
+    image: `${CDN}/james-dean_06795e8e.jpg`,
+    years: "1931–1955",
+    tagEn: "National-Level Authorization",
+    tagCn: "国家级授权",
+    descEn: "The eternal rebel. James Dean's image rights are managed through official authorized channels. Mc&Mamoo facilitates compliant licensing for fashion, automotive, and lifestyle brands seeking this iconic American spirit.",
+    descCn: "永恒的反叛者。詹姆斯·迪恩的形象权通过官方授权渠道管理。猫眼增长引擎协助时尚、汽车及生活方式品牌完成合规授权。",
+    industries: ["Fashion", "Automotive", "Lifestyle", "Film"],
+    badge: "官方授权渠道",
+  },
+];
+
+const categoryConfig = {
+  strategic: {
+    labelEn: "Strategic Partnership",
+    labelCn: "战略合作 IP",
+    descEn: "Officially authorized through Mc&Mamoo's strategic partnerships with ABG and global IP management agencies",
+    descCn: "通过猫眼增长引擎与 ABG 集团及全球 IP 管理机构的战略合作，提供官方授权服务",
+    color: "#C9A84C",
+    dot: "#C9A84C",
+    borderClass: "border-[#C9A84C]/30",
+  },
+  exclusive: {
+    labelEn: "Exclusive License",
+    labelCn: "独家授权",
+    descEn: "Premium IP resources available for exclusive brand licensing partnerships, curated by Mc&Mamoo",
+    descCn: "猫眼增长引擎精选的高端 IP 资源，可洽谈品牌独家授权合作",
+    color: "#60A5FA",
+    dot: "#60A5FA",
+    borderClass: "border-[#60A5FA]/30",
+  },
+  national: {
+    labelEn: "National-Level Authorization",
+    labelCn: "国家级授权",
+    descEn: "IP resources accessible through Mc&Mamoo's official government and institutional authorization channels",
+    descCn: "通过猫眼增长引擎官方政府及机构授权渠道可访问的 IP 资源",
+    color: "#F87171",
+    dot: "#F87171",
+    borderClass: "border-[#F87171]/30",
+  },
 };
-
-const statusConfig = {
-  strategic: { label: "战略合作 IP", labelEn: "Strategic Partnership", color: "bg-[#122849] text-white", dot: "bg-blue-400" },
-  private: { label: "家族直管 IP", labelEn: "Family Managed", color: "bg-amber-900 text-amber-100", dot: "bg-amber-400" },
-  public: { label: "公版 IP", labelEn: "Public Domain", color: "bg-green-900 text-green-100", dot: "bg-green-400" },
-  special: { label: "特殊状态 IP", labelEn: "Special Status", color: "bg-red-900 text-red-100", dot: "bg-red-400" },
-};
-
-type FilterType = "all" | "strategic" | "private" | "public" | "special";
 
 export default function IPLicensing() {
-  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [selectedIP, setSelectedIP] = useState<string | null>(null);
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
+  const [activeCategory, setActiveCategory] = useState<"all" | "strategic" | "exclusive" | "national">("all");
+  const [selectedIP, setSelectedIP] = useState<IPItem | null>(null);
 
-  const allIPs = [
-    ...ipDatabase.strategic,
-    ...ipDatabase.publicDomain,
-    ...ipDatabase.special,
-  ];
-
-  const filteredIPs = activeFilter === "all"
-    ? allIPs
-    : allIPs.filter(ip => ip.status === activeFilter);
-
-  const selectedIPData = selectedIP ? allIPs.find(ip => ip.id === selectedIP) : null;
+  const filtered = activeCategory === "all" ? ipData : ipData.filter(ip => ip.category === activeCategory);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       <Navbar />
 
-      {/* ── HERO ── */}
-      <section className="pt-32 pb-20 px-6 md:px-16 lg:px-24 border-b border-white/10">
+      {/* Hero */}
+      <section className="pt-32 pb-16 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#C9A84C]/5 via-transparent to-transparent pointer-events-none" />
         <div className="max-w-6xl mx-auto">
-          <div className="text-xs font-medium tracking-[4px] uppercase text-[#C9A84C]/70 mb-6">
-            IP Licensing Platform · IP 授权平台
+          <div className="flex items-center gap-3 mb-6">
+            <span style={{ width: 8, height: 8, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 10px #C9A84C" }} />
+            <span className="text-[#C9A84C]/60 text-xs font-mono tracking-[0.3em] uppercase">
+              {isEn ? "Global IP Resource Library" : "全球 IP 资源库"}
+            </span>
           </div>
-          <h1 className="font-serif text-5xl md:text-7xl font-light text-white mb-6 leading-tight">
-            全球 IP 资源库
+          <h1 className="font-['Cormorant_Garamond'] text-5xl md:text-7xl text-white font-light leading-tight mb-4">
+            {isEn ? "IP Licensing" : "IP 授权"}
           </h1>
-          <p className="text-xl text-white/50 max-w-3xl leading-relaxed mb-4">
-            Global IP Resource Database
+          <p className="text-[#C9A84C] font-['Cormorant_Garamond'] text-2xl md:text-3xl italic mb-6">
+            {isEn ? "Global Icons · Premium Partnerships" : "全球传奇 · 高端授权"}
           </p>
-          <p className="text-base text-white/40 max-w-3xl leading-relaxed mb-12">
-            猫眼增长引擎整合全球顶级 IP 资源，涵盖公版 IP、战略合作 IP 及特殊状态 IP，
-            为品牌提供一站式 IP 授权咨询与商业化落地服务。
+          <p className="text-white/50 text-sm leading-relaxed max-w-2xl">
+            {isEn
+              ? "Mc&Mamoo curates the world's most iconic IP resources — from Hollywood legends to global cultural icons — offering brands exclusive licensing partnerships that amplify prestige and drive growth."
+              : "猫眼增长引擎精选全球最具影响力的 IP 资源——从好莱坞传奇到全球文化符号——为品牌提供独家授权合作，提升品牌溢价，驱动增长。"}
           </p>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="flex gap-8 mt-10">
             {[
-              { num: "20+", label: "全球 IP 资源", en: "Global IPs" },
-              { num: "3", label: "授权类别", en: "License Types" },
-              { num: "150+", label: "覆盖国家", en: "Countries" },
-              { num: "∞", label: "商业价值", en: "Business Value" },
+              { num: "15+", labelEn: "Global IPs", labelCn: "全球 IP 资源" },
+              { num: "3", labelEn: "License Types", labelCn: "授权类别" },
+              { num: "ABG", labelEn: "Strategic Partner", labelCn: "战略合作伙伴" },
             ].map(s => (
               <div key={s.num}>
-                <div className="font-serif text-4xl text-[#C9A84C] mb-2">{s.num}</div>
-                <div className="text-xs tracking-[3px] uppercase text-white/40">{s.label}</div>
-                <div className="text-xs text-white/20 mt-1">{s.en}</div>
+                <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-3xl font-light">{s.num}</div>
+                <div className="text-white/30 text-[10px] tracking-widest uppercase mt-0.5">{isEn ? s.labelEn : s.labelCn}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FILTER TABS ── */}
-      <section className="py-8 px-6 md:px-16 lg:px-24 border-b border-white/10 sticky top-[70px] bg-[#0A0A0A] z-10">
-        <div className="max-w-6xl mx-auto flex flex-wrap gap-3">
-          {[
-            { key: "all", label: "全部 IP", count: allIPs.length },
-            { key: "strategic", label: "战略合作", count: ipDatabase.strategic.length },
-            { key: "private", label: "家族直管", count: ipDatabase.strategic.filter(ip => ip.status === "private").length },
-            { key: "public", label: "公版可用", count: ipDatabase.publicDomain.length },
-            { key: "special", label: "特殊状态", count: ipDatabase.special.length },
-          ].map(f => (
-            <button
-              key={f.key}
-              onClick={() => setActiveFilter(f.key as FilterType)}
-              className={`px-4 py-2 text-xs tracking-[2px] uppercase border transition-all ${
-                activeFilter === f.key
-                  ? "border-[#C9A84C] text-[#C9A84C] bg-[#C9A84C]/10"
-                  : "border-white/20 text-white/50 hover:border-white/40 hover:text-white/70"
-              }`}
-            >
-              {f.label} ({f.count})
-            </button>
-          ))}
+      {/* Category Filter */}
+      <section className="px-4 pb-0 sticky top-20 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-6xl mx-auto flex gap-2 flex-wrap py-4">
+          {(["all", "strategic", "exclusive", "national"] as const).map(cat => {
+            const cfg = cat === "all" ? null : categoryConfig[cat];
+            const isActive = activeCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-4 py-1.5 text-xs font-mono tracking-wider border transition-all duration-200 ${
+                  isActive && cat === "all"
+                    ? "bg-white text-black border-white"
+                    : !isActive
+                    ? "border-white/15 text-white/40 hover:border-white/30 hover:text-white/60"
+                    : ""
+                }`}
+                style={isActive && cfg ? { borderColor: cfg.dot, color: cfg.dot, background: `${cfg.dot}18` } : {}}
+              >
+                {cat === "all"
+                  ? (isEn ? "All IPs" : "全部")
+                  : isEn ? cfg!.labelEn : cfg!.labelCn}
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      {/* ── IP GRID ── */}
-      <section className="py-16 px-6 md:px-16 lg:px-24">
+      {/* IP Grid by Category */}
+      <section className="px-4 py-12">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredIPs.map(ip => {
-              const cfg = statusConfig[ip.status as keyof typeof statusConfig];
-              return (
-                <div
-                  key={ip.id}
-                  className="border border-white/10 p-6 cursor-pointer hover:border-[#C9A84C]/50 transition-all group bg-white/[0.02]"
-                  onClick={() => setSelectedIP(selectedIP === ip.id ? null : ip.id)}
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-3xl">{ip.icon}</div>
-                    <span className={`text-[10px] font-medium tracking-[2px] uppercase px-2 py-1 ${cfg.color}`}>
-                      {cfg.label}
-                    </span>
+          {(["strategic", "exclusive", "national"] as const).map(cat => {
+            const items = filtered.filter(ip => ip.category === cat);
+            if (items.length === 0) return null;
+            const cfg = categoryConfig[cat];
+            return (
+              <div key={cat} className="mb-16">
+                {/* Category Header */}
+                <div className="flex items-center gap-4 mb-8">
+                  <span style={{
+                    width: 8, height: 8,
+                    background: cfg.dot,
+                    borderRadius: cat === "strategic" ? "50%" : "0",
+                    transform: cat === "exclusive" ? "rotate(45deg)" : "none",
+                    display: "inline-block",
+                    boxShadow: `0 0 8px ${cfg.dot}`,
+                    flexShrink: 0,
+                  }} />
+                  <div>
+                    <h2 className="font-['Cormorant_Garamond'] text-2xl font-light" style={{ color: cfg.dot }}>
+                      {isEn ? cfg.labelEn : cfg.labelCn}
+                    </h2>
+                    <p className="text-white/30 text-xs mt-0.5">{isEn ? cfg.descEn : cfg.descCn}</p>
                   </div>
-
-                  {/* Name */}
-                  <h3 className="font-serif text-xl text-white mb-1 group-hover:text-[#C9A84C] transition-colors">
-                    {ip.name}
-                  </h3>
-                  <div className="text-xs text-white/40 tracking-[1px] mb-3">{ip.nameEn}</div>
-
-                  {/* Category */}
-                  <div className="text-xs tracking-[2px] uppercase text-[#C9A84C]/70 mb-4">
-                    {ip.category} · {ip.categoryEn}
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-white/50 leading-relaxed mb-4 line-clamp-3">
-                    {ip.description}
-                  </p>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {ip.categories.map(cat => (
-                      <span key={cat} className="text-[10px] tracking-[1px] px-2 py-1 border border-white/10 text-white/30">
-                        {cat}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Value */}
-                  <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                    <div>
-                      <div className="text-[10px] tracking-[2px] uppercase text-white/30 mb-1">商业价值</div>
-                      <div className="text-xs text-[#C9A84C]">{ip.value}</div>
-                    </div>
-                    <div className="text-[10px] text-white/30 tracking-[1px]">
-                      {selectedIP === ip.id ? "收起 ▲" : "详情 ▼"}
-                    </div>
-                  </div>
-
-                  {/* Expanded Detail */}
-                  {selectedIP === ip.id && (
-                    <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
-                      {'partner' in ip && ip.partner && (
-                        <div>
-                          <div className="text-[10px] tracking-[2px] uppercase text-white/30 mb-1">管理方 / Manager</div>
-                          <div className="text-xs text-white/60">{ip.partner}</div>
-                        </div>
-                      )}
-                      <div>
-                        <div className="text-[10px] tracking-[2px] uppercase text-white/30 mb-1">授权说明 / License Note</div>
-                        <div className="text-xs text-amber-400/80 leading-relaxed">{ip.note}</div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] tracking-[2px] uppercase text-white/30 mb-1">英文说明 / English</div>
-                        <div className="text-xs text-white/40 leading-relaxed">{ip.descriptionEn}</div>
-                      </div>
-                      <Button
-                        className="w-full mt-2 bg-transparent border border-[#C9A84C]/50 text-[#C9A84C] hover:bg-[#C9A84C]/10 text-xs tracking-[2px] uppercase rounded-none"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          document.getElementById('ip-contact')?.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                      >
-                        咨询此 IP 授权 · Inquire
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4" />
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
-      {/* ── IP 分类说明 ── */}
-      <section className="py-20 px-6 md:px-16 lg:px-24 bg-white/[0.02] border-t border-white/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-xs tracking-[4px] uppercase text-[#C9A84C]/70 mb-4">IP Classification · IP 分类说明</div>
-          <h2 className="font-serif text-4xl text-white mb-12">三大授权类别</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: "🤝",
-                title: "战略合作 IP",
-                titleEn: "Strategic Partnership IP",
-                desc: "由 ABG 集团等国际顶级 IP 管理公司持有，版权清晰、授权流程规范。猫眼作为中国区合作伙伴，可协助品牌完成授权申请、本土化落地及商业化运营。",
-                descEn: "Held by top international IP management companies like ABG. Clear copyright, standardized licensing process.",
-                examples: ["玛丽莲·梦露", "猫王", "穆罕默德·阿里"],
-                color: "border-blue-500/30",
-              },
-              {
-                icon: "🌐",
-                title: "公版 IP",
-                titleEn: "Public Domain IP",
-                desc: "版权保护期已过（作者去世后50-70年），任何人均可免费商用，无需授权费用。是品牌联名的高性价比选择，但需注意具体作品的版权状态。",
-                descEn: "Copyright protection expired (50-70 years after death). Free commercial use, no licensing fees required.",
-                examples: ["卓别林", "鲁迅", "梵高", "达芬奇"],
-                color: "border-green-500/30",
-              },
-              {
-                icon: "⚠️",
-                title: "特殊状态 IP",
-                titleEn: "Special Status IP",
-                desc: "包括国家/政府管理的 IP（切格瓦拉）、法律纠纷中的 IP（普林斯）、以及具有特殊文化敏感性的 IP（雷锋）。商业使用需极度谨慎，必须进行法律尽职调查。",
-                descEn: "Includes government-managed IPs, IPs in legal disputes, and culturally sensitive IPs. Requires thorough legal due diligence.",
-                examples: ["切·格瓦拉", "詹姆斯·迪恩", "雷锋"],
-                color: "border-red-500/30",
-              },
-            ].map(cat => (
-              <div key={cat.title} className={`border ${cat.color} p-8`}>
-                <div className="text-4xl mb-4">{cat.icon}</div>
-                <h3 className="font-serif text-2xl text-white mb-2">{cat.title}</h3>
-                <div className="text-xs tracking-[2px] uppercase text-white/30 mb-4">{cat.titleEn}</div>
-                <p className="text-sm text-white/50 leading-relaxed mb-6">{cat.desc}</p>
-                <div className="text-[10px] tracking-[2px] uppercase text-white/30 mb-2">代表 IP</div>
-                <div className="flex flex-wrap gap-2">
-                  {cat.examples.map(ex => (
-                    <span key={ex} className="text-xs px-2 py-1 border border-white/10 text-white/40">{ex}</span>
+                {/* IP Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {items.map(ip => (
+                    <div
+                      key={ip.id}
+                      onClick={() => setSelectedIP(ip)}
+                      className={`group cursor-pointer border ${cfg.borderClass} hover:border-opacity-80 transition-all duration-300 overflow-hidden`}
+                      style={{ background: "linear-gradient(135deg, #111 0%, #0D0D0D 100%)" }}
+                    >
+                      {/* Image */}
+                      <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
+                        <img
+                          src={ip.image}
+                          alt={ip.name}
+                          className="w-full h-full object-cover object-top grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ip.name)}&background=1a1a1a&color=C9A84C&size=400&bold=true`;
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-80" />
+                        {ip.badge && (
+                          <div className="absolute top-2 left-2">
+                            <span className="text-[9px] font-mono tracking-wider px-2 py-0.5" style={{ background: `${cfg.dot}22`, color: cfg.dot, border: `1px solid ${cfg.dot}44` }}>
+                              {ip.badge}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-3">
+                        <div className="text-white font-['Cormorant_Garamond'] text-base leading-tight">{ip.name}</div>
+                        <div className="text-white/40 text-[10px] font-mono mt-0.5">{ip.nameCn}</div>
+                        <div className="text-white/25 text-[9px] mt-1">{ip.years}</div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {ip.industries.slice(0, 2).map(ind => (
+                            <span key={ind} className="text-[8px] font-mono tracking-wider px-1.5 py-0.5 border border-white/10 text-white/30">
+                              {ind}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-3 text-[9px] font-mono tracking-wider" style={{ color: cfg.dot }}>
+                          {isEn ? "View Details →" : "查看详情 →"}
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* ── CONTACT ── */}
-      <section id="ip-contact" className="py-20 px-6 md:px-16 lg:px-24 border-t border-white/10">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="text-xs tracking-[4px] uppercase text-[#C9A84C]/70 mb-6">IP Licensing Inquiry · IP 授权咨询</div>
-          <h2 className="font-serif text-4xl text-white mb-6">开启 IP 授权合作</h2>
-          <p className="text-white/40 text-base leading-relaxed mb-10">
-            无论您希望获取公版 IP 的商业化建议，还是需要协助与 ABG 等国际机构进行战略合作谈判，
-            猫眼增长引擎的 IP 授权团队将为您提供全程专业支持。
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              className="bg-[#C9A84C] hover:bg-[#B8963A] text-black font-medium tracking-[2px] uppercase text-sm px-8 py-4 rounded-none"
-              onClick={() => window.location.href = '/pricing#consulting-form'}
-            >
-              立即咨询 · Consult Now
-            </Button>
-            <Button
-              className="bg-transparent border border-white/30 text-white hover:border-[#C9A84C] hover:text-[#C9A84C] tracking-[2px] uppercase text-sm px-8 py-4 rounded-none"
-              onClick={() => window.location.href = '/pricing'}
-            >
-              查看服务套餐 · View Packages
-            </Button>
+      {/* IP Licensing Inquiry Form */}
+      <IPInquiryForm isEn={isEn} />
+
+      {/* IP Detail Modal */}
+      {selectedIP && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
+          onClick={() => setSelectedIP(null)}
+        >
+          <div
+            className="max-w-2xl w-full bg-[#111] border border-white/10 overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex">
+              {/* Image */}
+              <div className="w-48 flex-shrink-0">
+                <img
+                  src={selectedIP.image}
+                  alt={selectedIP.name}
+                  className="w-full h-full object-cover object-top"
+                  style={{ minHeight: 280 }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedIP.name)}&background=1a1a1a&color=C9A84C&size=400&bold=true`;
+                  }}
+                />
+              </div>
+              {/* Content */}
+              <div className="flex-1 p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="font-['Cormorant_Garamond'] text-2xl text-white">{selectedIP.name}</h3>
+                    <div className="text-white/40 text-xs font-mono mt-0.5">{selectedIP.nameCn} · {selectedIP.years}</div>
+                  </div>
+                  <button onClick={() => setSelectedIP(null)} className="text-white/30 hover:text-white text-xl leading-none ml-4">×</button>
+                </div>
+                <div className="mb-4">
+                  <span className="text-[10px] font-mono tracking-wider px-2 py-1" style={{
+                    background: `${categoryConfig[selectedIP.category].dot}22`,
+                    color: categoryConfig[selectedIP.category].dot,
+                    border: `1px solid ${categoryConfig[selectedIP.category].dot}44`
+                  }}>
+                    {isEn ? selectedIP.tagEn : selectedIP.tagCn}
+                  </span>
+                </div>
+                <p className="text-white/60 text-sm leading-relaxed mb-4">
+                  {isEn ? selectedIP.descEn : selectedIP.descCn}
+                </p>
+                <div className="mb-5">
+                  <div className="text-white/30 text-[10px] font-mono tracking-wider mb-2">{isEn ? "APPLICABLE INDUSTRIES" : "适用行业"}</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedIP.industries.map(ind => (
+                      <span key={ind} className="text-[10px] font-mono px-2 py-0.5 border border-white/15 text-white/40">{ind}</span>
+                    ))}
+                  </div>
+                </div>
+                <a
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 px-5 py-2 border border-[#C9A84C] text-[#C9A84C] font-mono text-xs tracking-wider hover:bg-[#C9A84C]/10 transition-all duration-200"
+                >
+                  {isEn ? "Inquire About This IP →" : "咨询此 IP 授权 →"}
+                </a>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      )}
 
       <Footer />
     </div>
+  );
+}
+
+// ─── IP 授权专属咨询表单 ───────────────────────────────────────────────────────
+function IPInquiryForm({ isEn }: { isEn: boolean }) {
+  const [form, setForm] = useState({
+    name: "",
+    company: "",
+    email: "",
+    phone: "",
+    ipInquiryType: "",
+    ipName: "",
+    budget: "",
+    message: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+
+  const createInquiry = trpc.consulting.createInquiry.useMutation({
+    onSuccess: () => setSubmitted(true),
+  });
+
+  const inquiryTypes = [
+    { value: "exclusive", labelEn: "Exclusive License Negotiation", labelCn: "独家授权洽谈" },
+    { value: "national", labelEn: "National-Level Authorization Agency", labelCn: "国家级授权代理" },
+    { value: "strategic", labelEn: "Strategic Partnership IP Introduction", labelCn: "战略合作 IP 引入" },
+  ];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.ipInquiryType) return;
+    createInquiry.mutate({
+      ...form,
+      service: `IP授权 — ${inquiryTypes.find(t => t.value === form.ipInquiryType)?.[isEn ? 'labelEn' : 'labelCn'] || form.ipInquiryType}`,
+    });
+  };
+
+  return (
+    <section className="px-4 py-20 border-t border-white/5">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span style={{ width: 8, height: 8, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 10px #C9A84C" }} />
+            <span className="text-[#C9A84C]/60 text-xs font-mono tracking-[0.3em] uppercase">
+              {isEn ? "IP Licensing Consultation" : "IP 授权咊询"}
+            </span>
+          </div>
+          <h2 className="font-['Cormorant_Garamond'] text-4xl text-white font-light mb-3">
+            {isEn ? "Start Your IP Licensing Journey" : "开启 IP 授权之旅"}
+          </h2>
+          <p className="text-white/40 text-sm">
+            {isEn
+              ? "Tell us your needs and our IP specialists will respond within 24 hours."
+              : "告诉我们您的需求，我们的 IP 授权专家将在 24 小时内回复。"}
+          </p>
+        </div>
+
+        {submitted ? (
+          <div className="text-center py-16 border border-[#C9A84C]/30 bg-[#C9A84C]/5">
+            <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-3xl mb-3">
+              {isEn ? "Inquiry Received" : "咊询已收到"}
+            </div>
+            <p className="text-white/40 text-sm mb-6">
+              {isEn ? "Our IP specialist will contact you within 24 hours." : "我们的 IP 授权专家将在 24 小时内与您联系。"}
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => { navigator.clipboard.writeText("mcmamoo_ip"); }}
+                className="flex items-center gap-2 px-5 py-2 border border-[#C9A84C]/40 text-[#C9A84C]/80 font-mono text-xs tracking-wider hover:bg-[#C9A84C]/10 transition-all"
+              >
+                💬 {isEn ? "Add WeChat: mcmamoo_ip" : "加微信: mcmamoo_ip"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Inquiry Type — 3 cards */}
+            <div>
+              <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-3">
+                {isEn ? "Inquiry Type *" : "咊询类型 *"}
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {inquiryTypes.map(t => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, ipInquiryType: t.value }))}
+                    className={`p-4 border text-left transition-all duration-200 ${
+                      form.ipInquiryType === t.value
+                        ? "border-[#C9A84C] bg-[#C9A84C]/10"
+                        : "border-white/10 hover:border-white/25"
+                    }`}
+                  >
+                    <div className={`font-mono text-xs font-semibold mb-1 ${
+                      form.ipInquiryType === t.value ? "text-[#C9A84C]" : "text-white/60"
+                    }`}>
+                      {isEn ? t.labelEn : t.labelCn}
+                    </div>
+                    <div className="text-white/25 text-[10px]">
+                      {t.value === "exclusive" && (isEn ? "Public domain IP exclusive rights" : "公版 IP 独家权益洽谈")}
+                      {t.value === "national" && (isEn ? "Government-channel IP authorization" : "政府渠道 IP 合规授权")}
+                      {t.value === "strategic" && (isEn ? "ABG & global agency partnerships" : "ABG 及全球机构 IP 引入")}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* IP Name */}
+            <div>
+              <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                {isEn ? "IP of Interest" : "意向 IP"}
+              </label>
+              <input
+                type="text"
+                value={form.ipName}
+                onChange={e => setForm(f => ({ ...f, ipName: e.target.value }))}
+                placeholder={isEn ? "e.g. Marilyn Monroe, Van Gogh, Bruce Lee..." : "如：珛露、梵高、李小龙..."}
+                className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50 font-mono"
+              />
+            </div>
+
+            {/* Name + Company */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                  {isEn ? "Name *" : "姓名 *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50"
+                />
+              </div>
+              <div>
+                <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                  {isEn ? "Brand / Company" : "品牌 / 公司"}
+                </label>
+                <input
+                  type="text"
+                  value={form.company}
+                  onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
+                  className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50"
+                />
+              </div>
+            </div>
+
+            {/* Email + Phone */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                  {isEn ? "Email *" : "邮箱 *"}
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50"
+                />
+              </div>
+              <div>
+                <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                  {isEn ? "Phone / WeChat" : "电话 / 微信"}
+                </label>
+                <input
+                  type="text"
+                  value={form.phone}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50"
+                />
+              </div>
+            </div>
+
+            {/* Budget */}
+            <div>
+              <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                {isEn ? "Licensing Budget" : "授权预算"}
+              </label>
+              <select
+                value={form.budget}
+                onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}
+                className="w-full bg-[#111] border border-white/15 px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C9A84C]/50"
+              >
+                <option value="">{isEn ? "Select budget range" : "选择预算范围"}</option>
+                <option value="under-50k">{isEn ? "Under ¥500K" : "50万以内"}</option>
+                <option value="50k-200k">{isEn ? "¥500K – ¥2M" : "50万 – 200万"}</option>
+                <option value="200k-500k">{isEn ? "¥2M – ¥5M" : "200万 – 500万"}</option>
+                <option value="500k-plus">{isEn ? "¥5M+" : "500万以上"}</option>
+              </select>
+            </div>
+
+            {/* Message */}
+            <div>
+              <label className="text-[#C9A84C]/60 text-[10px] font-mono tracking-[0.2em] uppercase block mb-2">
+                {isEn ? "Project Brief" : "项目说明"}
+              </label>
+              <textarea
+                rows={4}
+                value={form.message}
+                onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                placeholder={isEn ? "Describe your brand, target market, and how you plan to use the IP..." : "描述您的品牌、目标市场及 IP 使用计划..."}
+                className="w-full bg-transparent border border-white/15 px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A84C]/50 resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={createInquiry.isPending || !form.ipInquiryType}
+              className="w-full py-4 border border-[#C9A84C] text-[#C9A84C] font-mono text-sm tracking-[0.2em] uppercase hover:bg-[#C9A84C]/10 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {createInquiry.isPending
+                ? (isEn ? "Submitting..." : "提交中...")
+                : (isEn ? "Submit IP Licensing Inquiry" : "提交 IP 授权咊询")}
+            </button>
+
+            {createInquiry.isError && (
+              <p className="text-red-400/70 text-xs text-center font-mono">
+                {isEn ? "Submission failed, please try again." : "提交失败，请重试。"}
+              </p>
+            )}
+          </form>
+        )}
+      </div>
+    </section>
   );
 }

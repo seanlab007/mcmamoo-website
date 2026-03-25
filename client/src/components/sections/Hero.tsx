@@ -188,6 +188,33 @@ export default function Hero() {
                 {t('hero.cta2')}
               </button>
             </div>
+
+            {/* IP Licensing Highlight */}
+            <div
+              className={`mt-8 flex flex-wrap items-center gap-3 transition-all duration-700 delay-800 ${
+                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              }`}
+            >
+              <a
+                href="/ip-licensing"
+                className="group flex items-center gap-2.5 px-4 py-2 border border-[#C9A84C]/30 hover:border-[#C9A84C] hover:bg-[#C9A84C]/8 transition-all duration-300"
+              >
+                <span style={{ width: 5, height: 5, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 6px #C9A84C80" }} />
+                <span className="text-[#C9A84C]/80 group-hover:text-[#C9A84C] font-mono text-[10px] tracking-[0.2em] uppercase transition-colors">
+                  战略合作 ABG · 全球 15+ 顶级 IP 授权
+                </span>
+                <span className="text-[#C9A84C]/40 group-hover:text-[#C9A84C]/70 font-mono text-[10px] transition-colors">→</span>
+              </a>
+              <a
+                href="/whale-pictures"
+                className="group flex items-center gap-2 px-4 py-2 border border-white/10 hover:border-white/25 transition-all duration-300"
+              >
+                <span className="text-white/40 group-hover:text-white/60 font-mono text-[10px] tracking-[0.15em] uppercase transition-colors">
+                  Whale Pictures · 影视制作
+                </span>
+                <span className="text-white/25 group-hover:text-white/40 font-mono text-[10px] transition-colors">→</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>

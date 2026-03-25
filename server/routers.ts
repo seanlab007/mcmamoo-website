@@ -601,7 +601,7 @@ Required structure:
   consulting: router({
     createInquiry: publicProcedure
       .input((val: unknown) => {
-        const v = val as { name: string; company?: string; email: string; phone?: string; service?: string; budget?: string; message?: string };
+        const v = val as { name: string; company?: string; email: string; phone?: string; service?: string; budget?: string; message?: string; ipInquiryType?: string; ipName?: string };
         if (!v.name || !v.email) throw new TRPCError({ code: "BAD_REQUEST", message: "必填字段不能为空" });
         return v;
       })

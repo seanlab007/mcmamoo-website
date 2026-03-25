@@ -60,7 +60,7 @@ export default function Navbar() {
     },
   ];
 
-  // 子公司入口
+  // 子公司入口（猫眼工业 + Whale Pictures）
   const subsidiaries = [
     {
       href: "/whale-pictures",
@@ -72,11 +72,11 @@ export default function Navbar() {
       external: false,
     },
     {
-      href: "/ip-licensing",
-      label: isEn ? 'IP Licensing' : 'IP 授权',
-      sublabel: isEn ? 'Global IP Resource Database' : '全球 IP 资源库 · 公版 · 合作',
-      color: "#C9A84C",
-      dot: "circle",
+      href: "#mao-industry",
+      label: isEn ? 'Mao Industry' : '猫眼工业',
+      sublabel: isEn ? 'Millennium Clock · Industrial Design' : '万年钟 · 工业设计',
+      color: "#4FC3F7",
+      dot: "diamond",
       glow: true,
       external: false,
     },
@@ -138,43 +138,7 @@ export default function Navbar() {
               </button>
             ))}
 
-            {/* 猫眼工业 下拉菜单 */}
-            <div className="relative group">
-              <button
-                onClick={() => handleNav("#mao-industry")}
-                className="relative text-[#4FC3F7]/80 hover:text-[#4FC3F7] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
-                style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
-              >
-                <span style={{ width: 6, height: 6, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #4FC3F7" }} />
-                {isEn ? 'Mc Industry' : '猫眼工业'}
-                <span className="text-[#4FC3F7]/40 text-[0.6rem] ml-0.5">▾</span>
-              </button>
-              <div className="absolute top-full left-0 mt-1 w-44 bg-[#0A0A0A]/98 border border-[#4FC3F7]/20 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <a
-                  href="#mao-industry"
-                  onClick={(e) => { e.preventDefault(); handleNav("#mao-industry"); }}
-                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#4FC3F7] hover:bg-[#4FC3F7]/5 text-xs font-mono tracking-wider transition-colors duration-200 border-b border-white/5"
-                >
-                  <span style={{ width: 4, height: 4, background: "#4FC3F7", transform: "rotate(45deg)", display: "inline-block" }} />
-                  {isEn ? 'Industry Overview' : '工业板块首页'}
-                </a>
-                <a
-                  href="/millennium-clock"
-                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 text-xs font-mono tracking-wider transition-colors duration-200 border-b border-white/5"
-                >
-                  <span style={{ width: 4, height: 4, background: "#C9A84C", borderRadius: "50%", display: "inline-block" }} />
-                  {isEn ? 'Millennium Clock' : '万年钟详情页'}
-                </a>
-                <a
-                  href="#contact"
-                  onClick={(e) => { e.preventDefault(); handleNav("#contact"); }}
-                  className="flex items-center gap-2 px-4 py-3 text-white/60 hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 text-xs font-mono tracking-wider transition-colors duration-200"
-                >
-                  <span style={{ width: 4, height: 4, background: "#C9A84C", display: "inline-block" }} />
-                  {isEn ? 'Inquire' : '合作咨询'}
-                </a>
-              </div>
-            </div>
+            {/* 猫眼工业 — 已移入旗下子公司下拉菜单，此处保留首页锚点快捷入口 */}
 
             {/* AI 产品 下拉菜单 — 合并所有 AI/平台产品 */}
             <div className="relative group">
@@ -250,12 +214,13 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* IP 授权入口 */}
+            {/* IP 授权 — 独立板块入口 */}
             <a
               href="/ip-licensing"
-              className="relative text-white/60 hover:text-[#C9A84C] text-sm tracking-wide transition-all duration-300 py-1 whitespace-nowrap"
+              className="relative text-[#C9A84C]/80 hover:text-[#C9A84C] text-sm tracking-wide transition-all duration-300 py-1 flex items-center gap-1.5 whitespace-nowrap"
               style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
             >
+              <span style={{ width: 5, height: 5, background: '#C9A84C', transform: 'rotate(45deg)', display: 'inline-block', boxShadow: '0 0 5px #C9A84C' }} />
               {isEn ? 'IP Licensing' : 'IP 授权'}
             </a>
 
