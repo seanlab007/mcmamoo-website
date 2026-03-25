@@ -56,7 +56,7 @@ export default function Cases() {
       <div className="relative z-10 container">
         {/* Header */}
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
-          <div className="section-label mb-4">05 — Landmark Cases</div>
+          <div className="section-label mb-4">04 — Landmark Cases</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
             {isEn ? "Landmark Cases" : "标杆案例"}
           </h2>

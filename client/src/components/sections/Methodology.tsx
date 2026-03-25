@@ -77,7 +77,7 @@ export default function Methodology() {
       <div className="relative z-10 container">
         {/* Header */}
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
-          <div className="section-label mb-4">02 — Core Methodology</div>
+          <div className="section-label mb-4">06 — Core Methodology</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
             {isEn ? "Mc&Mamoo Methodology" : "猫眼方法论"}
           </h2>

@@ -32,7 +32,7 @@ export default function Team() {
       <div className="container">
         {/* Team header */}
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
-          <div className="section-label mb-4">08 — Core Team</div>
+          <div className="section-label mb-4">07 — Core Team</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold">
             {isEn ? "Core Team" : "核心团队"}
           </h2>

@@ -55,7 +55,7 @@ export default function KOL() {
       <div className="container relative z-10">
         {/* Header */}
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-14">
-          <div className="section-label mb-4">03 — KOL Strategy</div>
+          <div className="section-label mb-4">02 — KOL Strategy</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold leading-tight mb-4">
             {isEn ? <>Top Influencer <span className="text-[#C9A84C]">Strategic Partnerships</span></> : <>头部网红<span className="text-[#C9A84C]">战略合作</span></>}
           </h2>

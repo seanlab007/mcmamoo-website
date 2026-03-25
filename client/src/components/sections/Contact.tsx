@@ -79,7 +79,7 @@ export default function Contact() {
       <div className="relative z-10 container">
         {/* Header */}
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
-          <div className="section-label mb-4">09 — Contact</div>
+          <div className="section-label mb-4">08 — Contact</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
             {isEn ? "Contact Us" : "联系我们"}
           </h2>
