@@ -22,11 +22,14 @@ __export(db_exports, {
   createPaymentOrder: () => createPaymentOrder,
   createRoutingRule: () => createRoutingRule,
   deleteAiNode: () => deleteAiNode,
+  deleteAllNodeSkills: () => deleteAllNodeSkills,
   deleteContentCopy: () => deleteContentCopy,
   deleteConversation: () => deleteConversation,
+  deleteNodeSkill: () => deleteNodeSkill,
   deleteRoutingRule: () => deleteRoutingRule,
   getAiNodeById: () => getAiNodeById,
   getAiNodes: () => getAiNodes,
+  getAllNodeSkills: () => getAllNodeSkills,
   getConsultingInquiries: () => getConsultingInquiries,
   getContentCopies: () => getContentCopies,
   getConversations: () => getConversations,
@@ -34,6 +37,7 @@ __export(db_exports, {
   getMessages: () => getMessages,
   getMillenniumClockReservations: () => getMillenniumClockReservations,
   getNodeLogs: () => getNodeLogs,
+  getNodeSkills: () => getNodeSkills,
   getNodeStats: () => getNodeStats,
   getPaymentOrders: () => getPaymentOrders,
   getRoutingRules: () => getRoutingRules,
@@ -41,6 +45,7 @@ __export(db_exports, {
   getUserByOpenId: () => getUserByOpenId,
   getUserSubscription: () => getUserSubscription,
   incrementUsage: () => incrementUsage,
+  setNodeSkillEnabled: () => setNodeSkillEnabled,
   updateAiNode: () => updateAiNode,
   updateContentCopyStatus: () => updateContentCopyStatus,
   updateConversation: () => updateConversation,
@@ -48,6 +53,7 @@ __export(db_exports, {
   updateNodePingStatus: () => updateNodePingStatus,
   updatePaymentOrder: () => updatePaymentOrder,
   updateRoutingRule: () => updateRoutingRule,
+  upsertNodeSkill: () => upsertNodeSkill,
   upsertSubscription: () => upsertSubscription,
   upsertUser: () => upsertUser
 });
@@ -360,6 +366,46 @@ async function updateInquiryStatus(id, status, notes) {
   if (notes !== void 0) data.notes = notes;
   await supabasePatch("consulting_inquiries", `id=eq.${id}`, data);
 }
+async function getNodeSkills(nodeId) {
+  const rows = await supabaseGet(
+    "node_skills",
+    `nodeId=eq.${nodeId}&order=category.asc,name.asc`
+  );
+  return rows;
+}
+async function getAllNodeSkills() {
+  const rows = await supabaseGet(
+    "node_skills",
+    "order=nodeId.asc,category.asc,name.asc"
+  );
+  return rows;
+}
+async function upsertNodeSkill(skill) {
+  const data = {
+    nodeId: skill.nodeId,
+    skillId: skill.skillId,
+    name: skill.name,
+    version: skill.version ?? "1.0.0",
+    description: skill.description ?? "",
+    category: skill.category ?? "general",
+    triggers: Array.isArray(skill.triggers) ? JSON.stringify(skill.triggers) : skill.triggers ?? "[]",
+    isEnabled: skill.isEnabled !== false,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  await supabaseUpsert("node_skills", data, "nodeId,skillId");
+}
+async function deleteNodeSkill(nodeId, skillId) {
+  await supabaseDelete("node_skills", `nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`);
+}
+async function deleteAllNodeSkills(nodeId) {
+  await supabaseDelete("node_skills", `nodeId=eq.${nodeId}`);
+}
+async function setNodeSkillEnabled(nodeId, skillId, isEnabled) {
+  await supabasePatch("node_skills", `nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`, {
+    isEnabled,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  });
+}
 var SUPABASE_URL, SUPABASE_KEY;
 var init_db = __esm({
   "server/db.ts"() {
@@ -385,7 +431,11 @@ var init_env = __esm({
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
       isProduction: process.env.NODE_ENV === "production",
       forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
-      forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? ""
+      forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+      togetherApiKey: process.env.TOGETHER_API_KEY ?? "",
+      stableHordeApiKey: process.env.STABLE_HORDE_API_KEY ?? "0000000000",
+      tavilyApiKey: process.env.TAVILY_API_KEY ?? "",
+      githubToken: process.env.GITHUB_TOKEN ?? ""
     };
   }
 });
@@ -756,18 +806,103 @@ var imageGeneration_exports = {};
 __export(imageGeneration_exports, {
   generateImage: () => generateImage
 });
-async function generateImage(options) {
-  if (!ENV.forgeApiUrl) {
-    throw new Error("BUILT_IN_FORGE_API_URL is not configured");
+async function generateImageViaTogetherAI(options) {
+  const model = "black-forest-labs/FLUX.1-schnell-Free";
+  const body = {
+    model,
+    prompt: options.prompt,
+    width: options.width ?? 1024,
+    height: options.height ?? 1024,
+    steps: options.steps ?? 4,
+    n: 1,
+    response_format: "b64_json",
+    output_format: "png"
+  };
+  const response = await fetch("https://api.together.xyz/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ENV.togetherApiKey}`
+    },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(
+      `Together AI image generation failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
+    );
   }
-  if (!ENV.forgeApiKey) {
-    throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
+  const result = await response.json();
+  const item = result.data?.[0];
+  if (!item) throw new Error("Together AI returned empty data");
+  if (item.b64_json) {
+    const buffer = Buffer.from(item.b64_json, "base64");
+    const { url } = await storagePut(`generated/${Date.now()}.png`, buffer, "image/png");
+    return { url };
   }
+  if (item.url) return { url: item.url };
+  throw new Error("Together AI returned no image data");
+}
+async function generateImageViaStableHorde(options) {
+  const apiKey = ENV.stableHordeApiKey || "0000000000";
+  const submitRes = await fetch("https://stablehorde.net/api/v2/generate/async", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: apiKey,
+      "Client-Agent": "MaoAI:1.0:mcmamoo"
+    },
+    body: JSON.stringify({
+      prompt: options.prompt,
+      params: {
+        width: options.width ?? 512,
+        height: options.height ?? 512,
+        steps: options.steps ?? 20,
+        n: 1,
+        sampler_name: "k_euler_a",
+        cfg_scale: 7
+      },
+      models: ["stable_diffusion"],
+      r2: true,
+      shared: false
+    })
+  });
+  if (!submitRes.ok) {
+    const detail = await submitRes.text().catch(() => "");
+    throw new Error(`Stable Horde submit failed (${submitRes.status}): ${detail}`);
+  }
+  const { id: jobId } = await submitRes.json();
+  if (!jobId) throw new Error("Stable Horde did not return a job ID");
+  const maxAttempts = 36;
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise((r) => setTimeout(r, 5e3));
+    const checkRes = await fetch(`https://stablehorde.net/api/v2/generate/check/${jobId}`, {
+      headers: { "Client-Agent": "MaoAI:1.0:mcmamoo" }
+    });
+    if (!checkRes.ok) continue;
+    const check = await checkRes.json();
+    if (check.faulted) throw new Error("Stable Horde generation faulted");
+    if (!check.done) continue;
+    const statusRes = await fetch(`https://stablehorde.net/api/v2/generate/status/${jobId}`, {
+      headers: { "Client-Agent": "MaoAI:1.0:mcmamoo" }
+    });
+    if (!statusRes.ok) throw new Error(`Stable Horde status fetch failed (${statusRes.status})`);
+    const status = await statusRes.json();
+    const gen = status.generations?.[0];
+    if (!gen) throw new Error("Stable Horde returned no generations");
+    const imgData = gen.img;
+    if (imgData.startsWith("http")) {
+      return { url: imgData };
+    }
+    const buffer = Buffer.from(imgData, "base64");
+    const { url } = await storagePut(`generated/${Date.now()}.webp`, buffer, "image/webp");
+    return { url };
+  }
+  throw new Error("Stable Horde generation timed out after 3 minutes");
+}
+async function generateImageViaForge(options) {
   const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL(
-    "images.v1.ImageService/GenerateImage",
-    baseUrl
-  ).toString();
+  const fullUrl = new URL("images.v1.ImageService/GenerateImage", baseUrl).toString();
   const response = await fetch(fullUrl, {
     method: "POST",
     headers: {
@@ -776,28 +911,43 @@ async function generateImage(options) {
       "connect-protocol-version": "1",
       authorization: `Bearer ${ENV.forgeApiKey}`
     },
-    body: JSON.stringify({
-      prompt: options.prompt,
-      original_images: options.originalImages || []
-    })
+    body: JSON.stringify({ prompt: options.prompt, original_images: options.originalImages || [] })
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
     throw new Error(
-      `Image generation request failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
+      `Forge image generation failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
     );
   }
   const result = await response.json();
-  const base64Data = result.image.b64Json;
-  const buffer = Buffer.from(base64Data, "base64");
-  const { url } = await storagePut(
-    `generated/${Date.now()}.png`,
-    buffer,
-    result.image.mimeType
+  const buffer = Buffer.from(result.image.b64Json, "base64");
+  const { url } = await storagePut(`generated/${Date.now()}.png`, buffer, result.image.mimeType);
+  return { url };
+}
+async function generateImage(options) {
+  if (ENV.togetherApiKey) {
+    try {
+      return await generateImageViaTogetherAI(options);
+    } catch (err) {
+      const msg = String(err?.message || "");
+      if (msg.includes("credit") || msg.includes("Credit") || msg.includes("billing")) {
+        console.warn("[ImageGen] Together AI credit limit, falling back to Stable Horde");
+      } else {
+        throw err;
+      }
+    }
+  }
+  try {
+    return await generateImageViaStableHorde(options);
+  } catch (err) {
+    console.warn("[ImageGen] Stable Horde failed:", err?.message);
+  }
+  if (ENV.forgeApiUrl && ENV.forgeApiKey) {
+    return generateImageViaForge(options);
+  }
+  throw new Error(
+    "\u56FE\u50CF\u751F\u6210\u6682\u65F6\u4E0D\u53EF\u7528\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002\u5982\u9700\u63D0\u5347\u7A33\u5B9A\u6027\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u914D\u7F6E TOGETHER_API_KEY\u3002"
   );
-  return {
-    url
-  };
 }
 var init_imageGeneration = __esm({
   "server/_core/imageGeneration.ts"() {
@@ -1987,7 +2137,15 @@ var appRouter = router({
         return { online: false, latency: null };
       }
     }),
-    stats: adminProcedure2.input(z2.object({ id: z2.number() })).query(async ({ input }) => getNodeStats(input.id))
+    stats: adminProcedure2.input(z2.object({ id: z2.number() })).query(async ({ input }) => getNodeStats(input.id)),
+    getSkills: adminProcedure2.input(z2.object({ nodeId: z2.number() })).query(async ({ input }) => {
+      const skills = await getNodeSkills(input.nodeId);
+      return { skills };
+    }),
+    toggleSkill: adminProcedure2.input(z2.object({ nodeId: z2.number(), skillId: z2.string(), isEnabled: z2.boolean() })).mutation(async ({ input }) => {
+      await setNodeSkillEnabled(input.nodeId, input.skillId, input.isEnabled);
+      return { success: true };
+    })
   }),
   // ─── Admin: Routing Rules ────────────────────────────────────────────────────
   routing: router({
@@ -2728,6 +2886,404 @@ function serveStatic(app) {
 // server/aiStream.ts
 import { Router } from "express";
 init_db();
+import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
+
+// server/tools.ts
+import { exec } from "child_process";
+import { promisify } from "util";
+import * as fs3 from "fs/promises";
+import * as path3 from "path";
+import * as os from "os";
+var execAsync = promisify(exec);
+var TOOL_DEFINITIONS = [
+  {
+    type: "function",
+    function: {
+      name: "web_search",
+      description: "\u641C\u7D22\u4E92\u8054\u7F51\u83B7\u53D6\u6700\u65B0\u4FE1\u606F\u3002\u5F53\u7528\u6237\u8BE2\u95EE\u6700\u65B0\u65B0\u95FB\u3001\u5F53\u524D\u4E8B\u4EF6\u3001\u5B9E\u65F6\u6570\u636E\u6216\u9700\u8981\u67E5\u627E\u5177\u4F53\u4FE1\u606F\u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "\u641C\u7D22\u67E5\u8BE2\u8BCD\uFF0C\u5C3D\u91CF\u7B80\u6D01\u7CBE\u51C6"
+          },
+          max_results: {
+            type: "number",
+            description: "\u8FD4\u56DE\u7ED3\u679C\u6570\u91CF\uFF0C\u9ED8\u8BA45\uFF0C\u6700\u591A10",
+            default: 5
+          }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "run_code",
+      description: "\u5728\u670D\u52A1\u5668\u6C99\u7BB1\u4E2D\u6267\u884C\u4EE3\u7801\u5E76\u8FD4\u56DE\u7ED3\u679C\u3002\u652F\u6301 Python \u548C JavaScript\u3002\u5F53\u7528\u6237\u9700\u8981\u8BA1\u7B97\u3001\u6570\u636E\u5904\u7406\u3001\u751F\u6210\u6587\u4EF6\u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          language: {
+            type: "string",
+            enum: ["python", "javascript"],
+            description: "\u7F16\u7A0B\u8BED\u8A00"
+          },
+          code: {
+            type: "string",
+            description: "\u8981\u6267\u884C\u7684\u4EE3\u7801"
+          },
+          timeout: {
+            type: "number",
+            description: "\u8D85\u65F6\u65F6\u95F4\uFF08\u79D2\uFF09\uFF0C\u9ED8\u8BA430\uFF0C\u6700\u5927120",
+            default: 30
+          }
+        },
+        required: ["language", "code"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "github_push",
+      description: "\u5C06\u6587\u4EF6\u63A8\u9001\u5230 GitHub \u4ED3\u5E93\u3002\u5F53\u7528\u6237\u8981\u6C42\u90E8\u7F72\u4EE3\u7801\u3001\u66F4\u65B0\u6587\u4EF6\u3001\u63D0\u4EA4\u5230 GitHub \u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          repo: {
+            type: "string",
+            description: "\u4ED3\u5E93\u540D\u79F0\uFF0C\u683C\u5F0F\uFF1Aowner/repo\uFF0C\u4F8B\u5982 seanlab007/mcmamoo-website"
+          },
+          files: {
+            type: "array",
+            description: "\u8981\u63A8\u9001\u7684\u6587\u4EF6\u5217\u8868",
+            items: {
+              type: "object",
+              properties: {
+                path: { type: "string", description: "\u6587\u4EF6\u5728\u4ED3\u5E93\u4E2D\u7684\u8DEF\u5F84" },
+                content: { type: "string", description: "\u6587\u4EF6\u5185\u5BB9" }
+              },
+              required: ["path", "content"]
+            }
+          },
+          message: {
+            type: "string",
+            description: "commit \u63D0\u4EA4\u4FE1\u606F"
+          },
+          branch: {
+            type: "string",
+            description: "\u76EE\u6807\u5206\u652F\uFF0C\u9ED8\u8BA4 main",
+            default: "main"
+          }
+        },
+        required: ["repo", "files", "message"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "github_read",
+      description: "\u8BFB\u53D6 GitHub \u4ED3\u5E93\u4E2D\u7684\u6587\u4EF6\u5185\u5BB9\u3002\u5F53\u7528\u6237\u9700\u8981\u67E5\u770B\u4ED3\u5E93\u4EE3\u7801\u6216\u6587\u4EF6\u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          repo: {
+            type: "string",
+            description: "\u4ED3\u5E93\u540D\u79F0\uFF0C\u683C\u5F0F\uFF1Aowner/repo"
+          },
+          file_path: {
+            type: "string",
+            description: "\u6587\u4EF6\u5728\u4ED3\u5E93\u4E2D\u7684\u8DEF\u5F84"
+          },
+          branch: {
+            type: "string",
+            description: "\u5206\u652F\u540D\uFF0C\u9ED8\u8BA4 main",
+            default: "main"
+          }
+        },
+        required: ["repo", "file_path"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_url",
+      description: "\u8BFB\u53D6\u7F51\u9875\u5185\u5BB9\u3002\u5F53\u7528\u6237\u63D0\u4F9B\u4E86\u4E00\u4E2A URL \u5E76\u8981\u6C42\u5206\u6790\u6216\u603B\u7ED3\u5176\u5185\u5BB9\u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "\u8981\u8BFB\u53D6\u7684\u7F51\u9875 URL"
+          },
+          extract_text_only: {
+            type: "boolean",
+            description: "\u662F\u5426\u53EA\u63D0\u53D6\u7EAF\u6587\u672C\uFF08\u53BB\u9664 HTML \u6807\u7B7E\uFF09\uFF0C\u9ED8\u8BA4 true",
+            default: true
+          }
+        },
+        required: ["url"]
+      }
+    }
+  }
+];
+var ADMIN_TOOL_DEFINITIONS = [
+  ...TOOL_DEFINITIONS,
+  {
+    type: "function",
+    function: {
+      name: "run_shell",
+      description: "\u5728\u670D\u52A1\u5668\u4E0A\u6267\u884C Shell \u547D\u4EE4\u3002\u4EC5\u7BA1\u7406\u5458\u53EF\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "\u8981\u6267\u884C\u7684 Shell \u547D\u4EE4"
+          },
+          cwd: {
+            type: "string",
+            description: "\u5DE5\u4F5C\u76EE\u5F55\uFF0C\u9ED8\u8BA4 /tmp"
+          }
+        },
+        required: ["command"]
+      }
+    }
+  }
+];
+async function executeTool(toolName, args, isAdmin = false) {
+  try {
+    switch (toolName) {
+      case "web_search":
+        return await toolWebSearch(args.query, args.max_results || 5);
+      case "run_code":
+        return await toolRunCode(args.language, args.code, args.timeout || 30);
+      case "github_push":
+        return await toolGithubPush(args.repo, args.files, args.message, args.branch || "main");
+      case "github_read":
+        return await toolGithubRead(args.repo, args.file_path, args.branch || "main");
+      case "read_url":
+        return await toolReadUrl(args.url, args.extract_text_only !== false);
+      case "run_shell":
+        if (!isAdmin) return { success: false, output: "", error: "run_shell \u4EC5\u7BA1\u7406\u5458\u53EF\u7528" };
+        return await toolRunShell(args.command, args.cwd || "/tmp");
+      default:
+        return { success: false, output: "", error: `\u672A\u77E5\u5DE5\u5177: ${toolName}` };
+    }
+  } catch (err) {
+    return { success: false, output: "", error: `\u5DE5\u5177\u6267\u884C\u5F02\u5E38: ${err.message}` };
+  }
+}
+async function toolWebSearch(query, maxResults) {
+  const tavilyKey = process.env.TAVILY_API_KEY;
+  if (!tavilyKey) {
+    try {
+      const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+      const resp = await fetch(ddgUrl, { headers: { "User-Agent": "MaoAI/1.0" } });
+      const data = await resp.json();
+      const parts = [];
+      if (data.AbstractText) parts.push(`\u6458\u8981: ${data.AbstractText}`);
+      if (data.RelatedTopics?.length) {
+        parts.push("\u76F8\u5173\u4E3B\u9898:");
+        data.RelatedTopics.slice(0, maxResults).forEach((t2) => {
+          if (t2.Text) parts.push(`\u2022 ${t2.Text}${t2.FirstURL ? ` (${t2.FirstURL})` : ""}`);
+        });
+      }
+      if (parts.length === 0) parts.push("\u672A\u627E\u5230\u76F4\u63A5\u7B54\u6848\uFF0C\u5EFA\u8BAE\u914D\u7F6E TAVILY_API_KEY \u83B7\u53D6\u66F4\u597D\u7684\u641C\u7D22\u7ED3\u679C\u3002");
+      return { success: true, output: parts.join("\n"), metadata: { source: "duckduckgo", query } };
+    } catch (e) {
+      return { success: false, output: "", error: `\u641C\u7D22\u5931\u8D25: ${e.message}` };
+    }
+  }
+  try {
+    const resp = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: tavilyKey,
+        query,
+        max_results: maxResults,
+        search_depth: "advanced",
+        include_answer: true
+      })
+    });
+    const data = await resp.json();
+    const parts = [];
+    if (data.answer) parts.push(`\u76F4\u63A5\u7B54\u6848: ${data.answer}
+`);
+    parts.push("\u641C\u7D22\u7ED3\u679C:");
+    (data.results || []).forEach((r, i) => {
+      parts.push(`${i + 1}. **${r.title}**`);
+      parts.push(`   ${r.content?.slice(0, 300)}...`);
+      parts.push(`   \u6765\u6E90: ${r.url}`);
+    });
+    return { success: true, output: parts.join("\n"), metadata: { source: "tavily", query, count: data.results?.length } };
+  } catch (e) {
+    return { success: false, output: "", error: `Tavily \u641C\u7D22\u5931\u8D25: ${e.message}` };
+  }
+}
+async function toolRunCode(language, code, timeout) {
+  const safeTimeout = Math.min(timeout, 120);
+  const tmpDir = await fs3.mkdtemp(path3.join(os.tmpdir(), "maoai-code-"));
+  try {
+    let filePath;
+    let cmd;
+    if (language === "python") {
+      filePath = path3.join(tmpDir, "script.py");
+      await fs3.writeFile(filePath, code, "utf8");
+      cmd = `timeout ${safeTimeout} python3 "${filePath}" 2>&1`;
+    } else if (language === "javascript") {
+      filePath = path3.join(tmpDir, "script.js");
+      await fs3.writeFile(filePath, code, "utf8");
+      cmd = `timeout ${safeTimeout} node "${filePath}" 2>&1`;
+    } else {
+      return { success: false, output: "", error: `\u4E0D\u652F\u6301\u7684\u8BED\u8A00: ${language}` };
+    }
+    const { stdout, stderr } = await execAsync(cmd, { timeout: (safeTimeout + 5) * 1e3 });
+    const output = (stdout + stderr).trim();
+    return {
+      success: true,
+      output: output || "(\u4EE3\u7801\u6267\u884C\u5B8C\u6210\uFF0C\u65E0\u8F93\u51FA)",
+      metadata: { language, lines: code.split("\n").length }
+    };
+  } catch (err) {
+    const msg = err.killed ? `\u6267\u884C\u8D85\u65F6\uFF08${safeTimeout}\u79D2\uFF09` : err.stdout || err.message;
+    return { success: false, output: err.stdout || "", error: msg };
+  } finally {
+    await fs3.rm(tmpDir, { recursive: true, force: true }).catch(() => {
+    });
+  }
+}
+async function toolGithubPush(repo, files, message, branch) {
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || process.env.GITHUB_PAT;
+  if (!token) {
+    return {
+      success: false,
+      output: "",
+      error: "\u672A\u914D\u7F6E GitHub Token\u3002\u8BF7\u5728\u670D\u52A1\u5668\u73AF\u5883\u53D8\u91CF\u4E2D\u8BBE\u7F6E GITHUB_TOKEN\u3002"
+    };
+  }
+  const results = [];
+  const headers = {
+    "Authorization": `Bearer ${token}`,
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    "Content-Type": "application/json"
+  };
+  for (const file of files) {
+    try {
+      let sha;
+      const getResp = await fetch(
+        `https://api.github.com/repos/${repo}/contents/${file.path}?ref=${branch}`,
+        { headers }
+      );
+      if (getResp.ok) {
+        const existing = await getResp.json();
+        sha = existing.sha;
+      }
+      const body = {
+        message,
+        content: Buffer.from(file.content, "utf8").toString("base64"),
+        branch
+      };
+      if (sha) body.sha = sha;
+      const putResp = await fetch(
+        `https://api.github.com/repos/${repo}/contents/${file.path}`,
+        { method: "PUT", headers, body: JSON.stringify(body) }
+      );
+      if (putResp.ok) {
+        results.push(`\u2713 ${file.path}`);
+      } else {
+        const err = await putResp.json();
+        results.push(`\u2717 ${file.path}: ${err.message}`);
+      }
+    } catch (e) {
+      results.push(`\u2717 ${file.path}: ${e.message}`);
+    }
+  }
+  const allOk = results.every((r) => r.startsWith("\u2713"));
+  return {
+    success: allOk,
+    output: `GitHub \u63A8\u9001\u7ED3\u679C\uFF08${repo}@${branch}\uFF09:
+${results.join("\n")}
+
+Commit: "${message}"`,
+    metadata: { repo, branch, fileCount: files.length }
+  };
+}
+async function toolGithubRead(repo, filePath, branch) {
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || process.env.GITHUB_PAT;
+  const headers = {
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  try {
+    const resp = await fetch(
+      `https://api.github.com/repos/${repo}/contents/${filePath}?ref=${branch}`,
+      { headers }
+    );
+    if (!resp.ok) {
+      const err = await resp.json();
+      return { success: false, output: "", error: `GitHub API \u9519\u8BEF: ${err.message}` };
+    }
+    const data = await resp.json();
+    const content = Buffer.from(data.content, "base64").toString("utf8");
+    return {
+      success: true,
+      output: `\u6587\u4EF6: ${filePath}\uFF08${data.size} bytes\uFF0CSHA: ${data.sha.slice(0, 8)}\uFF09
+
+${content}`,
+      metadata: { repo, branch, path: filePath, size: data.size }
+    };
+  } catch (e) {
+    return { success: false, output: "", error: e.message };
+  }
+}
+async function toolReadUrl(url, extractTextOnly) {
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; MaoAI/1.0)",
+        "Accept": "text/html,application/xhtml+xml,*/*"
+      },
+      signal: AbortSignal.timeout(15e3)
+    });
+    if (!resp.ok) return { success: false, output: "", error: `HTTP ${resp.status}` };
+    const html = await resp.text();
+    if (!extractTextOnly) {
+      return { success: true, output: html.slice(0, 5e4), metadata: { url, length: html.length } };
+    }
+    const text = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/\s{3,}/g, "\n\n").trim().slice(0, 3e4);
+    return { success: true, output: text, metadata: { url, originalLength: html.length, extractedLength: text.length } };
+  } catch (e) {
+    return { success: false, output: "", error: `\u8BFB\u53D6\u5931\u8D25: ${e.message}` };
+  }
+}
+async function toolRunShell(command, cwd) {
+  try {
+    const { stdout, stderr } = await execAsync(command, { cwd, timeout: 6e4 });
+    return {
+      success: true,
+      output: (stdout + stderr).trim() || "(\u547D\u4EE4\u6267\u884C\u5B8C\u6210\uFF0C\u65E0\u8F93\u51FA)",
+      metadata: { command, cwd }
+    };
+  } catch (err) {
+    return {
+      success: false,
+      output: err.stdout || "",
+      error: err.stderr || err.message
+    };
+  }
+}
+
+// server/aiStream.ts
 var aiStreamRouter = Router();
 async function getAdminUser(req) {
   try {
@@ -2932,6 +3488,10 @@ aiStreamRouter.post("/chat/stream", async (req, res) => {
     res.end();
     return;
   }
+  const { enableTools = true } = req.body;
+  const adminUser = await getAdminUser(req);
+  const toolDefs = enableTools ? adminUser ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS : [];
+  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 && (model === "deepseek-chat" || model === "glm-4-plus" || model === "glm-4-flash");
   try {
     if (hasImage) {
       const debugMsgs = allMessages.map((m) => ({
@@ -2943,51 +3503,128 @@ aiStreamRouter.post("/chat/stream", async (req, res) => {
       }));
       console.log("[Vision Debug] model:", cfg.model, "baseUrl:", cfg.baseUrl, "apiKey_len:", cfg.apiKey.length, "msgs:", JSON.stringify(debugMsgs));
     }
-    const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
-      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: cfg.maxTokens || 4096 })
-    });
-    if (!response.ok) {
-      const errText = await response.text();
-      res.write(`data: ${JSON.stringify({ error: `API Error ${response.status}: ${errText}` })}
+    const conversationMessages = [...allMessages];
+    const MAX_TOOL_ROUNDS = 8;
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const requestBody = {
+        model: cfg.model,
+        messages: conversationMessages,
+        max_tokens: cfg.maxTokens || 4096,
+        stream: true
+      };
+      if (supportsTools && round < MAX_TOOL_ROUNDS - 1) {
+        requestBody.tools = toolDefs;
+        requestBody.tool_choice = "auto";
+      }
+      const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
+        body: JSON.stringify(requestBody)
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        res.write(`data: ${JSON.stringify({ error: `API Error ${response.status}: ${errText}` })}
 
 `);
-      res.end();
-      return;
-    }
-    const reader = response.body?.getReader();
-    if (!reader) {
-      res.write(`data: ${JSON.stringify({ error: "No response body" })}
+        res.end();
+        return;
+      }
+      const reader = response.body?.getReader();
+      if (!reader) {
+        res.write(`data: ${JSON.stringify({ error: "No response body" })}
 
 `);
-      res.end();
-      return;
-    }
-    const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed === "data: [DONE]") {
-          if (trimmed === "data: [DONE]") res.write("data: [DONE]\n\n");
-          continue;
-        }
-        if (trimmed.startsWith("data: ")) {
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            const delta = json.choices?.[0]?.delta?.content;
-            if (delta !== void 0 && delta !== null) res.write(`data: ${JSON.stringify({ content: delta })}
+        res.end();
+        return;
+      }
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantContent = "";
+      let toolCallsAccum = {};
+      let finishReason = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === "data: [DONE]") continue;
+          if (trimmed.startsWith("data: ")) {
+            try {
+              const json = JSON.parse(trimmed.slice(6));
+              const choice = json.choices?.[0];
+              if (!choice) continue;
+              if (choice.finish_reason) finishReason = choice.finish_reason;
+              const delta = choice.delta;
+              if (!delta) continue;
+              if (delta.content !== void 0 && delta.content !== null) {
+                assistantContent += delta.content;
+                res.write(`data: ${JSON.stringify({ content: delta.content })}
 
 `);
-          } catch {
+              }
+              if (delta.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  const idx = String(tc.index ?? 0);
+                  if (!toolCallsAccum[idx]) {
+                    toolCallsAccum[idx] = { id: tc.id || "", name: tc.function?.name || "", arguments: "" };
+                  }
+                  if (tc.id) toolCallsAccum[idx].id = tc.id;
+                  if (tc.function?.name) toolCallsAccum[idx].name = tc.function.name;
+                  if (tc.function?.arguments) toolCallsAccum[idx].arguments += tc.function.arguments;
+                }
+              }
+            } catch {
+            }
           }
         }
+      }
+      const toolCalls = Object.values(toolCallsAccum);
+      if (toolCalls.length === 0 || finishReason === "stop") {
+        res.write("data: [DONE]\n\n");
+        res.end();
+        return;
+      }
+      conversationMessages.push({
+        role: "assistant",
+        content: assistantContent || null,
+        tool_calls: toolCalls.map((tc) => ({
+          id: tc.id,
+          type: "function",
+          function: { name: tc.name, arguments: tc.arguments }
+        }))
+      });
+      for (const tc of toolCalls) {
+        let args = {};
+        try {
+          args = JSON.parse(tc.arguments);
+        } catch {
+          args = {};
+        }
+        res.write(`data: ${JSON.stringify({
+          toolCall: { id: tc.id, name: tc.name, args }
+        })}
+
+`);
+        const result = await executeTool(tc.name, args, !!adminUser);
+        res.write(`data: ${JSON.stringify({
+          toolResult: {
+            id: tc.id,
+            name: tc.name,
+            success: result.success,
+            output: result.output.slice(0, 500)
+            // preview for frontend
+          }
+        })}
+
+`);
+        conversationMessages.push({
+          role: "tool",
+          tool_call_id: tc.id,
+          content: result.success ? result.output.slice(0, 8e3) : `\u5DE5\u5177\u6267\u884C\u5931\u8D25: ${result.error}`
+        });
       }
     }
     res.write("data: [DONE]\n\n");
@@ -3174,7 +3811,7 @@ aiStreamRouter.post("/node/register", async (req, res) => {
   }
 });
 aiStreamRouter.post("/node/heartbeat", async (req, res) => {
-  const { token, nodeId } = req.body;
+  const { token, nodeId, skillsChecksum, skillCount } = req.body;
   const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
   if (!expectedToken || token !== expectedToken) {
     res.status(401).json({ error: "Invalid token" });
@@ -3191,7 +3828,13 @@ aiStreamRouter.post("/node/heartbeat", async (req, res) => {
       return;
     }
     await updateNodePingStatus(nodeId, true, void 0);
-    res.json({ success: true, timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+    if (skillsChecksum !== void 0) {
+      const { updateAiNode: updateAiNode2 } = await Promise.resolve().then(() => (init_db(), db_exports));
+      await updateAiNode2(nodeId, { skillsChecksum });
+    }
+    const serverChecksum = node.skillsChecksum;
+    const needsSkillSync = skillsChecksum !== void 0 && serverChecksum !== skillsChecksum;
+    res.json({ success: true, timestamp: (/* @__PURE__ */ new Date()).toISOString(), needsSkillSync });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3206,6 +3849,102 @@ aiStreamRouter.post("/node/deregister", async (req, res) => {
   try {
     await updateNodePingStatus(nodeId, false, void 0);
     console.log(`[Node Deregister] Node ${nodeId} marked offline`);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+aiStreamRouter.post("/node/skills/sync", async (req, res) => {
+  const { token, nodeId, action = "upsert", skills } = req.body;
+  const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
+  if (!expectedToken || token !== expectedToken) {
+    res.status(401).json({ error: "Invalid token" });
+    return;
+  }
+  if (!nodeId || typeof nodeId !== "number") {
+    res.status(400).json({ error: "Missing required field: nodeId" });
+    return;
+  }
+  if (!Array.isArray(skills)) {
+    res.status(400).json({ error: "skills must be an array" });
+    return;
+  }
+  try {
+    const node = await getAiNodeById(nodeId);
+    if (!node) {
+      res.status(404).json({ error: `Node ${nodeId} not found` });
+      return;
+    }
+    if (action === "replace_all") {
+      await deleteAllNodeSkills(nodeId);
+      for (const skill of skills) {
+        await upsertNodeSkill({ ...skill, nodeId });
+      }
+      console.log(`[Skills Sync] Node ${nodeId} replace_all: ${skills.length} skills`);
+    } else if (action === "upsert") {
+      for (const skill of skills) {
+        await upsertNodeSkill({ ...skill, nodeId });
+      }
+      console.log(`[Skills Sync] Node ${nodeId} upsert: ${skills.length} skills`);
+    } else if (action === "delete") {
+      for (const skill of skills) {
+        await deleteNodeSkill(nodeId, skill.skillId || skill.id);
+      }
+      console.log(`[Skills Sync] Node ${nodeId} delete: ${skills.length} skills`);
+    } else {
+      res.status(400).json({ error: `Unknown action: ${action}` });
+      return;
+    }
+    res.json({ success: true, count: skills.length, action });
+  } catch (err) {
+    console.error("[Skills Sync] Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+aiStreamRouter.get("/node/skills/:nodeId", async (req, res) => {
+  const admin = await getAdminUser(req);
+  if (!admin) {
+    res.status(401).json({ error: "Admin only" });
+    return;
+  }
+  const nodeId = parseInt(req.params.nodeId);
+  if (isNaN(nodeId)) {
+    res.status(400).json({ error: "Invalid nodeId" });
+    return;
+  }
+  try {
+    const skills = await getNodeSkills(nodeId);
+    res.json({ skills });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+aiStreamRouter.get("/node/skills", async (req, res) => {
+  const admin = await getAdminUser(req);
+  if (!admin) {
+    res.status(401).json({ error: "Admin only" });
+    return;
+  }
+  try {
+    const skills = await getAllNodeSkills();
+    res.json({ skills });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+aiStreamRouter.patch("/node/skills/toggle", async (req, res) => {
+  const admin = await getAdminUser(req);
+  if (!admin) {
+    res.status(401).json({ error: "Admin only" });
+    return;
+  }
+  const { nodeId, skillId, isEnabled } = req.body;
+  if (!nodeId || !skillId || typeof isEnabled !== "boolean") {
+    res.status(400).json({ error: "Missing required fields: nodeId, skillId, isEnabled" });
+    return;
+  }
+  try {
+    await setNodeSkillEnabled(Number(nodeId), skillId, isEnabled);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -3249,6 +3988,124 @@ aiStreamRouter.post("/image/generate", async (req, res) => {
   } catch (err) {
     console.error("[Image Generate] Error:", err);
     res.status(500).json({ error: err.message || "\u56FE\u50CF\u751F\u6210\u5931\u8D25" });
+  }
+});
+aiStreamRouter.post("/upload", async (req, res) => {
+  try {
+    const user = await sdk.authenticateRequest(req);
+    if (!user) {
+      res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
+      return;
+    }
+    const multer = (await import("multer")).default;
+    const upload = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+      fileFilter: (_req, file2, cb) => {
+        const ok = [
+          "image/jpeg",
+          "image/png",
+          "image/gif",
+          "image/webp",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/msword",
+          "text/plain",
+          "text/csv",
+          "text/markdown",
+          "application/json"
+        ];
+        if (ok.includes(file2.mimetype) || /\.(txt|md|csv|json|pdf|docx|doc|png|jpg|jpeg|gif|webp)$/i.test(file2.originalname)) {
+          cb(null, true);
+        } else {
+          cb(new Error(`\u4E0D\u652F\u6301\u7684\u6587\u4EF6\u7C7B\u578B: ${file2.mimetype}`));
+        }
+      }
+    });
+    await new Promise((resolve, reject) => {
+      upload.single("file")(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    const file = req.file;
+    if (!file) {
+      res.status(400).json({ error: "\u8BF7\u9009\u62E9\u8981\u4E0A\u4F20\u7684\u6587\u4EF6" });
+      return;
+    }
+    const { originalname, mimetype, buffer, size } = file;
+    if (mimetype.startsWith("image/")) {
+      const base64 = buffer.toString("base64");
+      res.json({
+        type: "image",
+        dataUrl: `data:${mimetype};base64,${base64}`,
+        fileName: originalname,
+        fileType: mimetype,
+        size
+      });
+      return;
+    }
+    let extractedText = "";
+    let fileType = "text";
+    if (mimetype === "application/pdf" || /\.pdf$/i.test(originalname)) {
+      try {
+        const parser = new PDFParse({ data: buffer });
+        const result = await parser.getText();
+        extractedText = result.text?.trim() || "";
+        if (!extractedText) extractedText = "[PDF \u5185\u5BB9\u4E3A\u7A7A\u6216\u4E3A\u626B\u63CF\u4EF6\uFF0C\u65E0\u6CD5\u63D0\u53D6\u6587\u5B57]";
+        fileType = "pdf";
+      } catch (e) {
+        console.warn("[Upload] PDF parse failed:", e?.message);
+        extractedText = `[PDF \u89E3\u6790\u5931\u8D25: ${e?.message || "\u672A\u77E5\u9519\u8BEF"}\uFF0C\u8BF7\u5C1D\u8BD5\u590D\u5236\u6587\u672C\u5185\u5BB9]`;
+        fileType = "pdf";
+      }
+    } else if (mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || /\.docx$/i.test(originalname)) {
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        extractedText = result.value?.trim() || "";
+        if (!extractedText) extractedText = "[Word \u6587\u6863\u5185\u5BB9\u4E3A\u7A7A]";
+        fileType = "docx";
+        if (result.messages?.length > 0) {
+          console.log("[Upload] DOCX warnings:", result.messages.map((m) => m.message).join("; "));
+        }
+      } catch (e) {
+        console.warn("[Upload] DOCX parse failed:", e?.message);
+        extractedText = `[Word \u6587\u6863\u89E3\u6790\u5931\u8D25: ${e?.message || "\u672A\u77E5\u9519\u8BEF"}]`;
+        fileType = "docx";
+      }
+    } else if (mimetype === "application/msword" || /\.doc$/i.test(originalname)) {
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        extractedText = result.value?.trim() || "";
+        if (!extractedText) extractedText = "[\u65E7\u7248 .doc \u683C\u5F0F\u5185\u5BB9\u4E3A\u7A7A\uFF0C\u5EFA\u8BAE\u53E6\u5B58\u4E3A .docx \u540E\u91CD\u65B0\u4E0A\u4F20]";
+        fileType = "doc";
+      } catch (e) {
+        console.warn("[Upload] DOC parse failed:", e?.message);
+        extractedText = `[\u65E7\u7248 .doc \u683C\u5F0F\u6682\u4E0D\u652F\u6301\u81EA\u52A8\u89E3\u6790\uFF0C\u8BF7\u5728 Word \u4E2D\u53E6\u5B58\u4E3A .docx \u683C\u5F0F\u540E\u91CD\u65B0\u4E0A\u4F20]`;
+        fileType = "doc";
+      }
+    } else {
+      extractedText = buffer.toString("utf-8").trim();
+      fileType = /\.csv$/i.test(originalname) ? "csv" : /\.json$/i.test(originalname) ? "json" : /\.md$/i.test(originalname) ? "markdown" : "text";
+    }
+    const MAX_CHARS = 6e4;
+    let truncated = false;
+    if (extractedText.length > MAX_CHARS) {
+      extractedText = extractedText.slice(0, MAX_CHARS);
+      truncated = true;
+    }
+    res.json({
+      type: "document",
+      text: extractedText,
+      fileName: originalname,
+      fileType,
+      size,
+      truncated,
+      charCount: extractedText.length
+    });
+  } catch (err) {
+    console.error("[Upload] Error:", err);
+    res.status(500).json({ error: err.message || "\u6587\u4EF6\u89E3\u6790\u5931\u8D25" });
   }
 });
 aiStreamRouter.get("/status", async (_req, res) => {
