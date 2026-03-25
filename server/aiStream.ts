@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import { MODEL_CONFIGS } from "./routers";
 import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog } from "./db";
 import { sdk } from "./_core/sdk";
+import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
 
 const aiStreamRouter = Router();
 
@@ -598,13 +600,15 @@ aiStreamRouter.post("/upload", async (req: Request, res: Response) => {
     // ── PDF ──
     if (mimetype === "application/pdf" || /\.pdf$/i.test(originalname)) {
       try {
-        const pdfParse = (await import("pdf-parse")).default;
-        const data = await pdfParse(buffer);
-        extractedText = data.text?.trim() || "";
+        // pdf-parse v2: new PDFParse({ data: buffer }).getText()
+        const parser = new PDFParse({ data: buffer });
+        const result = await parser.getText();
+        extractedText = result.text?.trim() || "";
+        if (!extractedText) extractedText = "[PDF 内容为空或为扫描件，无法提取文字]";
         fileType = "pdf";
-      } catch (e) {
-        console.warn("[Upload] PDF parse failed:", e);
-        extractedText = "[PDF 解析失败，请尝试复制文本内容]";
+      } catch (e: any) {
+        console.warn("[Upload] PDF parse failed:", e?.message);
+        extractedText = `[PDF 解析失败: ${e?.message || "未知错误"}，请尝试复制文本内容]`;
         fileType = "pdf";
       }
     }
@@ -614,14 +618,34 @@ aiStreamRouter.post("/upload", async (req: Request, res: Response) => {
       /\.docx$/i.test(originalname)
     ) {
       try {
-        const mammoth = await import("mammoth");
         const result = await mammoth.extractRawText({ buffer });
         extractedText = result.value?.trim() || "";
+        if (!extractedText) extractedText = "[Word 文档内容为空]";
         fileType = "docx";
-      } catch (e) {
-        console.warn("[Upload] DOCX parse failed:", e);
-        extractedText = "[Word 文档解析失败]";
+        if (result.messages?.length > 0) {
+          console.log("[Upload] DOCX warnings:", result.messages.map((m: any) => m.message).join("; "));
+        }
+      } catch (e: any) {
+        console.warn("[Upload] DOCX parse failed:", e?.message);
+        extractedText = `[Word 文档解析失败: ${e?.message || "未知错误"}]`;
         fileType = "docx";
+      }
+    }
+    // ── Word (.doc 旧格式) ──
+    else if (
+      mimetype === "application/msword" ||
+      /\.doc$/i.test(originalname)
+    ) {
+      // mammoth 主要支持 .docx，对旧版 .doc 尝试解析，失败时给出明确提示
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        extractedText = result.value?.trim() || "";
+        if (!extractedText) extractedText = "[旧版 .doc 格式内容为空，建议另存为 .docx 后重新上传]";
+        fileType = "doc";
+      } catch (e: any) {
+        console.warn("[Upload] DOC parse failed:", e?.message);
+        extractedText = `[旧版 .doc 格式暂不支持自动解析，请在 Word 中另存为 .docx 格式后重新上传]`;
+        fileType = "doc";
       }
     }
     // ── Plain text / CSV / JSON / Markdown ──

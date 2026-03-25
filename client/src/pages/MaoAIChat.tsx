@@ -148,6 +148,8 @@ export default function MaoAIChat() {
   const [showUpgradePrompt, setShowUpgradePrompt] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -340,6 +342,81 @@ export default function MaoAIChat() {
       setIsUploadingFile(false);
     }
   };
+
+  // ── Drag & Drop handlers ────────────────────────────────────────────────────
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current += 1;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+    setIsUploadingFile(true);
+    try {
+      for (const file of files) {
+        if (file.type.startsWith("image/")) {
+          await addImageFromFile(file);
+          continue;
+        }
+        const formData = new FormData();
+        formData.append("file", file);
+        const token = localStorage.getItem("maoai_session_token");
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const resp = await fetch(`${BACKEND_URL}/api/ai/upload`, {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: formData,
+        });
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+          throw new Error(errData.error || `上传失败 (${resp.status})`);
+        }
+        const data = await resp.json();
+        if (data.type === "image") {
+          setPendingImages(prev => [...prev, data.dataUrl]);
+        } else {
+          setPendingFiles(prev => [...prev, {
+            name: data.fileName,
+            fileType: data.fileType,
+            text: data.text,
+            size: data.size,
+            truncated: data.truncated,
+            charCount: data.charCount,
+          }]);
+        }
+      }
+    } catch (err: any) {
+      alert(`文件上传失败: ${err.message}`);
+    } finally {
+      setIsUploadingFile(false);
+    }
+  }, []);
 
   const startNewChat = () => {
     setCurrentConvId(null);
@@ -742,7 +819,23 @@ export default function MaoAIChat() {
       </aside>
 
       {/* ── Main area ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div
+        className="flex-1 flex flex-col min-w-0 overflow-hidden relative"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* Drag overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 bg-[#0A0A0A]/90 border-2 border-dashed border-[#C9A84C]/60 flex flex-col items-center justify-center gap-4 pointer-events-none">
+            <div className="w-16 h-16 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center">
+              <Paperclip size={28} className="text-[#C9A84C]/70" />
+            </div>
+            <p className="text-[#C9A84C]/80 text-lg font-medium">松开以上传文件</p>
+            <p className="text-white/30 text-sm">支持图片、PDF、Word、TXT、CSV、JSON</p>
+          </div>
+        )}
 
         {/* ── Header ── */}
         <header className="border-b border-[#C9A84C]/20 bg-[#0A0A0A]/95 backdrop-blur-sm shrink-0 z-10">
