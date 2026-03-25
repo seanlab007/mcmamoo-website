@@ -362,7 +362,7 @@ export default function IPLicensing() {
               </div>
             </div>
 
-            {/* Case 2: 法国奢利香芬 × 李小龙 */}
+            {/* Case 2: 法国奢利香氛 × 李小龙 */}
             <div className="border border-white/8 bg-[#111] overflow-hidden group hover:border-[#C9A84C]/30 transition-all duration-300">
               <div className="flex">
                 <div className="w-32 flex-shrink-0 bg-[#1a1a1a] relative overflow-hidden">
@@ -385,12 +385,12 @@ export default function IPLicensing() {
                     <span className="text-white/20 text-[9px] font-mono">2024</span>
                   </div>
                   <h3 className="font-['Cormorant_Garamond'] text-lg text-white mb-1">
-                    {isEn ? "Luxe Parfum France × Bruce Lee" : "法国奢利香芬 × 李小龙"}
+                    {isEn ? "Luxe Parfum France × Bruce Lee" : "法国奢利香氛 × 李小龙"}
                   </h3>
                   <p className="text-white/40 text-xs leading-relaxed mb-4">
                     {isEn
                       ? "French luxury fragrance brand Luxe Parfum collaborated with Bruce Lee Enterprises to launch a warrior-spirit collection, blending Eastern philosophy with French perfumery craftsmanship."
-                      : "法国奢利香芬与 Bruce Lee Enterprises 合作，推出「武魂」香水系列，融合东方哲学与法式调香工艺，定价 2,800 元。"}
+                      : "法国奢利香氛与 Bruce Lee Enterprises 合作，推出「武魂」香水系列，融合东方哲学与法式调香工艺，定价 2,800 元。"}
                   </p>
                   <div className="flex gap-4">
                     <div>
