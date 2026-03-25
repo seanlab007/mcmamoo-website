@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "about": "Tentang Kami",
+    "kol": "KOL",
+    "services": "Layanan",
+    "cases": "Kasus",
+    "awards": "Penghargaan",
+    "contact": "Kontak",
+    "bookConsultation": "Pesan Konsultasi",
+    "maoIndustry": "Mao Industry",
+    "maoIndustryHome": "Beranda Industri",
+    "millenniumClock": "Jam Milenium",
+    "cooperation": "Kemitraan"
+  },
+  "hero": {
+    "label": "Manajemen Merek Premium Global",
+    "subtitle": "Lipat Gandakan Keuntungan Merek Anda",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Tingkatkan merek · Lipat gandakan keuntungan · Tumbuh di semua saluran",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Pesan Diagnosis Merek",
+    "cta2": "Lihat Kasus Global",
+    "ipBadge": "Mitra Strategis ABG · 15+ Lisensi IP Global",
+    "whaleBadge": "Whale Pictures · Produksi Film"
+  },
+  "about": {
+    "title": "Tentang Kami",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo adalah perusahaan manajemen merek premium internasional, berkantor pusat di Chicago dan Shanghai, didukung oleh Dark Matter Capital.",
+    "mission": "Misi",
+    "missionText": "Membuat setiap merek bernilai terlihat oleh lebih banyak orang",
+    "vision": "Visi",
+    "visionText": "Menjadi mitra pertumbuhan merek paling terpercaya di dunia",
+    "values": "Nilai",
+    "valuesText": "Integritas · Inovasi · Kesuksesan bersama"
+  },
+  "services": {
+    "title": "Layanan Utama",
+    "subtitle": "Solusi Pertumbuhan Omnichannel",
+    "brand": "Strategi Merek",
+    "brandDesc": "Dari pemosisian merek hingga sistem visual, membangun aset merek yang terdiferensiasi",
+    "digital": "Pemasaran Digital",
+    "digitalDesc": "Pemasaran omnichannel terintegrasi untuk menjangkau audiens target secara tepat",
+    "kol": "Pemasaran KOL",
+    "kolDesc": "Matriks influencer teratas dengan distribusi konten dan konversi terintegrasi",
+    "growth": "Konsultasi Pertumbuhan",
+    "growthDesc": "Strategi pertumbuhan berbasis data untuk terobosan GMV berkelanjutan"
+  },
+  "maoIndustry": {
+    "title": "Mao Industry",
+    "subtitle": "Divisi Teknologi Industri",
+    "description": "Portofolio teknologi industri berorientasi masa depan — dari energi bulan hingga manufaktur pertahanan.",
+    "helium3": "Energi Helium-3 Bulan",
+    "helium3Desc": "Memimpin eksplorasi dan ekstraksi He-3 bulan untuk menyediakan energi fusi bersih bagi Bumi",
+    "tokamak": "R&D Perangkat Tokamak",
+    "tokamakDesc": "Pengembangan mandiri perangkat fusi confinement magnetik generasi berikutnya",
+    "military": "Manufaktur Pertahanan",
+    "militaryDesc": "Manufaktur komponen pertahanan presisi tinggi dan integrasi sistem",
+    "partners": "Mitra Strategis",
+    "cooperationTitle": "Permohonan Kemitraan Strategis",
+    "cooperationDesc": "Jika Anda tertarik dengan kerja sama strategis dengan Mao Industry, silakan isi informasi berikut."
+  },
+  "millenniumClock": {
+    "title": "Jam Milenium",
+    "subtitle": "Satu detakan setiap 10.000 tahun",
+    "description": "Ditemukan oleh pemikir Sean DAI, sebuah jam yang dirancang untuk mengingatkan umat manusia untuk berpikir dalam skala waktu yang sangat panjang.",
+    "inventor": "Penemu",
+    "inventorName": "Sean DAI",
+    "reserve": "Reservasi / Pertanyaan Pembelian",
+    "reserveDesc": "Isi informasi Anda dan kami akan menghubungi Anda"
+  },
+  "contact": {
+    "title": "Hubungi Kami",
+    "subtitle": "Mulai Perjalanan Pertumbuhan Merek Anda",
+    "name": "Nama",
+    "email": "Email",
+    "company": "Perusahaan",
+    "message": "Pesan",
+    "submit": "Kirim",
+    "phone": "Telepon",
+    "address": "Alamat"
+  },
+  "footer": {
+    "rights": "Hak cipta dilindungi",
+    "privacy": "Kebijakan Privasi",
+    "terms": "Ketentuan Layanan"
+  },
+  "common": {
+    "learnMore": "Pelajari lebih lanjut",
+    "contactUs": "Hubungi kami",
+    "viewAll": "Lihat semua",
+    "back": "Kembali",
+    "submit": "Kirim",
+    "cancel": "Batal",
+    "loading": "Memuat...",
+    "success": "Berhasil dikirim",
+    "error": "Pengiriman gagal, coba lagi"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "about": "Über uns",
+    "kol": "KOL",
+    "services": "Leistungen",
+    "cases": "Fallstudien",
+    "awards": "Auszeichnungen",
+    "contact": "Kontakt",
+    "bookConsultation": "Beratung buchen",
+    "maoIndustry": "Mao Industry",
+    "maoIndustryHome": "Industrie-Startseite",
+    "millenniumClock": "Jahrtausend-Uhr",
+    "cooperation": "Partnerschaft"
+  },
+  "hero": {
+    "label": "Globales Premium-Markenmanagement",
+    "subtitle": "Vervielfachen Sie Ihre Markengewinne",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Marken aufwerten · Gewinne vervielfachen · Auf allen Kanälen wachsen",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Markendiagnose buchen",
+    "cta2": "Globale Fallstudien ansehen",
+    "ipBadge": "Strategischer Partner ABG · 15+ Globale IP-Lizenzen",
+    "whaleBadge": "Whale Pictures · Film & Produktion"
+  },
+  "about": {
+    "title": "Über uns",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo ist ein internationales Premium-Markenmanagement-Unternehmen mit Sitz in Chicago und Shanghai, unterstützt von Dark Matter Capital.",
+    "mission": "Mission",
+    "missionText": "Jede wertvolle Marke für mehr Menschen sichtbar machen",
+    "vision": "Vision",
+    "visionText": "Der vertrauenswürdigste Markenwachstumspartner der Welt werden",
+    "values": "Werte",
+    "valuesText": "Integrität · Innovation · Gemeinsamer Erfolg"
+  },
+  "services": {
+    "title": "Kernleistungen",
+    "subtitle": "Omnichannel-Wachstumslösungen",
+    "brand": "Markenstrategie",
+    "brandDesc": "Von der Markenpositionierung bis zum visuellen System, differenzierte Markenassets aufbauen",
+    "digital": "Digitales Marketing",
+    "digitalDesc": "Integriertes Omnichannel-Marketing zur präzisen Erreichung von Zielgruppen",
+    "kol": "KOL-Marketing",
+    "kolDesc": "Top-Influencer-Matrix mit integrierter Content-Verbreitung und Konversion",
+    "growth": "Wachstumsberatung",
+    "growthDesc": "Datengetriebene Wachstumsstrategien für kontinuierliche GMV-Durchbrüche"
+  },
+  "maoIndustry": {
+    "title": "Mao Industry",
+    "subtitle": "Industrietechnologie-Division",
+    "description": "Ein zukunftsorientiertes Industrietechnologie-Portfolio — von Mondenergie bis zur Verteidigungsproduktion.",
+    "helium3": "Mond-Helium-3-Energie",
+    "helium3Desc": "Führend in der Erkundung und Gewinnung von He-3 auf dem Mond für saubere Fusionsenergie",
+    "tokamak": "Tokamak-Gerät F&E",
+    "tokamakDesc": "Eigenständige Entwicklung von Magnetfusions-Einschlussgeräten der nächsten Generation",
+    "military": "Verteidigungsproduktion",
+    "militaryDesc": "Hochpräzise Verteidigungskomponentenfertigung und Systemintegration",
+    "partners": "Strategische Partner",
+    "cooperationTitle": "Strategische Partnerschaftsanfrage",
+    "cooperationDesc": "Wenn Sie an einer strategischen Zusammenarbeit mit Mao Industry interessiert sind, füllen Sie bitte die folgenden Informationen aus."
+  },
+  "millenniumClock": {
+    "title": "Die Jahrtausend-Uhr",
+    "subtitle": "Ein Tick alle 10.000 Jahre",
+    "description": "Erfunden vom Denker Sean DAI, eine Uhr, die die Menschheit daran erinnern soll, in ultra-langen Zeiträumen zu denken.",
+    "inventor": "Erfinder",
+    "inventorName": "Sean DAI",
+    "reserve": "Reservierung / Kaufanfrage",
+    "reserveDesc": "Bitte füllen Sie Ihre Informationen aus und wir werden Sie kontaktieren"
+  },
+  "contact": {
+    "title": "Kontakt",
+    "subtitle": "Beginnen Sie Ihre Markenwachstumsreise",
+    "name": "Name",
+    "email": "E-Mail",
+    "company": "Unternehmen",
+    "message": "Nachricht",
+    "submit": "Absenden",
+    "phone": "Telefon",
+    "address": "Adresse"
+  },
+  "footer": {
+    "rights": "Alle Rechte vorbehalten",
+    "privacy": "Datenschutzrichtlinie",
+    "terms": "Nutzungsbedingungen"
+  },
+  "common": {
+    "learnMore": "Mehr erfahren",
+    "contactUs": "Kontaktieren Sie uns",
+    "viewAll": "Alle anzeigen",
+    "back": "Zurück",
+    "submit": "Absenden",
+    "cancel": "Abbrechen",
+    "loading": "Laden...",
+    "success": "Erfolgreich gesendet",
+    "error": "Senden fehlgeschlagen, bitte erneut versuchen"
+  }
+}

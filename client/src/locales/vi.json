@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "about": "Về chúng tôi",
+    "kol": "KOL",
+    "services": "Dịch vụ",
+    "cases": "Trường hợp",
+    "awards": "Giải thưởng",
+    "contact": "Liên hệ",
+    "bookConsultation": "Đặt tư vấn",
+    "maoIndustry": "Mao Industry",
+    "maoIndustryHome": "Trang chủ Công nghiệp",
+    "millenniumClock": "Đồng hồ Thiên niên kỷ",
+    "cooperation": "Hợp tác"
+  },
+  "hero": {
+    "label": "Quản lý Thương hiệu Cao cấp Toàn cầu",
+    "subtitle": "Nhân đôi Lợi nhuận Thương hiệu của bạn",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Nâng tầm thương hiệu · Nhân đôi lợi nhuận · Tăng trưởng đa kênh",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Đặt Chẩn đoán Thương hiệu",
+    "cta2": "Xem Trường hợp Toàn cầu",
+    "ipBadge": "Đối tác Chiến lược ABG · 15+ Giấy phép IP Toàn cầu",
+    "whaleBadge": "Whale Pictures · Sản xuất Phim"
+  },
+  "about": {
+    "title": "Về chúng tôi",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo là công ty quản lý thương hiệu cao cấp quốc tế, có trụ sở tại Chicago và Thượng Hải, được hỗ trợ bởi Dark Matter Capital.",
+    "mission": "Sứ mệnh",
+    "missionText": "Giúp mọi thương hiệu có giá trị tiếp cận nhiều người hơn",
+    "vision": "Tầm nhìn",
+    "visionText": "Trở thành đối tác tăng trưởng thương hiệu đáng tin cậy nhất thế giới",
+    "values": "Giá trị",
+    "valuesText": "Chính trực · Đổi mới · Thành công chung"
+  },
+  "services": {
+    "title": "Dịch vụ Cốt lõi",
+    "subtitle": "Giải pháp Tăng trưởng Đa kênh",
+    "brand": "Chiến lược Thương hiệu",
+    "brandDesc": "Từ định vị thương hiệu đến hệ thống hình ảnh, xây dựng tài sản thương hiệu khác biệt",
+    "digital": "Marketing Kỹ thuật số",
+    "digitalDesc": "Marketing đa kênh tích hợp để tiếp cận chính xác đối tượng mục tiêu",
+    "kol": "Marketing KOL",
+    "kolDesc": "Ma trận KOL hàng đầu với phân phối nội dung và chuyển đổi tích hợp",
+    "growth": "Tư vấn Tăng trưởng",
+    "growthDesc": "Chiến lược tăng trưởng dựa trên dữ liệu cho các đột phá GMV liên tục"
+  },
+  "maoIndustry": {
+    "title": "Mao Industry",
+    "subtitle": "Bộ phận Công nghệ Công nghiệp",
+    "description": "Danh mục công nghệ công nghiệp hướng tương lai — từ năng lượng mặt trăng đến sản xuất quốc phòng.",
+    "helium3": "Năng lượng Heli-3 Mặt Trăng",
+    "helium3Desc": "Dẫn đầu trong thăm dò và khai thác He-3 mặt trăng để cung cấp năng lượng tổng hợp sạch cho Trái Đất",
+    "tokamak": "R&D Thiết bị Tokamak",
+    "tokamakDesc": "Phát triển độc lập các thiết bị tổng hợp từ trường thế hệ tiếp theo",
+    "military": "Sản xuất Quốc phòng",
+    "militaryDesc": "Sản xuất linh kiện quốc phòng độ chính xác cao và tích hợp hệ thống",
+    "partners": "Đối tác Chiến lược",
+    "cooperationTitle": "Đơn xin Hợp tác Chiến lược",
+    "cooperationDesc": "Nếu bạn quan tâm đến hợp tác chiến lược với Mao Industry, vui lòng điền thông tin bên dưới."
+  },
+  "millenniumClock": {
+    "title": "Đồng hồ Thiên niên kỷ",
+    "subtitle": "Một tích tắc mỗi 10.000 năm",
+    "description": "Được phát minh bởi nhà tư tưởng Sean DAI, một chiếc đồng hồ được thiết kế để nhắc nhở nhân loại suy nghĩ theo thang thời gian siêu dài.",
+    "inventor": "Nhà phát minh",
+    "inventorName": "Sean DAI",
+    "reserve": "Đặt chỗ / Hỏi mua",
+    "reserveDesc": "Vui lòng điền thông tin và chúng tôi sẽ liên hệ với bạn"
+  },
+  "contact": {
+    "title": "Liên hệ",
+    "subtitle": "Bắt đầu Hành trình Tăng trưởng Thương hiệu",
+    "name": "Tên",
+    "email": "Email",
+    "company": "Công ty",
+    "message": "Tin nhắn",
+    "submit": "Gửi",
+    "phone": "Điện thoại",
+    "address": "Địa chỉ"
+  },
+  "footer": {
+    "rights": "Bảo lưu mọi quyền",
+    "privacy": "Chính sách Bảo mật",
+    "terms": "Điều khoản Dịch vụ"
+  },
+  "common": {
+    "learnMore": "Tìm hiểu thêm",
+    "contactUs": "Liên hệ",
+    "viewAll": "Xem tất cả",
+    "back": "Quay lại",
+    "submit": "Gửi",
+    "cancel": "Hủy",
+    "loading": "Đang tải...",
+    "success": "Gửi thành công",
+    "error": "Gửi thất bại, vui lòng thử lại"
+  }
+}

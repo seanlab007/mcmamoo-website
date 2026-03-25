@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "home": "ホーム",
+    "about": "私たちについて",
+    "kol": "KOL",
+    "services": "サービス",
+    "cases": "事例",
+    "awards": "受賞歴",
+    "contact": "お問い合わせ",
+    "bookConsultation": "相談予約",
+    "maoIndustry": "Mao Industry",
+    "maoIndustryHome": "産業部門",
+    "millenniumClock": "ミレニアムクロック",
+    "cooperation": "パートナーシップ"
+  },
+  "hero": {
+    "label": "グローバル・プレミアム・ブランドマネジメント",
+    "subtitle": "ブランド利益を倍増させる",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "ブランドをプレミアムに · 利益を倍増 · 全チャネルで成長",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "ブランド診断を予約",
+    "cta2": "グローバル事例を見る",
+    "ipBadge": "ABG 戦略パートナー · グローバル 15+ IP ライセンス",
+    "whaleBadge": "Whale Pictures · 映像制作"
+  },
+  "about": {
+    "title": "私たちについて",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamooはシカゴと上海に拠点を置く国際的なプレミアムブランド管理会社です。Dark Matter Capitalが投資・設立しました。",
+    "mission": "ミッション",
+    "missionText": "すべての価値あるブランドをより多くの人に届ける",
+    "vision": "ビジョン",
+    "visionText": "世界で最も信頼されるブランド成長パートナーになる",
+    "values": "バリュー",
+    "valuesText": "誠実・革新・共栄"
+  },
+  "services": {
+    "title": "コアサービス",
+    "subtitle": "全チャネル成長ソリューション",
+    "brand": "ブランド戦略",
+    "brandDesc": "ブランドポジショニングからビジュアルシステムまで、差別化されたブランド資産を構築",
+    "digital": "デジタルマーケティング",
+    "digitalDesc": "統合オムニチャネルマーケティングでターゲットオーディエンスに精確にリーチ",
+    "kol": "KOLマーケティング",
+    "kolDesc": "トップインフルエンサーマトリクスによるコンテンツ拡散と転換の一体化",
+    "growth": "成長コンサルティング",
+    "growthDesc": "データドリブンの成長戦略でGMVの継続的な突破を実現"
+  },
+  "maoIndustry": {
+    "title": "Mao Industry",
+    "subtitle": "産業技術部門",
+    "description": "月面エネルギーから防衛製造まで、人類文明の次の支点を構築する未来志向の産業技術ポートフォリオ。",
+    "helium3": "月面ヘリウム3エネルギー",
+    "helium3Desc": "月面He-3資源の探査・採掘技術をリードし、地球にクリーンな核融合エネルギーを提供",
+    "tokamak": "トカマク装置R&D",
+    "tokamakDesc": "次世代磁気閉じ込め核融合装置を独自開発し、商業核融合のコア技術を突破",
+    "military": "防衛製造",
+    "militaryDesc": "高精度防衛部品製造とシステム統合で国防近代化に貢献",
+    "partners": "戦略パートナー",
+    "cooperationTitle": "戦略的パートナーシップ申請",
+    "cooperationDesc": "Mao Industryとの戦略的協力に関心がある方は、以下の情報をご記入ください。48時間以内にご連絡いたします。"
+  },
+  "millenniumClock": {
+    "title": "ミレニアムクロック",
+    "subtitle": "1万年に一度の刻み",
+    "description": "思想家Sean DAIが発明した、人類に超長期的思考を促す時計装置。",
+    "inventor": "発明者",
+    "inventorName": "Sean DAI",
+    "reserve": "見学予約 / 購入問い合わせ",
+    "reserveDesc": "情報をご記入ください。担当者よりご連絡いたします"
+  },
+  "contact": {
+    "title": "お問い合わせ",
+    "subtitle": "ブランド成長の旅を始めましょう",
+    "name": "お名前",
+    "email": "メールアドレス",
+    "company": "会社名",
+    "message": "メッセージ",
+    "submit": "送信",
+    "phone": "電話番号",
+    "address": "住所"
+  },
+  "footer": {
+    "rights": "All Rights Reserved",
+    "privacy": "プライバシーポリシー",
+    "terms": "利用規約"
+  },
+  "common": {
+    "learnMore": "詳しく見る",
+    "contactUs": "お問い合わせ",
+    "viewAll": "すべて見る",
+    "back": "戻る",
+    "submit": "送信",
+    "cancel": "キャンセル",
+    "loading": "読み込み中...",
+    "success": "送信完了",
+    "error": "送信失敗。もう一度お試しください"
+  }
+}

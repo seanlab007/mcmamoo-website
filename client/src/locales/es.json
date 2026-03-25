@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "about": "Nosotros",
+    "kol": "KOL",
+    "services": "Servicios",
+    "cases": "Casos",
+    "awards": "Premios",
+    "contact": "Contacto",
+    "bookConsultation": "Reservar Consulta",
+    "maoIndustry": "Mao Industry",
+    "maoIndustryHome": "Inicio Industrial",
+    "millenniumClock": "Reloj Milenario",
+    "cooperation": "Asociación"
+  },
+  "hero": {
+    "label": "Gestión de Marca Premium Global",
+    "subtitle": "Multiplica los Beneficios de tu Marca",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Elevar marcas · Multiplicar beneficios · Crecer en todos los canales",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Reservar Diagnóstico de Marca",
+    "cta2": "Ver Casos Globales",
+    "ipBadge": "Socio Estratégico ABG · 15+ Licencias IP Globales",
+    "whaleBadge": "Whale Pictures · Producción Audiovisual"
+  },
+  "about": {
+    "title": "Nosotros",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo es una firma internacional de gestión de marca premium, con sede en Chicago y Shanghái, respaldada por Dark Matter Capital.",
+    "mission": "Misión",
+    "missionText": "Hacer que cada marca valiosa sea vista por más personas",
+    "vision": "Visión",
+    "visionText": "Convertirnos en el socio de crecimiento de marca más confiable del mundo",
+    "values": "Valores",
+    "valuesText": "Integridad · Innovación · Éxito mutuo"
+  },
+  "services": {
+    "title": "Servicios Principales",
+    "subtitle": "Soluciones de Crecimiento Omnicanal",
+    "brand": "Estrategia de Marca",
+    "brandDesc": "Del posicionamiento al sistema visual, construyendo activos de marca diferenciados",
+    "digital": "Marketing Digital",
+    "digitalDesc": "Marketing omnicanal integrado para alcanzar con precisión a las audiencias objetivo",
+    "kol": "Marketing KOL",
+    "kolDesc": "Matriz de influencers top con difusión de contenido y conversión integradas",
+    "growth": "Consultoría de Crecimiento",
+    "growthDesc": "Estrategias de crecimiento basadas en datos para avances continuos de GMV"
+  },
+  "maoIndustry": {
+    "title": "Mao Industry",
+    "subtitle": "División de Tecnología Industrial",
+    "description": "Un portafolio de tecnología industrial orientado al futuro — desde energía lunar hasta fabricación de defensa.",
+    "helium3": "Energía Helio-3 Lunar",
+    "helium3Desc": "Liderando la exploración y extracción de He-3 lunar para proporcionar energía de fusión limpia a la Tierra",
+    "tokamak": "I+D Dispositivo Tokamak",
+    "tokamakDesc": "Desarrollando de forma independiente dispositivos de fusión de confinamiento magnético de próxima generación",
+    "military": "Fabricación de Defensa",
+    "militaryDesc": "Fabricación de componentes de defensa de alta precisión e integración de sistemas",
+    "partners": "Socios Estratégicos",
+    "cooperationTitle": "Solicitud de Asociación Estratégica",
+    "cooperationDesc": "Si está interesado en cooperación estratégica con Mao Industry, complete la siguiente información."
+  },
+  "millenniumClock": {
+    "title": "El Reloj Milenario",
+    "subtitle": "Un tic cada 10.000 años",
+    "description": "Inventado por el pensador Sean DAI, un reloj diseñado para recordar a la humanidad que piense en escalas de tiempo ultra-largas.",
+    "inventor": "Inventor",
+    "inventorName": "Sean DAI",
+    "reserve": "Reservar / Consulta de Compra",
+    "reserveDesc": "Complete su información y nos pondremos en contacto con usted"
+  },
+  "contact": {
+    "title": "Contáctenos",
+    "subtitle": "Comience su Viaje de Crecimiento de Marca",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "company": "Empresa",
+    "message": "Mensaje",
+    "submit": "Enviar",
+    "phone": "Teléfono",
+    "address": "Dirección"
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados",
+    "privacy": "Política de privacidad",
+    "terms": "Términos de servicio"
+  },
+  "common": {
+    "learnMore": "Saber más",
+    "contactUs": "Contáctenos",
+    "viewAll": "Ver todo",
+    "back": "Volver",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "loading": "Cargando...",
+    "success": "Enviado con éxito",
+    "error": "Error al enviar, inténtelo de nuevo"
+  }
+}
