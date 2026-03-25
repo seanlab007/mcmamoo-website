@@ -267,3 +267,123 @@ export async function createMillenniumClockReservation(data: MillenniumClockRese
 export async function getMillenniumClockReservations() {
   return supabaseGet<Record<string, unknown>>("millennium_clock_reservations", "order=createdAt.desc&limit=200");
 }
+
+// ─── Subscriptions ────────────────────────────────────────────────────────────
+
+export async function getUserSubscription(userId: number) {
+  const rows = await supabaseGet<Record<string, unknown>>(
+    "subscriptions",
+    `userId=eq.${userId}&status=eq.active&order=createdAt.desc&limit=1`
+  );
+  return rows[0] ?? null;
+}
+
+export async function upsertSubscription(data: {
+  userId: number;
+  tier: string;
+  status?: string;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string | null;
+}) {
+  // Check if subscription exists
+  const existing = await supabaseGet<Record<string, unknown>>(
+    "subscriptions",
+    `userId=eq.${data.userId}&limit=1`
+  );
+  if (existing.length > 0) {
+    await supabasePatch("subscriptions", `userId=eq.${data.userId}`, {
+      tier: data.tier,
+      status: data.status ?? "active",
+      currentPeriodStart: data.currentPeriodStart ?? new Date().toISOString(),
+      currentPeriodEnd: data.currentPeriodEnd ?? null,
+      updatedAt: new Date().toISOString(),
+    });
+  } else {
+    await supabaseInsert<Record<string, unknown>>("subscriptions", {
+      userId: data.userId,
+      tier: data.tier,
+      status: data.status ?? "active",
+      currentPeriodStart: data.currentPeriodStart ?? new Date().toISOString(),
+      currentPeriodEnd: data.currentPeriodEnd ?? null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+}
+
+// ─── Payment Orders ───────────────────────────────────────────────────────────
+
+export async function createPaymentOrder(data: {
+  userId: number;
+  tier: string;
+  provider: string;
+  currency: string;
+  amount: string;
+  metadata?: string;
+}) {
+  return supabaseInsert<Record<string, unknown>>("payment_orders", {
+    ...data,
+    status: "pending",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function updatePaymentOrder(id: number, data: {
+  status?: string;
+  externalOrderId?: string;
+  paymentUrl?: string;
+  paidAt?: string;
+  metadata?: string;
+}) {
+  await supabasePatch("payment_orders", `id=eq.${id}`, {
+    ...data,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function getPaymentOrders(userId: number) {
+  return supabaseGet<Record<string, unknown>>(
+    "payment_orders",
+    `userId=eq.${userId}&order=createdAt.desc&limit=50`
+  );
+}
+
+// ─── Usage Records ────────────────────────────────────────────────────────────
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export async function getTodayUsage(userId: number) {
+  const date = todayStr();
+  const rows = await supabaseGet<Record<string, unknown>>(
+    "usage_records",
+    `userId=eq.${userId}&date=eq.${date}&limit=1`
+  );
+  return rows[0] ?? { userId, date, chatMessages: 0, imageGenerations: 0 };
+}
+
+export async function incrementUsage(userId: number, field: "chatMessages" | "imageGenerations") {
+  const date = todayStr();
+  const existing = await supabaseGet<Record<string, unknown>>(
+    "usage_records",
+    `userId=eq.${userId}&date=eq.${date}&limit=1`
+  );
+  if (existing.length > 0) {
+    const current = (existing[0][field] as number) ?? 0;
+    await supabasePatch("usage_records", `userId=eq.${userId}&date=eq.${date}`, {
+      [field]: current + 1,
+      updatedAt: new Date().toISOString(),
+    });
+  } else {
+    await supabaseInsert<Record<string, unknown>>("usage_records", {
+      userId,
+      date,
+      chatMessages: field === "chatMessages" ? 1 : 0,
+      imageGenerations: field === "imageGenerations" ? 1 : 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+}

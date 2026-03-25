@@ -21,6 +21,7 @@ import MillenniumClock from "./pages/MillenniumClock";
 // ─── MaoAI 页面 ───────────────────────────────────────────────────────────────
 import MaoAILogin from "./pages/MaoAILogin";
 import MaoAIChat from "./pages/MaoAIChat";
+import MaoAIPricing from "./pages/MaoAIPricing";
 
 // ─── 管理员页面 ───────────────────────────────────────────────────────────────
 import AdminMaoApplications from "./pages/AdminMaoApplications";
@@ -48,6 +49,7 @@ function Router() {
       {/* ── MaoAI 路由 ── */}
       <Route path={"/maoai/login"} component={MaoAILogin} />
       <Route path={"/maoai"} component={MaoAIChat} />
+      <Route path={"/maoai/pricing"} component={MaoAIPricing} />
 
       {/* ── 管理员路由（各页面内部有 role 守卫）── */}
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />

@@ -3,8 +3,9 @@ import { trpc } from "@/lib/trpc";
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
-  Wand2, Image as ImageIcon,
+  Wand2, Image as ImageIcon, Crown, Zap,
 } from "lucide-react";
+import type { PlanTier } from "@shared/plans";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Streamdown } from "streamdown";
 
@@ -135,6 +136,7 @@ export default function MaoAIChat() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [inputMode, setInputMode] = useState<InputMode>("chat");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -157,6 +159,10 @@ export default function MaoAIChat() {
     onSuccess: () => utils.conversations.list.invalidate(),
   });
   const saveMsgMutation = trpc.messages.save.useMutation();
+  const { data: mySubscription, refetch: refetchSubscription } = trpc.billing.mySubscription.useQuery(
+    undefined,
+    { enabled: !!user, staleTime: 60_000 }
+  );
   const { data: historyMessages } = trpc.messages.list.useQuery(
     { conversationId: currentConvId! },
     { enabled: !!currentConvId }
@@ -327,9 +333,47 @@ export default function MaoAIChat() {
   const allOptions: ModelOption[] = [...CLOUD_MODELS, ...(isAdmin ? localNodes : [])];
   const currentOption = allOptions.find(m => m.id === selectedId) || CLOUD_MODELS[0];
 
+  // ── Limit check helpers ───────────────────────────────────────────────────────────
+  const checkChatLimit = (): boolean => {
+    if (!mySubscription) return true; // not loaded yet, allow
+    const { limits, usage } = mySubscription;
+    if (limits.dailyChatMessages === -1) return true;
+    if (usage.chatMessages >= limits.dailyChatMessages) {
+      setShowUpgradePrompt("chat");
+      return false;
+    }
+    return true;
+  };
+
+  const checkImageLimit = (): boolean => {
+    if (!mySubscription) return true;
+    const { limits, usage, tier } = mySubscription;
+    if (!limits.imageGeneration) {
+      setShowUpgradePrompt("image_locked");
+      return false;
+    }
+    if (limits.dailyImageGenerations !== -1 && usage.imageGenerations >= limits.dailyImageGenerations) {
+      setShowUpgradePrompt("image");
+      return false;
+    }
+    return true;
+  };
+
+  const checkPremiumModel = (modelId: string): boolean => {
+    const premiumModels = ["deepseek-reasoner", "glm-4-plus"];
+    if (!premiumModels.includes(modelId)) return true;
+    if (!mySubscription) return true;
+    if (!mySubscription.limits.premiumModels) {
+      setShowUpgradePrompt("premium_model");
+      return false;
+    }
+    return true;
+  };
+
   // ── Image generation (nano banana) ─────────────────────────────────────────
   const generateImage = async (prompt: string) => {
     if (!prompt.trim() || isGeneratingImage) return;
+    if (!checkImageLimit()) return;
 
     const userMsg: Message = {
       role: "user",
@@ -394,6 +438,8 @@ export default function MaoAIChat() {
   // ── Send chat message ────────────────────────────────────────────────────────
   const sendMessage = async (textContent: string) => {
     if ((!textContent.trim() && pendingImages.length === 0) || isStreaming) return;
+    if (!checkChatLimit()) return;
+    if (!currentOption.isLocal && !checkPremiumModel(selectedId)) return;
 
     let userContent: MessageContent;
     if (pendingImages.length > 0) {
@@ -1056,6 +1102,101 @@ export default function MaoAIChat() {
       </div>
 
       {showPicker && <div className="fixed inset-0 z-10" onClick={() => setShowPicker(false)} />}
+
+      {/* ── Upgrade Prompt Modal ── */}
+      {showUpgradePrompt && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111] border border-white/15 w-full max-w-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Crown size={15} className="text-[#C9A84C]" />
+                <h3 className="text-white font-medium text-sm">
+                  {showUpgradePrompt === "image_locked" ? "图像生成需要升级" :
+                   showUpgradePrompt === "image" ? "今日图像生成已达上限" :
+                   showUpgradePrompt === "premium_model" ? "高级模型需要升级" :
+                   "今日对话已达上限"}
+                </h3>
+              </div>
+              <button onClick={() => setShowUpgradePrompt(null)} className="text-white/30 hover:text-white/60 transition-colors text-lg leading-none">×</button>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-white/50 text-sm mb-4 leading-relaxed">
+                {showUpgradePrompt === "image_locked" && "图像生成（nano banana）仅对专业版及以上用户开放。升级后每日可生成 20 张图像，无限版不限次数。"}
+                {showUpgradePrompt === "image" && `今日图像生成次数已达上限（${mySubscription?.usage.imageGenerations}/${mySubscription?.limits.dailyImageGenerations}）。升级到无限版可不限次数生成。`}
+                {showUpgradePrompt === "premium_model" && "此模型（DeepSeek R1、GLM-4 Plus）仅对专业版及以上用户开放。升级后可使用全部高级模型。"}
+                {showUpgradePrompt === "chat" && `今日对话次数已达上限（${mySubscription?.usage.chatMessages}/${mySubscription?.limits.dailyChatMessages}）。升级专业版每日可发送 200 条消息，无限版不限次数。`}
+              </p>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="/maoai/pricing"
+                  className="w-full py-2.5 text-center text-sm bg-[#C9A84C]/15 border border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C]/25 transition-all flex items-center justify-center gap-2"
+                >
+                  <Zap size={13} />
+                  <span>查看升级方案</span>
+                </a>
+                <button
+                  onClick={() => setShowUpgradePrompt(null)}
+                  className="w-full py-2 text-center text-xs text-white/25 hover:text-white/40 transition-colors"
+                >
+                  明天再说
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Usage bar (bottom of sidebar) ── */}
+      {sidebarOpen && mySubscription && (
+        <div className="fixed bottom-0 left-0 w-[264px] border-t border-white/5 bg-[#0D0D0D] px-4 py-3 z-30">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Crown size={10} className={mySubscription.tier === "pro" ? "text-[#C9A84C]" : mySubscription.tier === "max" ? "text-purple-400" : "text-white/25"} />
+              <span className={`text-[10px] font-medium ${
+                mySubscription.tier === "pro" ? "text-[#C9A84C]/70" :
+                mySubscription.tier === "max" ? "text-purple-400/70" :
+                "text-white/30"
+              }`}>
+                {mySubscription.tier === "free" ? "免费版" : mySubscription.tier === "pro" ? "专业版" : "旗舰版"}
+              </span>
+            </div>
+            <a href="/maoai/pricing" className="text-[9px] text-white/20 hover:text-[#C9A84C]/60 transition-colors">
+              {mySubscription.tier === "free" ? "升级 →" : "管理"}
+            </a>
+          </div>
+          {mySubscription.limits.dailyChatMessages !== -1 && (
+            <div className="mb-1.5">
+              <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
+                <span>对话</span>
+                <span>{mySubscription.usage.chatMessages}/{mySubscription.limits.dailyChatMessages}</span>
+              </div>
+              <div className="h-0.5 bg-white/8 w-full">
+                <div
+                  className="h-0.5 bg-[#C9A84C]/50 transition-all"
+                  style={{ width: `${Math.min(100, (mySubscription.usage.chatMessages / mySubscription.limits.dailyChatMessages) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+          {mySubscription.limits.imageGeneration && mySubscription.limits.dailyImageGenerations !== -1 && (
+            <div>
+              <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
+                <span>图像生成</span>
+                <span>{mySubscription.usage.imageGenerations}/{mySubscription.limits.dailyImageGenerations}</span>
+              </div>
+              <div className="h-0.5 bg-white/8 w-full">
+                <div
+                  className="h-0.5 bg-purple-400/50 transition-all"
+                  style={{ width: `${Math.min(100, (mySubscription.usage.imageGenerations / mySubscription.limits.dailyImageGenerations) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+          {mySubscription.tier === "max" && (
+            <p className="text-[9px] text-purple-400/40 mt-1">无限制使用中</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
