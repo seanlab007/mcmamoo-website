@@ -2887,7 +2887,7 @@ function serveStatic(app) {
 import { Router } from "express";
 init_db();
 import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
+import pdfParse from "pdf-parse";
 
 // server/tools.ts
 import { exec } from "child_process";
@@ -4049,8 +4049,7 @@ aiStreamRouter.post("/upload", async (req, res) => {
     let fileType = "text";
     if (mimetype === "application/pdf" || /\.pdf$/i.test(originalname)) {
       try {
-        const parser = new PDFParse({ data: buffer });
-        const result = await parser.getText();
+        const result = await pdfParse(buffer);
         extractedText = result.text?.trim() || "";
         if (!extractedText) extractedText = "[PDF \u5185\u5BB9\u4E3A\u7A7A\u6216\u4E3A\u626B\u63CF\u4EF6\uFF0C\u65E0\u6CD5\u63D0\u53D6\u6587\u5B57]";
         fileType = "pdf";
