@@ -152,10 +152,10 @@ export default function Awards() {
                     src={item.img}
                     alt={isEn ? item.label_en : item.label_zh}
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
-                    style={{ filter: 'sepia(0.35) brightness(0.82) contrast(0.88) saturate(0.75)' }}
+                    style={{ filter: 'sepia(0.15) brightness(0.93) contrast(0.96) saturate(0.90)' }}
                   />
                   {/* Aged overlay: subtle grain + vignette */}
-                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%), url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.06\'/%3E%3C/svg%3E")', mixBlendMode: 'multiply' }} />
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.25) 100%)' }} />
                 </div>
                 <div className="p-4 border-t border-white/10">
                   <div className="text-white font-semibold text-sm mb-0.5">{isEn ? item.label_en : item.label_zh}</div>
@@ -210,10 +210,10 @@ export default function Awards() {
                       src={getAwardImg(award.type)}
                       alt={award.type}
                       className="h-20 object-contain opacity-75 group-hover:opacity-90 transition-opacity duration-300"
-                      style={{ filter: 'sepia(0.45) brightness(0.78) contrast(0.85) saturate(0.65)' }}
+                      style={{ filter: 'sepia(0.18) brightness(0.92) contrast(0.94) saturate(0.85)' }}
                     />
                     {/* Aged photo corner effect */}
-                    <div className="absolute inset-0 pointer-events-none rounded-sm" style={{ background: 'radial-gradient(ellipse at center, transparent 30%, rgba(10,8,4,0.6) 100%)' }} />
+                    <div className="absolute inset-0 pointer-events-none rounded-sm" style={{ background: 'radial-gradient(ellipse at center, transparent 50%, rgba(10,8,4,0.28) 100%)' }} />
                   </div>
                 </div>
 
