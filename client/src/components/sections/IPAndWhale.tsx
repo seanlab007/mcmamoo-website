@@ -20,7 +20,7 @@ export default function IPAndWhale() {
   const isEn = i18n.language !== 'zh';
 
   return (
-    <section className="py-24 bg-[#0A0A0A] relative overflow-hidden">
+    <section id="ip-licensing" className="py-24 bg-[#0A0A0A] relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-[#C9A84C]/3 rounded-full blur-3xl -translate-y-1/2" />
@@ -104,13 +104,20 @@ export default function IPAndWhale() {
             ))}
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a
+              href="#contact"
+              onClick={(e) => { e.preventDefault(); document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="inline-flex items-center gap-3 px-7 py-3 bg-[#C9A84C] text-[#0A0A0A] font-mono text-xs tracking-wider font-bold hover:bg-[#D4B866] transition-all duration-300"
+            >
+              <span style={{ width: 5, height: 5, background: "#0A0A0A", transform: "rotate(45deg)", display: "inline-block" }} />
+              {isEn ? "Book IP Licensing Consultation" : "预约 IP 授权合作洽谈"}
+            </a>
             <a
               href="/ip-licensing"
-              className="inline-flex items-center gap-3 px-6 py-2.5 border border-[#C9A84C]/40 text-[#C9A84C]/80 font-mono text-xs tracking-wider hover:border-[#C9A84C] hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 transition-all duration-300"
+              className="inline-flex items-center gap-3 px-6 py-3 border border-[#C9A84C]/40 text-[#C9A84C]/80 font-mono text-xs tracking-wider hover:border-[#C9A84C] hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 transition-all duration-300"
             >
-              <span style={{ width: 5, height: 5, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block" }} />
-              {isEn ? "Explore IP Licensing →" : "探索 IP 授权资源 →"}
+              {isEn ? "Browse IP Library →" : "浏览 IP 资源库 →"}
             </a>
           </div>
         </div>

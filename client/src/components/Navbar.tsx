@@ -18,10 +18,10 @@ export default function Navbar() {
 
   const navItems = [
     { label: t('nav.about'), href: "#about" },
+    { label: t('nav.awards'), href: "#awards" },
     { label: t('nav.kol'), href: "#kol" },
     { label: t('nav.services'), href: "#services" },
     { label: t('nav.cases'), href: "#cases" },
-    { label: t('nav.awards'), href: "#awards" },
     { label: t('nav.contact'), href: "#contact" },
   ];
 
