@@ -903,7 +903,7 @@ aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
     nodeCount = nodes.length;
     onlineCount = nodes.filter(n => n.isOnline).length;
   } catch { /* db not ready */ }
-  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: new Date().toISOString(), version: "v2.2-max-tokens-fix" });
+  res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: new Date().toISOString(), version: "v2.3-openclaw-skills" });
 });
 
 export default aiStreamRouter;
