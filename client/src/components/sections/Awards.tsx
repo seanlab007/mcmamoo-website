@@ -46,6 +46,33 @@ const INSTITUTIONS = [
   { name: "China 4A", cn: "中国4A广告协会", type: "行业协会", typeEn: "Industry Association" },
 ];
 
+const CREATIVE_AWARDS_ZH = [
+  { year: "2021", award: "伦敦广告节 小金人（London International Awards）", category_zh: "影视广告", category_en: "Film & TV" },
+  { year: "2016", award: "戛纳广告节 1金1铜（Cannes Lions）", category_zh: "创意策略", category_en: "Creative Strategy" },
+  { year: "2015", award: "戛纳广告节 1金1银（Cannes Lions）", category_zh: "品牌传播", category_en: "Brand Communication" },
+  { year: "2014", award: "D&AD In Book", category_zh: "设计", category_en: "Design" },
+  { year: "2014", award: "ONE SHOW 铜铅笔", category_zh: "创意", category_en: "Creative" },
+  { year: "2014", award: "亚太广告节 铜奖", category_zh: "亚太区", category_en: "APAC" },
+  { year: "2013", award: "戛纳广告节 铜狮（Cannes Lions）", category_zh: "品牌传播", category_en: "Brand Communication" },
+  { year: "2013", award: "中国4A金印奖 金奖", category_zh: "中国最佳", category_en: "China Best" },
+  { year: "2013", award: "龙玺广告节 1金2银", category_zh: "华文创意", category_en: "Chinese Creative" },
+];
+
+const CREATIVE_AWARDS_EN = [
+  { year: "2021", award: "London International Awards — Statue", category_zh: "影视广告", category_en: "Film & TV" },
+  { year: "2016", award: "Cannes Lions — 1 Gold, 1 Bronze", category_zh: "创意策略", category_en: "Creative Strategy" },
+  { year: "2015", award: "Cannes Lions — 1 Gold, 1 Silver", category_zh: "品牌传播", category_en: "Brand Communication" },
+  { year: "2014", award: "D&AD — In Book", category_zh: "设计", category_en: "Design" },
+  { year: "2014", award: "One Show — Bronze Pencil", category_zh: "创意", category_en: "Creative" },
+  { year: "2014", award: "ADFEST — Bronze", category_zh: "亚太区", category_en: "APAC" },
+  { year: "2013", award: "Cannes Lions — Bronze Lion", category_zh: "品牌传播", category_en: "Brand Communication" },
+  { year: "2013", award: "China 4A Gold Seal Award — Gold", category_zh: "中国最佳", category_en: "China Best" },
+  { year: "2013", award: "Longxi Advertising Festival — 1 Gold, 2 Silver", category_zh: "华文创意", category_en: "Chinese Creative" },
+];
+
+const PARTNER_INSTITUTIONS_ZH = ["混沌大学", "博商管理研究院", "中欧商学院", "青山资本", "赛马资本", "中国营销企业家俱乐部", "中国糖酒会", "暗物质资本"];
+const PARTNER_INSTITUTIONS_EN = ["Chaos University", "BSMI", "CEIBS", "Qingshan Capital", "Saima Capital", "China Marketing Entrepreneurs Club", "China Sugar & Wine Fair", "Dark Matter Capital"];
+
 const STATS_ZH = [
   { value: "17", label: "国际顶级奖项" },
   { value: "16", label: "年全球布局" },
@@ -72,7 +99,10 @@ export default function Awards() {
   const ref2 = useScrollReveal();
   const ref3 = useScrollReveal();
   const ref4 = useScrollReveal();
+  const ref5 = useScrollReveal();
   const stats = isEn ? STATS_EN : STATS_ZH;
+  const creativeAwards = isEn ? CREATIVE_AWARDS_EN : CREATIVE_AWARDS_ZH;
+  const partnerInstitutions = isEn ? PARTNER_INSTITUTIONS_EN : PARTNER_INSTITUTIONS_ZH;
   const [activeYear, setActiveYear] = useState<number | null>(null);
 
   return (
@@ -202,7 +232,7 @@ export default function Awards() {
         </div>
 
         {/* ── Partner Institutions ───────────────────────────────── */}
-        <div ref={ref4 as React.RefObject<HTMLDivElement>} className="reveal">
+        <div ref={ref4 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-6 font-['DM_Mono']">
             {isEn ? "Recognized By & Partners" : "合作机构与认可"}
           </div>
@@ -214,6 +244,41 @@ export default function Awards() {
                 <div className="text-white/20 text-xs mt-1 font-['DM_Mono']">{isEn ? inst.typeEn : inst.type}</div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* ── Creative Awards + Partner Institutions (from Team) ─── */}
+        <div ref={ref5 as React.RefObject<HTMLDivElement>} className="reveal">
+          <div className="border-t border-white/10 pt-16">
+            <div className="grid lg:grid-cols-2 gap-12">
+              {/* Creative Awards */}
+              <div>
+                <div className="text-white/40 text-xs tracking-widest uppercase mb-8 font-['DM_Mono']">
+                  {isEn ? "Creative Awards · Advertising Excellence" : "创意奖项 · 广告卓越"}
+                </div>
+                <div className="space-y-0">
+                  {creativeAwards.map((a) => (
+                    <div key={a.award} className="flex items-center gap-4 py-3.5 border-b border-white/10 group hover:border-[#C9A84C]/20 transition-colors">
+                      <span className="font-['DM_Mono'] text-[#C9A84C] text-xs w-10 flex-shrink-0">{a.year}</span>
+                      <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors flex-1">{a.award}</span>
+                      <span className="text-white/20 text-xs font-['DM_Mono'] flex-shrink-0">{isEn ? a.category_en : a.category_zh}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Partner Institutions */}
+              <div>
+                <div className="text-white/40 text-xs tracking-widest uppercase mb-8 font-['DM_Mono']">
+                  {isEn ? "Partner Institutions" : "合作机构"}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {partnerInstitutions.map((p) => (
+                    <div key={p} className="p-4 border border-white/10 text-white/50 text-sm hover:border-[#C9A84C]/40 hover:text-white/80 transition-all duration-300">{p}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

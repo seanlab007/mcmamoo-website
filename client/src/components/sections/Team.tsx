@@ -19,55 +19,13 @@ const team_en = [
   { name: "Tulagu (图拉古)", role: "Director · Film Director", en: "Director · Film Director", bio: "Chinese mainland film director, graduated from Beijing Film Academy and USC School of Cinematic Arts, Forbes FGA500 Elite. Won Best Director at the Paris Film Festival in 2015 for a mystery film. Launched the Super Film Industrial System in 2021.", tags: ["Paris Film Festival Best Director", "Beijing Film Academy", "USC School of Cinematic Arts"] },
 ];
 
-const awards_zh = [
-  { year: "2021", award: "伦敦广告节 小金人（London International Awards）" },
-  { year: "2016", award: "戛纳广告节 1金1铜（Cannes Lions）" },
-  { year: "2015", award: "戛纳广告节 1金1银（Cannes Lions）" },
-  { year: "2014", award: "D&AD In Book" },
-  { year: "2014", award: "ONE SHOW 铜铅笔" },
-  { year: "2014", award: "亚太广告节 铜奖" },
-  { year: "2013", award: "戛纳广告节 铜狮（Cannes Lions）" },
-  { year: "2013", award: "中国4A金印奖 金奖" },
-  { year: "2013", award: "龙玺广告节 1金2银" },
-];
-
-const awards_en = [
-  { year: "2021", award: "London International Awards — Statue" },
-  { year: "2016", award: "Cannes Lions — 1 Gold, 1 Bronze" },
-  { year: "2015", award: "Cannes Lions — 1 Gold, 1 Silver" },
-  { year: "2014", award: "D&AD — In Book" },
-  { year: "2014", award: "One Show — Bronze Pencil" },
-  { year: "2014", award: "ADFEST — Bronze" },
-  { year: "2013", award: "Cannes Lions — Bronze Lion" },
-  { year: "2013", award: "China 4A Gold Seal Award — Gold" },
-  { year: "2013", award: "Longxi Advertising Festival — 1 Gold, 2 Silver" },
-];
-
-const partners_zh = ["混沌大学", "博商管理研究院", "中欧商学院", "青山资本", "赛马资本", "中国营销企业家俱乐部", "中国糖酒会", "暗物质资本（Dark Matter Capital）"];
-const partners_en = ["Chaos University", "BSMI", "CEIBS", "Qingshan Capital", "Saima Capital", "China Marketing Entrepreneurs Club", "China Sugar & Wine Fair", "Dark Matter Capital"];
-
-const serviceModels_zh = [
-  { type: "高增长潜力品牌", model: "低服务费 + 大股权置换 + 大额风投" },
-  { type: "稳定增长品牌", model: "中等服务费 + 中股权置换 + 中额风投" },
-  { type: "标准项目", model: "标准服务费" },
-];
-const serviceModels_en = [
-  { type: "High-Growth Potential Brands", model: "Low service fee + Large equity swap + Large VC investment" },
-  { type: "Steady-Growth Brands", model: "Mid service fee + Mid equity swap + Mid VC investment" },
-  { type: "Standard Projects", model: "Standard service fee" },
-];
-
 export default function Team() {
   const { i18n } = useTranslation();
   const isEn = i18n.language !== 'zh';
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
-  const ref3 = useScrollReveal();
-
   const team = isEn ? team_en : team_zh;
-  const awards = isEn ? awards_en : awards_zh;
-  const partners = isEn ? partners_en : partners_zh;
-  const serviceModels = isEn ? serviceModels_en : serviceModels_zh;
+
 
   return (
     <section id="team" className="bg-[#0A0A0A] py-24 lg:py-32">
@@ -103,50 +61,6 @@ export default function Team() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Awards + Partners */}
-        <div ref={ref3 as React.RefObject<HTMLDivElement>} className="reveal grid lg:grid-cols-2 gap-12">
-          {/* Awards */}
-          <div>
-            <div className="section-label mb-6">{isEn ? "Awards & Honors" : "荣誉奖项"}</div>
-            <div className="space-y-0">
-              {awards.map((a) => (
-                <div key={a.award} className="flex items-center gap-4 py-3.5 border-b border-white/10 group hover:border-[#C9A84C]/20 transition-colors">
-                  <span className="font-['DM_Mono'] text-[#C9A84C] text-xs w-10 flex-shrink-0">{a.year}</span>
-                  <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors">{a.award}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Partners */}
-          <div>
-            <div className="section-label mb-6">{isEn ? "Partner Institutions" : "合作机构"}</div>
-            <div className="grid grid-cols-2 gap-3">
-              {partners.map((p) => (
-                <div key={p} className="p-4 border border-white/10 text-white/50 text-sm hover:border-[#C9A84C]/40 hover:text-white/80 transition-all duration-300">{p}</div>
-              ))}
-            </div>
-
-            {/* Service models */}
-            <div className="mt-8 p-6 border border-[#C9A84C]/30 bg-[#C9A84C]/5">
-              <div className="text-white/40 text-xs tracking-widest uppercase mb-4 font-['DM_Mono']">
-                {isEn ? "Service Models" : "服务模式"}
-              </div>
-              <div className="space-y-3">
-                {serviceModels.map((m) => (
-                  <div key={m.type} className="flex items-start gap-3">
-                    <span className="text-[#C9A84C] mt-1 text-xs">◆</span>
-                    <div>
-                      <span className="text-white text-sm font-semibold">{m.type}</span>
-                      <span className="text-white/40 text-sm"> — {m.model}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
