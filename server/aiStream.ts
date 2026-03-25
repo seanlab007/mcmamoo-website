@@ -4,6 +4,7 @@ import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingSt
 import { sdk } from "./_core/sdk";
 import mammoth from "mammoth";
 import { PDFParse } from "pdf-parse";
+import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 
 const aiStreamRouter = Router();
 
@@ -214,6 +215,15 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   if (!cfg) { res.write(`data: ${JSON.stringify({ error: `Unknown model: ${model}` })}\n\n`); res.end(); return; }
   if (!cfg.apiKey) { res.write(`data: ${JSON.stringify({ error: `API key not configured for model: ${model}` })}\n\n`); res.end(); return; }
 
+  // ── Determine tool access ─────────────────────────────────────────────────
+  // Check if user is admin for extended tool access
+  const { enableTools = true } = req.body;
+  const adminUser = await getAdminUser(req);
+  const toolDefs = enableTools ? (adminUser ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS) : [];
+  // Vision models don't support function calling
+  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 &&
+    (model === "deepseek-chat" || model === "glm-4-plus" || model === "glm-4-flash");
+
   try {
     // Debug: log vision request structure
     if (hasImage) {
@@ -226,38 +236,149 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
       }));
       console.log('[Vision Debug] model:', cfg.model, 'baseUrl:', cfg.baseUrl, 'apiKey_len:', cfg.apiKey.length, 'msgs:', JSON.stringify(debugMsgs));
     }
-    const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
-      body: JSON.stringify({ model: cfg.model, messages: allMessages, stream: true, max_tokens: cfg.maxTokens || 4096 }),
-    });
-    if (!response.ok) {
-      const errText = await response.text();
-      res.write(`data: ${JSON.stringify({ error: `API Error ${response.status}: ${errText}` })}\n\n`);
-      res.end(); return;
-    }
-    const reader = response.body?.getReader();
-    if (!reader) { res.write(`data: ${JSON.stringify({ error: "No response body" })}\n\n`); res.end(); return; }
-    const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed === "data: [DONE]") { if (trimmed === "data: [DONE]") res.write("data: [DONE]\n\n"); continue; }
-        if (trimmed.startsWith("data: ")) {
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            const delta = json.choices?.[0]?.delta?.content;
-            if (delta !== undefined && delta !== null) res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
-          } catch { /* skip */ }
+
+    // ── Function Calling Loop ─────────────────────────────────────────────────
+    // Supports up to 8 rounds of tool calls before forcing final answer
+    const conversationMessages = [...allMessages];
+    const MAX_TOOL_ROUNDS = 8;
+
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      // Build request body
+      const requestBody: any = {
+        model: cfg.model,
+        messages: conversationMessages,
+        max_tokens: cfg.maxTokens || 4096,
+        stream: true
+      };
+
+      // Add tools on first rounds (not on final forced answer)
+      if (supportsTools && round < MAX_TOOL_ROUNDS - 1) {
+        requestBody.tools = toolDefs;
+        requestBody.tool_choice = "auto";
+      }
+
+      const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        res.write(`data: ${JSON.stringify({ error: `API Error ${response.status}: ${errText}` })}\n\n`);
+        res.end(); return;
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) { res.write(`data: ${JSON.stringify({ error: "No response body" })}\n\n`); res.end(); return; }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantContent = "";
+      let toolCallsAccum: Record<string, { id: string; name: string; arguments: string }> = {};
+      let finishReason = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === "data: [DONE]") continue;
+          if (trimmed.startsWith("data: ")) {
+            try {
+              const json = JSON.parse(trimmed.slice(6));
+              const choice = json.choices?.[0];
+              if (!choice) continue;
+
+              // Capture finish reason
+              if (choice.finish_reason) finishReason = choice.finish_reason;
+
+              const delta = choice.delta;
+              if (!delta) continue;
+
+              // Stream text content to client
+              if (delta.content !== undefined && delta.content !== null) {
+                assistantContent += delta.content;
+                res.write(`data: ${JSON.stringify({ content: delta.content })}\n\n`);
+              }
+
+              // Accumulate tool calls (streamed in chunks)
+              if (delta.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  const idx = String(tc.index ?? 0);
+                  if (!toolCallsAccum[idx]) {
+                    toolCallsAccum[idx] = { id: tc.id || "", name: tc.function?.name || "", arguments: "" };
+                  }
+                  if (tc.id) toolCallsAccum[idx].id = tc.id;
+                  if (tc.function?.name) toolCallsAccum[idx].name = tc.function.name;
+                  if (tc.function?.arguments) toolCallsAccum[idx].arguments += tc.function.arguments;
+                }
+              }
+            } catch { /* skip */ }
+          }
         }
       }
+
+      const toolCalls = Object.values(toolCallsAccum);
+
+      // ── No tool calls → final answer, done ───────────────────────────────
+      if (toolCalls.length === 0 || finishReason === "stop") {
+        res.write("data: [DONE]\n\n");
+        res.end();
+        return;
+      }
+
+      // ── Tool calls detected → execute each tool ───────────────────────────
+      // Add assistant message with tool_calls to conversation
+      conversationMessages.push({
+        role: "assistant",
+        content: assistantContent || null,
+        tool_calls: toolCalls.map(tc => ({
+          id: tc.id,
+          type: "function",
+          function: { name: tc.name, arguments: tc.arguments }
+        }))
+      } as any);
+
+      // Execute each tool and collect results
+      for (const tc of toolCalls) {
+        let args: Record<string, any> = {};
+        try { args = JSON.parse(tc.arguments); } catch { args = {}; }
+
+        // Notify frontend: tool is being called
+        res.write(`data: ${JSON.stringify({
+          toolCall: { id: tc.id, name: tc.name, args }
+        })}\n\n`);
+
+        const result = await executeTool(tc.name, args, !!adminUser);
+
+        // Notify frontend: tool result received
+        res.write(`data: ${JSON.stringify({
+          toolResult: {
+            id: tc.id,
+            name: tc.name,
+            success: result.success,
+            output: result.output.slice(0, 500) // preview for frontend
+          }
+        })}\n\n`);
+
+        // Add tool result to conversation
+        conversationMessages.push({
+          role: "tool",
+          tool_call_id: tc.id,
+          content: result.success
+            ? result.output.slice(0, 8000) // limit context size
+            : `工具执行失败: ${result.error}`
+        } as any);
+      }
+
+      // Continue loop → AI will process tool results and either answer or call more tools
     }
+
+    // Reached max rounds without final answer
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err: any) {
