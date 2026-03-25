@@ -111,7 +111,7 @@ export default function Awards() {
 
         {/* ── Header ─────────────────────────────────────────────── */}
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
-          <div className="section-label mb-4">06 — Awards & Recognition</div>
+          <div className="section-label mb-4">07 — Awards & Recognition</div>
           <div className="flex items-end gap-6 mb-6">
             <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold leading-tight">
               {isEn ? "Global Awards & Honors" : "全球荣誉 · 历年奖项"}
@@ -147,12 +147,15 @@ export default function Awards() {
               { img: PLAQUE_IMG, label_zh: "荣誉奖牌", label_en: "Prestige Plaque", sub_zh: "行业卓越认可", sub_en: "Industry Excellence" },
             ].map((item, i) => (
               <div key={i} className="group relative bg-[#0D0D0D] border border-white/10 hover:border-[#C9A84C]/40 transition-all duration-500 overflow-hidden">
-                <div className="aspect-square overflow-hidden bg-black flex items-center justify-center p-4">
+                <div className="aspect-square overflow-hidden bg-black flex items-center justify-center p-4 relative">
                   <img
                     src={item.img}
                     alt={isEn ? item.label_en : item.label_zh}
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
+                    style={{ filter: 'sepia(0.35) brightness(0.82) contrast(0.88) saturate(0.75)' }}
                   />
+                  {/* Aged overlay: subtle grain + vignette */}
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%), url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.06\'/%3E%3C/svg%3E")', mixBlendMode: 'multiply' }} />
                 </div>
                 <div className="p-4 border-t border-white/10">
                   <div className="text-white font-semibold text-sm mb-0.5">{isEn ? item.label_en : item.label_zh}</div>
@@ -201,12 +204,17 @@ export default function Awards() {
                 </div>
 
                 {/* Award image thumbnail */}
-                <div className="pt-8 px-4 pb-0 flex justify-center">
-                  <img
-                    src={getAwardImg(award.type)}
-                    alt={award.type}
-                    className="h-20 object-contain opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-                  />
+                <div className="pt-8 px-4 pb-0 flex justify-center relative">
+                  <div className="relative">
+                    <img
+                      src={getAwardImg(award.type)}
+                      alt={award.type}
+                      className="h-20 object-contain opacity-75 group-hover:opacity-90 transition-opacity duration-300"
+                      style={{ filter: 'sepia(0.45) brightness(0.78) contrast(0.85) saturate(0.65)' }}
+                    />
+                    {/* Aged photo corner effect */}
+                    <div className="absolute inset-0 pointer-events-none rounded-sm" style={{ background: 'radial-gradient(ellipse at center, transparent 30%, rgba(10,8,4,0.6) 100%)' }} />
+                  </div>
                 </div>
 
                 <div className="p-4 pt-3">

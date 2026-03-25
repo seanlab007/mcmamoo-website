@@ -86,7 +86,7 @@ export default function Services() {
       <div className="container">
         {/* Header */}
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
-          <div className="section-label mb-4">03 — Services</div>
+          <div className="section-label mb-4">04 — Services</div>
           <div className="flex items-end gap-6">
             <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold">
               {isEn ? "Service System" : "服务体系"}

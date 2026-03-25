@@ -20,7 +20,7 @@ export default function Navbar() {
     { label: t('nav.about'), href: "#about" },
     { label: t('nav.kol'), href: "#kol" },
     { label: t('nav.services'), href: "#services" },
-    { label: t('nav.cases'), href: "#global-cases" },
+    { label: t('nav.cases'), href: "#cases" },
     { label: t('nav.awards'), href: "#awards" },
     { label: t('nav.contact'), href: "#contact" },
   ];

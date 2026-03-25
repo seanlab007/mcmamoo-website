@@ -78,7 +78,7 @@ export default function GlobalCases() {
       <div className="container">
         {/* Header */}
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-12">
-          <div className="section-label mb-4">05 — Global Cases</div>
+          <div className="section-label mb-4">06 — Global Cases</div>
           <div className="flex items-end gap-6 mb-6">
             <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold leading-tight">
               {isEn ? "Global Brand Cases" : "全球品牌案例"}
