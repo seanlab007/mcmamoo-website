@@ -8,8 +8,8 @@ const CDN = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simd
 
 const featuredIPs = [
   { name: "Marilyn Monroe", nameCn: "玛丽莲·梦露", image: `${CDN}/marilyn-monroe_bc773e51.jpg`, tag: "ABG" },
-  { name: "Bruce Lee", nameCn: "李小龙", image: `${CDN}/bruce-lee_76412.jpg`, tag: "Bruce Lee Ent." },
-  { name: "Muhammad Ali", nameCn: "穆罕默德·阿里", image: `${CDN}/muhammad-ali_61880.jpg`, tag: "ABG" },
+  { name: "Bruce Lee", nameCn: "李小龙", image: `${CDN}/bruce_lee_portrait_3c7cc2b5.jpg`, tag: "Bruce Lee Ent." },
+  { name: "Muhammad Ali", nameCn: "穆罕默德·阿里", image: `${CDN}/muhammad_ali_portrait_54f6cb91.jpg`, tag: "ABG" },
   { name: "Audrey Hepburn", nameCn: "奥黛丽·赫本", image: `${CDN}/audrey-hepburn_331f00a4.jpg`, tag: "Hepburn Estate" },
   { name: "Van Gogh", nameCn: "梵高", image: `${CDN}/van-gogh_99c13193.jpg`, tag: "独家授权" },
   { name: "Che Guevara", nameCn: "切·格瓦拉", image: `${CDN}/che-guevara_9cf42a64.jpg`, tag: "国家级授权" },

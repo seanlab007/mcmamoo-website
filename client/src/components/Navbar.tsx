@@ -349,6 +349,15 @@ export default function Navbar() {
             Whale Pictures
           </a>
 
+          {/* IP 授权 Mobile */}
+          <a
+            href="/ip-licensing"
+            className="text-[#C9A84C]/80 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ width: 8, height: 8, background: '#C9A84C', transform: 'rotate(45deg)', display: 'inline-block', boxShadow: '0 0 8px #C9A84C' }} />
+            {isEn ? 'IP Licensing' : 'IP 授权'}
+          </a>
           {/* 咨询服务 Mobile */}
           <a
             href="/pricing"
