@@ -40,6 +40,7 @@ type CloudModel = {
   badge: string;
   description: string;
   supportsVision?: boolean;
+  available?: boolean;
   isLocal: false;
 };
 
@@ -74,15 +75,15 @@ type PendingFile = {
   charCount?: number;
 };
 
-// ─── Cloud models ─────────────────────────────────────────────────────────────
-const CLOUD_MODELS: CloudModel[] = [
-  { id: "deepseek-chat",           name: "DeepSeek V3",   badge: "🔵", description: "通用对话·写作·分析",   isLocal: false },
-  { id: "deepseek-reasoner",       name: "DeepSeek R1",   badge: "🧠", description: "深度推理·复杂逻辑",   isLocal: false },
-  { id: "glm-4-flash",             name: "GLM-4 Flash",   badge: "⚡", description: "智谱极速·免费额度多", isLocal: false },
-  { id: "glm-4-plus",              name: "GLM-4 Plus",    badge: "🟣", description: "智谱旗舰·能力强",     isLocal: false },
-  { id: "glm-4v-flash",            name: "GLM-4V 视觉",   badge: "👁️", description: "图片理解·截图分析",   supportsVision: true, isLocal: false },
-  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", badge: "🦙", description: "Groq 超快·英文优秀",  isLocal: false },
-];
+// ─── Model descriptions (local mapping for richer UI) ─────────────────────────
+const MODEL_DESCRIPTIONS: Record<string, { description: string; supportsVision?: boolean }> = {
+  "deepseek-chat":           { description: "通用对话·写作·分析" },
+  "deepseek-reasoner":       { description: "深度推理·复杂逻辑" },
+  "glm-4-flash":             { description: "智谱极速·免费额度多" },
+  "glm-4-plus":              { description: "智谱旗舰·能力强" },
+  "glm-4v-flash":            { description: "图片理解·截图分析", supportsVision: true },
+  "llama-3.3-70b-versatile": { description: "Groq 超快·英文优秀" },
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -159,6 +160,18 @@ export default function MaoAIChat() {
 
   // ── tRPC ────────────────────────────────────────────────────────────────────
   const utils = trpc.useUtils();
+  // Dynamic model list from backend
+  const { data: backendModels = [] } = trpc.ai.models.useQuery(undefined, { staleTime: 60_000 });
+  const CLOUD_MODELS: CloudModel[] = backendModels.map(m => ({
+    id: m.id,
+    name: m.name,
+    badge: m.badge,
+    description: MODEL_DESCRIPTIONS[m.id]?.description ?? "",
+    supportsVision: MODEL_DESCRIPTIONS[m.id]?.supportsVision,
+    available: m.available,
+    isLocal: false as const,
+  }));
+
   const { data: conversations = [], isLoading: loadingConvs } = trpc.conversations.list.useQuery(
     undefined,
     { enabled: !!user }
@@ -253,6 +266,16 @@ export default function MaoAIChat() {
   useEffect(() => {
     if (isAdmin) fetchLocalNodes();
   }, [isAdmin, fetchLocalNodes]);
+
+  // Auto-select first available model when backend models load
+  useEffect(() => {
+    if (backendModels.length === 0) return;
+    const current = backendModels.find(m => m.id === selectedId);
+    if (!current || current.available === false) {
+      const firstAvailable = backendModels.find(m => m.available);
+      if (firstAvailable) setSelectedId(firstAvailable.id);
+    }
+  }, [backendModels]);
 
   const addImageFromFile = async (file: File | Blob) => {
     if (!file.type.startsWith("image/")) return;
@@ -475,7 +498,8 @@ export default function MaoAIChat() {
   };
 
   const allOptions: ModelOption[] = [...CLOUD_MODELS, ...(isAdmin ? localNodes : [])];
-  const currentOption = allOptions.find(m => m.id === selectedId) || CLOUD_MODELS[0];
+  const FALLBACK_MODEL: CloudModel = { id: "deepseek-chat", name: "DeepSeek V3", badge: "🔵", description: "通用对话·写作·分析", isLocal: false };
+  const currentOption = allOptions.find(m => m.id === selectedId) || CLOUD_MODELS[0] || FALLBACK_MODEL;
 
   // ── Limit check helpers ───────────────────────────────────────────────────────────
   const checkChatLimit = (): boolean => {
@@ -881,15 +905,17 @@ export default function MaoAIChat() {
                         </div>
                       </div>
                       {CLOUD_MODELS.map(m => (
-                        <button key={m.id} onClick={() => { setSelectedId(m.id); setShowPicker(false); }}
-                          className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${m.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}>
+                        <button key={m.id} onClick={() => { if (m.available !== false) { setSelectedId(m.id); setShowPicker(false); } }}
+                          disabled={m.available === false}
+                          className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-colors ${m.available === false ? "opacity-40 cursor-not-allowed" : "hover:bg-[#C9A84C]/5"} ${m.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}>
                           <span className="text-sm mt-0.5 shrink-0">{m.badge}</span>
                           <div className="min-w-0">
                             <div className="text-white/90 text-xs font-medium flex items-center gap-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
                               {m.name}
                               {m.supportsVision && <span className="text-[9px] px-1 py-0.5 bg-purple-500/20 text-purple-400/80 border border-purple-500/20">视觉</span>}
+                              {m.available === false && <span className="text-[9px] px-1 py-0.5 bg-red-500/20 text-red-400/80 border border-red-500/20">未配置</span>}
                             </div>
-                            <div className="text-white/35 text-[11px] mt-0.5 truncate">{m.description}</div>
+                            <div className="text-white/35 text-[11px] mt-0.5 truncate">{m.description || "—"}</div>
                           </div>
                           {m.id === selectedId && <div className="ml-auto shrink-0 w-1.5 h-1.5 rounded-full bg-[#C9A84C] mt-1.5" />}
                         </button>
