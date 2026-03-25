@@ -1151,17 +1151,18 @@ export default function MaoAIChat() {
         <div className="fixed bottom-0 left-0 w-[264px] border-t border-white/5 bg-[#0D0D0D] px-4 py-3 z-30">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
-              <Crown size={10} className={mySubscription.tier === "pro" ? "text-[#C9A84C]" : mySubscription.tier === "max" ? "text-purple-400" : "text-white/25"} />
+              <Crown size={10} className={mySubscription.tier === "starter" ? "text-sky-400" : mySubscription.tier === "pro" ? "text-[#C9A84C]" : mySubscription.tier === "flagship" ? "text-purple-400" : "text-white/25"} />
               <span className={`text-[10px] font-medium ${
+                mySubscription.tier === "starter" ? "text-sky-400/70" :
                 mySubscription.tier === "pro" ? "text-[#C9A84C]/70" :
-                mySubscription.tier === "max" ? "text-purple-400/70" :
+                mySubscription.tier === "flagship" ? "text-purple-400/70" :
                 "text-white/30"
               }`}>
-                {mySubscription.tier === "free" ? "免费版" : mySubscription.tier === "pro" ? "专业版" : "旗舰版"}
+                {(mySubscription.tier as string) === "free" ? "免费版" : mySubscription.tier === "starter" ? "入门版" : mySubscription.tier === "pro" ? "专业版" : "旗舰版"}
               </span>
             </div>
             <a href="/maoai/pricing" className="text-[9px] text-white/20 hover:text-[#C9A84C]/60 transition-colors">
-              {mySubscription.tier === "free" ? "升级 →" : "管理"}
+              {(mySubscription.tier as string) === "free" ? "升级 →" : "管理"}
             </a>
           </div>
           {mySubscription.limits.dailyChatMessages !== -1 && (
@@ -1192,7 +1193,7 @@ export default function MaoAIChat() {
               </div>
             </div>
           )}
-          {mySubscription.tier === "max" && (
+          {mySubscription.tier === "flagship" && (
             <p className="text-[9px] text-purple-400/40 mt-1">无限制使用中</p>
           )}
         </div>

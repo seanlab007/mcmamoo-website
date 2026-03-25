@@ -454,8 +454,32 @@ Required structure:
     mySubscription: protectedProcedure.query(async ({ ctx }) => {
       const sub = await getUserSubscription(ctx.user.id);
       const usage = await getTodayUsage(ctx.user.id);
-      const tier = (sub?.tier as PlanTier) ?? "free";
-      const limits = PLAN_LIMITS[tier];
+      const rawTier = (sub?.tier as string) ?? "free";
+      // Map legacy tier names to new three-tier system
+      const tierMap: Record<string, PlanTier> = {
+        free: "free" as any,
+        starter: "starter",
+        pro: "pro",
+        max: "flagship",
+        flagship: "flagship",
+      };
+      const tier = (tierMap[rawTier] ?? "starter") as PlanTier;
+      // Free tier: very limited, no image generation
+      const FREE_LIMITS = {
+        dailyChatMessages: 20,
+        dailyImageGenerations: 0,
+        maxConversations: 10,
+        premiumModels: false,
+        imageGeneration: false,
+        priorityQueue: false,
+        fileUpload: false,
+        brandStrategy: false,
+        accountManager: false,
+        customPersona: false,
+        apiAccess: false,
+        teamSeats: 1,
+      };
+      const limits = rawTier === "free" ? FREE_LIMITS : PLAN_LIMITS[tier];
       return {
         tier,
         status: (sub?.status as string) ?? "active",
@@ -476,30 +500,30 @@ Required structure:
     // Create a payment order (stub — actual payment URL filled by provider webhook)
     createOrder: protectedProcedure
       .input(z.object({
-        tier: z.enum(["pro", "max"]),
+        tier: z.enum(["starter", "pro", "flagship"]),
         provider: z.enum(["alipay", "lianpay", "paypal", "stripe", "wechatpay", "manual"]),
         currency: z.enum(["CNY", "USD"]),
-        billingCycle: z.enum(["monthly", "yearly"]).default("monthly"),
+        billingCycle: z.enum(["monthly", "biannual", "annual", "lifetime"]).default("monthly"),
       }))
       .mutation(async ({ ctx, input }) => {
-        const price = PLAN_PRICES[input.tier][input.currency as Currency];
-        const amount = input.billingCycle === "yearly" ? price.yearly : price.monthly;
+        const tierPrices = PLAN_PRICES[input.tier as PlanTier];
+        const cyclePrices = tierPrices[input.currency as Currency];
+        const pricing = cyclePrices[input.billingCycle as import("@shared/plans").BillingCycle];
+        const amount = pricing.total;
         const order = await createPaymentOrder({
           userId: ctx.user.id,
           tier: input.tier,
           provider: input.provider,
           currency: input.currency,
           amount: amount.toFixed(2),
-          metadata: JSON.stringify({ billingCycle: input.billingCycle }),
+          metadata: JSON.stringify({ billingCycle: input.billingCycle, perMonth: pricing.perMonth }),
         });
-        // TODO: integrate actual payment gateway SDK here
-        // For now, return a stub pending order
         return {
           orderId: (order as any).id,
           status: "pending",
           amount,
           currency: input.currency,
-          paymentUrl: null, // Will be populated by payment provider integration
+          paymentUrl: null,
           message: "支付接口接入中，请联系客服完成支付",
         };
       }),
@@ -508,7 +532,7 @@ Required structure:
     adminActivate: adminProcedure
       .input(z.object({
         userId: z.number(),
-        tier: z.enum(["free", "pro", "max"]),
+        tier: z.enum(["free", "starter", "pro", "flagship"]),
         durationDays: z.number().default(30),
       }))
       .mutation(async ({ input }) => {
