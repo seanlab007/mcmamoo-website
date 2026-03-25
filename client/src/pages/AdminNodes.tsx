@@ -11,8 +11,89 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCw, Wifi, WifiOff, Loader2, Pencil, ExternalLink } from "lucide-react";
+import { Plus, Trash2, RefreshCw, Wifi, WifiOff, Loader2, Pencil, ExternalLink, ChevronDown, ChevronRight, Zap } from "lucide-react";
 import { Link } from "wouter";
+
+// ─── NodeSkillsPanel: 展示指定节点的技能列表 ──────────────────────────────────
+const CATEGORY_LABELS: Record<string, string> = {
+  search: "搜索", file: "文件", browser: "浏览器", code: "代码",
+  system: "系统", ai: "AI", general: "通用",
+};
+function NodeSkillsPanel({ nodeId, nodeType }: { nodeId: number; nodeType: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [toggling, setToggling] = useState<Record<string, boolean>>({});
+  const { data, isLoading, refetch } = trpc.nodes.getSkills.useQuery(
+    { nodeId },
+    { enabled: expanded }
+  );
+  const toggleSkill = trpc.nodes.toggleSkill.useMutation({
+    onSuccess: () => { refetch(); },
+    onError: (e) => { toast.error("操作失败: " + e.message); },
+  });
+  const skills = data?.skills ?? [];
+  const grouped = skills.reduce((acc: Record<string, typeof skills>, s) => {
+    const cat = (s.category as string) || "general";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(s);
+    return acc;
+  }, {});
+  if (nodeType !== "openclaw" && nodeType !== "openmanus" && nodeType !== "workbuddy") return null;
+  return (
+    <div className="mt-2 border-t border-border/50 pt-2">
+      <button
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        onClick={() => setExpanded(e => !e)}
+      >
+        {expanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+        <Zap className="size-3 text-yellow-400" />
+        <span>技能列表</span>
+        {skills.length > 0 && <span className="text-muted-foreground/60">({skills.length})</span>}
+      </button>
+      {expanded && (
+        <div className="mt-2 space-y-2">
+          {isLoading ? (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground py-1">
+              <Loader2 className="size-3 animate-spin" /><span>加载技能中...</span>
+            </div>
+          ) : skills.length === 0 ? (
+            <p className="text-xs text-muted-foreground/60 py-1">暂无技能数据。OpenClaw Switcher 启动后会自动同步。</p>
+          ) : (
+            Object.entries(grouped).map(([cat, catSkills]) => (
+              <div key={cat}>
+                <p className="text-xs font-medium text-muted-foreground/80 mb-1">
+                  {CATEGORY_LABELS[cat] || cat}
+                </p>
+                <div className="grid grid-cols-1 gap-1">
+                  {(catSkills as any[]).map((skill: any) => (
+                    <div key={skill.skillId} className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-muted/30">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-medium">{skill.name}</span>
+                        {skill.description && (
+                          <span className="text-xs text-muted-foreground ml-1.5 truncate">{skill.description}</span>
+                        )}
+                      </div>
+                      <Switch
+                        checked={skill.isEnabled !== false}
+                        disabled={toggling[skill.skillId]}
+                        onCheckedChange={async (v) => {
+                          setToggling(t => ({ ...t, [skill.skillId]: true }));
+                          await toggleSkill.mutateAsync({ nodeId, skillId: skill.skillId, isEnabled: v });
+                          setToggling(t => ({ ...t, [skill.skillId]: false }));
+                        }}
+                        className="scale-75"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 const NODE_TYPES = [
   { value: "claude_api", label: "Claude API (付费)", color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
@@ -132,6 +213,7 @@ export default function AdminNodes() {
                           {node.lastPingAt && <span>最近检测: {new Date(node.lastPingAt).toLocaleString()}</span>}
                           {node.lastPingMs && <span>延迟: {node.lastPingMs}ms</span>}
                         </div>
+                        <NodeSkillsPanel nodeId={node.id} nodeType={node.type} />
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { MODEL_CONFIGS } from "./routers";
-import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog } from "./db";
+import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog, getNodeSkills, getAllNodeSkills, upsertNodeSkill, deleteNodeSkill, deleteAllNodeSkills, setNodeSkillEnabled } from "./db";
 import { sdk } from "./_core/sdk";
 import mammoth from "mammoth";
 import { PDFParse } from "pdf-parse";
@@ -588,7 +588,7 @@ aiStreamRouter.post("/node/register", async (req: Request, res: Response) => {
 
 // ─── Node Heartbeat ───────────────────────────────────────────────────────────
 aiStreamRouter.post("/node/heartbeat", async (req: Request, res: Response) => {
-  const { token, nodeId } = req.body;
+  const { token, nodeId, skillsChecksum, skillCount } = req.body;
   const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
   if (!expectedToken || token !== expectedToken) { res.status(401).json({ error: "Invalid token" }); return; }
   if (!nodeId || typeof nodeId !== "number") { res.status(400).json({ error: "Missing required field: nodeId" }); return; }
@@ -596,7 +596,15 @@ aiStreamRouter.post("/node/heartbeat", async (req: Request, res: Response) => {
     const node = await getAiNodeById(nodeId);
     if (!node) { res.status(404).json({ error: `Node ${nodeId} not found` }); return; }
     await updateNodePingStatus(nodeId, true, undefined);
-    res.json({ success: true, timestamp: new Date().toISOString() });
+    // Update skillsChecksum if provided
+    if (skillsChecksum !== undefined) {
+      const { updateAiNode } = await import("./db");
+      await updateAiNode(nodeId, { skillsChecksum } as any);
+    }
+    // Check if server's skill checksum differs from client's
+    const serverChecksum = (node as any).skillsChecksum;
+    const needsSkillSync = skillsChecksum !== undefined && serverChecksum !== skillsChecksum;
+    res.json({ success: true, timestamp: new Date().toISOString(), needsSkillSync });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -610,6 +618,88 @@ aiStreamRouter.post("/node/deregister", async (req: Request, res: Response) => {
   try {
     await updateNodePingStatus(nodeId, false, undefined);
     console.log(`[Node Deregister] Node ${nodeId} marked offline`);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Node Skills Sync ─────────────────────────────────────────────────────────────────
+// POST /api/ai/node/skills/sync
+// action: "upsert" | "delete" | "replace_all"
+// skills: array of skill objects
+aiStreamRouter.post("/node/skills/sync", async (req: Request, res: Response) => {
+  const { token, nodeId, action = "upsert", skills } = req.body;
+  const expectedToken = process.env.NODE_REGISTRATION_TOKEN;
+  if (!expectedToken || token !== expectedToken) { res.status(401).json({ error: "Invalid token" }); return; }
+  if (!nodeId || typeof nodeId !== "number") { res.status(400).json({ error: "Missing required field: nodeId" }); return; }
+  if (!Array.isArray(skills)) { res.status(400).json({ error: "skills must be an array" }); return; }
+  try {
+    const node = await getAiNodeById(nodeId);
+    if (!node) { res.status(404).json({ error: `Node ${nodeId} not found` }); return; }
+    if (action === "replace_all") {
+      // Delete all existing skills for this node, then insert new ones
+      await deleteAllNodeSkills(nodeId);
+      for (const skill of skills) {
+        await upsertNodeSkill({ ...skill, nodeId });
+      }
+      console.log(`[Skills Sync] Node ${nodeId} replace_all: ${skills.length} skills`);
+    } else if (action === "upsert") {
+      for (const skill of skills) {
+        await upsertNodeSkill({ ...skill, nodeId });
+      }
+      console.log(`[Skills Sync] Node ${nodeId} upsert: ${skills.length} skills`);
+    } else if (action === "delete") {
+      for (const skill of skills) {
+        await deleteNodeSkill(nodeId, skill.skillId || skill.id);
+      }
+      console.log(`[Skills Sync] Node ${nodeId} delete: ${skills.length} skills`);
+    } else {
+      res.status(400).json({ error: `Unknown action: ${action}` }); return;
+    }
+    res.json({ success: true, count: skills.length, action });
+  } catch (err: any) {
+    console.error("[Skills Sync] Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/ai/node/skills/:nodeId  (admin only)
+aiStreamRouter.get("/node/skills/:nodeId", async (req: Request, res: Response) => {
+  const admin = await getAdminUser(req);
+  if (!admin) { res.status(401).json({ error: "Admin only" }); return; }
+  const nodeId = parseInt(req.params.nodeId);
+  if (isNaN(nodeId)) { res.status(400).json({ error: "Invalid nodeId" }); return; }
+  try {
+    const skills = await getNodeSkills(nodeId);
+    res.json({ skills });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/ai/node/skills  (admin only, all nodes)
+aiStreamRouter.get("/node/skills", async (req: Request, res: Response) => {
+  const admin = await getAdminUser(req);
+  if (!admin) { res.status(401).json({ error: "Admin only" }); return; }
+  try {
+    const skills = await getAllNodeSkills();
+    res.json({ skills });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/ai/node/skills/toggle  (admin only, enable/disable a skill)
+aiStreamRouter.patch("/node/skills/toggle", async (req: Request, res: Response) => {
+  const admin = await getAdminUser(req);
+  if (!admin) { res.status(401).json({ error: "Admin only" }); return; }
+  const { nodeId, skillId, isEnabled } = req.body;
+  if (!nodeId || !skillId || typeof isEnabled !== "boolean") {
+    res.status(400).json({ error: "Missing required fields: nodeId, skillId, isEnabled" }); return;
+  }
+  try {
+    await setNodeSkillEnabled(Number(nodeId), skillId, isEnabled);
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

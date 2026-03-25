@@ -419,3 +419,66 @@ export async function updateInquiryStatus(id: number, status: string, notes?: st
   if (notes !== undefined) data.notes = notes;
   await supabasePatch("consulting_inquiries", `id=eq.${id}`, data);
 }
+
+// ─── Node Skills ──────────────────────────────────────────────────────────────
+export interface NodeSkill {
+  id?: number;
+  nodeId: number;
+  skillId: string;
+  name: string;
+  version?: string;
+  description?: string;
+  category?: string;
+  triggers?: string[] | string;
+  isEnabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getNodeSkills(nodeId: number): Promise<NodeSkill[]> {
+  const rows = await supabaseGet<Record<string, unknown>>(
+    "node_skills",
+    `nodeId=eq.${nodeId}&order=category.asc,name.asc`
+  );
+  return rows as unknown as NodeSkill[];
+}
+
+export async function getAllNodeSkills(): Promise<NodeSkill[]> {
+  const rows = await supabaseGet<Record<string, unknown>>(
+    "node_skills",
+    "order=nodeId.asc,category.asc,name.asc"
+  );
+  return rows as unknown as NodeSkill[];
+}
+
+export async function upsertNodeSkill(skill: NodeSkill): Promise<void> {
+  const data: Record<string, unknown> = {
+    nodeId: skill.nodeId,
+    skillId: skill.skillId,
+    name: skill.name,
+    version: skill.version ?? "1.0.0",
+    description: skill.description ?? "",
+    category: skill.category ?? "general",
+    triggers: Array.isArray(skill.triggers)
+      ? JSON.stringify(skill.triggers)
+      : (skill.triggers ?? "[]"),
+    isEnabled: skill.isEnabled !== false,
+    updatedAt: new Date().toISOString(),
+  };
+  await supabaseUpsert("node_skills", data, "nodeId,skillId");
+}
+
+export async function deleteNodeSkill(nodeId: number, skillId: string): Promise<void> {
+  await supabaseDelete("node_skills", `nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`);
+}
+
+export async function deleteAllNodeSkills(nodeId: number): Promise<void> {
+  await supabaseDelete("node_skills", `nodeId=eq.${nodeId}`);
+}
+
+export async function setNodeSkillEnabled(nodeId: number, skillId: string, isEnabled: boolean): Promise<void> {
+  await supabasePatch("node_skills", `nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`, {
+    isEnabled,
+    updatedAt: new Date().toISOString(),
+  });
+}
