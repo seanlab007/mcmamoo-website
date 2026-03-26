@@ -1,70 +1,67 @@
 import { protectedProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { getDb } from "./db";
+import { supabaseAdmin, getSalesLeads, getSalesLeadById, createSalesLead, updateSalesLead, deleteSalesLead, getOutreachTemplates, getOutreachActivities, createOutreachActivity, getPipelineStats, getAIInsights } from "../supabase/sales-client";
 
-// Sales Lead Router
+// Sales Lead Router - Using Supabase
 export const salesRouter = router({
   // List all leads
   listLeads: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database unavailable");
-    
-    // This would query from a sales_leads table
-    // For now, return mock data
-    return [
-      {
-        id: "1",
-        name: "张伟",
-        company: "科技创新有限公司",
-        title: "市场总监",
-        email: "zhangwei@tech-innovation.com",
-        phone: "+86 138-0000-0001",
-        linkedin: "linkedin.com/in/zhangwei",
-        status: "qualified",
-        source: "website",
-        score: 85,
-        notes: "对AI营销解决方案表现出浓厚兴趣，预算充足",
-        lastContact: "2026-03-20",
-        nextFollowUp: "2026-03-27",
-        createdAt: "2026-03-15",
-        aiInsights: ["高意向客户，建议优先跟进", "预算周期即将开始"],
-        suggestedActions: ["发送案例研究", "安排产品演示"]
-      },
-      {
-        id: "2",
-        name: "李芳",
-        company: "数字营销集团",
-        title: "CEO",
-        email: "lifang@digital-marketing.com",
-        status: "proposal",
-        source: "linkedin",
-        score: 92,
-        notes: "已发送提案，等待反馈",
-        lastContact: "2026-03-22",
-        nextFollowUp: "2026-03-26",
-        createdAt: "2026-03-10",
-        aiInsights: ["决策周期短，预计2周内成交", "对价格敏感度中等"],
-        suggestedActions: ["跟进提案反馈", "准备合同模板"]
-      }
-    ];
+    try {
+      const leads = await getSalesLeads();
+      return leads.map(lead => ({
+        id: lead.id.toString(),
+        name: lead.name,
+        company: lead.company,
+        title: lead.title || "",
+        email: lead.email,
+        phone: lead.phone || "",
+        linkedin: lead.linkedin || "",
+        status: lead.status,
+        source: lead.source,
+        score: lead.score,
+        notes: lead.notes || "",
+        lastContact: lead.last_contact,
+        nextFollowUp: lead.next_follow_up,
+        assignedTo: lead.assigned_to,
+        aiInsights: lead.ai_insights || [],
+        suggestedActions: lead.suggested_actions || [],
+        createdAt: lead.created_at,
+        updatedAt: lead.updated_at,
+      }));
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch leads" });
+    }
   }),
 
   // Get lead by ID
   getLead: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
-      // Return mock lead
-      return {
-        id: input.id,
-        name: "张伟",
-        company: "科技创新有限公司",
-        title: "市场总监",
-        email: "zhangwei@tech-innovation.com",
-        status: "qualified",
-        score: 85,
-        aiInsights: ["高意向客户", "预算充足"]
-      };
+      try {
+        const lead = await getSalesLeadById(parseInt(input.id));
+        return {
+          id: lead.id.toString(),
+          name: lead.name,
+          company: lead.company,
+          title: lead.title || "",
+          email: lead.email,
+          phone: lead.phone || "",
+          linkedin: lead.linkedin || "",
+          status: lead.status,
+          source: lead.source,
+          score: lead.score,
+          notes: lead.notes || "",
+          lastContact: lead.last_contact,
+          nextFollowUp: lead.next_follow_up,
+          aiInsights: lead.ai_insights || [],
+          suggestedActions: lead.suggested_actions || [],
+        };
+      } catch (error) {
+        console.error("Error fetching lead:", error);
+        throw new TRPCError({ code: "NOT_FOUND", message: "Lead not found" });
+      }
     }),
 
   // Create new lead
@@ -72,19 +69,39 @@ export const salesRouter = router({
     .input(z.object({
       name: z.string().min(1),
       company: z.string().min(1),
-      title: z.string(),
+      title: z.string().optional(),
       email: z.string().email(),
       phone: z.string().optional(),
       linkedin: z.string().optional(),
+      website: z.string().optional(),
       source: z.enum(["website", "linkedin", "referral", "cold_outreach", "event", "other"]),
       notes: z.string().optional()
     }))
     .mutation(async ({ input, ctx }) => {
-      const db = await getDb();
-      if (!db) throw new Error("Database unavailable");
-      
-      // TODO: Insert into database
-      return { success: true, id: "new-lead-id" };
+      try {
+        const lead = await createSalesLead({
+          name: input.name,
+          company: input.company,
+          title: input.title || null,
+          email: input.email,
+          phone: input.phone || null,
+          linkedin: input.linkedin || null,
+          website: input.website || null,
+          source: input.source,
+          notes: input.notes || null,
+          status: "new",
+          score: 0,
+          assigned_to: null,
+          ai_insights: [],
+          suggested_actions: [],
+          last_contact: null,
+          next_follow_up: null,
+        });
+        return { success: true, id: lead.id.toString() };
+      } catch (error) {
+        console.error("Error creating lead:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create lead" });
+      }
     }),
 
   // Update lead status
@@ -94,34 +111,115 @@ export const salesRouter = router({
       status: z.enum(["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"])
     }))
     .mutation(async ({ input }) => {
-      // TODO: Update in database
-      return { success: true };
+      try {
+        await updateSalesLead(parseInt(input.id), { status: input.status });
+        return { success: true };
+      } catch (error) {
+        console.error("Error updating lead status:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update lead status" });
+      }
+    }),
+
+  // Update lead
+  updateLead: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      data: z.object({
+        name: z.string().min(1).optional(),
+        company: z.string().min(1).optional(),
+        title: z.string().optional(),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        linkedin: z.string().optional(),
+        website: z.string().optional(),
+        status: z.enum(["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"]).optional(),
+        score: z.number().optional(),
+        notes: z.string().optional(),
+      })
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        await updateSalesLead(parseInt(input.id), input.data);
+        return { success: true };
+      } catch (error) {
+        console.error("Error updating lead:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update lead" });
+      }
     }),
 
   // Delete lead
   deleteLead: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      // TODO: Delete from database
-      return { success: true };
+      try {
+        await deleteSalesLead(parseInt(input.id));
+        return { success: true };
+      } catch (error) {
+        console.error("Error deleting lead:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to delete lead" });
+      }
     }),
 
   // Get sales pipeline stats
   getPipelineStats: protectedProcedure.query(async () => {
-    return {
-      total: 24,
-      new: 8,
-      contacted: 6,
-      qualified: 4,
-      proposal: 3,
-      negotiation: 2,
-      closedWon: 1,
-      closedLost: 0,
-      totalValue: 1500000,
-      avgDealSize: 62500,
-      conversionRate: 25
-    };
+    try {
+      const stats = await getPipelineStats();
+      return {
+        ...stats,
+        totalValue: stats.closedWon * 50000 + stats.negotiation * 30000 + stats.proposal * 20000,
+        avgDealSize: stats.closedWon > 0 ? Math.round((stats.closedWon * 50000) / stats.closedWon) : 0,
+        conversionRate: stats.total > 0 ? Math.round((stats.closedWon / stats.total) * 100) : 0,
+      };
+    } catch (error) {
+      console.error("Error fetching pipeline stats:", error);
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch pipeline stats" });
+    }
   }),
+
+  // Get outreach templates
+  getTemplates: protectedProcedure
+    .input(z.object({ type: z.enum(["email", "linkedin"]).optional() }).optional())
+    .query(async ({ input }) => {
+      try {
+        const templates = await getOutreachTemplates(input?.type);
+        return templates.map(t => ({
+          id: t.id.toString(),
+          name: t.name,
+          subject: t.subject || "",
+          body: t.body,
+          type: t.type,
+          category: t.category || "",
+          aiOptimized: t.ai_optimized,
+        }));
+      } catch (error) {
+        console.error("Error fetching templates:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch templates" });
+      }
+    }),
+
+  // Get outreach activities
+  getActivities: protectedProcedure
+    .input(z.object({ leadId: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      try {
+        const activities = await getOutreachActivities(input?.leadId ? parseInt(input.leadId) : undefined);
+        return activities.map(a => ({
+          id: a.id.toString(),
+          leadId: a.lead_id.toString(),
+          type: a.type,
+          subject: a.subject || "",
+          content: a.content || "",
+          status: a.status,
+          sentAt: a.sent_at,
+          openedAt: a.opened_at,
+          repliedAt: a.replied_at,
+          createdAt: a.created_at,
+        }));
+      } catch (error) {
+        console.error("Error fetching activities:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch activities" });
+      }
+    }),
 
   // AI: Generate outreach email
   generateEmail: protectedProcedure
@@ -132,122 +230,141 @@ export const salesRouter = router({
       customInstructions: z.string().optional()
     }))
     .mutation(async ({ input }) => {
-      // This would call an AI service to generate personalized email
-      const templates: Record<string, { subject: string; body: string }> = {
-        cold: {
-          subject: "{{company}}的AI营销转型机会",
-          body: `您好{{name}}，
+      try {
+        // Get lead data
+        const lead = await getSalesLeadById(parseInt(input.leadId));
+        
+        // Get template from Supabase
+        const templates = await getOutreachTemplates(input.template === "linkedin" ? "linkedin" : "email");
+        const template = templates.find(t => {
+          if (input.template === "cold") return t.category === "cold_outreach";
+          if (input.template === "followup") return t.category === "follow_up";
+          if (input.template === "proposal") return t.category === "proposal";
+          if (input.template === "linkedin") return t.category === "networking";
+          return false;
+        }) || templates[0];
 
-我注意到{{company}}在数字营销领域的出色表现。我是MaoAI的销售顾问，专门帮助像您这样的企业利用AI技术提升营销效果。
-
-我们最近帮助一家类似规模的公司实现了：
-• 营销转化率提升40%
-• 客户获取成本降低35%
-• 销售周期缩短50%
-
-我想了解{{company}}目前的营销挑战，看看我们是否能提供帮助。您是否有15分钟时间进行简短交流？
-
-期待您的回复。
-
-此致，
-MaoAI销售团队`
-        },
-        followup: {
-          subject: "关于{{company}}的AI解决方案 - 下一步",
-          body: `您好{{name}}，
-
-希望您一切都好。我想跟进我们上周关于{{company}}AI营销转型的讨论。
-
-基于我们的对话，我整理了一些针对性的建议：
-
-{{ai_insights}}
-
-如果您有任何问题或想进一步探讨，请随时联系我。
-
-此致，
-MaoAI销售团队`
-        },
-        proposal: {
-          subject: "{{company}}专属AI解决方案提案",
-          body: `您好{{name}}，
-
-感谢您抽出时间了解MaoAI。根据我们之前的讨论，我为{{company}}准备了一份定制化的AI营销解决方案提案。
-
-提案亮点：
-• 定制AI销售助手
-• 智能线索评分系统
-• 自动化外联工具
-• 实时销售洞察
-
-请查收附件中的详细提案。我期待与您讨论如何帮助{{company}}实现销售增长。
-
-此致，
-MaoAI销售团队`
-        },
-        linkedin: {
-          subject: "",
-          body: `您好{{name}}，我是MaoAI的销售顾问。看到您在{{company}}担任{{title}}，想与您建立联系。我们专注于AI驱动的销售自动化，可能对您的工作有所帮助。期待交流！`
+        if (!template) {
+          throw new Error("Template not found");
         }
-      };
 
-      return {
-        success: true,
-        content: templates[input.template]
-      };
+        // Replace placeholders
+        let subject = template.subject || "";
+        let body = template.body;
+
+        const replacements: Record<string, string> = {
+          "{{name}}": lead.name,
+          "{{company}}": lead.company,
+          "{{title}}": lead.title || "",
+          "{{ai_insights}}": (lead.ai_insights || []).join("\n"),
+        };
+
+        Object.entries(replacements).forEach(([key, value]) => {
+          subject = subject.replace(new RegExp(key, "g"), value);
+          body = body.replace(new RegExp(key, "g"), value);
+        });
+
+        // Record activity
+        await createOutreachActivity({
+          lead_id: lead.id,
+          type: input.template === "linkedin" ? "linkedin" : "email",
+          subject: subject,
+          content: body,
+          status: "draft",
+          sent_at: null,
+          opened_at: null,
+          replied_at: null,
+          created_by: null,
+        });
+
+        return {
+          success: true,
+          content: { subject, body }
+        };
+      } catch (error) {
+        console.error("Error generating email:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate email" });
+      }
     }),
 
   // AI: Analyze lead score
   analyzeLead: protectedProcedure
     .input(z.object({ leadId: z.string() }))
     .mutation(async ({ input }) => {
-      // This would use AI to analyze lead quality
-      return {
-        score: 85,
-        factors: [
-          { name: "职位匹配度", score: 90, weight: 0.3 },
-          { name: "公司规模", score: 80, weight: 0.25 },
-          { name: "互动历史", score: 85, weight: 0.25 },
-          { name: "预算信号", score: 85, weight: 0.2 }
-        ],
-        insights: [
-          "高意向客户，建议优先跟进",
-          "预算周期即将开始",
-          "对AI解决方案表现出浓厚兴趣"
-        ],
-        suggestedActions: [
-          "发送案例研究",
-          "安排产品演示",
-          "提供ROI计算器"
-        ],
-        predictedConversion: 78
-      };
+      try {
+        const lead = await getSalesLeadById(parseInt(input.leadId));
+        
+        // Simple scoring algorithm based on available data
+        let score = 50;
+        const factors = [];
+
+        // Title score
+        const titleScore = lead.title?.toLowerCase().includes("director") || 
+                          lead.title?.toLowerCase().includes("vp") || 
+                          lead.title?.toLowerCase().includes("ceo") ? 90 : 60;
+        score += titleScore * 0.3;
+        factors.push({ name: "职位匹配度", score: titleScore, weight: 0.3 });
+
+        // Source score
+        const sourceScore = lead.source === "referral" ? 95 : 
+                           lead.source === "website" ? 80 : 60;
+        score += sourceScore * 0.25;
+        factors.push({ name: "来源质量", score: sourceScore, weight: 0.25 });
+
+        // Contact info score
+        const contactScore = lead.linkedin && lead.phone ? 90 : lead.linkedin || lead.phone ? 70 : 50;
+        score += contactScore * 0.25;
+        factors.push({ name: "联系信息完整度", score: contactScore, weight: 0.25 });
+
+        // Notes score
+        const notesScore = lead.notes && lead.notes.length > 20 ? 85 : 50;
+        score += notesScore * 0.2;
+        factors.push({ name: "互动深度", score: notesScore, weight: 0.2 });
+
+        const finalScore = Math.round(score);
+
+        // Update lead score in database
+        await updateSalesLead(lead.id, { 
+          score: finalScore,
+          ai_insights: [
+            finalScore >= 80 ? "高意向客户，建议优先跟进" : "中等意向，需要培养",
+            lead.source === "referral" ? "推荐来源，信任度高" : null,
+          ].filter(Boolean) as string[],
+          suggested_actions: [
+            finalScore >= 80 ? "安排产品演示" : "发送案例研究",
+            "发送个性化邮件",
+            lead.linkedin ? "LinkedIn互动" : null,
+          ].filter(Boolean) as string[],
+        });
+
+        return {
+          score: finalScore,
+          factors,
+          insights: [
+            finalScore >= 80 ? "高意向客户，建议优先跟进" : "中等意向客户，需要持续培养",
+            lead.source === "referral" ? "推荐来源，信任度较高" : null,
+          ].filter(Boolean),
+          suggestedActions: [
+            finalScore >= 80 ? "安排产品演示" : "发送案例研究",
+            "发送个性化邮件",
+          ],
+          predictedConversion: Math.min(finalScore + 10, 95),
+        };
+      } catch (error) {
+        console.error("Error analyzing lead:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to analyze lead" });
+      }
     }),
 
   // AI: Get sales insights
   getInsights: protectedProcedure.query(async () => {
-    return [
-      {
-        id: "1",
-        type: "opportunity",
-        title: "高价值线索识别",
-        description: "检测到3个高意向客户，预计总价值¥150万，建议本周内优先跟进",
-        confidence: 87
-      },
-      {
-        id: "2",
-        type: "risk",
-        title: "流失风险预警",
-        description: "客户\"数字营销集团\"已3天未回复，建议立即跟进",
-        confidence: 72
-      },
-      {
-        id: "3",
-        type: "action",
-        title: "最佳联系时间",
-        description: "根据历史数据分析，工作日下午2-4点是联系客户的最佳时段",
-        confidence: 91
-      }
-    ];
+    try {
+      const insights = await getAIInsights();
+      return insights;
+    } catch (error) {
+      console.error("Error fetching insights:", error);
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch insights" });
+    }
   }),
 
   // AI: Chat with sales assistant
@@ -260,18 +377,56 @@ MaoAI销售团队`
       }).optional()
     }))
     .mutation(async ({ input }) => {
-      // This would integrate with an AI chat service
-      const responses: Record<string, string> = {
-        "分析": "基于我的分析，这个线索的成交概率约为78%。建议优先跟进，因为他们已经表现出强烈的购买意向。",
-        "邮件": "我可以为你生成一封针对性的跟进邮件。请告诉我你希望强调哪些价值点？",
-        "预测": "根据当前管道数据，预计本月可成交3-4个客户，总价值约¥80万。",
-        "最佳": "工作日下午2-4点是联系客户的最佳时段，回复率比平均高出35%。"
-      };
+      try {
+        const message = input.message.toLowerCase();
+        
+        // Get lead context if provided
+        let leadContext = "";
+        if (input.context?.leadId) {
+          try {
+            const lead = await getSalesLeadById(parseInt(input.context.leadId));
+            leadContext = `客户: ${lead.name}, 公司: ${lead.company}, 状态: ${lead.status}, 评分: ${lead.score}`;
+          } catch (e) {
+            // Lead not found, continue without context
+          }
+        }
 
-      const response = Object.entries(responses).find(([key]) => input.message.includes(key));
-      
-      return {
-        response: response ? response[1] : "我是MaoAI销售助手，可以帮你分析线索、生成邮件、预测成交概率等。有什么可以帮你的吗？"
-      };
+        // Simple keyword-based responses
+        if (message.includes("分析") || message.includes("评分")) {
+          return {
+            response: leadContext 
+              ? `基于${leadContext}，这是一个高价值线索，建议优先跟进。`
+              : "请提供一个线索ID，我可以帮你分析该线索的成交概率和关键特征。"
+          };
+        }
+        
+        if (message.includes("邮件") || message.includes("生成")) {
+          return {
+            response: "我可以为你生成个性化的外联邮件。请告诉我：\n1. 目标客户的线索ID\n2. 邮件类型（初次接触/跟进/提案）\n3. 希望强调的价值点"
+          };
+        }
+        
+        if (message.includes("预测") || message.includes("成交")) {
+          const stats = await getPipelineStats();
+          return {
+            response: `根据当前销售管道数据：\n• 总线索: ${stats.total}\n• 提案中: ${stats.proposal}\n• 谈判中: ${stats.negotiation}\n• 已成交: ${stats.closedWon}\n\n预计本月可成交 ${stats.negotiation + Math.ceil(stats.proposal * 0.3)} 个客户。`
+          };
+        }
+        
+        if (message.includes("最佳") || message.includes("时间")) {
+          return {
+            response: "根据历史数据分析：\n• 最佳联系时间：工作日下午 2-4 点\n• 回复率最高的日子：周二、周三\n• 避免时间：周一上午、周五下午\n\n建议在这些时段安排重要的客户沟通。"
+          };
+        }
+
+        return {
+          response: "我是MaoAI销售助手，可以帮你：\n• 分析线索质量和成交概率\n• 生成个性化外联邮件\n• 预测销售业绩\n• 提供联系时间建议\n\n请告诉我你需要什么帮助？"
+        };
+      } catch (error) {
+        console.error("Error in chat:", error);
+        return {
+          response: "抱歉，处理请求时出错，请稍后再试。"
+        };
+      }
     })
 });
