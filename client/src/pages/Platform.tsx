@@ -5,21 +5,40 @@
  * 未登录：跳转登录页
  */
 import { useState } from "react";
-import { ExternalLink, Loader2, AlertCircle, RefreshCw, Lock } from "lucide-react";
+import { ExternalLink, Loader2, AlertCircle, RefreshCw, Lock, Video, MessageSquare, Zap } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 // 运营平台后端地址（本地或云端）
 const PLATFORM_BASE_URL = import.meta.env.VITE_PLATFORM_URL || "http://localhost:8766";
+const AUTOCLIP_URL = import.meta.env.VITE_AUTOCLIP_URL || "/autoclip";
+
+// 工具栏配置
+const TOOLS = [
+  { id: "platform", name: "运营平台", icon: Zap, url: PLATFORM_BASE_URL },
+  { id: "autoclip", name: "AutoClip", icon: Video, url: AUTOCLIP_URL },
+  { id: "maoai", name: "MaoAI", icon: MessageSquare, url: "/chat" },
+];
 
 export default function Platform() {
   const { data: me, isLoading: authLoading } = trpc.auth.me.useQuery();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [activeTool, setActiveTool] = useState("platform");
 
   // 构造带用户身份的 URL
   const platformUrl = me?.id
     ? `${PLATFORM_BASE_URL}?uid=${encodeURIComponent(String(me.id))}`
     : PLATFORM_BASE_URL;
+
+  // 根据当前工具获取URL
+  const getCurrentUrl = () => {
+    if (activeTool === "platform") return platformUrl;
+    if (activeTool === "autoclip") return AUTOCLIP_URL;
+    if (activeTool === "maoai") return "/chat";
+    return platformUrl;
+  };
+
+  const currentUrl = getCurrentUrl();
 
   const handleLoad = () => {
     setLoading(false);
@@ -36,8 +55,14 @@ export default function Platform() {
     setError(false);
     const iframe = document.getElementById("platform-iframe") as HTMLIFrameElement;
     if (iframe) {
-      iframe.src = platformUrl;
+      iframe.src = currentUrl;
     }
+  };
+
+  const handleToolChange = (toolId: string) => {
+    setActiveTool(toolId);
+    setLoading(true);
+    setError(false);
   };
 
   // 未登录提示
@@ -95,7 +120,7 @@ export default function Platform() {
           </button>
           {/* 新标签页打开 */}
           <a
-            href={platformUrl}
+            href={activeTool === "platform" ? platformUrl : (activeTool === "autoclip" ? AUTOCLIP_URL : "/chat")}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-[#C9A84C] border border-[#C9A84C]/40 hover:bg-[#C9A84C]/10 transition-all"
@@ -104,6 +129,24 @@ export default function Platform() {
             独立窗口
           </a>
         </div>
+      </div>
+
+      {/* 工具栏 */}
+      <div className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2 bg-[#0A0A0A] border-b border-white/5">
+        {TOOLS.map((tool) => (
+          <button
+            key={tool.id}
+            onClick={() => handleToolChange(tool.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTool === tool.id
+                ? "bg-[#C9A84C] text-black"
+                : "text-white/50 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <tool.icon size={16} />
+            {tool.name}
+          </button>
+        ))}
       </div>
 
       {/* iframe 容器 */}
@@ -149,15 +192,37 @@ export default function Platform() {
 
         {/* 平台 iframe（auth 加载完才渲染，避免 URL 中 uid 不对） */}
         {!authLoading && (
-          <iframe
-            id="platform-iframe"
-            src={platformUrl}
-            className="w-full h-full border-0"
-            title="猫眼运营平台"
-            onLoad={handleLoad}
-            onError={handleError}
-            allow="clipboard-read; clipboard-write"
-          />
+          activeTool === "platform" ? (
+            <iframe
+              id="platform-iframe"
+              src={currentUrl}
+              className="w-full h-full border-0"
+              title="猫眼运营平台"
+              onLoad={handleLoad}
+              onError={handleError}
+              allow="clipboard-read; clipboard-write"
+            />
+          ) : activeTool === "autoclip" ? (
+            <iframe
+              id="autoclip-iframe"
+              src={AUTOCLIP_URL}
+              className="w-full h-full border-0"
+              title="AutoClip 视频剪辑"
+              onLoad={handleLoad}
+              onError={handleError}
+              allow="clipboard-read; clipboard-write"
+            />
+          ) : (
+            <iframe
+              id="maoai-iframe"
+              src="/chat"
+              className="w-full h-full border-0"
+              title="MaoAI 聊天"
+              onLoad={handleLoad}
+              onError={handleError}
+              allow="clipboard-read; clipboard-write"
+            />
+          )
         )}
       </div>
     </div>
