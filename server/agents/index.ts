@@ -5,7 +5,7 @@
  * 集成到 MaoAI 作为"大脑"，通过工具调用执行任务
  */
 
-import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS } from "./tools";
+import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS } from "../tools";
 
 // ─── Agent 定义 ─────────────────────────────────────────────────────────────────
 
