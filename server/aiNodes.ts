@@ -16,8 +16,36 @@
 
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 
 export const aiNodesRouter = Router();
+
+// ─── 本地文件存储（开发模式降级层）────────────────────────────────────────────
+
+const LOCAL_DB_PATH = path.resolve(process.cwd(), ".openclaw-local-db.json");
+
+interface LocalDb {
+  nodes: Record<number, Record<string, unknown>>;
+  skills: Record<string, Record<string, unknown>>;
+  nextNodeId: number;
+}
+
+function loadLocalDb(): LocalDb {
+  try {
+    return JSON.parse(fs.readFileSync(LOCAL_DB_PATH, "utf8"));
+  } catch {
+    return { nodes: {}, skills: {}, nextNodeId: 1 };
+  }
+}
+
+function saveLocalDb(db: LocalDb): void {
+  fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(db, null, 2), "utf8");
+}
+
+function isSupabaseConfigured(): boolean {
+  return !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY);
+}
 
 // ─── Supabase 配置 ───────────────────────────────────────────────────────────
 
@@ -59,6 +87,100 @@ async function sbFetch(
   }
 
   return { ok: res.ok, status: res.status, data };
+}
+
+// ─── 本地存储适配层（Supabase 未配置时使用）───────────────────────────────────
+
+/** 解析 Supabase 风格 path 并在本地 DB 上执行操作 */
+async function localFetch(
+  p: string,
+  options: RequestInit = {}
+): Promise<{ ok: boolean; status: number; data: unknown }> {
+  const db = loadLocalDb();
+  const method = (options.method ?? "GET").toUpperCase();
+  const [tablePart, queryPart] = p.split("?");
+  const table = tablePart.replace(/^\//, "");
+  const params = new URLSearchParams(queryPart ?? "");
+
+  // Helper: 根据 query params 过滤记录
+  function filterRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+    let result = [...rows];
+    params.forEach((val, key) => {
+      if (key === "select" || key === "order") return;
+      const [field, op] = key.split(".");
+      if (!op) return;
+      if (op === "eq") result = result.filter((r) => String(r[field]) === val);
+      if (op === "lt") result = result.filter((r) => new Date(String(r[field])) < new Date(val));
+      if (op === "in") {
+        const ids = val.replace(/[()]/g, "").split(",").map((v) => v.trim());
+        result = result.filter((r) => ids.includes(String(r[field])));
+      }
+    });
+    return result;
+  }
+
+  const tableKey = table === "ai_nodes" ? "nodes" : "skills";
+  const store = db[tableKey] as Record<number, Record<string, unknown>>;
+  const rows = Object.values(store);
+
+  if (method === "GET") {
+    const filtered = filterRows(rows);
+    return { ok: true, status: 200, data: filtered };
+  }
+
+  if (method === "POST") {
+    const body = JSON.parse(String(options.body ?? "{}"));
+    if (Array.isArray(body)) {
+      for (const item of body) {
+        const id = tableKey === "nodes" ? db.nextNodeId++ : `${item.nodeId}:${item.skillId}`;
+        const key = typeof id === "number" ? id : (id as string);
+        store[key as number] = { id: key, ...item };
+      }
+    } else {
+      const id = tableKey === "nodes" ? db.nextNodeId++ : `${body.nodeId}:${body.skillId}`;
+      const key = typeof id === "number" ? id : (id as string);
+      store[key as number] = { id: key, ...body };
+      saveLocalDb(db);
+      return { ok: true, status: 201, data: [{ id: key, ...body }] };
+    }
+    saveLocalDb(db);
+    return { ok: true, status: 201, data: null };
+  }
+
+  if (method === "PATCH") {
+    const body = JSON.parse(String(options.body ?? "{}"));
+    const toUpdate = filterRows(rows);
+    for (const row of toUpdate) {
+      const key = row.id as number;
+      store[key] = { ...store[key], ...body };
+    }
+    saveLocalDb(db);
+    return { ok: true, status: 200, data: toUpdate.map((r) => ({ ...r, ...body })) };
+  }
+
+  if (method === "DELETE") {
+    const toDelete = filterRows(rows);
+    for (const row of toDelete) {
+      delete store[row.id as number];
+    }
+    saveLocalDb(db);
+    return { ok: true, status: 204, data: null };
+  }
+
+  return { ok: false, status: 405, data: null };
+}
+
+/** 统一入口：有 Supabase 走云端，否则走本地文件 */
+async function dbFetch(
+  p: string,
+  options: RequestInit = {},
+  prefer?: string
+): Promise<{ ok: boolean; status: number; data: unknown }> {
+  if (isSupabaseConfigured()) {
+    return sbFetch(p, options, prefer);
+  }
+  console.log("[aiNodes] 🗂️ 使用本地文件存储（开发模式）");
+  return localFetch(p, options);
 }
 
 // ─── 类型定义 ───────────────────────────────────────────────────────────────
@@ -143,7 +265,7 @@ async function markOfflineNodes(): Promise<void> {
   try {
     const cutoff = new Date(Date.now() - 90_000).toISOString();
     // 更新超时节点为离线
-    await sbFetch(
+    await dbFetch(
       `/ai_nodes?isOnline=eq.true&lastHeartbeatAt=lt.${encodeURIComponent(cutoff)}`,
       { method: "PATCH", body: JSON.stringify({ isOnline: false }) }
     );
@@ -173,7 +295,7 @@ aiNodesRouter.post("/node/register", async (req: Request, res: Response) => {
     const skillsChecksum = body.skills ? computeChecksum(body.skills) : null;
 
     // 查找同名节点
-    const existing = await sbFetch(`/ai_nodes?name=eq.${encodeURIComponent(body.name)}&select=id`);
+    const existing = await dbFetch(`/ai_nodes?name=eq.${encodeURIComponent(body.name)}&select=id`);
     const existingRows = existing.data as { id: number }[] | null;
 
     let nodeId: number;
@@ -181,7 +303,7 @@ aiNodesRouter.post("/node/register", async (req: Request, res: Response) => {
     if (existingRows && existingRows.length > 0) {
       nodeId = existingRows[0].id;
       // 更新节点信息
-      await sbFetch(
+      await dbFetch(
         `/ai_nodes?id=eq.${nodeId}`,
         {
           method: "PATCH",
@@ -202,7 +324,7 @@ aiNodesRouter.post("/node/register", async (req: Request, res: Response) => {
       );
     } else {
       // 插入新节点
-      const result = await sbFetch(
+      const result = await dbFetch(
         `/ai_nodes`,
         {
           method: "POST",
@@ -233,10 +355,10 @@ aiNodesRouter.post("/node/register", async (req: Request, res: Response) => {
     // 全量写入技能
     if (body.skills && body.skills.length > 0 && nodeId) {
       // 先删除旧技能
-      await sbFetch(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
+      await dbFetch(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
       // 批量插入新技能
       const skillRows = body.skills.map((s) => toSkillRow(nodeId, s));
-      await sbFetch(
+      await dbFetch(
         `/node_skills`,
         { method: "POST", body: JSON.stringify(skillRows) },
         "return=minimal"
@@ -267,7 +389,7 @@ aiNodesRouter.post("/node/heartbeat", async (req: Request, res: Response) => {
   }
 
   try {
-    const existing = await sbFetch(
+    const existing = await dbFetch(
       `/ai_nodes?id=eq.${body.nodeId}&select=id,skillsChecksum`
     );
     const rows = existing.data as { id: number; skillsChecksum: string | null }[] | null;
@@ -277,7 +399,7 @@ aiNodesRouter.post("/node/heartbeat", async (req: Request, res: Response) => {
       return;
     }
 
-    await sbFetch(
+    await dbFetch(
       `/ai_nodes?id=eq.${body.nodeId}`,
       {
         method: "PATCH",
@@ -311,7 +433,7 @@ aiNodesRouter.post("/node/deregister", async (req: Request, res: Response) => {
   }
 
   try {
-    await sbFetch(
+    await dbFetch(
       `/ai_nodes?id=eq.${body.nodeId}`,
       { method: "PATCH", body: JSON.stringify({ isOnline: false }) }
     );
@@ -341,7 +463,7 @@ aiNodesRouter.post("/node/skills/sync", async (req: Request, res: Response) => {
     if (body.action === "delete") {
       // 逐个删除指定技能
       for (const s of body.skills) {
-        await sbFetch(
+        await dbFetch(
           `/node_skills?nodeId=eq.${body.nodeId}&skillId=eq.${encodeURIComponent(s.id)}`,
           { method: "DELETE" }
         );
@@ -350,7 +472,7 @@ aiNodesRouter.post("/node/skills/sync", async (req: Request, res: Response) => {
       // Upsert（逐个 POST with onConflict）
       for (const s of body.skills) {
         const row = toSkillRow(body.nodeId, s);
-        await sbFetch(
+        await dbFetch(
           `/node_skills`,
           { method: "POST", body: JSON.stringify(row) },
           "resolution=merge-duplicates"
@@ -359,7 +481,7 @@ aiNodesRouter.post("/node/skills/sync", async (req: Request, res: Response) => {
     }
 
     // 重算 checksum
-    const allSkillsRes = await sbFetch(
+    const allSkillsRes = await dbFetch(
       `/node_skills?nodeId=eq.${body.nodeId}&select=skillId,version`
     );
     const allSkills = allSkillsRes.data as { skillId: string; version: string }[] | [];
@@ -367,7 +489,7 @@ aiNodesRouter.post("/node/skills/sync", async (req: Request, res: Response) => {
       allSkills.map((s) => ({ id: s.skillId, version: s.version }))
     );
 
-    await sbFetch(
+    await dbFetch(
       `/ai_nodes?id=eq.${body.nodeId}`,
       { method: "PATCH", body: JSON.stringify({ skillsChecksum: newChecksum }) }
     );
@@ -383,10 +505,10 @@ aiNodesRouter.post("/node/skills/sync", async (req: Request, res: Response) => {
 
 aiNodesRouter.get("/node/list", async (_req: Request, res: Response) => {
   try {
-    const nodesRes = await sbFetch("/ai_nodes?isLocal=eq.true&select=*&order=createdAt.asc");
+    const nodesRes = await dbFetch("/ai_nodes?isLocal=eq.true&select=*&order=createdAt.asc");
     const nodes = nodesRes.data as Record<string, unknown>[] | null ?? [];
 
-    const skillsRes = await sbFetch(
+    const skillsRes = await dbFetch(
       `/node_skills?nodeId=in.(${nodes.map((n) => n.id).join(",") || "0"})`
     );
     const allSkills = skillsRes.data as { nodeId: number }[] | [];
@@ -410,7 +532,7 @@ aiNodesRouter.post("/skill/invoke", async (req: Request, res: Response) => {
 
   try {
     // 查找在线节点
-    const nodeRes = await sbFetch(
+    const nodeRes = await dbFetch(
       `/ai_nodes?id=eq.${nodeId}&isOnline=eq.true&select=*`
     );
     const nodes = nodeRes.data as Record<string, unknown>[] | null;
@@ -458,7 +580,7 @@ aiNodesRouter.post("/skill/match", async (req: Request, res: Response) => {
 
   try {
     // 获取所有在线本地节点的 id
-    const nodesRes = await sbFetch(
+    const nodesRes = await dbFetch(
       "/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id"
     );
     const onlineNodes = nodesRes.data as { id: number }[] | [];
@@ -469,7 +591,7 @@ aiNodesRouter.post("/skill/match", async (req: Request, res: Response) => {
     }
 
     const nodeIds = onlineNodes.map((n) => n.id);
-    const skillsRes = await sbFetch(
+    const skillsRes = await dbFetch(
       `/node_skills?nodeId=in.(${nodeIds.join(",")})&isActive=eq.true&select=*`
     );
     const skills = skillsRes.data as Array<{
