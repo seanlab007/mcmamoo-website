@@ -86,12 +86,13 @@ type ToolCallStep = {
 
 // Tool name → 中文显示名和图标
 const TOOL_DISPLAY: Record<string, { label: string; emoji: string; color: string }> = {
-  web_search:  { label: "联网搜索", emoji: "🔍", color: "text-blue-400" },
-  run_code:    { label: "执行代码", emoji: "⚡", color: "text-yellow-400" },
-  github_push: { label: "GitHub 推送", emoji: "🚀", color: "text-green-400" },
-  github_read: { label: "读取仓库", emoji: "📂", color: "text-purple-400" },
-  read_url:    { label: "读取网页", emoji: "🌐", color: "text-cyan-400" },
-  run_shell:   { label: "Shell 命令", emoji: "🖥️", color: "text-red-400" },
+  web_search:     { label: "联网搜索", emoji: "🔍", color: "text-blue-400" },
+  run_code:       { label: "执行代码", emoji: "⚡", color: "text-yellow-400" },
+  github_push:    { label: "GitHub 推送", emoji: "🚀", color: "text-green-400" },
+  github_read:    { label: "读取仓库", emoji: "📂", color: "text-purple-400" },
+  read_url:       { label: "读取网页", emoji: "🌐", color: "text-cyan-400" },
+  run_shell:      { label: "Shell 命令", emoji: "🖥️", color: "text-red-400" },
+  deep_research:  { label: "深度研究", emoji: "🔬", color: "text-indigo-400" },
 };
 
 // ─── Cloud models ─────────────────────────────────────────────────────────────
