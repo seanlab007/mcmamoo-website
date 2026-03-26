@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{BRAND}} — Editorial Board</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #6366f1;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #475569;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --col-ideas: #1a1a26;
+    --col-research: #1a1e26;
+    --col-writing: #1a261e;
+    --col-review: #261e1a;
+    --col-published: #1a2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  /* Topbar */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .brand-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .topbar h1 { font-size: 17px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #5254d4; }
+  .btn-ghost { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--border); color: var(--text); }
+
+  /* Board */
+  .board {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    min-height: calc(100vh - 58px);
+    align-items: flex-start;
+  }
+
+  /* Columns */
+  .column {
+    flex: 0 0 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 100px);
+  }
+  .column-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    border-radius: 14px 14px 0 0;
+    background: inherit;
+  }
+  .column-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-ideas { background: #6366f1; }
+  .dot-research { background: #3b82f6; }
+  .dot-writing { background: #eab308; }
+  .dot-review { background: #f97316; }
+  .dot-published { background: #22c55e; }
+  .column-title { font-weight: 700; font-size: 14px; flex: 1; }
+  .column-count {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 22px;
+    text-align: center;
+  }
+  .column-body {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .column-body.drag-over {
+    background: rgba(99,102,241,0.05);
+    border-radius: 0 0 14px 14px;
+  }
+
+  /* Add button inside column */
+  .add-card-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .add-card-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(99,102,241,0.05); }
+
+  /* Cards */
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: grab;
+    transition: all 0.15s;
+    user-select: none;
+    position: relative;
+  }
+  .card:hover { border-color: rgba(99,102,241,0.5); box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
+  .card.dragging { opacity: 0.4; transform: rotate(2deg); }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .card-title { font-weight: 600; font-size: 13px; line-height: 1.4; flex: 1; }
+  .card-menu { color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; }
+  .card-menu:hover { background: var(--border); color: var(--text); }
+  .card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .tag-expertise { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+  .tag-story { background: rgba(168,85,247,0.2); color: #d8b4fe; }
+  .tag-utility { background: rgba(34,197,94,0.2); color: #86efac; }
+  .tag-perspective { background: rgba(245,158,11,0.2); color: #fcd34d; }
+  .tag-proof { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  .tag-blog { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+  .tag-newsletter { background: rgba(34,197,94,0.15); color: #86efac; }
+  .tag-social { background: rgba(245,158,11,0.15); color: #fcd34d; }
+  .tag-video { background: rgba(239,68,68,0.15); color: #fca5a5; }
+  .card-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; line-height: 1.5; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-due { font-size: 11px; color: var(--text-muted); }
+  .card-due.overdue { color: var(--red); }
+  .card-assignee {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: white;
+  }
+  .priority-indicator {
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    border-radius: 10px 0 0 10px;
+  }
+  .priority-high { background: var(--red); }
+  .priority-med { background: var(--yellow); }
+  .priority-low { background: var(--green); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+  }
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; display: block; letter-spacing: 0.04em; text-transform: uppercase; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-select option { background: var(--surface); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="brand-badge">Marketing Claw</span>
+    <h1>{{BRAND}} — Editorial Board</h1>
+  </div>
+  <div class="topbar-right">
+    <a href="command-center.html" class="btn btn-ghost">← Command Center</a>
+    <button class="btn btn-primary" onclick="openModal()">+ Add Content</button>
+  </div>
+</div>
+
+<div class="board" id="board">
+  <!-- Columns generated by JS -->
+</div>
+
+<!-- Add Card Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>Add Content Item</h2>
+    <div class="form-group">
+      <label class="form-label">Title</label>
+      <input class="form-input" id="cardTitle" placeholder="e.g., Why Most Content Strategies Fail" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="cardType">
+          <option value="blog">Blog Post</option>
+          <option value="newsletter">Newsletter</option>
+          <option value="social">Social Thread</option>
+          <option value="video">Video Script</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pillar</label>
+        <select class="form-select" id="cardPillar">
+          <option value="expertise">Expertise</option>
+          <option value="story">Story</option>
+          <option value="utility">Utility</option>
+          <option value="perspective">Perspective</option>
+          <option value="proof">Social Proof</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description / Angle</label>
+      <textarea class="form-textarea" id="cardDesc" placeholder="What's the angle? Who's this for? What's the key insight?"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Column</label>
+        <select class="form-select" id="cardColumn">
+          <option value="ideas">Ideas</option>
+          <option value="research">Research</option>
+          <option value="writing">Writing</option>
+          <option value="review">Review</option>
+          <option value="published">Published</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Due Date</label>
+        <input class="form-input" id="cardDue" type="date" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-select" id="cardPriority">
+        <option value="">None</option>
+        <option value="high">High</option>
+        <option value="med">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addCard()">Add to Board</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLUMNS = [
+  { id: 'ideas', label: 'Ideas', dot: 'dot-ideas' },
+  { id: 'research', label: 'Research', dot: 'dot-research' },
+  { id: 'writing', label: 'Writing', dot: 'dot-writing' },
+  { id: 'review', label: 'Review', dot: 'dot-review' },
+  { id: 'published', label: 'Published', dot: 'dot-published' },
+];
+
+const TAG_CLASSES = {
+  expertise: 'tag-expertise', story: 'tag-story', utility: 'tag-utility',
+  perspective: 'tag-perspective', proof: 'tag-proof',
+  blog: 'tag-blog', newsletter: 'tag-newsletter', social: 'tag-social', video: 'tag-video'
+};
+
+// Initial sample data
+const DEFAULT_CARDS = [
+  { id: 1, col: 'ideas', title: 'Why Most Content Strategies Fail (And What to Do Instead)', type: 'blog', pillar: 'perspective', desc: 'Contrarian take on the "post consistently" advice. Argues that consistency without strategy is just noise.', due: '', priority: 'high' },
+  { id: 2, col: 'ideas', title: 'The 5-Step Framework for Qualifying Leads from Social', type: 'blog', pillar: 'utility', desc: 'Practical guide for turning social engagement into qualified pipeline. Concrete steps, not theory.', due: '', priority: 'med' },
+  { id: 3, col: 'ideas', title: 'What 6 Months of Newsletter Data Taught Us', type: 'newsletter', pillar: 'story', desc: 'Retrospective on newsletter growth — what worked, what flopped, hard numbers.', due: '', priority: '' },
+  { id: 4, col: 'research', title: 'The Hidden Cost of Inconsistent Branding', type: 'blog', pillar: 'expertise', desc: 'Research-backed post on the revenue impact of brand inconsistency. Need to find 3-4 credible studies.', due: nextWeek(3), priority: 'med' },
+  { id: 5, col: 'research', title: 'How Top {{INDUSTRY}} Companies Use X for Growth', type: 'social', pillar: 'utility', desc: 'Thread format. Need to analyze 5-10 top accounts and extract patterns.', due: nextWeek(2), priority: '' },
+  { id: 6, col: 'writing', title: 'Your First 1,000 Newsletter Subscribers: The Playbook', type: 'blog', pillar: 'utility', desc: 'Step-by-step guide. Draft 60% complete. Need intro section and case study.', due: nextWeek(1), priority: 'high' },
+  { id: 7, col: 'writing', title: 'Weekly Newsletter Issue #12', type: 'newsletter', pillar: 'expertise', desc: 'Theme: The compound effect of consistent content. Quill draft in memory/newsletter-drafts/.', due: tomorrow(), priority: 'high' },
+  { id: 8, col: 'review', title: 'The Founder\'s Guide to Hiring a Marketing Team', type: 'blog', pillar: 'expertise', desc: 'Long-form guide. Draft complete. Needs {{USER_NAME}}\'s review and personal story insertion.', due: tomorrow(), priority: 'high' },
+  { id: 9, col: 'review', title: 'Thread: 10 Lessons from Running a 12-Agent AI Marketing Squad', type: 'social', pillar: 'story', desc: 'Ghost-written thread. Strong draft — needs voice check and final polish.', due: today(), priority: 'med' },
+  { id: 10, col: 'published', title: 'Why We Ditched Our Marketing Agency', type: 'blog', pillar: 'perspective', desc: 'Published. 847 views. Best performer of the month. Drove 43 newsletter signups.', due: lastWeek(5), priority: '' },
+  { id: 11, col: 'published', title: 'Weekly Newsletter Issue #11', type: 'newsletter', pillar: 'expertise', desc: 'Sent. 41% open rate. 6.2% CTR. 12 replies. Beat benchmark on all metrics.', due: lastWeek(7), priority: '' },
+];
+
+function today() { return new Date().toISOString().split('T')[0]; }
+function tomorrow() { const d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().split('T')[0]; }
+function nextWeek(n) { const d = new Date(); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
+function lastWeek(n) { const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; }
+
+let cards = [];
+let dragCard = null;
+let dragFrom = null;
+let nextId = 100;
+
+function load() {
+  const stored = localStorage.getItem('mc_editorial_cards');
+  if (stored) {
+    try { cards = JSON.parse(stored); nextId = Math.max(...cards.map(c=>c.id||0))+1; } catch(e) { cards = [...DEFAULT_CARDS]; }
+  } else {
+    cards = [...DEFAULT_CARDS];
+  }
+}
+
+function save() { localStorage.setItem('mc_editorial_cards', JSON.stringify(cards)); }
+
+function formatDate(ds) {
+  if (!ds) return '';
+  const d = new Date(ds+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = (d - today) / 86400000;
+  if (diff < 0) return `Overdue ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  if (diff === 0) return 'Due today';
+  if (diff === 1) return 'Due tomorrow';
+  return `Due ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+}
+
+function isOverdue(ds) {
+  if (!ds) return false;
+  return new Date(ds+'T00:00:00') < new Date();
+}
+
+function renderCard(card) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.dataset.id = card.id;
+  el.draggable = true;
+  const dueText = formatDate(card.due);
+  const overdue = isOverdue(card.due);
+  const initials = '{{USER_NAME}}'.substring(0,2).toUpperCase() || '??';
+  el.innerHTML = `
+    ${card.priority ? `<div class="priority-indicator priority-${card.priority}"></div>` : ''}
+    <div class="card-top">
+      <div class="card-title">${escHtml(card.title)}</div>
+      <div class="card-menu" onclick="deleteCard(${card.id}, event)">⋯</div>
+    </div>
+    <div class="card-meta">
+      <span class="tag ${TAG_CLASSES[card.type] || ''}">${card.type}</span>
+      <span class="tag ${TAG_CLASSES[card.pillar] || ''}">${card.pillar}</span>
+    </div>
+    ${card.desc ? `<div class="card-desc">${escHtml(card.desc)}</div>` : ''}
+    <div class="card-footer">
+      <span class="card-due ${overdue ? 'overdue' : ''}">${dueText}</span>
+      <div class="card-assignee" title="{{USER_NAME}}">${initials}</div>
+    </div>
+  `;
+  el.addEventListener('dragstart', e => { dragCard = card; dragFrom = card.col; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+  el.addEventListener('dragend', () => { el.classList.remove('dragging'); dragCard = null; });
+  return el;
+}
+
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function deleteCard(id, e) {
+  e.stopPropagation();
+  if (confirm('Remove this card?')) {
+    cards = cards.filter(c => c.id !== id);
+    save();
+    render();
+  }
+}
+
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  COLUMNS.forEach(col => {
+    const colCards = cards.filter(c => c.col === col.id);
+    const colEl = document.createElement('div');
+    colEl.className = 'column';
+    colEl.dataset.col = col.id;
+    colEl.innerHTML = `
+      <div class="column-header">
+        <div class="column-dot ${col.dot}"></div>
+        <div class="column-title">${col.label}</div>
+        <div class="column-count">${colCards.length}</div>
+      </div>
+    `;
+    const body = document.createElement('div');
+    body.className = 'column-body';
+    body.dataset.col = col.id;
+    colCards.forEach(card => body.appendChild(renderCard(card)));
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-card-btn';
+    addBtn.textContent = '+ Add';
+    addBtn.onclick = () => { document.getElementById('cardColumn').value = col.id; openModal(); };
+    body.appendChild(addBtn);
+    // Drag events
+    body.addEventListener('dragover', e => { e.preventDefault(); body.classList.add('drag-over'); });
+    body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
+    body.addEventListener('drop', e => {
+      e.preventDefault();
+      body.classList.remove('drag-over');
+      if (dragCard && dragCard.col !== col.id) {
+        const c = cards.find(c => c.id === dragCard.id);
+        if (c) c.col = col.id;
+        save();
+        render();
+      }
+    });
+    colEl.appendChild(body);
+    board.appendChild(colEl);
+  });
+}
+
+function openModal() {
+  document.getElementById('cardTitle').value = '';
+  document.getElementById('cardDesc').value = '';
+  document.getElementById('cardDue').value = '';
+  document.getElementById('cardPriority').value = '';
+  document.getElementById('addModal').classList.add('open');
+  document.getElementById('cardTitle').focus();
+}
+
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+
+function addCard() {
+  const title = document.getElementById('cardTitle').value.trim();
+  if (!title) { document.getElementById('cardTitle').focus(); return; }
+  const card = {
+    id: nextId++,
+    col: document.getElementById('cardColumn').value,
+    title,
+    type: document.getElementById('cardType').value,
+    pillar: document.getElementById('cardPillar').value,
+    desc: document.getElementById('cardDesc').value.trim(),
+    due: document.getElementById('cardDue').value,
+    priority: document.getElementById('cardPriority').value
+  };
+  cards.push(card);
+  save();
+  render();
+  closeModal();
+}
+
+document.getElementById('addModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+load();
+render();
+</script>
+</body>
+</html>

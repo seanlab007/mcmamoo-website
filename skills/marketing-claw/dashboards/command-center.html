@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{BRAND}} — Marketing Command Center</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #6366f1;
+    --accent-dim: #4f52c0;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #475569;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  /* Layout */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .brand-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .topbar h1 { font-size: 18px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .topbar-date { color: var(--text-dim); font-size: 13px; }
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .live-label { font-size: 12px; color: var(--green); font-weight: 500; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* Grid */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 800px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .card-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .badge-accent { background: rgba(99,102,241,0.15); color: var(--accent); }
+
+  /* Metric cards */
+  .metric-value {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  .metric-label { color: var(--text-dim); font-size: 13px; margin-bottom: 12px; }
+  .metric-change {
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .metric-change.up { color: var(--green); }
+  .metric-change.down { color: var(--red); }
+  .metric-change.flat { color: var(--text-muted); }
+
+  /* Mini sparkline */
+  .sparkline { margin-top: 16px; }
+  .spark-bars { display: flex; gap: 3px; align-items: flex-end; height: 32px; }
+  .spark-bar {
+    flex: 1;
+    border-radius: 3px 3px 0 0;
+    background: var(--accent);
+    opacity: 0.4;
+    transition: opacity 0.2s;
+  }
+  .spark-bar:last-child { opacity: 1; }
+  .spark-bar.up { background: var(--green); }
+  .spark-bar.down { background: var(--red); }
+
+  /* Sections */
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Content score table */
+  .score-table { width: 100%; border-collapse: collapse; }
+  .score-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .score-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    vertical-align: middle;
+  }
+  .score-table tr:last-child td { border-bottom: none; }
+  .score-table tr:hover td { background: var(--surface2); }
+  .content-type-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .score-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .score-bar-bg { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; }
+  .score-bar-fill { height: 6px; border-radius: 3px; background: var(--accent); }
+  .score-num { font-size: 13px; font-weight: 700; min-width: 28px; text-align: right; }
+
+  /* Agent status */
+  .agent-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .agent-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .agent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-red { background: var(--red); }
+  .dot-gray { background: var(--text-muted); }
+  .agent-name { font-weight: 600; font-size: 13px; flex: 1; }
+  .agent-time { font-size: 11px; color: var(--text-muted); }
+
+  /* Lead pipeline */
+  .pipeline-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    gap: 12px;
+  }
+  .pipeline-row:last-child { border-bottom: none; }
+  .pipeline-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: white; flex-shrink: 0;
+  }
+  .pipeline-info { flex: 1; min-width: 0; }
+  .pipeline-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pipeline-signal { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pipeline-score { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
+
+  /* Recommendations */
+  .rec-item {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+  }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: rgba(99,102,241,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .rec-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .rec-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+  .rec-priority {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .priority-high { color: var(--red); }
+  .priority-med { color: var(--yellow); }
+  .priority-low { color: var(--green); }
+
+  /* Activity feed */
+  .activity-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-icon {
+    font-size: 16px; flex-shrink: 0; width: 24px; text-align: center; margin-top: 2px;
+  }
+  .activity-text { font-size: 13px; line-height: 1.5; flex: 1; }
+  .activity-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 32px 24px;
+    color: var(--text-muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="brand-badge">Marketing Claw</span>
+    <h1>{{BRAND}} Command Center</h1>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-date" id="currentDate"></span>
+    <span><span class="live-dot"></span><span class="live-label">Squad Active</span></span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- KPI Row -->
+  <div class="section-title">Performance Overview</div>
+  <div class="grid-4">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Social Followers</span>
+        <span class="card-badge badge-green">+12% WoW</span>
+      </div>
+      <div class="metric-value" id="followers">—</div>
+      <div class="metric-label">{{SOCIAL_PLATFORM}} · {{SOCIAL_HANDLE}}</div>
+      <div class="metric-change up">↑ 284 this week</div>
+      <div class="sparkline">
+        <div class="spark-bars">
+          <div class="spark-bar" style="height:40%"></div>
+          <div class="spark-bar" style="height:55%"></div>
+          <div class="spark-bar" style="height:48%"></div>
+          <div class="spark-bar" style="height:70%"></div>
+          <div class="spark-bar" style="height:62%"></div>
+          <div class="spark-bar" style="height:85%"></div>
+          <div class="spark-bar up" style="height:100%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Newsletter Subscribers</span>
+        <span class="card-badge badge-green">+8% WoW</span>
+      </div>
+      <div class="metric-value" id="subscribers">—</div>
+      <div class="metric-label">{{NEWSLETTER_PLATFORM}} list</div>
+      <div class="metric-change up">↑ 143 this week</div>
+      <div class="sparkline">
+        <div class="spark-bars">
+          <div class="spark-bar" style="height:50%"></div>
+          <div class="spark-bar" style="height:45%"></div>
+          <div class="spark-bar" style="height:60%"></div>
+          <div class="spark-bar" style="height:55%"></div>
+          <div class="spark-bar" style="height:75%"></div>
+          <div class="spark-bar" style="height:80%"></div>
+          <div class="spark-bar up" style="height:100%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Hot Leads</span>
+        <span class="card-badge badge-accent">This week</span>
+      </div>
+      <div class="metric-value" id="hotLeads">—</div>
+      <div class="metric-label">Ready to contact now</div>
+      <div class="metric-change up">↑ 3 from yesterday</div>
+      <div class="sparkline">
+        <div class="spark-bars">
+          <div class="spark-bar" style="height:30%"></div>
+          <div class="spark-bar" style="height:50%"></div>
+          <div class="spark-bar" style="height:40%"></div>
+          <div class="spark-bar" style="height:80%"></div>
+          <div class="spark-bar" style="height:60%"></div>
+          <div class="spark-bar" style="height:70%"></div>
+          <div class="spark-bar up" style="height:100%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Content Published</span>
+        <span class="card-badge badge-accent">This week</span>
+      </div>
+      <div class="metric-value" id="contentCount">—</div>
+      <div class="metric-label">Posts, blogs & newsletter</div>
+      <div class="metric-change flat">→ On cadence</div>
+      <div class="sparkline">
+        <div class="spark-bars">
+          <div class="spark-bar" style="height:60%"></div>
+          <div class="spark-bar" style="height:60%"></div>
+          <div class="spark-bar" style="height:80%"></div>
+          <div class="spark-bar" style="height:60%"></div>
+          <div class="spark-bar" style="height:80%"></div>
+          <div class="spark-bar" style="height:60%"></div>
+          <div class="spark-bar up" style="height:80%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Scoring + Agent Status -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Content Scores — This Week</span>
+        <span class="card-badge badge-accent">Judge · Fri</span>
+      </div>
+      <table class="score-table">
+        <thead>
+          <tr>
+            <th>Content</th>
+            <th>Type</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="scoreTableBody">
+          <tr>
+            <td colspan="3" style="color:var(--text-muted); text-align:center; padding: 24px;">
+              Content scores appear after Judge runs each Friday.<br>
+              <span style="font-size:12px;">Configure Judge agent to populate this table.</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Agent Squad Status</span>
+        <span class="card-badge badge-green">Active</span>
+      </div>
+      <div class="agent-grid">
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Pulse</div>
+          <div class="agent-time">8:00 AM daily</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Hype</div>
+          <div class="agent-time">9:00 AM daily</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Megaphone</div>
+          <div class="agent-time">10:00 AM daily</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Mingle</div>
+          <div class="agent-time">11 AM + 4 PM</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Ghost</div>
+          <div class="agent-time">Tue / Thu 9 AM</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Scout</div>
+          <div class="agent-time">8:30 AM daily</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Oracle</div>
+          <div class="agent-time">Mon 7:00 AM</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Quill</div>
+          <div class="agent-time">Wed 10:00 AM</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Judge</div>
+          <div class="agent-time">Fri 3:00 PM</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Hunter</div>
+          <div class="agent-time">7:30 AM daily</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Prospector</div>
+          <div class="agent-time">M/W/F 6:00 AM</div>
+        </div>
+        <div class="agent-row">
+          <div class="agent-dot dot-green"></div>
+          <div class="agent-name">Standup</div>
+          <div class="agent-time">9:30 AM daily</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lead Pipeline + Recommendations -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Lead Pipeline</span>
+        <span class="card-badge badge-accent">Hunter · Daily</span>
+      </div>
+      <div id="leadPipeline">
+        <div class="pipeline-row">
+          <div class="pipeline-avatar">?</div>
+          <div class="pipeline-info">
+            <div class="pipeline-name">Pipeline populates from Hunter + Prospector</div>
+            <div class="pipeline-signal">Agents surface leads daily — they'll appear here</div>
+          </div>
+          <span class="pipeline-score badge-accent card-badge">—</span>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-avatar" style="background:var(--surface2); color:var(--text-muted)">•</div>
+          <div class="pipeline-info">
+            <div class="pipeline-name" style="color:var(--text-muted)">Warm leads</div>
+            <div class="pipeline-signal">Scoring criteria: ICP fit + signal strength + timing</div>
+          </div>
+          <span class="pipeline-score card-badge badge-yellow">WARM</span>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-avatar" style="background:var(--surface2); color:var(--text-muted)">•</div>
+          <div class="pipeline-info">
+            <div class="pipeline-name" style="color:var(--text-muted)">Nurture watch list</div>
+            <div class="pipeline-signal">Long-term monitoring — reviewed monthly</div>
+          </div>
+          <span class="pipeline-score card-badge badge-green">NURTURE</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Today's Recommendations</span>
+        <span class="card-badge badge-accent">AI Priority</span>
+      </div>
+      <div id="recommendations">
+        <div class="rec-item">
+          <div class="rec-icon">🎯</div>
+          <div>
+            <div class="rec-priority priority-high">High Priority</div>
+            <div class="rec-title">Review hot leads from Hunter</div>
+            <div class="rec-desc">Hunter surfaces warm leads daily. Check memory/lead-pipeline.md and contact any HOT leads within 24 hours.</div>
+          </div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">📝</div>
+          <div>
+            <div class="rec-priority priority-med">Medium Priority</div>
+            <div class="rec-title">Approve content queue for Megaphone</div>
+            <div class="rec-desc">Hype generates 3 post options daily. Review and mark [READY] in content-queue.md so Megaphone can post.</div>
+          </div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-icon">💌</div>
+          <div>
+            <div class="rec-priority priority-low">Standard</div>
+            <div class="rec-title">Review Quill's newsletter draft (Wed)</div>
+            <div class="rec-desc">Quill drafts your newsletter every Wednesday. Review, personalize, and send via {{NEWSLETTER_PLATFORM}}.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Feed -->
+  <div class="section-title">Agent Activity Feed</div>
+  <div class="card">
+    <div id="activityFeed">
+      <div class="activity-item">
+        <div class="activity-icon">📊</div>
+        <div>
+          <div class="activity-text"><strong>Pulse</strong> — Daily analytics digest ready. Check Telegram for today's report.</div>
+          <div class="activity-time">8:00 AM today</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="activity-icon">💡</div>
+        <div>
+          <div class="activity-text"><strong>Hype</strong> — 3 content ideas generated for {{SOCIAL_PLATFORM}}. Pending approval in content queue.</div>
+          <div class="activity-time">9:00 AM today</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="activity-icon">🔍</div>
+        <div>
+          <div class="activity-text"><strong>Hunter</strong> — Lead scan complete. Check Telegram and memory/lead-pipeline.md for new prospects.</div>
+          <div class="activity-time">7:30 AM today</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="activity-icon">🎯</div>
+        <div>
+          <div class="activity-text"><strong>Scout</strong> — Community scan complete. Brand mentions and competitor moves in today's report.</div>
+          <div class="activity-time">8:30 AM today</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="activity-icon">📋</div>
+        <div>
+          <div class="activity-text"><strong>Standup</strong> — Squad audit complete. All agents operational. 2 items need your review.</div>
+          <div class="activity-time">9:30 AM today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Marketing Claw — {{BRAND}} | <span id="footerDate"></span> | <a href="editorial-kanban.html" style="color:var(--accent);text-decoration:none;">Editorial Board</a> · <a href="social-kanban.html" style="color:var(--accent);text-decoration:none;">Social Board</a>
+</div>
+
+<script>
+  // Date display
+  const now = new Date();
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const dateStr = now.toLocaleDateString('en-US', opts);
+  document.getElementById('currentDate').textContent = dateStr;
+  document.getElementById('footerDate').textContent = dateStr;
+
+  // Placeholder metric values — replace these with real data from your analytics tool
+  // or wire up to an API once you have one
+  const metrics = {
+    followers: '—',
+    subscribers: '—',
+    hotLeads: '—',
+    contentCount: '—'
+  };
+
+  // Try to load from localStorage (agents can write here)
+  try {
+    const stored = JSON.parse(localStorage.getItem('mcMetrics') || '{}');
+    Object.assign(metrics, stored);
+  } catch(e) {}
+
+  document.getElementById('followers').textContent = metrics.followers;
+  document.getElementById('subscribers').textContent = metrics.subscribers;
+  document.getElementById('hotLeads').textContent = metrics.hotLeads;
+  document.getElementById('contentCount').textContent = metrics.contentCount;
+
+  // Content score table — load from localStorage if available
+  try {
+    const scores = JSON.parse(localStorage.getItem('mcContentScores') || '[]');
+    if (scores.length > 0) {
+      const tbody = document.getElementById('scoreTableBody');
+      tbody.innerHTML = scores.map(s => `
+        <tr>
+          <td>${s.title}</td>
+          <td><span class="content-type-tag">${s.type}</span></td>
+          <td>
+            <div class="score-bar-wrap">
+              <div class="score-bar-bg"><div class="score-bar-fill" style="width:${s.score*10}%"></div></div>
+              <div class="score-num">${s.score}</div>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch(e) {}
+
+  // Expose a global function agents can call to update metrics
+  window.updateMetrics = function(data) {
+    try {
+      const current = JSON.parse(localStorage.getItem('mcMetrics') || '{}');
+      Object.assign(current, data);
+      localStorage.setItem('mcMetrics', JSON.stringify(current));
+      location.reload();
+    } catch(e) {}
+  };
+</script>
+</body>
+</html>
