@@ -25,6 +25,47 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    // Admin: list all users
+    listUsers: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可查看用户列表" });
+      }
+      const db = await getDb();
+      if (!db) return [];
+      const { users } = await import("../drizzle/schema");
+      const results = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        lastSignedIn: users.lastSignedIn,
+        createdAt: users.createdAt,
+      }).from(users).orderBy(users.id.desc());
+      return results;
+    }),
+    // Admin: update user role
+    updateUserRole: protectedProcedure
+      .input(
+        z.object({
+          userId: z.number().int().positive(),
+          role: z.enum(["user", "admin"]),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        // Only admins can update user roles
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作用户角色" });
+        }
+        const db = await getDb();
+        if (!db) throw new Error("Database unavailable");
+        const { eq } = await import("drizzle-orm");
+        const { users } = await import("../drizzle/schema");
+        await db
+          .update(users)
+          .set({ role: input.role, updatedAt: new Date() })
+          .where(eq(users.id, input.userId));
+        return { success: true };
+      }),
   }),
 
   // Contact form submission with email notification
