@@ -3,7 +3,9 @@
 .pnpm-store/
 
 # Build outputs
-dist/
+# dist/  # 注释掉以允许 dist/public 提交到 GitHub 供 Cloudflare Pages 部署
+dist/index.js
+dist/index.d.ts
 build/
 *.dist
 
