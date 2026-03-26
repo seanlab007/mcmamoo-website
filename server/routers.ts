@@ -9,9 +9,11 @@ import { maoApplications, briefSubscribers } from "../drizzle/schema";
 import { z } from "zod";
 import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfirmationHtml, generateContactAdminHtml } from "./email";
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
+import { autoclipRouter } from "./autoclip";
 
 export const appRouter = router({
   system: systemRouter,
+  autoclip: autoclipRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

@@ -17,6 +17,7 @@ const navItems = [
 const specialItems = [
   { label: "毛智库", href: "/maothink", external: true },
   { label: "运营平台", href: "/platform", external: true },
+  { label: "AutoClip", href: "/autoclip", external: true },
 ];
 
 export default function Navbar() {
@@ -103,6 +104,14 @@ export default function Navbar() {
               <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "2px", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px rgba(201,168,76,0.6)" }} />
               MaoAI
             </a>
+            <a
+              href="/autoclip"
+              className="relative text-purple-400/80 hover:text-purple-400 text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5"
+              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+            >
+              <span style={{ width: 6, height: 6, background: "#a855f7", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #a855f7" }} />
+              AutoClip
+            </a>
             <button
               onClick={() => handleNav("#contact")}
               className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
@@ -161,6 +170,14 @@ export default function Navbar() {
           >
             <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "2px", display: "inline-block", boxShadow: "0 0 8px rgba(201,168,76,0.6)" }} />
             MaoAI
+          </a>
+          <a
+            href="/autoclip"
+            className="text-purple-400/80 hover:text-purple-400 text-xl transition-colors duration-300 flex items-center gap-2"
+            style={{ fontFamily: "'DM Mono', monospace" }}
+          >
+            <span style={{ width: 8, height: 8, background: "#a855f7", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #a855f7" }} />
+            AutoClip
           </a>
           <button
             onClick={() => handleNav("#contact")}

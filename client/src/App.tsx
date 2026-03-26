@@ -31,6 +31,7 @@ import AdminLogs from "./pages/AdminLogs";
 import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
+import AutoClip from "./pages/AutoClip";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -45,7 +46,7 @@ function Router() {
       <Route path={"/maothink"} component={MaoThinkTank} />
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />
-      <Route path={"/admin/ai-nodes"} component={AdminAiNodes} />
+      <Route path={"/admin/ai-nodes" } component={AdminAiNodes} />
       <Route path={"/platform"} component={Platform} />
       <Route path={"/chat"} component={Chat} />
       <Route path={"/notes"} component={Notes} />
@@ -60,6 +61,7 @@ function Router() {
       <Route path={"/openclaw"} component={OpenClaw} />
       <Route path={"/millennium-clock"} component={MillenniumClock} />
       <Route path={"/whale-pictures"} component={WhalePictures} />
+      <Route path={"/autoclip"} component={AutoClip} />
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
       <Route path={"/admin/logs"} component={AdminLogs} />
