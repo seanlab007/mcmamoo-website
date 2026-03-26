@@ -10,10 +10,12 @@ import { z } from "zod";
 import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfirmationHtml, generateContactAdminHtml } from "./email";
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
 import { autoclipRouter } from "./autoclip";
+import { salesRouter } from "./sales";
 
 export const appRouter = router({
   system: systemRouter,
   autoclip: autoclipRouter,
+  sales: salesRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -221,6 +223,9 @@ export const appRouter = router({
         return { success: true, sent: success, failed, message: `已发送 ${success} 封，失败 ${failed} 封` };
       }),
   }),
+
+  // Sales automation router
+  sales: salesRouter,
 });
 
 export type AppRouter = typeof appRouter;

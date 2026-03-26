@@ -97,3 +97,66 @@ export interface NodeSkill {
 }
 
 export type InsertNodeSkill = Omit<NodeSkill, "id" | "createdAt" | "updatedAt">;
+
+// ── Sales Automation Tables ───────────────────────────────────────────────────
+
+// Sales leads table
+export const salesLeads = mysqlTable("sales_leads", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  company: varchar("company", { length: 256 }).notNull(),
+  title: varchar("title", { length: 128 }),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 64 }),
+  linkedin: varchar("linkedin", { length: 256 }),
+  website: varchar("website", { length: 256 }),
+  status: mysqlEnum("status", ["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"]).default("new").notNull(),
+  source: mysqlEnum("source", ["website", "linkedin", "referral", "cold_outreach", "event", "other"]).default("other").notNull(),
+  score: int("score").default(0),
+  notes: text("notes"),
+  lastContact: timestamp("lastContact"),
+  nextFollowUp: timestamp("nextFollowUp"),
+  assignedTo: int("assignedTo").references(() => users.id),
+  aiInsights: json("aiInsights").$type<string[]>(),
+  suggestedActions: json("suggestedActions").$type<string[]>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SalesLead = typeof salesLeads.$inferSelect;
+export type InsertSalesLead = typeof salesLeads.$inferInsert;
+
+// Outreach templates
+export const outreachTemplates = mysqlTable("outreach_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  subject: varchar("subject", { length: 256 }),
+  body: text("body").notNull(),
+  type: mysqlEnum("type", ["email", "linkedin"]).default("email").notNull(),
+  category: varchar("category", { length: 64 }),
+  aiOptimized: boolean("aiOptimized").default(false),
+  createdBy: int("createdBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type OutreachTemplate = typeof outreachTemplates.$inferSelect;
+export type InsertOutreachTemplate = typeof outreachTemplates.$inferInsert;
+
+// Outreach activities
+export const outreachActivities = mysqlTable("outreach_activities", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId").notNull().references(() => salesLeads.id),
+  type: mysqlEnum("type", ["email", "linkedin", "call", "meeting", "note"]).notNull(),
+  subject: varchar("subject", { length: 256 }),
+  content: text("content"),
+  status: mysqlEnum("status", ["draft", "sent", "delivered", "opened", "replied", "bounced"]).default("draft").notNull(),
+  sentAt: timestamp("sentAt"),
+  openedAt: timestamp("openedAt"),
+  repliedAt: timestamp("repliedAt"),
+  createdBy: int("createdBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OutreachActivity = typeof outreachActivities.$inferSelect;
+export type InsertOutreachActivity = typeof outreachActivities.$inferInsert;
