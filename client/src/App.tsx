@@ -17,6 +17,7 @@ import AdminAiNodes from "./pages/AdminAiNodes";
 import Platform from "./pages/Platform";
 import Chat from "./pages/Chat";
 import Notes from "./pages/Notes";
+import MaoAISales from "./pages/MaoAISales";
 import WechatFloat from "./components/WechatFloat";
 import IPLicensing from "./pages/IPLicensing";
 import Pricing from "./pages/Pricing";
@@ -33,7 +34,6 @@ import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
@@ -49,42 +49,30 @@ function Router() {
       <Route path={"/platform"} component={Platform} />
       <Route path={"/chat"} component={Chat} />
       <Route path={"/notes"} component={Notes} />
-      {/* IP 授权、定价、新闻稿等页面 */}
       <Route path={"/ip-licensing"} component={IPLicensing} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/press"} component={Press} />
-      {/* MaoAI 相关页面 */}
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
-      {/* 其他功能页面 */}
+      <Route path={"/maoai/sales"} component={MaoAISales} />
       <Route path={"/openclaw"} component={OpenClaw} />
       <Route path={"/millennium-clock"} component={MillenniumClock} />
       <Route path={"/whale-pictures"} component={WhalePictures} />
-      {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
       <Route path={"/admin/logs"} component={AdminLogs} />
       <Route path={"/admin/millennium-clock"} component={AdminMillenniumClock} />
       <Route path={"/admin/nodes"} component={AdminNodes} />
       <Route path={"/admin/routing"} component={AdminRouting} />
       <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="dark"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />
