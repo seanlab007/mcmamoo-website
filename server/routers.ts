@@ -8,6 +8,7 @@ import { getDb } from "./db";
 import { maoApplications, briefSubscribers } from "../drizzle/schema";
 import { z } from "zod";
 import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfirmationHtml, generateContactAdminHtml } from "./email";
+import { reportMcmamooOrder } from "./_core/maoyan-rewards";
 
 export const appRouter = router({
   system: systemRouter,
