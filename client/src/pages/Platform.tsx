@@ -3,10 +3,20 @@
  * 将猫眼自动运营平台嵌入官网
  * 已登录用户：iframe 携带 ?uid= 传入 Supabase user_id，供后端双轨 AI 路由鉴权
  * 未登录：跳转登录页
+ * 管理员：显示管理后台入口
+ * 普通用户：显示用户运营平台
  */
 import { useState } from "react";
-import { ExternalLink, Loader2, AlertCircle, RefreshCw, Lock, Video, MessageSquare, Zap } from "lucide-react";
+import { ExternalLink, Loader2, AlertCircle, RefreshCw, Lock, Video, MessageSquare, Zap, Shield, User } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+
+// 类型定义
+interface User {
+  id: string;
+  email?: string;
+  name?: string;
+  role?: string;
+}
 
 // 运营平台后端地址（本地或云端）
 const PLATFORM_BASE_URL = import.meta.env.VITE_PLATFORM_URL || "http://localhost:8766";
@@ -18,6 +28,11 @@ const TOOLS = [
   { id: "autoclip", name: "AutoClip", icon: Video, url: AUTOCLIP_URL },
   { id: "maoai", name: "MaoAI", icon: MessageSquare, url: "/chat" },
 ];
+
+// 判断是否为管理员
+const isAdmin = (user: User | undefined): boolean => {
+  return user?.role === "admin";
+};
 
 export default function Platform() {
   const { data: me, isLoading: authLoading } = trpc.auth.me.useQuery();
@@ -86,6 +101,75 @@ export default function Platform() {
     );
   }
 
+  // 管理员入口提示
+  const userIsAdmin = isAdmin(me);
+  if (userIsAdmin) {
+    return (
+      <div className="flex flex-col h-screen bg-[#0A0A0A]">
+        {/* 顶部栏 */}
+        <div className="flex-shrink-0 flex items-center justify-between px-5 h-12 bg-[#111118] border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <a
+              href="/"
+              className="flex items-center gap-2 text-[#C9A84C] hover:text-[#e8c96a] transition-colors text-sm"
+            >
+              <span className="text-lg">←</span>
+              <span className="font-['Cormorant_Garamond'] tracking-wide">Mc&amp;Mamoo</span>
+            </a>
+            <span className="text-white/15">/</span>
+            <span className="text-white/50 text-sm">管理员后台</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-white/30 text-xs">
+              {me?.name || me?.email || "已登录"} · 管理员
+            </span>
+          </div>
+        </div>
+
+        {/* 管理功能选择 */}
+        <div className="flex-1 flex flex-col items-center justify-center p-8">
+          <div className="text-center mb-8">
+            <Shield size={48} className="text-[#C9A84C] mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-white mb-2">管理员后台</h1>
+            <p className="text-white/40">选择您要进入的管理模块</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl">
+            <a
+              href="/admin/nodes"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl bg-[#111118] border border-white/10 hover:border-[#C9A84C]/50 transition-all group"
+            >
+              <Zap size={24} className="text-[#C9A84C] group-hover:scale-110 transition-transform" />
+              <span className="text-white/80 text-sm">运营平台</span>
+            </a>
+            <a
+              href="/autoclip"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl bg-[#111118] border border-white/10 hover:border-purple-500/50 transition-all group"
+            >
+              <Video size={24} className="text-purple-400 group-hover:scale-110 transition-transform" />
+              <span className="text-white/80 text-sm">AutoClip</span>
+            </a>
+            <a
+              href="/chat"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl bg-[#111118] border border-white/10 hover:border-blue-500/50 transition-all group"
+            >
+              <MessageSquare size={24} className="text-blue-400 group-hover:scale-110 transition-transform" />
+              <span className="text-white/80 text-sm">MaoAI</span>
+            </a>
+            <a
+              href="/admin/routing"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl bg-[#111118] border border-white/10 hover:border-green-500/50 transition-all group"
+            >
+              <Shield size={24} className="text-green-400 group-hover:scale-110 transition-transform" />
+              <span className="text-white/80 text-sm">系统管理</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-[#0A0A0A]">
       {/* 顶部栏 */}
@@ -100,7 +184,7 @@ export default function Platform() {
             <span className="font-['Cormorant_Garamond'] tracking-wide">Mc&amp;Mamoo</span>
           </a>
           <span className="text-white/15">/</span>
-          <span className="text-white/50 text-sm">猫眼运营平台</span>
+          <span className="text-white/50 text-sm">{userIsAdmin ? "管理员后台" : "猫眼运营平台"}</span>
         </div>
 
         <div className="flex items-center gap-3">
