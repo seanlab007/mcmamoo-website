@@ -2,8 +2,11 @@
  * Awards Section — 国际荣誉墙
  * Design: 深黑底 + 金色奖项展示 + 合作机构 LOGO 墙
  * Theme: 国际权威背书 · 行业顶级认可
+ * i18n: full bilingual support
  */
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { useTranslation } from "react-i18next";
+import React from "react";
 
 // Generic fallback images
 const MEDAL_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_medal_gold_6822bcf3.png";
@@ -63,13 +66,13 @@ const institutions = [
   { name: "China 4A", cn: "中国4A广告协会", type: "行业协会" },
 ];
 
-const stats = [
-  { value: "10+", label: "国际顶级奖项" },
-  { value: "3", label: "戛纳广告节金奖" },
+const stats_zh = [
+  { value: "17", label: "国际顶级奖项" },
+  { value: "16", label: "年行业深耕" },
+  { value: "12", label: "国家与地区" },
   { value: "20+", label: "国际合作机构" },
-  { value: "14", label: "年行业深耕" },
 ];
-const STATS_EN = [
+const stats_en = [
   { value: "17", label: "International Top Awards" },
   { value: "16", label: "Years of Global Presence" },
   { value: "12", label: "Countries & Regions" },
@@ -84,9 +87,12 @@ function getAwardImg(type: string, city?: string) {
 }
 
 export default function Awards() {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
   const ref3 = useScrollReveal();
+  const stats = isEn ? stats_en : stats_zh;
 
   return (
     <section id="awards" className="bg-[#060606] py-24 lg:py-32">
@@ -96,7 +102,7 @@ export default function Awards() {
           <div className="section-label mb-4">06 — Awards & Recognition</div>
           <div className="flex items-end gap-6 mb-6">
             <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold leading-tight">
-              国际荣誉与认可
+              {isEn ? "International Recognition" : "国际荣誉与认可"}
             </h2>
             <div className="hidden md:block h-px flex-1 bg-white/10 mb-3" />
           </div>
@@ -117,45 +123,39 @@ export default function Awards() {
           </div>
         </div>
 
-        {/* Awards list */}
+        {/* Awards grid */}
         <div ref={ref2 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-6 font-['DM_Mono']">
-            国际奖项 · International Awards
+            {isEn ? "International Awards" : "国际奖项 · International Awards"}
           </div>
           <div className="grid md:grid-cols-2 gap-0 border border-white/10">
-            {awards.map((a, i) => (
+            {AWARDS.map((award, i) => (
               <div
-                key={a.award}
-                className={`flex items-center gap-4 p-5 ${i % 2 === 0 ? "border-r border-white/10" : ""} border-b border-white/10 group hover:bg-[#C9A84C]/5 transition-all duration-200`}
+                key={`${award.year}-${award.city}`}
+                className={`relative flex items-start gap-4 p-5 ${i % 2 === 0 ? "md:border-r border-white/10" : ""} border-b border-white/10 group hover:bg-[#C9A84C]/5 transition-all duration-200`}
               >
-                <span className="text-2xl flex-shrink-0">{a.icon}</span>
+                {/* Award image */}
+                <div className="flex-shrink-0 w-14 flex items-center justify-center pt-1">
+                  <img
+                    src={getAwardImg(award.type, award.city)}
+                    alt={award.city}
+                    className="h-14 w-14 object-contain opacity-75 group-hover:opacity-95 transition-opacity duration-300"
+                    style={{ filter: 'sepia(0.18) brightness(0.92) contrast(0.94) saturate(0.85)' }}
+                  />
+                </div>
+
+                {/* Award info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-0.5">
-                    <span className="font-['DM_Mono'] text-[#C9A84C] text-xs w-10 flex-shrink-0">{a.year}</span>
-                    <span className="text-white font-semibold text-sm group-hover:text-[#C9A84C] transition-colors truncate">{a.award}</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-['DM_Mono'] text-[#C9A84C] text-xs flex-shrink-0">{award.year}</span>
+                    <span
+                      className="text-xs font-bold tracking-widest uppercase px-2 py-0.5"
+                      style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }}
+                    >
+                      {isEn ? award.category_en : award.category_zh}
+                    </span>
                   </div>
-                  <div className="text-white/30 text-xs pl-13">{a.en}</div>
-                </div>
-
-                {/* Award image thumbnail */}
-                <div className="pt-8 px-4 pb-0 flex justify-center relative">
-                  <div className="relative">
-                    <img
-                      src={getAwardImg(award.type, award.city)}
-                      alt={award.type}
-                      className="h-20 object-contain opacity-75 group-hover:opacity-90 transition-opacity duration-300"
-                      style={{ filter: 'sepia(0.18) brightness(0.92) contrast(0.94) saturate(0.85)' }}
-                    />
-                    {/* Aged photo corner effect */}
-                    <div className="absolute inset-0 pointer-events-none rounded-sm" style={{ background: 'radial-gradient(ellipse at center, transparent 50%, rgba(10,8,4,0.28) 100%)' }} />
-                  </div>
-                </div>
-
-                <div className="p-4 pt-3">
-                  <div className="text-[#C9A84C] text-xs font-['DM_Mono'] mb-1 uppercase tracking-wider">
-                    {isEn ? award.category_en : award.category_zh}
-                  </div>
-                  <div className="text-white font-semibold text-sm leading-snug mb-2 group-hover:text-[#C9A84C] transition-colors">
+                  <div className="text-white font-semibold text-sm leading-snug mb-1 group-hover:text-[#C9A84C] transition-colors">
                     {isEn ? award.name_en : award.name_zh}
                   </div>
                   <div className="text-white/30 text-xs leading-relaxed">
@@ -176,7 +176,7 @@ export default function Awards() {
         {/* Institutions */}
         <div ref={ref3 as React.RefObject<HTMLDivElement>} className="reveal">
           <div className="text-white/40 text-xs tracking-widest uppercase mb-6 font-['DM_Mono']">
-            合作机构与认可 · Partners & Recognition
+            {isEn ? "Partners & Recognition" : "合作机构与认可 · Partners & Recognition"}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {institutions.map((inst) => (

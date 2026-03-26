@@ -320,14 +320,17 @@ const pricingTiers_en = [
 ];
 
 export default function Services() {
+  const { i18n } = useTranslation();
+  const isEn = i18n.language !== 'zh';
   const ref1 = useScrollReveal();
   const ref2 = useScrollReveal();
   const ref3 = useScrollReveal();
   const ref4 = useScrollReveal();
 
-  const services = isEn ? services_en : services_zh;
-  const models = isEn ? models_en : models_zh;
   const pricingTiers = isEn ? pricingTiers_en : pricingTiers_zh;
+  // services and models are module-level constants (no i18n needed for now)
+  const serviceList = services;
+  const modelList = models;
 
   return (
     <section id="services" className="bg-[#0A0A0A] py-24 lg:py-32">
@@ -348,7 +351,7 @@ export default function Services() {
 
         {/* Service cards */}
         <div ref={ref2 as React.RefObject<HTMLDivElement>} className="reveal grid md:grid-cols-2 gap-0 mb-20 border border-white/10">
-          {services.map((s, i) => (
+          {serviceList.map((s, i) => (
             <div
               key={s.num}
               className={`p-8 group hover:bg-[#C9A84C]/5 transition-all duration-300 ${
@@ -510,7 +513,7 @@ export default function Services() {
             猫眼增长模型
           </div>
           <div className="grid md:grid-cols-3 gap-4">
-            {models.map((m) => (
+            {modelList.map((m) => (
               <div
                 key={m.title}
                 className="p-6 border border-white/10 hover:border-[#C9A84C]/40 transition-all duration-300 group"
