@@ -2,8 +2,6 @@
 -- Created for MaoAI Sales feature (Rox-inspired)
 -- Project: fczherphuixpdjuevzsh
 
--- Enable RLS (Row Level Security) for all tables
-
 -- Sales leads table
 CREATE TABLE IF NOT EXISTS sales_leads (
   id SERIAL PRIMARY KEY,
@@ -20,7 +18,7 @@ CREATE TABLE IF NOT EXISTS sales_leads (
   notes TEXT,
   last_contact TIMESTAMP WITH TIME ZONE,
   next_follow_up TIMESTAMP WITH TIME ZONE,
-  assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  assigned_to UUID,
   ai_insights JSONB DEFAULT '[]',
   suggested_actions JSONB DEFAULT '[]',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -30,18 +28,22 @@ CREATE TABLE IF NOT EXISTS sales_leads (
 -- Enable RLS on sales_leads
 ALTER TABLE sales_leads ENABLE ROW LEVEL SECURITY;
 
--- Create policy for sales_leads (authenticated users can read all, admins can modify)
+-- Create simple policies for sales_leads (allow all authenticated users)
+DROP POLICY IF EXISTS "Allow authenticated read access" ON sales_leads;
 CREATE POLICY "Allow authenticated read access" ON sales_leads
   FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Allow admin insert" ON sales_leads
-  FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+DROP POLICY IF EXISTS "Allow authenticated insert" ON sales_leads;
+CREATE POLICY "Allow authenticated insert" ON sales_leads
+  FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY "Allow admin update" ON sales_leads
-  FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+DROP POLICY IF EXISTS "Allow authenticated update" ON sales_leads;
+CREATE POLICY "Allow authenticated update" ON sales_leads
+  FOR UPDATE TO authenticated USING (true);
 
-CREATE POLICY "Allow admin delete" ON sales_leads
-  FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+DROP POLICY IF EXISTS "Allow authenticated delete" ON sales_leads;
+CREATE POLICY "Allow authenticated delete" ON sales_leads
+  FOR DELETE TO authenticated USING (true);
 
 -- Outreach templates table
 CREATE TABLE IF NOT EXISTS outreach_templates (
@@ -52,7 +54,7 @@ CREATE TABLE IF NOT EXISTS outreach_templates (
   type VARCHAR(16) NOT NULL DEFAULT 'email' CHECK (type IN ('email', 'linkedin')),
   category VARCHAR(64),
   ai_optimized BOOLEAN DEFAULT false,
-  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_by UUID,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
@@ -60,17 +62,21 @@ CREATE TABLE IF NOT EXISTS outreach_templates (
 -- Enable RLS on outreach_templates
 ALTER TABLE outreach_templates ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow authenticated read templates" ON outreach_templates;
 CREATE POLICY "Allow authenticated read templates" ON outreach_templates
   FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Allow admin template insert" ON outreach_templates
-  FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+DROP POLICY IF EXISTS "Allow authenticated insert templates" ON outreach_templates;
+CREATE POLICY "Allow authenticated insert templates" ON outreach_templates
+  FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY "Allow admin template update" ON outreach_templates
-  FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+DROP POLICY IF EXISTS "Allow authenticated update templates" ON outreach_templates;
+CREATE POLICY "Allow authenticated update templates" ON outreach_templates
+  FOR UPDATE TO authenticated USING (true);
 
-CREATE POLICY "Allow admin template delete" ON outreach_templates
-  FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+DROP POLICY IF EXISTS "Allow authenticated delete templates" ON outreach_templates;
+CREATE POLICY "Allow authenticated delete templates" ON outreach_templates
+  FOR DELETE TO authenticated USING (true);
 
 -- Outreach activities table
 CREATE TABLE IF NOT EXISTS outreach_activities (
@@ -83,21 +89,24 @@ CREATE TABLE IF NOT EXISTS outreach_activities (
   sent_at TIMESTAMP WITH TIME ZONE,
   opened_at TIMESTAMP WITH TIME ZONE,
   replied_at TIMESTAMP WITH TIME ZONE,
-  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_by UUID,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- Enable RLS on outreach_activities
 ALTER TABLE outreach_activities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow authenticated read activities" ON outreach_activities;
 CREATE POLICY "Allow authenticated read activities" ON outreach_activities
   FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Allow admin activity insert" ON outreach_activities
-  FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+DROP POLICY IF EXISTS "Allow authenticated insert activities" ON outreach_activities;
+CREATE POLICY "Allow authenticated insert activities" ON outreach_activities
+  FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY "Allow admin activity update" ON outreach_activities
-  FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
+DROP POLICY IF EXISTS "Allow authenticated update activities" ON outreach_activities;
+CREATE POLICY "Allow authenticated update activities" ON outreach_activities
+  FOR UPDATE TO authenticated USING (true);
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_sales_leads_status ON sales_leads(status);

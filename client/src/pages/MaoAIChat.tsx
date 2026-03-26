@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { AgentModeSelector } from "@/components/AgentModeSelector";
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
@@ -207,6 +208,7 @@ export default function MaoAIChat() {
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
   const [currentToolCalls, setCurrentToolCalls] = useState<ToolCallStep[]>([]);
+  const [currentAgent, setCurrentAgent] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -726,6 +728,9 @@ export default function MaoAIChat() {
     if (docSystemPrompt) {
       bodyPayload.systemPrompt = docSystemPrompt;
     }
+    if (currentAgent) {
+      bodyPayload.agent = currentAgent;
+    }
     if (isLocal) {
       bodyPayload.useLocal = true;
       bodyPayload.nodeId = (currentOption as LocalNode).nodeId;
@@ -1035,6 +1040,12 @@ export default function MaoAIChat() {
                   )}
                 </div>
               )}
+              {/* Agent 模式选择器 */}
+              <AgentModeSelector
+                currentAgent={currentAgent}
+                onAgentChange={(agentId) => setCurrentAgent(agentId)}
+                disabled={isBusy}
+              />
               {/* Image mode badge */}
               {inputMode === "image" && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 border border-purple-500/30 text-purple-400/80 text-xs" style={{ fontFamily: "'DM Mono', monospace" }}>

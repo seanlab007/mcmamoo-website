@@ -5,6 +5,7 @@ import { sdk } from "./_core/sdk";
 import mammoth from "mammoth";
 // pdf-parse is loaded dynamically to avoid DOMMatrix crash at startup
 import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
+import { getAgentSystemPrompt } from "./agents";
 
 const aiStreamRouter = Router();
 
@@ -132,8 +133,17 @@ async function streamFromNode(
 // ─── Main Chat Stream ─────────────────────────────────────────────────────────
 // model: cloud model ID (e.g. "deepseek-chat") or "local:<nodeId>" for local node
 // useLocal: true = admin-only, force local node routing
+// agent: Agent ID to load specialized system prompt
 aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
-  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId } = req.body;
+  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId, agent: agentId } = req.body;
+
+  // 如果指定了 agent，加载对应的系统提示词
+  if (agentId && !systemPrompt) {
+    const agentPrompt = getAgentSystemPrompt(agentId);
+    if (agentPrompt) {
+      systemPrompt = agentPrompt;
+    }
+  }
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");

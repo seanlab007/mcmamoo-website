@@ -9,9 +9,12 @@
  *  GET  /api/chat/conversations/:id/messages  获取消息列表
  *  POST /api/chat/send                   发送消息（流式 SSE）
  *  POST /api/chat/image-gen              图片生成（CogView-3）
+ *  GET  /api/chat/agents                 获取可用 Agent 列表
+ *  GET  /api/chat/agents/:id             获取指定 Agent 详情
  */
 
 import { Router, Request, Response } from "express";
+import { AGENTS, getAgent, getAgentSystemPrompt, AGENTS_BY_CATEGORY, CATEGORY_INFO } from "./agents";
 
 export const chatRouter = Router();
 
@@ -267,10 +270,16 @@ chatRouter.get("/conversations/:id/messages", async (req: Request, res: Response
 
 // ── POST /api/chat/send （流式 SSE）──────────────────────────────────────────
 chatRouter.post("/send", async (req: Request, res: Response) => {
-  const { conversationId, message, model = DEFAULT_MODEL, useSearch = false } = req.body;
+  const { conversationId, message, model = DEFAULT_MODEL, useSearch = false, agent: agentId } = req.body;
 
   if (!conversationId || !message) {
     return res.status(400).json({ error: "conversationId 和 message 必填" });
+  }
+
+  // 获取 Agent 系统提示词（如果选择了 Agent）
+  let agentSystemPrompt = "";
+  if (agentId) {
+    agentSystemPrompt = getAgentSystemPrompt(agentId);
   }
 
   // 设置 SSE headers
@@ -307,7 +316,13 @@ chatRouter.post("/send", async (req: Request, res: Response) => {
     });
 
     // 4. 构造消息列表
-    const systemPrompt = `你是毛AI（MaoAI），一个以中国战略思维和全球视野为核心的AI助手。你擅长战略分析、商业洞察和前沿信息整合。请用中文回答，保持专业、深刻、有洞见。${searchContext ? `\n\n${searchContext}` : ""}`;
+    // 优先使用 Agent 的系统提示词，否则使用默认的 MaoAI 提示词
+    let systemPrompt: string;
+    if (agentSystemPrompt) {
+      systemPrompt = agentSystemPrompt + (searchContext ? `\n\n${searchContext}` : "");
+    } else {
+      systemPrompt = `你是毛AI（MaoAI），一个以中国战略思维和全球视野为核心的AI助手。你擅长战略分析、商业洞察和前沿信息整合。请用中文回答，保持专业、深刻、有洞见。${searchContext ? `\n\n${searchContext}` : ""}`;
+    }
 
     const messages = [
       { role: "system", content: systemPrompt },
@@ -446,4 +461,31 @@ chatRouter.post("/image-gen", async (req: Request, res: Response) => {
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// ── GET /api/chat/agents ─────────────────────────────────────────────────────────
+// 获取所有可用 Agent 列表（按分类）
+chatRouter.get("/agents", (_req, res) => {
+  const result = Object.entries(AGENTS_BY_CATEGORY).map(([category, agents]) => ({
+    category,
+    info: CATEGORY_INFO[category],
+    agents: agents.map(a => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+      emoji: a.emoji,
+      exampleQuestions: a.exampleQuestions,
+    })),
+  }));
+  res.json(result);
+});
+
+// ── GET /api/chat/agents/:id ───────────────────────────────────────────────────────
+// 获取指定 Agent 详情
+chatRouter.get("/agents/:id", (req, res) => {
+  const agent = getAgent(req.params.id);
+  if (!agent) {
+    return res.status(404).json({ error: "Agent 不存在" });
+  }
+  res.json(agent);
 });
