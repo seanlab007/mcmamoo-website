@@ -1,3 +1,173 @@
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// vite.config.ts
+var vite_config_exports = {};
+__export(vite_config_exports, {
+  default: () => vite_config_default
+});
+import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import fs from "node:fs";
+import path from "node:path";
+import { defineConfig } from "vite";
+import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+function ensureLogDir() {
+  if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+  }
+}
+function trimLogFile(logPath, maxSize) {
+  try {
+    if (!fs.existsSync(logPath) || fs.statSync(logPath).size <= maxSize) {
+      return;
+    }
+    const lines = fs.readFileSync(logPath, "utf-8").split("\n");
+    const keptLines = [];
+    let keptBytes = 0;
+    const targetSize = TRIM_TARGET_BYTES;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const lineBytes = Buffer.byteLength(`${lines[i]}
+`, "utf-8");
+      if (keptBytes + lineBytes > targetSize) break;
+      keptLines.unshift(lines[i]);
+      keptBytes += lineBytes;
+    }
+    fs.writeFileSync(logPath, keptLines.join("\n"), "utf-8");
+  } catch {
+  }
+}
+function writeToLogFile(source, entries) {
+  if (entries.length === 0) return;
+  ensureLogDir();
+  const logPath = path.join(LOG_DIR, `${source}.log`);
+  const lines = entries.map((entry) => {
+    const ts = (/* @__PURE__ */ new Date()).toISOString();
+    return `[${ts}] ${JSON.stringify(entry)}`;
+  });
+  fs.appendFileSync(logPath, `${lines.join("\n")}
+`, "utf-8");
+  trimLogFile(logPath, MAX_LOG_SIZE_BYTES);
+}
+function vitePluginManusDebugCollector() {
+  return {
+    name: "manus-debug-collector",
+    transformIndexHtml(html) {
+      if (process.env.NODE_ENV === "production") {
+        return html;
+      }
+      return {
+        html,
+        tags: [
+          {
+            tag: "script",
+            attrs: {
+              src: "/__manus__/debug-collector.js",
+              defer: true
+            },
+            injectTo: "head"
+          }
+        ]
+      };
+    },
+    configureServer(server) {
+      server.middlewares.use("/__manus__/logs", (req, res, next) => {
+        if (req.method !== "POST") {
+          return next();
+        }
+        const handlePayload = (payload) => {
+          if (payload.consoleLogs?.length > 0) {
+            writeToLogFile("browserConsole", payload.consoleLogs);
+          }
+          if (payload.networkRequests?.length > 0) {
+            writeToLogFile("networkRequests", payload.networkRequests);
+          }
+          if (payload.sessionEvents?.length > 0) {
+            writeToLogFile("sessionReplay", payload.sessionEvents);
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: true }));
+        };
+        const reqBody = req.body;
+        if (reqBody && typeof reqBody === "object") {
+          try {
+            handlePayload(reqBody);
+          } catch (e) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ success: false, error: String(e) }));
+          }
+          return;
+        }
+        let body = "";
+        req.on("data", (chunk) => {
+          body += chunk.toString();
+        });
+        req.on("end", () => {
+          try {
+            const payload = JSON.parse(body);
+            handlePayload(payload);
+          } catch (e) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ success: false, error: String(e) }));
+          }
+        });
+      });
+    }
+  };
+}
+var PROJECT_ROOT, LOG_DIR, MAX_LOG_SIZE_BYTES, TRIM_TARGET_BYTES, plugins, vite_config_default;
+var init_vite_config = __esm({
+  "vite.config.ts"() {
+    "use strict";
+    PROJECT_ROOT = import.meta.dirname;
+    LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
+    MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024;
+    TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6);
+    plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+    vite_config_default = defineConfig({
+      plugins,
+      resolve: {
+        alias: {
+          "@": path.resolve(import.meta.dirname, "client", "src"),
+          "@shared": path.resolve(import.meta.dirname, "shared"),
+          "@assets": path.resolve(import.meta.dirname, "attached_assets")
+        }
+      },
+      envDir: path.resolve(import.meta.dirname),
+      root: path.resolve(import.meta.dirname, "client"),
+      publicDir: path.resolve(import.meta.dirname, "client", "public"),
+      build: {
+        outDir: path.resolve(import.meta.dirname, "dist/public"),
+        emptyOutDir: true
+      },
+      server: {
+        host: true,
+        allowedHosts: [
+          ".manuspre.computer",
+          ".manus.computer",
+          ".manus-asia.computer",
+          ".manuscomputer.ai",
+          ".manusvm.computer",
+          "localhost",
+          "127.0.0.1"
+        ],
+        fs: {
+          strict: true,
+          deny: ["**/.*"]
+        }
+      }
+    });
+  }
+});
+
 // server/_core/index.ts
 import "dotenv/config";
 import express2 from "express";
@@ -958,20 +1128,20 @@ async function createContext(opts) {
 
 // server/_core/vite.ts
 import express from "express";
-import fs from "fs";
+import fs2 from "fs";
 import { nanoid } from "nanoid";
-import path from "path";
+import path2 from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
+var __dirname = path2.dirname(__filename);
 async function setupVite(app, server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true
   };
-  const viteConfig = await import("../../vite.config").then((m) => m.default || m);
+  const viteConfig = await Promise.resolve().then(() => (init_vite_config(), vite_config_exports)).then((m) => m.default || m);
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
@@ -982,13 +1152,13 @@ async function setupVite(app, server) {
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
     try {
-      const clientTemplate = path.resolve(
+      const clientTemplate = path2.resolve(
         __dirname,
         "../..",
         "client",
         "index.html"
       );
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      let template = await fs2.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
@@ -1002,15 +1172,15 @@ async function setupVite(app, server) {
   });
 }
 function serveStatic(app) {
-  const distPath = process.env.NODE_ENV === "development" ? path.resolve(__dirname, "../..", "dist", "public") : path.resolve(__dirname, "public");
-  if (!fs.existsSync(distPath)) {
+  const distPath = process.env.NODE_ENV === "development" ? path2.resolve(__dirname, "../..", "dist", "public") : path2.resolve(__dirname, "public");
+  if (!fs2.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
   app.use(express.static(distPath));
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.sendFile(path2.resolve(distPath, "index.html"));
   });
 }
 
@@ -1026,7 +1196,7 @@ function getSupabaseConfig() {
   }
   return { url, key };
 }
-async function sbFetch(path2, options = {}, prefer) {
+async function sbFetch(path3, options = {}, prefer) {
   const { url, key } = getSupabaseConfig();
   const headers = {
     "Content-Type": "application/json",
@@ -1035,7 +1205,7 @@ async function sbFetch(path2, options = {}, prefer) {
     ...options.headers
   };
   if (prefer) headers["Prefer"] = prefer;
-  const res = await globalThis.fetch(`${url}/rest/v1${path2}`, {
+  const res = await globalThis.fetch(`${url}/rest/v1${path3}`, {
     ...options,
     headers
   });
@@ -1361,17 +1531,17 @@ function sbHeaders() {
     }
   };
 }
-async function sbGet(path2) {
+async function sbGet(path3) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, { headers });
+  const res = await fetch(`${url}/rest/v1${path3}`, { headers });
   const text2 = await res.text();
   return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
 }
-async function sbPost(path2, body, prefer) {
+async function sbPost(path3, body, prefer) {
   const { url, headers } = sbHeaders();
   const h = { ...headers };
   if (prefer) h["Prefer"] = prefer;
-  const res = await fetch(`${url}/rest/v1${path2}`, {
+  const res = await fetch(`${url}/rest/v1${path3}`, {
     method: "POST",
     headers: h,
     body: JSON.stringify(body)
@@ -1379,14 +1549,14 @@ async function sbPost(path2, body, prefer) {
   const text2 = await res.text();
   return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
 }
-async function sbDelete(path2) {
+async function sbDelete(path3) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, { method: "DELETE", headers });
+  const res = await fetch(`${url}/rest/v1${path3}`, { method: "DELETE", headers });
   return { ok: res.ok, status: res.status };
 }
-async function sbPatch(path2, body) {
+async function sbPatch(path3, body) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, {
+  const res = await fetch(`${url}/rest/v1${path3}`, {
     method: "PATCH",
     headers,
     body: JSON.stringify(body)
@@ -1701,7 +1871,7 @@ function getSupabaseConfig2() {
   if (!url || !key) throw new Error("SUPABASE_URL \u6216 SUPABASE_SERVICE_KEY \u672A\u914D\u7F6E");
   return { url, key };
 }
-async function sbFetch2(path2, options = {}, prefer) {
+async function sbFetch2(path3, options = {}, prefer) {
   const { url, key } = getSupabaseConfig2();
   const headers = {
     "Content-Type": "application/json",
@@ -1710,7 +1880,7 @@ async function sbFetch2(path2, options = {}, prefer) {
     ...options.headers
   };
   if (prefer) headers["Prefer"] = prefer;
-  const res = await globalThis.fetch(`${url}/rest/v1${path2}`, { ...options, headers });
+  const res = await globalThis.fetch(`${url}/rest/v1${path3}`, { ...options, headers });
   let data;
   const text2 = await res.text();
   try {
@@ -1790,15 +1960,15 @@ notesRouter.post("/init", requireAdmin, async (req, res) => {
 notesRouter.get("/", requireAdmin, async (req, res) => {
   await ensureTable();
   const { q, tag, archived, pinned, limit = "50", offset = "0" } = req.query;
-  let path2 = `/notes?order=is_pinned.desc,updated_at.desc&limit=${limit}&offset=${offset}`;
+  let path3 = `/notes?order=is_pinned.desc,updated_at.desc&limit=${limit}&offset=${offset}`;
   if (archived === "true") {
-    path2 += "&is_archived=eq.true";
+    path3 += "&is_archived=eq.true";
   } else {
-    path2 += "&is_archived=eq.false";
+    path3 += "&is_archived=eq.false";
   }
-  if (pinned === "true") path2 += "&is_pinned=eq.true";
-  if (tag) path2 += `&tags=cs.{${encodeURIComponent(tag)}}`;
-  const result = await sbFetch2(path2, {
+  if (pinned === "true") path3 += "&is_pinned=eq.true";
+  if (tag) path3 += `&tags=cs.{${encodeURIComponent(tag)}}`;
+  const result = await sbFetch2(path3, {
     headers: { "Range-Unit": "items", Range: `${offset}-${parseInt(offset) + parseInt(limit) - 1}` }
   }, "count=exact");
   if (!result.ok) return res.status(result.status).json({ error: result.data });
