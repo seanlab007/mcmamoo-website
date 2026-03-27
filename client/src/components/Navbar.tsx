@@ -80,12 +80,14 @@ export default function Navbar() {
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center gap-10">
           {/* AI 产品 Dropdown */}
-          <div className="relative" onMouseEnter={() => setIsAiDropdownOpen(true)} onMouseLeave={() => setIsAiDropdownOpen(false)}>
+          <div className="relative group" onMouseEnter={() => setIsAiDropdownOpen(true)} onMouseLeave={() => setIsAiDropdownOpen(false)}>
             <button className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors">
               AI Products <ChevronDown size={12} className={`transition-transform duration-300 ${isAiDropdownOpen ? "rotate-180" : ""}`} />
             </button>
+            {/* 隐形缓冲区 */}
+            {isAiDropdownOpen && <div className="absolute top-0 left-0 right-0 h-3" />}
             {isAiDropdownOpen && (
-              <div className="absolute top-full left-0 mt-4 w-64 bg-[#111] border border-white/10 p-4 shadow-2xl">
+              <div className="absolute top-full left-0 mt-0 w-64 bg-[#111] border border-white/10 p-4 shadow-2xl rounded-sm">
                 {aiProducts.map((p) => (
                   <Link key={p.href} href={p.href}>
                     <a className="flex items-start gap-3 p-3 hover:bg-white/5 transition-colors group">
@@ -104,12 +106,14 @@ export default function Navbar() {
           </div>
 
           {/* 旗下子公司 Dropdown */}
-          <div className="relative" onMouseEnter={() => setIsSubDropdownOpen(true)} onMouseLeave={() => setIsSubDropdownOpen(false)}>
+          <div className="relative group" onMouseEnter={() => setIsSubDropdownOpen(true)} onMouseLeave={() => setIsSubDropdownOpen(false)}>
             <button className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors">
               Subsidiaries <ChevronDown size={12} className={`transition-transform duration-300 ${isSubDropdownOpen ? "rotate-180" : ""}`} />
             </button>
+            {/* 隐形缓冲区 */}
+            {isSubDropdownOpen && <div className="absolute top-0 left-0 right-0 h-3" />}
             {isSubDropdownOpen && (
-              <div className="absolute top-full left-0 mt-4 w-48 bg-[#111] border border-white/10 p-2 shadow-2xl">
+              <div className="absolute top-full left-0 mt-0 w-48 bg-[#111] border border-white/10 p-2 shadow-2xl rounded-sm">
                 {subsidiaries.map((s) => (
                   <Link key={s.href} href={s.href}>
                     <a className="block p-3 text-white/60 hover:text-white hover:bg-white/5 text-xs tracking-widest uppercase font-['DM_Mono'] transition-all">
