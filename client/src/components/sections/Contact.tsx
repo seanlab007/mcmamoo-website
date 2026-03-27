@@ -89,18 +89,16 @@ export default function Contact() {
             <div className="mb-8">
               <div className="inline-flex items-center gap-6 p-5 border border-[#C9A84C]/25 bg-[#C9A84C]/5 hover:border-[#C9A84C]/50 transition-all duration-300">
                 <div className="relative flex-shrink-0">
-                  {/* 外层金边框 */}
-                  <div className="absolute -inset-1 border border-[#C9A84C]/60" />
-                  <div className="absolute -inset-2 border border-[#C9A84C]/20" />
-                  {/* 二维码容器 - 物理性切除白边 */}
-                  <div className="relative flex-shrink-0 w-20 h-20 overflow-hidden bg-[#0A0A0A]">
+                  {/* 二维码容器 - 黑色背景 + 金边 + 完全切除白边 */}
+                  <div className="relative flex-shrink-0 w-20 h-20 overflow-hidden bg-[#0A0A0A] border-2 border-[#C9A84C]">
                     <img
                       src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png"
                       alt="微信二维码"
                       className="w-full h-full object-cover block"
                       style={{
-                        filter: "invert(1) brightness(1.1) contrast(1.2)",
-                        clipPath: "inset(8% 8% 8% 8%)",
+                        filter: "invert(1) brightness(1.15) contrast(1.3) saturate(0.95)",
+                        clipPath: "inset(12% 12% 12% 12%)",
+                        transform: "scale(1.15)",
                       }}
                     />
                   </div>
