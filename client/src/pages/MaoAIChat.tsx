@@ -5,10 +5,12 @@ import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
   Wand2, Image as ImageIcon, Crown, Zap, Paperclip, FileText, FileJson, Table2,
+  LayoutGrid, Lock,
 } from "lucide-react";
 import type { PlanTier } from "@shared/plans";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Streamdown } from "streamdown";
+import { useContentSubscription } from "@/hooks/useContentSubscription";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://api.mcmamoo.com";
 
@@ -186,6 +188,7 @@ export default function MaoAIChat() {
     redirectPath: "/maoai/login",
   });
   const isAdmin = (user as any)?.role === "admin";
+  const { data: contentSub, hasContentAccess, isAdmin: isContentAdmin } = useContentSubscription(!!user);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -957,6 +960,53 @@ export default function MaoAIChat() {
               </button>
             </div>
           ))}
+        </div>
+
+        {/* ── Sidebar bottom nav ── */}
+        <div className="shrink-0 border-t border-[#C9A84C]/10 px-2 py-2 flex flex-col gap-1">
+          {/* 内容平台 — 所有登录用户可见，无权限时显示锁定状态 */}
+          {user && (
+            hasContentAccess ? (
+              <a
+                href="/content"
+                className="flex items-center gap-2 px-3 py-2 text-xs text-[#40d090]/80 hover:text-[#40d090] hover:bg-[#40d090]/8 border border-transparent hover:border-[#40d090]/20 transition-all rounded"
+                style={{ fontFamily: "'DM Mono', monospace" }}
+                title="前往猫眼自动内容平台"
+              >
+                <LayoutGrid size={13} className="shrink-0" />
+                <span className="truncate">内容平台</span>
+                {contentSub.plan !== "free" && (
+                  <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-[#40d090]/15 border border-[#40d090]/25 text-[#40d090]/70 rounded-sm capitalize shrink-0">
+                    {contentSub.plan}
+                  </span>
+                )}
+              </a>
+            ) : (
+              <button
+                onClick={() => window.location.href = "/mao-ai-pricing"}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-white/20 hover:text-white/40 hover:bg-white/3 border border-transparent hover:border-white/8 transition-all rounded cursor-pointer"
+                style={{ fontFamily: "'DM Mono', monospace" }}
+                title="升级套餐解锁内容平台"
+              >
+                <Lock size={12} className="shrink-0" />
+                <span className="truncate">内容平台</span>
+                <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/50 rounded-sm shrink-0">升级</span>
+              </button>
+            )
+          )}
+          {/* 管理员：内容调度 */}
+          {(isAdmin || isContentAdmin) && (
+            <a
+              href="/admin/content-jobs"
+              className="flex items-center gap-2 px-3 py-2 text-xs text-orange-400/60 hover:text-orange-400 hover:bg-orange-400/5 border border-transparent hover:border-orange-400/20 transition-all rounded"
+              style={{ fontFamily: "'DM Mono', monospace" }}
+              title="内容调度控制台"
+            >
+              <Zap size={12} className="shrink-0" />
+              <span className="truncate">内容调度</span>
+              <span className="ml-auto text-[9px] text-orange-400/40">ADMIN</span>
+            </a>
+          )}
         </div>
       </aside>
 

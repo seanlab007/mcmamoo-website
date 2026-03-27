@@ -5,6 +5,25 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 
+const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || "https://api.mcmamoo.com";
+
+function useNavContentAccess() {
+  const [show, setShow] = useState(false);
+  const [plan, setPlan] = useState<string>("free");
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/content/subscription`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(json => {
+        if (json && json.plan && json.plan !== "free") {
+          setShow(true);
+          setPlan(json.plan);
+        }
+      })
+      .catch(() => {});
+  }, []);
+  return { show, plan };
+}
+
 const navItems = [
   { label: "关于我们", href: "#about" },
   { label: "KOL合作", href: "#kol" },
@@ -23,6 +42,7 @@ const specialItems = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { show: showContent } = useNavContentAccess();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -112,6 +132,17 @@ export default function Navbar() {
               <span style={{ width: 6, height: 6, background: "#a855f7", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #a855f7" }} />
               AutoClip
             </a>
+            {/* 内容平台 — 仅对已购买 content/strategic 套餐的用户展示 */}
+            {showContent && (
+              <a
+                href="/content"
+                className="relative text-[#40d090]/80 hover:text-[#40d090] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5"
+                style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
+              >
+                <span style={{ width: 6, height: 6, background: "#40d090", borderRadius: "3px", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #40d090" }} />
+                内容平台
+              </a>
+            )}
             <button
               onClick={() => handleNav("#contact")}
               className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
@@ -179,6 +210,16 @@ export default function Navbar() {
             <span style={{ width: 8, height: 8, background: "#a855f7", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #a855f7" }} />
             AutoClip
           </a>
+          {showContent && (
+            <a
+              href="/content"
+              className="text-[#40d090]/80 hover:text-[#40d090] text-xl transition-colors duration-300 flex items-center gap-2"
+              style={{ fontFamily: "'DM Mono', monospace" }}
+            >
+              <span style={{ width: 8, height: 8, background: "#40d090", borderRadius: "3px", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 8px #40d090" }} />
+              内容平台
+            </a>
+          )}
           <button
             onClick={() => handleNav("#contact")}
             className="mt-4 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] text-lg hover:bg-[#C9A84C]/10 transition-all duration-300"

@@ -97,9 +97,22 @@ async function maybeResetQuota(sub: any): Promise<any> {
   return sub;
 }
 
+// ─── 平台级 plan 映射 ─────────────────────────────────────────────────────────
+// platform-specific required_plan 值 → { minPlan, platformKey }
+const PLATFORM_PLANS: Record<string, { minPlan: string; platformKey: string; label: string }> = {
+  xiaohongshu: { minPlan: "content",   platformKey: "xiaohongshu", label: "小红书" },
+  douyin:      { minPlan: "strategic", platformKey: "douyin",      label: "抖音" },
+  weibo:       { minPlan: "content",   platformKey: "weibo",       label: "微博" },
+  wechat:      { minPlan: "strategic", platformKey: "wechat",      label: "微信公众号" },
+};
+
 // ─── Skill 权限校验 ────────────────────────────────────────────────────────────
 /**
  * 校验用户是否有权限调用该 skill。
+ * 支持：
+ *   - 标准等级校验（free / content / strategic / admin）
+ *   - 平台专属校验（xiaohongshu / douyin / weibo / wechat）
+ *     → 要求用户套餐达到对应 minPlan，且订阅的 content_platforms 包含目标平台
  * @returns { allowed: true } 或 { allowed: false, reason: string }
  */
 export async function checkSkillPermission(
@@ -115,7 +128,45 @@ export async function checkSkillPermission(
   sub = await maybeResetQuota(sub);
   const userPlan = sub?.plan ?? "free";
 
-  // 等级校验
+  // ── 平台专属校验 ───────────────────────────────────────────────────────────
+  const platformDef = PLATFORM_PLANS[skillRequiredPlan];
+  if (platformDef) {
+    // 先检查套餐等级
+    if (planRank(userPlan) < planRank(platformDef.minPlan)) {
+      const planLabels: Record<string, string> = {
+        content:   "内容会员（Content Pro）",
+        strategic: "战略会员（Strategic）",
+      };
+      return {
+        allowed: false,
+        reason: `${platformDef.label}内容发布需要「${planLabels[platformDef.minPlan] ?? platformDef.minPlan}」及以上订阅，你当前为「${userPlan}」套餐。`,
+      };
+    }
+    // 检查平台是否在用户订阅的平台列表中
+    const allowedPlatforms: string[] = sub?.content_platforms ?? [];
+    if (allowedPlatforms.length > 0 && !allowedPlatforms.includes(platformDef.platformKey)) {
+      return {
+        allowed: false,
+        reason: `你的套餐不包含「${platformDef.label}」发布权限，请升级至包含该平台的套餐。`,
+      };
+    }
+    // 平台通过 → 走到配额校验
+    if (sub && sub.content_quota !== -1) {
+      if (sub.content_used >= sub.content_quota) {
+        return {
+          allowed: false,
+          reason: `本月内容生产次数已用完（${sub.content_used}/${sub.content_quota}），请升级套餐或等待下月重置。`,
+        };
+      }
+      await dbFetch(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}`, {
+        method: "PATCH",
+        body: { content_used: sub.content_used + 1 },
+      });
+    }
+    return { allowed: true };
+  }
+
+  // ── 标准等级校验 ───────────────────────────────────────────────────────────
   if (planRank(userPlan) < planRank(skillRequiredPlan)) {
     const planLabels: Record<string, string> = {
       content:   "内容会员（Content Pro）",
@@ -535,5 +586,116 @@ export async function initScheduler() {
     console.warn("[Scheduler] Failed to load jobs from DB:", err);
   }
 }
+
+// ─── Webhook 端点 ─────────────────────────────────────────────────────────────
+// POST /api/content/webhook
+// marketing-claw（或任何外部执行节点）在任务完成后调用此接口回写状态。
+// 安全：需要 CONTENT_WEBHOOK_SECRET 环境变量做 Bearer 鉴权。
+//
+// 请求体示例：
+// {
+//   "taskId": 123,                        // content_tasks.id
+//   "requestId": "task-123",              // 可选，用于兜底匹配
+//   "status": "success" | "failed",
+//   "result": { ... },                    // 执行结果（成功时）
+//   "errorMessage": "...",                // 错误信息（失败时）
+//   "publishedUrls": ["https://..."],     // 已发布链接（可选）
+//   "platform": "xiaohongshu"            // 发布平台（可选）
+// }
+contentPlatformRouter.post("/webhook", async (req: Request, res: Response) => {
+  // ── 鉴权 ──────────────────────────────────────────────────────────────────
+  const secret = process.env.CONTENT_WEBHOOK_SECRET;
+  if (secret) {
+    const auth = req.headers["authorization"] ?? req.headers["x-webhook-secret"] ?? "";
+    const token = String(auth).replace(/^Bearer\s+/i, "").trim();
+    if (token !== secret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+  }
+
+  const { taskId, requestId, status, result, errorMessage, publishedUrls, platform } = req.body ?? {};
+
+  if (!taskId && !requestId) {
+    return res.status(400).json({ error: "taskId or requestId required" });
+  }
+  if (!["success", "failed", "running"].includes(status)) {
+    return res.status(400).json({ error: "status must be success | failed | running" });
+  }
+
+  try {
+    let resolvedTaskId = taskId;
+
+    // 若没有 taskId，尝试通过 requestId 反查（格式 "task-{id}"）
+    if (!resolvedTaskId && requestId) {
+      const match = String(requestId).match(/^task-(\d+)$/);
+      if (match) resolvedTaskId = parseInt(match[1], 10);
+    }
+
+    if (!resolvedTaskId) {
+      return res.status(400).json({ error: "Could not resolve taskId" });
+    }
+
+    // 构建 patch payload
+    const patch: Record<string, unknown> = {
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    if (status === "success") {
+      patch.result = result ?? null;
+      patch.finished_at = new Date().toISOString();
+    }
+    if (status === "failed") {
+      patch.error_message = errorMessage ?? "Unknown error";
+      patch.finished_at = new Date().toISOString();
+    }
+    if (status === "running") {
+      patch.started_at = new Date().toISOString();
+    }
+    // 追加发布链接到 result
+    if (publishedUrls && Array.isArray(publishedUrls) && publishedUrls.length > 0) {
+      patch.result = { ...(typeof result === "object" && result ? result : {}), publishedUrls, platform };
+    }
+
+    await dbFetch(`/content_tasks?id=eq.${resolvedTaskId}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    });
+
+    console.log(`[Webhook] Task ${resolvedTaskId} → ${status}${platform ? ` (${platform})` : ""}`);
+    return res.json({ success: true, taskId: resolvedTaskId });
+  } catch (err: any) {
+    console.error("[Webhook] Error:", err?.message ?? err);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+// ─── 查询任务状态（SSE 轮询辅助）────────────────────────────────────────────
+// GET /api/content/tasks/:id/status — 供前端轮询单个任务最新状态
+contentPlatformRouter.get("/tasks/:id/status", async (req: Request, res: Response) => {
+  try {
+    let user: any = null;
+    let isAdmin = false;
+    try {
+      user = await sdk.authenticateRequest(req);
+      isAdmin = (user as any)?.role === "admin";
+    } catch { /* 未登录 */ }
+
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    const taskId = parseInt(req.params.id, 10);
+    if (isNaN(taskId)) return res.status(400).json({ error: "Invalid task ID" });
+
+    const filter = isAdmin
+      ? `/content_tasks?id=eq.${taskId}&select=id,status,result,error_message,started_at,finished_at`
+      : `/content_tasks?id=eq.${taskId}&user_open_id=eq.${(user as any).openId}&select=id,status,result,error_message,started_at,finished_at`;
+
+    const r = await dbFetch(filter);
+    const task = (r.data as any[])?.[0];
+    if (!task) return res.status(404).json({ error: "Task not found" });
+    return res.json(task);
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message ?? "Internal error" });
+  }
+});
 
 export { contentPlatformRouter };
