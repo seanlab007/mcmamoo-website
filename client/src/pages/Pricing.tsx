@@ -3,234 +3,62 @@
  * Pricing Page — 猫眼增长引擎服务体系与定价
  * ============================================================
  * 定价策略：
- * 1. 所有业务分为"AI 组 (AI-Powered)"与"专家组 (Expert-Led)"
- * 2. AI 组价格极具竞争力，作为专家组的平替，降低获客门槛
- * 3. 专家组由代言先生及核心团队亲自操刀，定价高端
- * 4. 所有入门级都有较低的尝试价格
+ * 1. 核心竞争力 = 极低的尝试价格（9.8/38/98/198）
+ * 2. 按"设计 -> 内容 -> 战略"梯度分层
+ * 3. AI 组与专家组均提供低价一次性尝试服务
+ * 4. 降低获客门槛，快速转化为付费用户
  * ============================================================
  */
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Check, ShieldCheck, Zap, Brain, Sparkles } from "lucide-react";
+import { Check, ShieldCheck, Zap, Brain, Sparkles, Flame } from "lucide-react";
 
 // ─── 定价数据定义 ────────────────────────────────────────────────────────────
 
 const pricingData_zh = {
-  // 1. 战略大脑：MaoAI (AI 组) + 专家咨询 (专家组)
-  strategicBrain: {
-    id: "strategic-brain",
-    badge: "核心大脑",
-    badgeColor: "#C9A84C",
-    title: "战略大脑",
-    subtitle: "Strategic Intelligence & Expert Consulting",
-    desc: "从市场洞察到战略决策，选择 AI 高效方案或专家深度陪跑。",
-    groups: [
-      {
-        name: "AI 组 (AI-Powered)",
-        icon: <Sparkles className="text-[#40d090]" size={20} />,
-        desc: "由 MaoAI 驱动的智能战略模型，高效且经济",
-        plans: [
-          {
-            name: "AI 战略助手",
-            period: "月付",
-            price: "0.98",
-            unit: "万",
-            highlight: false,
-            features: ["MaoAI 基础对话能力", "行业趋势实时监测", "竞品动态 AI 预警", "品牌声量基础分析"],
-            cta: "立即开通",
-            href: "/mao-ai"
-          },
-          {
-            name: "AI 战略陪跑",
-            period: "季度",
-            price: "18",
-            unit: "万",
-            highlight: true,
-            features: ["MaoAI 高级战略模型", "月度 AI 战略报告", "爆品策划 AI 预审", "竞品深度分析", "AI 自动生成周报"],
-            cta: "立即开通",
-            href: "/mao-ai"
-          },
-          {
-            name: "AI 年度订阅",
-            period: "年付",
-            price: "48",
-            unit: "万",
-            highlight: false,
-            features: ["全量 MaoAI 智库权限", "不限次战略咨询", "实时市场预警", "AI 自动生成月报", "品牌声音定制训练"],
-            cta: "预约演示",
-            href: "/mao-ai"
-          }
-        ]
-      },
-      {
-        name: "专家组 (Expert-Led)",
-        icon: <Brain className="text-[#C9A84C]" size={20} />,
-        desc: "由代言先生及核心专家团队亲自操刀，深度战略护航",
-        plans: [
-          {
-            name: "战略诊断",
-            period: "单次",
-            price: "28",
-            unit: "万",
-            highlight: false,
-            features: ["企业战略全面诊断", "竞争格局深度分析", "增长机会识别报告", "战略路线图建议", "高管汇报（1次）"],
-            cta: "预约诊断",
-            href: "#contact"
-          },
-          {
-            name: "季度战略陪跑",
-            period: "3个月",
-            price: "88",
-            unit: "万",
-            highlight: true,
-            features: ["专家团队月度战略会", "错位竞争理论深度应用", "爆品策划人工审核", "专属战略顾问支持", "管理员终审报告"],
-            cta: "预约演示",
-            href: "#contact"
-          },
-          {
-            name: "年度战略会员",
-            period: "年付",
-            price: "188",
-            unit: "万",
-            highlight: false,
-            features: ["全年战略护航陪跑", "毛智库深度研报订阅", "季度高管闭门研讨会", "重大战略决策人工复核", "国际机构资源对接"],
-            cta: "申请加入",
-            href: "#contact"
-          }
-        ]
-      }
-    ]
-  },
-
-  // 2. 执行引擎：内容平台 (AI 组) + 专家内容策划 (专家组)
-  executionEngine: {
-    id: "execution-engine",
-    badge: "执行引擎",
-    badgeColor: "#40d090",
-    title: "内容自动化平台",
-    subtitle: "Content Automation & AutoClip Engine",
-    desc: "从 AI 自动化到专家策划，选择适合您的内容生产方案。",
-    groups: [
-      {
-        name: "AI 组 (AI-Powered)",
-        icon: <Sparkles className="text-[#40d090]" size={20} />,
-        desc: "AI 驱动的全自动内容生产与 AutoClip 视频剪辑",
-        plans: [
-          {
-            name: "AI 内容尝鲜",
-            period: "月付",
-            price: "1.98",
-            unit: "万",
-            highlight: false,
-            features: ["每月 30 条 AI 图文内容", "基础 AutoClip 视频剪辑", "1 个平台账号管理", "AI 自动合规性预审"],
-            cta: "免费试用",
-            href: "/platform"
-          },
-          {
-            name: "AI 全能版",
-            period: "月付",
-            price: "5.98",
-            unit: "万",
-            highlight: true,
-            features: ["每月 150 条 AI 内容生产", "高级 AutoClip 视频矩阵", "4 个平台账号管理", "爆款预测模型应用", "AI 自动合规预审"],
-            cta: "立即升级",
-            href: "/platform"
-          },
-          {
-            name: "AI 旗舰版",
-            period: "年付",
-            price: "68",
-            unit: "万",
-            highlight: false,
-            features: ["无限量 AI 内容生产", "全量 AutoClip 算力支持", "全平台账号统一调度", "品牌声音/视觉定制训练", "实时数据大屏监测"],
-            cta: "预约演示",
-            href: "/platform"
-          }
-        ]
-      },
-      {
-        name: "专家组 (Expert-Led)",
-        icon: <Zap className="text-[#C9A84C]" size={20} />,
-        desc: "由内容策略师主导的人工策划与审核，确保品质",
-        plans: [
-          {
-            name: "专家内容尝鲜",
-            period: "月付",
-            price: "8.98",
-            unit: "万",
-            highlight: false,
-            features: ["每月 50 条策划内容", "人工内容策略师指导", "2 个平台账号管理", "内容日历规划", "人工审核服务"],
-            cta: "立即开通",
-            href: "#contact"
-          },
-          {
-            name: "专家全能版",
-            period: "月付",
-            price: "18.8",
-            unit: "万",
-            highlight: true,
-            features: ["每月 200 条策划内容", "专属内容策略师", "6 个平台账号管理", "深度数据分析 + 竞品监测", "KOL 内容协同", "A/B 测试优化"],
-            cta: "立即升级",
-            href: "#contact"
-          },
-          {
-            name: "专家旗舰版",
-            period: "年付",
-            price: "188",
-            unit: "万",
-            highlight: false,
-            features: ["不限量策划内容", "全平台账号管理（不限数量）", "专属内容团队", "实时爆款监测与预警", "自动发布与排期", "季度内容战略复盘"],
-            cta: "预约演示",
-            href: "#contact"
-          }
-        ]
-      }
-    ]
-  },
-
-  // 3. 品牌全案：AI 设计 (AI 组) + 专家全案 (专家组)
-  brandStrategy: {
-    id: "brand-strategy",
-    badge: "品牌全案",
+  // 1. 设计类服务
+  designServices: {
+    id: "design-services",
+    badge: "设计类",
     badgeColor: "#E53E3E",
-    title: "品牌战略与设计",
-    subtitle: "Brand Strategy & Design System",
-    desc: "从 AI 辅助设计到专家全案规划，打造一流品牌形象。",
+    title: "品牌视觉设计",
+    subtitle: "Brand Design & Visual Identity",
+    desc: "从 AI 快速设计到专家全案规划，打造一流品牌形象。",
     groups: [
       {
         name: "AI 组 (AI-Powered)",
         icon: <Sparkles className="text-[#40d090]" size={20} />,
-        desc: "AI 辅助的品牌设计与策略工具，经济高效",
+        desc: "AI 辅助的极速设计方案，经济高效",
         plans: [
           {
-            name: "AI 品牌尝鲜",
-            period: "一次性",
-            price: "2.98",
-            unit: "万",
+            name: "AI Logo 尝鲜",
+            period: "单次",
+            price: "9.8",
+            unit: "元",
             highlight: false,
-            features: ["AI 生成品牌 Logo（5 套方案）", "品牌色彩系统建议", "基础 VI 规范手册", "品牌故事文案初稿"],
+            features: ["AI 生成 Logo 5 套方案", "品牌色彩系统建议", "基础 VI 规范", "永久使用权"],
             cta: "立即体验",
             href: "#contact"
           },
           {
             name: "AI 品牌设计包",
-            period: "一次性",
-            price: "9.8",
-            unit: "万",
+            period: "单次",
+            price: "98",
+            unit: "元",
             highlight: true,
-            features: ["AI 品牌战略定位研究", "Logo + 视觉锤设计", "完整 VI 规范手册", "品牌故事与文案体系", "基础包装设计建议"],
+            features: ["AI Logo + 视觉锤", "完整 VI 规范手册", "品牌故事文案", "基础包装建议"],
             cta: "立即开通",
             href: "#contact"
           },
           {
             name: "AI 官网设计",
-            period: "一次性",
-            price: "12.8",
-            unit: "万",
+            period: "单次",
+            price: "1980",
+            unit: "元",
             highlight: false,
-            features: ["AI 官网策划与设计", "响应式开发（PC+移动端）", "SEO 基础优化", "CMS 内容管理系统", "1 个月免费维护"],
+            features: ["AI 官网策划与设计", "响应式开发", "SEO 基础优化", "1 个月免费维护"],
             cta: "预约咨询",
             href: "#contact"
           }
@@ -239,35 +67,35 @@ const pricingData_zh = {
       {
         name: "专家组 (Expert-Led)",
         icon: <Brain className="text-[#C9A84C]" size={20} />,
-        desc: "由代言先生及设计大师团队主导，顶级品牌形象塑造",
+        desc: "专家设计师主导的高端品牌塑造",
         plans: [
           {
             name: "专家品牌诊断",
             period: "单次",
-            price: "12.8",
-            unit: "万",
+            price: "980",
+            unit: "元",
             highlight: false,
-            features: ["品牌战略诊断报告", "竞品视觉分析", "品牌定位建议", "视觉升级方向指导"],
-            cta: "预约诊断",
+            features: ["品牌视觉诊断", "竞品分析", "定位建议", "升级方向指导"],
+            cta: "立即预约",
             href: "#contact"
           },
           {
             name: "专家品牌全案",
-            period: "一次性",
-            price: "58",
-            unit: "万",
+            period: "单次",
+            price: "9800",
+            unit: "元",
             highlight: true,
-            features: ["品牌战略定位研究", "品牌 Logo + 视觉锤设计", "猫眼符号系统", "完整 VI 规范手册", "包装设计（主 SKU）", "电商视觉体系", "品牌故事与文案体系"],
+            features: ["品牌战略定位", "Logo + 视觉锤设计", "完整 VI 规范", "包装设计", "电商视觉体系"],
             cta: "预约提案",
             href: "#contact"
           },
           {
             name: "专家官网设计开发",
-            period: "一次性",
-            price: "38",
-            unit: "万",
+            period: "单次",
+            price: "38000",
+            unit: "元",
             highlight: false,
-            features: ["品牌官网策划与设计", "响应式开发（PC+移动端）", "18 语言国际化", "SEO 基础优化", "CMS 内容管理系统", "3 个月免费维护"],
+            features: ["品牌官网策划与设计", "响应式开发", "18 语言国际化", "SEO 优化", "3 个月免费维护"],
             cta: "预约咨询",
             href: "#contact"
           }
@@ -276,85 +104,171 @@ const pricingData_zh = {
     ]
   },
 
-  // 4. 爆品营销：AI 爆品 (AI 组) + 专家爆品 (专家组)
-  productMarketing: {
-    id: "product-marketing",
-    badge: "爆品营销",
-    badgeColor: "#F6AD55",
-    title: "爆品营销策划",
-    subtitle: "Hero Product Marketing",
-    desc: "从 AI 爆品分析到专家全案执行，打造可复制的爆品。",
+  // 2. 内容类服务
+  contentServices: {
+    id: "content-services",
+    badge: "内容类",
+    badgeColor: "#40d090",
+    title: "内容自动化平台",
+    subtitle: "Content Automation & Production",
+    desc: "从 AI 自动化内容到专家策划执行，满足全域内容需求。",
     groups: [
       {
         name: "AI 组 (AI-Powered)",
         icon: <Sparkles className="text-[#40d090]" size={20} />,
-        desc: "AI 驱动的爆品分析与策略生成",
+        desc: "AI 驱动的全自动内容生产，高效且经济",
         plans: [
           {
-            name: "AI 爆品尝鲜",
+            name: "AI 内容尝鲜",
             period: "单次",
-            price: "4.98",
-            unit: "万",
+            price: "38",
+            unit: "元",
             highlight: false,
-            features: ["AI 爆品价值提炼", "AI 蜂窝模型分析", "上市传播策略初稿", "KOL 矩阵建议"],
+            features: ["3 条 AI 图文内容", "1 条 AI 视频剪辑", "基础合规预审", "多平台格式"],
             cta: "立即体验",
-            href: "#contact"
+            href: "/platform"
           },
           {
-            name: "AI 爆品策划",
+            name: "AI 内容包",
             period: "单次",
-            price: "18.8",
-            unit: "万",
+            price: "198",
+            unit: "元",
             highlight: true,
-            features: ["AI 爆品核心价值提炼", "AI 蜂窝 15 模型诊断", "上市传播全案策略", "KOL 种草矩阵规划", "首发活动策划方案"],
+            features: ["15 条 AI 图文内容", "5 条 AI 视频剪辑", "爆款预测应用", "全平台自动分发"],
             cta: "立即开通",
-            href: "#contact"
+            href: "/platform"
           },
           {
-            name: "AI 季度爆品",
-            period: "3个月",
-            price: "48",
-            unit: "万",
+            name: "AI 月度订阅",
+            period: "月付",
+            price: "1980",
+            unit: "元",
             highlight: false,
-            features: ["季度 AI 爆品战略规划", "3 款爆品 AI 策划", "KOL/KOC 矩阵执行", "全域内容种草", "实时数据监测"],
-            cta: "预约咨询",
-            href: "#contact"
+            features: ["每月 150 条 AI 内容", "高级 AutoClip 支持", "4 个平台账号", "实时数据监测"],
+            cta: "预约演示",
+            href: "/platform"
           }
         ]
       },
       {
         name: "专家组 (Expert-Led)",
         icon: <Zap className="text-[#C9A84C]" size={20} />,
-        desc: "由代言先生及爆品顾问团队主导，深度战略与执行",
+        desc: "专家策划师主导的人工内容生产与审核",
         plans: [
           {
-            name: "专家爆品尝鲜",
+            name: "专家内容尝鲜",
             period: "单次",
-            price: "18.8",
-            unit: "万",
+            price: "1980",
+            unit: "元",
             highlight: false,
-            features: ["爆品核心价值提炼", "爆品蜂窝 15 模型诊断", "上市传播策略", "KOL 种草矩阵规划"],
-            cta: "立即咨询",
+            features: ["5 条策划内容", "人工策略师指导", "内容日历规划", "人工审核"],
+            cta: "立即开通",
             href: "#contact"
           },
           {
-            name: "专家爆品全案",
+            name: "专家内容包",
             period: "单次",
-            price: "48",
-            unit: "万",
+            price: "9800",
+            unit: "元",
             highlight: true,
-            features: ["爆品核心价值深度提炼", "爆品蜂窝 15 模型诊断", "上市传播全案策略", "KOL 种草矩阵规划", "首发活动执行方案", "专家团队支持"],
-            cta: "预约提案",
+            features: ["30 条策划内容", "专属策略师", "深度数据分析", "KOL 内容协同", "A/B 测试优化"],
+            cta: "立即升级",
             href: "#contact"
           },
           {
-            name: "专家全年爆品陪跑",
-            period: "12个月",
-            price: "288",
-            unit: "万",
+            name: "专家月度陪跑",
+            period: "月付",
+            price: "19800",
+            unit: "元",
             highlight: false,
-            features: ["全年爆品战略规划", "不限数量爆品策划", "品牌 360° 领导力构建", "全球 KOL 资源（2 万+）", "跨境电商策略", "专属爆品顾问团队"],
-            cta: "立即签约",
+            features: ["不限量策划内容", "全平台账号管理", "专属内容团队", "实时爆款预警", "季度战略复盘"],
+            cta: "预约演示",
+            href: "#contact"
+          }
+        ]
+      }
+    ]
+  },
+
+  // 3. 战略类服务
+  strategyServices: {
+    id: "strategy-services",
+    badge: "战略类",
+    badgeColor: "#C9A84C",
+    title: "战略大脑与咨询",
+    subtitle: "Strategic Intelligence & Consulting",
+    desc: "从 AI 战略助手到专家深度陪跑，打造增长引擎。",
+    groups: [
+      {
+        name: "AI 组 (AI-Powered)",
+        icon: <Sparkles className="text-[#40d090]" size={20} />,
+        desc: "MaoAI 驱动的智能战略模型，高效且经济",
+        plans: [
+          {
+            name: "MaoAI 尝鲜",
+            period: "单次",
+            price: "98",
+            unit: "元",
+            highlight: false,
+            features: ["MaoAI 基础对话", "行业趋势分析", "竞品动态预警", "品牌声量分析"],
+            cta: "立即体验",
+            href: "/mao-ai"
+          },
+          {
+            name: "MaoAI 战略包",
+            period: "单次",
+            price: "1980",
+            unit: "元",
+            highlight: true,
+            features: ["MaoAI 高级战略模型", "爆品策划 AI 预审", "竞品深度分析", "AI 自动生成周报"],
+            cta: "立即开通",
+            href: "/mao-ai"
+          },
+          {
+            name: "MaoAI 月度订阅",
+            period: "月付",
+            price: "9800",
+            unit: "元",
+            highlight: false,
+            features: ["全量 MaoAI 智库权限", "不限次战略咨询", "实时市场预警", "AI 自动生成月报"],
+            cta: "预约演示",
+            href: "/mao-ai"
+          }
+        ]
+      },
+      {
+        name: "专家组 (Expert-Led)",
+        icon: <Brain className="text-[#C9A84C]" size={20} />,
+        desc: "代言先生及核心专家团队亲自操刀的战略护航",
+        plans: [
+          {
+            name: "专家战略尝鲜",
+            period: "单次",
+            price: "3800",
+            unit: "元",
+            highlight: false,
+            features: ["企业战略诊断", "竞争格局分析", "增长机会识别", "高管汇报 1 次"],
+            cta: "立即预约",
+            href: "#contact"
+          },
+          {
+            name: "专家战略全案",
+            period: "单次",
+            price: "38000",
+            unit: "元",
+            highlight: true,
+            features: ["战略定位深度研究", "错位竞争理论应用", "爆品策划人工审核", "专属战略顾问支持", "管理员终审报告"],
+            cta: "预约演示",
+            href: "#contact"
+          },
+          {
+            name: "专家年度陪跑",
+            period: "年付",
+            price: "188000",
+            unit: "元",
+            highlight: false,
+            features: ["全年战略护航陪跑", "毛智库深度研报", "季度高管闭门研讨", "重大决策人工复核", "国际机构资源对接"],
+            cta: "申请加入",
             href: "#contact"
           }
         ]
@@ -368,11 +282,11 @@ const pricingData_zh = {
 function ServiceCard({ plan, isEn }: { plan: any; isEn: boolean }) {
   return (
     <div className={`relative p-8 border transition-all duration-500 flex flex-col ${
-      plan.highlight ? "bg-[#C9A84C]/5 border-[#C9A84C]/30 scale-105 z-10" : "bg-white/[0.02] border-white/10 hover:border-white/20"
+      plan.highlight ? "bg-[#C9A84C]/5 border-[#C9A84C]/30 scale-105 z-10 ring-2 ring-[#C9A84C]/20" : "bg-white/[0.02] border-white/10 hover:border-white/20"
     }`}>
       {plan.highlight && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#C9A84C] text-[#0A0A0A] text-[10px] font-bold tracking-widest uppercase px-3 py-1">
-          {isEn ? "Recommended" : "推荐方案"}
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#C9A84C] text-[#0A0A0A] text-[10px] font-bold tracking-widest uppercase px-3 py-1 flex items-center gap-1">
+          <Flame size={12} /> {isEn ? "Best Value" : "最佳选择"}
         </div>
       )}
       <div className="mb-6">
@@ -381,7 +295,7 @@ function ServiceCard({ plan, isEn }: { plan: any; isEn: boolean }) {
       </div>
       <div className="mb-8">
         <div className="flex items-baseline gap-1">
-          <span className="text-4xl font-bold text-[#C9A84C]">{plan.price}</span>
+          <span className={`text-4xl font-bold ${plan.highlight ? "text-[#C9A84C]" : "text-white"}`}>{plan.price}</span>
           <span className="text-white/60 text-sm">{plan.unit}</span>
         </div>
       </div>
@@ -421,12 +335,12 @@ export default function Pricing() {
             Service & Pricing
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight font-['Noto_Serif_SC']">
-            {isEn ? "Growth Engine Pricing" : "猫眼增长引擎定价体系"}
+            {isEn ? "Growth Engine Pricing" : "极具竞争力的定价体系"}
           </h1>
           <p className="text-white/50 text-lg max-w-3xl leading-relaxed">
             {isEn 
-              ? "Choose between AI-powered efficiency or expert-led excellence. Every service line offers both options at competitive prices."
-              : "每项业务都分为 AI 组与专家组。AI 组价格极具竞争力，作为专家组的高效平替；专家组由代言先生及核心团队亲自操刀。"}
+              ? "Ultra-low entry prices (¥9.8/38/98/198) as our core competitive advantage. Every service offers both AI and Expert options."
+              : "我们的核心竞争力：极低的尝试价格（¥9.8/38/98/198）。每项业务都分为 AI 组与专家组，快速获客，高效转化。"}
           </p>
         </div>
       </section>
@@ -434,16 +348,16 @@ export default function Pricing() {
       {/* 定价板块 */}
       <section className="py-24">
         <div className="container">
-          {/* 1. 战略大脑 */}
+          {/* 1. 设计类 */}
           <div className="mb-32">
             <div className="flex items-center gap-4 mb-12">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10" />
-              <h3 className="text-2xl font-bold text-white font-['Noto_Serif_SC'] px-6">{data.strategicBrain.title}</h3>
+              <h3 className="text-2xl font-bold text-white font-['Noto_Serif_SC'] px-6">{data.designServices.title}</h3>
               <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10" />
             </div>
-            <p className="text-white/40 text-center mb-12 max-w-2xl mx-auto">{data.strategicBrain.desc}</p>
+            <p className="text-white/40 text-center mb-12 max-w-2xl mx-auto">{data.designServices.desc}</p>
             
-            {data.strategicBrain.groups.map((group, groupIdx) => (
+            {data.designServices.groups.map((group, groupIdx) => (
               <div key={groupIdx} className="mb-16">
                 <div className="flex items-center gap-3 mb-8">
                   {group.icon}
@@ -457,16 +371,16 @@ export default function Pricing() {
             ))}
           </div>
 
-          {/* 2. 执行引擎 */}
+          {/* 2. 内容类 */}
           <div className="mb-32">
             <div className="flex items-center gap-4 mb-12">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10" />
-              <h3 className="text-2xl font-bold text-white font-['Noto_Serif_SC'] px-6">{data.executionEngine.title}</h3>
+              <h3 className="text-2xl font-bold text-white font-['Noto_Serif_SC'] px-6">{data.contentServices.title}</h3>
               <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10" />
             </div>
-            <p className="text-white/40 text-center mb-12 max-w-2xl mx-auto">{data.executionEngine.desc}</p>
+            <p className="text-white/40 text-center mb-12 max-w-2xl mx-auto">{data.contentServices.desc}</p>
             
-            {data.executionEngine.groups.map((group, groupIdx) => (
+            {data.contentServices.groups.map((group, groupIdx) => (
               <div key={groupIdx} className="mb-16">
                 <div className="flex items-center gap-3 mb-8">
                   {group.icon}
@@ -480,39 +394,16 @@ export default function Pricing() {
             ))}
           </div>
 
-          {/* 3. 品牌全案 */}
-          <div className="mb-32">
-            <div className="flex items-center gap-4 mb-12">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10" />
-              <h3 className="text-2xl font-bold text-white font-['Noto_Serif_SC'] px-6">{data.brandStrategy.title}</h3>
-              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10" />
-            </div>
-            <p className="text-white/40 text-center mb-12 max-w-2xl mx-auto">{data.brandStrategy.desc}</p>
-            
-            {data.brandStrategy.groups.map((group, groupIdx) => (
-              <div key={groupIdx} className="mb-16">
-                <div className="flex items-center gap-3 mb-8">
-                  {group.icon}
-                  <h4 className="text-xl font-bold text-white">{group.name}</h4>
-                  <span className="text-white/30 text-sm ml-auto">{group.desc}</span>
-                </div>
-                <div className="grid md:grid-cols-3 gap-8">
-                  {group.plans.map(plan => <ServiceCard key={plan.name} plan={plan} isEn={isEn} />)}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 4. 爆品营销 */}
+          {/* 3. 战略类 */}
           <div>
             <div className="flex items-center gap-4 mb-12">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/10" />
-              <h3 className="text-2xl font-bold text-white font-['Noto_Serif_SC'] px-6">{data.productMarketing.title}</h3>
+              <h3 className="text-2xl font-bold text-white font-['Noto_Serif_SC'] px-6">{data.strategyServices.title}</h3>
               <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10" />
             </div>
-            <p className="text-white/40 text-center mb-12 max-w-2xl mx-auto">{data.productMarketing.desc}</p>
+            <p className="text-white/40 text-center mb-12 max-w-2xl mx-auto">{data.strategyServices.desc}</p>
             
-            {data.productMarketing.groups.map((group, groupIdx) => (
+            {data.strategyServices.groups.map((group, groupIdx) => (
               <div key={groupIdx} className="mb-16">
                 <div className="flex items-center gap-3 mb-8">
                   {group.icon}
@@ -532,17 +423,17 @@ export default function Pricing() {
       <section className="py-24 border-t border-white/5 bg-[#C9A84C]/5">
         <div className="container text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-8 font-['Noto_Serif_SC']">
-            {isEn ? "Ready to Start?" : "准备好开始了吗？"}
+            {isEn ? "Start Your Growth Journey" : "从 ¥9.8 开始您的增长之旅"}
           </h2>
           <p className="text-white/50 mb-12 max-w-2xl mx-auto">
-            所有合作均始于一场深度的战略沟通。我们的专家团队将为您提供初步的品牌诊断。
+            极低的尝试价格是我们的竞争力。无论您选择 AI 高效方案还是专家深度陪跑，都能以最经济的方式快速验证效果。
           </p>
           <div className="flex flex-col md:flex-row items-center justify-center gap-6">
             <a href="#contact" className="px-12 py-5 bg-[#C9A84C] text-[#0A0A0A] font-bold tracking-widest uppercase hover:bg-[#D4B866] transition-all">
-              立即预约战略会议
+              立即开始尝试（¥9.8 起）
             </a>
             <a href="/mao-ai" className="px-12 py-5 border border-white/20 text-white font-bold tracking-widest uppercase hover:bg-white/5 transition-all">
-              先去体验 MaoAI
+              体验 MaoAI 大脑
             </a>
           </div>
         </div>

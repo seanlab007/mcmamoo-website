@@ -3,17 +3,16 @@
  * Whale Pictures Page — 鲸达影业业务重构
  * ============================================================
  * 定价策略：
- * 1. 业务分为"AI 组 (AI-Powered)"与"专家组 (Expert-Led)"
- * 2. AI 组主打 AutoClip 视频自动化与 AI 短剧，作为专家组平替
- * 3. 专家组主打国际获奖团队摄制与外模经纪，定位高端
- * 4. 降低入门尝试价格（如 AI 视频尝鲜 0.98万起）
+ * 1. 核心竞争力 = 极低的尝试价格（9.8/38/98/198）
+ * 2. 影视摄制与外模经纪均分为 AI 组与专家组
+ * 3. 提供低价一次性尝试服务，快速获客
  * ============================================================
  */
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Check, Play, Users, Sparkles, Brain, ArrowRight, Star } from "lucide-react";
+import { Check, Play, Users, Sparkles, Brain, ArrowRight, Star, Flame } from "lucide-react";
 
 // ─── 定价数据定义 ────────────────────────────────────────────────────────────
 
@@ -35,30 +34,30 @@ const pricingData = {
           {
             name: "AI 视频尝鲜",
             period: "单次",
-            price: "0.98",
-            unit: "万",
+            price: "38",
+            unit: "元",
             highlight: false,
-            features: ["5 条 AI 自动剪辑视频", "AutoClip 基础算力支持", "品牌素材 AI 适配", "多平台尺寸自动生成"],
+            features: ["3 条 AI 自动剪辑视频", "AutoClip 基础算力", "品牌素材 AI 适配", "多平台尺寸生成"],
             cta: "立即体验",
             href: "/platform"
           },
           {
-            name: "AI 视频矩阵",
-            period: "月付",
-            price: "3.98",
-            unit: "万",
+            name: "AI 视频包",
+            period: "单次",
+            price: "198",
+            unit: "元",
             highlight: true,
-            features: ["每月 50 条 AI 视频生产", "AutoClip 高级引擎", "爆款视频模型匹配", "全自动数字人配音", "全平台自动分发"],
+            features: ["15 条 AI 视频生产", "AutoClip 高级引擎", "爆款视频模型匹配", "全自动数字人配音"],
             cta: "立即开通",
             href: "/platform"
           },
           {
-            name: "AI 短剧包",
+            name: "AI 短剧季卡",
             period: "单季",
-            price: "12.8",
-            unit: "万",
+            price: "1980",
+            unit: "元",
             highlight: false,
-            features: ["12 集 AI 生成短剧", "AI 场景与角色建模", "Sora/Kling 技术支持", "品牌深度植入策划", "数据监测报告"],
+            features: ["12 集 AI 生成短剧", "AI 场景与角色建模", "Sora/Kling 技术支持", "品牌深度植入策划"],
             cta: "预约演示",
             href: "/platform"
           }
@@ -72,30 +71,30 @@ const pricingData = {
           {
             name: "专家摄制尝鲜",
             period: "单次",
-            price: "8.8",
-            unit: "万",
+            price: "1980",
+            unit: "元",
             highlight: false,
-            features: ["15-30s 品牌短片", "专业导演团队策划", "高质感实拍/剪辑", "基础调色与音效", "1 次免费修改"],
-            cta: "预约咨询",
+            features: ["15-30s 品牌短片", "专业导演团队策划", "高质感实拍/剪辑", "基础调色与音效"],
+            cta: "立即预约",
             href: "#contact"
           },
           {
             name: "品牌 TVC 大片",
             period: "单次",
-            price: "28",
-            unit: "万",
+            price: "9800",
+            unit: "元",
             highlight: true,
-            features: ["60s 品牌形象大片", "戛纳获奖级别创意", "顶级摄制器材与灯光", "专业外模/演员出镜", "电影级后期调色"],
+            features: ["60s 品牌形象大片", "戛纳获奖级别创意", "顶级摄制器材与灯光", "专业外模/演员出镜"],
             cta: "预约提案",
             href: "#contact"
           },
           {
             name: "年度内容合伙人",
             period: "年付",
-            price: "128",
-            unit: "万",
+            price: "128000",
+            unit: "元",
             highlight: false,
-            features: ["全年内容战略规划", "4 场品牌级大片摄制", "每月 10 条专家策划短片", "专属导演团队对接", "全球版权授权"],
+            features: ["全年内容战略规划", "4 场品牌级大片摄制", "每月 10 条专家策划短片", "专属导演团队对接"],
             cta: "立即签约",
             href: "#contact"
           }
@@ -121,20 +120,20 @@ const pricingData = {
           {
             name: "AI 模特尝鲜",
             period: "单次",
-            price: "0.48",
-            unit: "万",
+            price: "9.8",
+            unit: "元",
             highlight: false,
-            features: ["3 张 AI 超写实模特图", "品牌服装 AI 试穿", "指定国籍/肤色/风格", "永久商用版权"],
+            features: ["1 张 AI 超写实模特图", "品牌服装 AI 试穿", "指定国籍/肤色/风格", "永久商用版权"],
             cta: "立即生成",
             href: "#contact"
           },
           {
-            name: "AI 模特画册",
+            name: "AI 模特包",
             period: "单次",
-            price: "1.98",
-            unit: "万",
+            price: "98",
+            unit: "元",
             highlight: true,
-            features: ["20 张 AI 模特精修图", "多场景 AI 切换", "品牌视觉风格定制", "支持视频号/电商使用", "永久商用版权"],
+            features: ["10 张 AI 模特精修图", "多场景 AI 切换", "品牌视觉风格定制", "支持视频号/电商使用"],
             cta: "立即定制",
             href: "#contact"
           }
@@ -148,20 +147,20 @@ const pricingData = {
           {
             name: "专家拍摄尝鲜",
             period: "4小时",
-            price: "0.8",
-            unit: "万",
+            price: "980",
+            unit: "元",
             highlight: false,
-            features: ["1 位国际模特出镜", "4 小时拍摄时长", "基础妆造配合", "国内商用版权授权", "24h 快速确认"],
+            features: ["1 位国际模特出镜", "4 小时拍摄时长", "基础妆造配合", "国内商用版权授权"],
             cta: "挑选模特",
             href: "#contact"
           },
           {
             name: "全天专业拍摄",
             period: "8小时",
-            price: "1.5",
-            unit: "万",
+            price: "1980",
+            unit: "元",
             highlight: true,
-            features: ["1-2 位国际模特出镜", "8 小时拍摄时长", "专业妆造团队", "全媒体商用版权", "多套服装/场景切换"],
+            features: ["1-2 位国际模特出镜", "8 小时拍摄时长", "专业妆造团队", "全媒体商用版权"],
             cta: "立即预约",
             href: "#contact"
           }
@@ -186,11 +185,11 @@ const AWARDS = [
 function ServiceCard({ plan, isEn }: { plan: any; isEn: boolean }) {
   return (
     <div className={`relative p-8 border transition-all duration-500 flex flex-col ${
-      plan.highlight ? "bg-[#F59E0B]/5 border-[#F59E0B]/30 scale-105 z-10" : "bg-white/[0.02] border-white/10 hover:border-white/20"
+      plan.highlight ? "bg-[#F59E0B]/5 border-[#F59E0B]/30 scale-105 z-10 ring-2 ring-[#F59E0B]/20" : "bg-white/[0.02] border-white/10 hover:border-white/20"
     }`}>
       {plan.highlight && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#F59E0B] text-[#0A0A0A] text-[10px] font-bold tracking-widest uppercase px-3 py-1">
-          {isEn ? "Most Popular" : "最受欢迎"}
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#F59E0B] text-[#0A0A0A] text-[10px] font-bold tracking-widest uppercase px-3 py-1 flex items-center gap-1">
+          <Flame size={12} /> {isEn ? "Best Value" : "最佳选择"}
         </div>
       )}
       <div className="mb-6">
@@ -353,14 +352,14 @@ export default function WhalePictures() {
       <section className="py-24 border-t border-white/5 bg-[#F59E0B]/5">
         <div className="container text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-8 font-['Noto_Serif_SC']">
-            {isEn ? "Create Your Brand Masterpiece" : "打造您的品牌视觉杰作"}
+            {isEn ? "Start Your Creative Journey" : "从 ¥9.8 开始您的创意之旅"}
           </h2>
           <p className="text-white/50 mb-12 max-w-2xl mx-auto">
-            无论是追求极致效率的 AI 视频矩阵，还是追求艺术高度的品牌大片，鲸达影业都能为您提供最专业的解决方案。
+            极低的尝试价格是我们的竞争力。无论是 AI 自动化视频矩阵，还是国际获奖团队摄制，都能以最经济的方式快速验证效果。
           </p>
           <div className="flex flex-col md:flex-row items-center justify-center gap-6">
             <a href="#contact" className="px-12 py-5 bg-[#F59E0B] text-[#0A0A0A] font-bold tracking-widest uppercase hover:bg-[#D98E0A] transition-all flex items-center gap-3">
-              立即预约创意咨询 <ArrowRight size={18} />
+              立即开始尝试（¥9.8 起） <ArrowRight size={18} />
             </a>
             <a href="https://whalepictures.vip" target="_blank" rel="noopener noreferrer" className="px-12 py-5 border border-white/20 text-white font-bold tracking-widest uppercase hover:bg-white/5 transition-all">
               访问鲸达影业官网
