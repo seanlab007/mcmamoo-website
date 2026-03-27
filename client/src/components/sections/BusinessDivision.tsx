@@ -198,7 +198,7 @@ export default function BusinessDivision() {
           tag="Brand Management · 品牌全案"
           title="品牌全案"
           subtitle="Make Brands Premium"
-          desc="运用猫眼「错位竞争」方法论，从品牌定位、KOL矩阵到全域营销一体化操盘，帮助品牌在竞争红海中找到高溢价增长路径。"
+          desc="运用猫眼增长引擎「错位竞争」方法论，从品牌定位、KOL矩阵到全域营销一体化操盘，帮助品牌在竞争红海中找到高溢价增长路径。"
           metrics={[
             { val: "8亿+", label: "蟹太太年营收" },
             { val: "20亿", label: "小仙炖5年营收" },

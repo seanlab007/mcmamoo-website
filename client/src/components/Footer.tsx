@@ -1,5 +1,5 @@
 /*
- * Footer — 猫眼咨询官网页脚
+ * Footer — 猫眼增长引擎增长引擎 (MaoEye Growth Engine)官网页脚
  * SEO优化：添加更多关键词链接和结构化内容
  */
 import { Link } from "wouter";
@@ -23,10 +23,10 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-white/40 text-sm leading-relaxed max-w-md mb-4">
-              猫眼咨询（Mc&Mamoo）是中国新消费领域领先的品牌战略咨询公司，独创错位竞争理论，服务江中猴姑、小仙炖、小罐茶、蟹太太等10亿级大单品品牌。
+              猫眼增长引擎增长引擎 (MaoEye Growth Engine)（Mc&Mamoo）是中国新消费领域领先的品牌战略咨询公司，独创错位竞争理论，服务江中猴姑、小仙炖、小罐茶、蟹太太等10亿级大单品品牌。
             </p>
             <p className="text-white/30 text-xs tracking-wide">
-              猫眼企业发展（上海）有限公司 · 全球新消费第一品牌管理公司
+              猫眼增长引擎企业发展（上海）有限公司 · 全球新消费第一品牌管理公司
             </p>
           </div>
 
@@ -35,7 +35,7 @@ export default function Footer() {
             <h4 className="text-white/60 text-xs font-medium mb-4 tracking-wider uppercase">快速导航</h4>
             <div className="flex flex-col gap-2">
               {[
-                { label: "关于猫眼", href: "#about" },
+                { label: "关于猫眼增长引擎", href: "#about" },
                 { label: "核心方法论", href: "#methodology" },
                 { label: "服务体系", href: "#services" },
                 { label: "标杆案例", href: "#cases" },
@@ -90,7 +90,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6">
           <p className="text-white/20 text-xs">
-            ©2024 Mc&amp;Mamoo Brand Management Inc. 猫眼企业发展（上海）有限公司 版权所有
+            ©2024 Mc&amp;Mamoo Brand Management Inc. 猫眼增长引擎企业发展（上海）有限公司 版权所有
           </p>
           <div className="flex items-center gap-4">
             <a href="/sitemap.xml" className="text-white/20 text-xs hover:text-[#C9A84C]/60 transition-colors">
