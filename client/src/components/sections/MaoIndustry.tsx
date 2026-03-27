@@ -84,7 +84,7 @@ export default function MaoIndustry() {
           <div className="flex items-center gap-3 mb-5">
             <span className="w-8 h-px bg-[#C9A84C]" />
             <span className="text-[#C9A84C] text-xs tracking-[0.3em] uppercase font-mono" style={{ letterSpacing: "0.3em" }}>
-              MAO INDUSTRY · {isEn ? "Mao Industry" : "猫眼增长引擎工业"}
+              MAO INDUSTRY · {isEn ? "Mao Industry" : "猫眼增长引擎 (Mc&Mamoo Growth Engine)工业"}
             </span>
           </div>
 
@@ -96,7 +96,7 @@ export default function MaoIndustry() {
           <p className="text-white/60 text-base md:text-lg max-w-xl leading-relaxed">
             {isEn
               ? "From lunar Helium-3 to Tokamak fusion reactors, from precision defense manufacturing to civilization-scale thinking — Mao Industry redefines the boundaries of industrial civilization with ultra long-termism."
-              : "从月球氦-3到托卡马克聚变堆，从军工精密制造到万年尺度的文明思考——猫眼增长引擎工业以超长期主义重构工业文明边界。"}
+              : "从月球氦-3到托卡马克聚变堆，从军工精密制造到万年尺度的文明思考——猫眼增长引擎 (Mc&Mamoo Growth Engine)工业以超长期主义重构工业文明边界。"}
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-8">
