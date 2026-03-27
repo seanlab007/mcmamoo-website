@@ -31,6 +31,8 @@ import AdminLogs from "./pages/AdminLogs";
 import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
+import ContentDashboard from "./pages/ContentDashboard";
+import AdminContentJobs from "./pages/AdminContentJobs";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -56,6 +58,9 @@ function Router() {
       {/* MaoAI 相关页面 */}
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
+      {/* 猫眼内容平台 */}
+      <Route path={"/content"} component={ContentDashboard} />
+      <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
       {/* 其他功能页面 */}
       <Route path={"/openclaw"} component={OpenClaw} />
       <Route path={"/millennium-clock"} component={MillenniumClock} />
