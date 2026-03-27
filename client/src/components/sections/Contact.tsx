@@ -89,17 +89,21 @@ export default function Contact() {
             <div className="mb-8">
               <div className="inline-flex items-center gap-6 p-5 border border-[#C9A84C]/25 bg-[#C9A84C]/5 hover:border-[#C9A84C]/50 transition-all duration-300">
                 {92	                <div className="relative flex-shrink-0">
-93	                  <div className="absolute -inset-1 border border-[#C9A84C]/40" />
-94	                  <div className="absolute -inset-2 border border-[#C9A84C]/15" />
-95	                  <div className="p-1.5 bg-[#C9A84C]">
-96	                    <div className="bg-[#0A0A0A] p-1">
-97	                      <img
-98	                        src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png"
-99	                        alt="微信二维码"
-100	                        className="w-20 h-20 object-contain block"
-101	                      />
-102	                    </div>
-103	                  </div>
+                  {/* 外层金边框 */}
+                  <div className="absolute -inset-1 border border-[#C9A84C]/60" />
+                  <div className="absolute -inset-2 border border-[#C9A84C]/20" />
+                  {/* 二维码容器 - 黑色背景 + 反转滤镜 */}
+                  <div className="p-1 bg-[#0A0A0A]">
+                    <img
+                      src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png"
+                      alt="微信二维码"
+                      className="w-20 h-20 object-contain block"
+                      style={{
+                        filter: "invert(1) brightness(1.1) contrast(1.2)",
+                      }}
+                    />
+                  </div>
+                </div>        </div>
 104	                </div>            {/* Info */}
                 <div>
                   <div className="text-[#C9A84C]/60 text-[0.6rem] font-['DM_Mono'] tracking-[0.2em] uppercase mb-2">SCAN TO ADD WECHAT</div>
