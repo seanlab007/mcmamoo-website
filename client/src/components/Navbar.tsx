@@ -43,13 +43,13 @@ export default function Navbar() {
           : "bg-transparent border-transparent py-4"
       )}
     >
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-8">
         {/* Desktop Navigation - Double Row */}
-        <div className="hidden lg:flex flex-col gap-4">
+        <div className="hidden lg:flex flex-col gap-5">
           {/* Row 1: Logo + Main Links */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-12">
-              <Link href="/" className="flex items-center gap-4 group">
+            <div className="flex items-center gap-16">
+              <Link href="/" className="flex items-center gap-4 group flex-shrink-0">
                 <div className="relative w-10 h-10 overflow-hidden">
                   <img 
                     src="/logo-gold.png" 
@@ -67,13 +67,13 @@ export default function Navbar() {
                 </div>
               </Link>
 
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-12 flex-1">
                 {navLinksRow1.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "text-[0.75rem] font-medium tracking-[0.15em] uppercase transition-all duration-300 hover:text-[#C9A84C]",
+                      "text-[0.75rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
                       location === link.href ? "text-[#C9A84C]" : "text-white/60"
                     )}
                   >
@@ -83,14 +83,14 @@ export default function Navbar() {
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-8 flex-shrink-0">
               <div className="flex items-center gap-2 text-white/40 hover:text-white transition-colors cursor-pointer">
                 <Globe size={14} />
                 <span className="text-[0.7rem] font-['DM_Mono'] tracking-widest uppercase">CN / EN</span>
               </div>
               <Button
                 asChild
-                className="bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866] rounded-none px-6 py-5 text-[0.7rem] font-bold tracking-[0.2em] uppercase transition-all duration-300"
+                className="bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866] rounded-none px-6 py-5 text-[0.7rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 flex-shrink-0"
               >
                 <Link href="/pricing">预约咨询</Link>
               </Button>
@@ -98,14 +98,14 @@ export default function Navbar() {
           </div>
 
           {/* Row 2: Secondary Links + Right Actions */}
-          <div className="flex items-center justify-between border-t border-white/5 pt-3">
-            <div className="flex items-center gap-8">
+          <div className="flex items-center justify-between border-t border-white/5 pt-4">
+            <div className="flex items-center gap-14">
               {navLinksRow2.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "text-[0.7rem] font-medium tracking-[0.15em] uppercase transition-all duration-300 hover:text-[#C9A84C]",
+                    "text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
                     location === link.href ? "text-[#C9A84C]" : "text-white/40"
                   )}
                 >
@@ -114,13 +114,13 @@ export default function Navbar() {
               ))}
             </div>
 
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-10">
               {rightLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "text-[0.7rem] font-medium tracking-[0.15em] uppercase transition-all duration-300 hover:text-[#C9A84C]",
+                    "text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
                     location === link.href ? "text-[#C9A84C]" : "text-white/40"
                   )}
                 >
@@ -129,7 +129,7 @@ export default function Navbar() {
               ))}
               <Link
                 href="/platform"
-                className="flex items-center gap-2 px-3 py-1 border border-[#C9A84C]/30 bg-[#C9A84C]/5 text-[#C9A84C] text-[0.65rem] font-bold tracking-[0.2em] uppercase hover:bg-[#C9A84C]/10 transition-all"
+                className="flex items-center gap-2 px-3 py-1 border border-[#C9A84C]/30 bg-[#C9A84C]/5 text-[#C9A84C] text-[0.65rem] font-bold tracking-[0.2em] uppercase hover:bg-[#C9A84C]/10 transition-all whitespace-nowrap flex-shrink-0"
               >
                 <Zap size={10} className="animate-pulse" />
                 Platform
