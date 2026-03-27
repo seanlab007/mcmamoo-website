@@ -171,7 +171,7 @@ async function localFetch(
 }
 
 /** 统一入口：有 Supabase 走云端，否则走本地文件 */
-async function dbFetch(
+export async function dbFetch(
   p: string,
   options: RequestInit = {},
   prefer?: string

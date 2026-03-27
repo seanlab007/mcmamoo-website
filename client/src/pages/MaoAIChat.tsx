@@ -760,7 +760,19 @@ export default function MaoAIChat() {
         buffer = lines.pop() || "";
         for (const line of lines) {
           const trimmed = line.trim();
-          if (!trimmed || trimmed === "data: [DONE]") continue;
+          if (!trimmed || trimmed === "data: [DONE]") {
+            if (trimmed === "data: [DONE]") {
+              // Mark any 'calling' skill invoke steps as done
+              const updated = liveToolCalls.map(t =>
+                t.status === "calling" && t.id.startsWith("skill-") ? { ...t, status: "done" as const } : t
+              );
+              if (updated.some((t, i) => t.status !== liveToolCalls[i]?.status)) {
+                liveToolCalls.splice(0, liveToolCalls.length, ...updated);
+                setCurrentToolCalls([...liveToolCalls]);
+              }
+            }
+            continue;
+          }
           if (trimmed.startsWith("data: ")) {
             try {
               const chunk = JSON.parse(trimmed.slice(6));
@@ -773,6 +785,18 @@ export default function MaoAIChat() {
               } else if (chunk.error) {
                 fullContent += `\n\n⚠️ 错误: ${chunk.error}`;
                 setStreamingContent(fullContent);
+              } else if (chunk.skillMatch) {
+                // Skill was matched — show it as a tool-call-style step
+                const step: ToolCallStep = {
+                  id: `skill-${chunk.skillMatch.skillId}`,
+                  name: chunk.skillMatch.mode === "invoke"
+                    ? `⚡ 调用技能: ${chunk.skillMatch.name}`
+                    : `🧩 技能模式: ${chunk.skillMatch.name}`,
+                  args: { skillId: chunk.skillMatch.skillId, mode: chunk.skillMatch.mode },
+                  status: chunk.skillMatch.mode === "invoke" ? "calling" : "done",
+                };
+                liveToolCalls.push(step);
+                setCurrentToolCalls([...liveToolCalls]);
               } else if (chunk.toolCall) {
                 // Tool is being called
                 const step: ToolCallStep = {
@@ -841,7 +865,14 @@ export default function MaoAIChat() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    // Ignore Enter during IME composition (e.g. Chinese/Japanese input methods)
+    // Also ignore when busy — streaming / generating image / uploading file
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      if (!isBusy) {
+        handleSend();
+      }
+    }
   };
 
   const stopStreaming = () => {
@@ -1404,9 +1435,11 @@ export default function MaoAIChat() {
                     ? "描述图片内容，或直接发送让 AI 分析..."
                     : "输入消息，Enter 发送，Shift+Enter 换行，Ctrl+V 粘贴截图"
                 }
-                disabled={isBusy}
+                disabled={isUploadingFile}
                 rows={1}
                 className={`flex-1 bg-white/5 border text-white/85 text-sm px-4 py-3 resize-none focus:outline-none placeholder-white/20 disabled:opacity-50 ${
+                  isBusy ? "opacity-60" : ""
+                } ${
                   inputMode === "image"
                     ? "border-purple-500/20 focus:border-purple-500/40"
                     : "border-white/10 focus:border-[#C9A84C]/40"
