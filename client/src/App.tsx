@@ -35,6 +35,7 @@ import AdminRouting from "./pages/AdminRouting";
 import ContentDashboard from "./pages/ContentDashboard";
 import AdminContentJobs from "./pages/AdminContentJobs";
 import AutoClip from "./pages/AutoClip";
+import MaoIndustry from "./pages/MaoIndustry";
 
 function Router() {
   return (
@@ -45,7 +46,13 @@ function Router() {
       <Route path={"/cases/jiangzhong"} component={CaseJiangzhong} />
       <Route path={"/cases/xiaoguan"} component={CaseXiaoguan} />
       <Route path={"/cases/pangge"} component={CasePangge} />
-      <Route path={"/maothink"} component={MaoThinkTank} />
+      
+      {/* 旗下子公司路由 */}
+      <Route path={"/mao-think-tank"} component={MaoThinkTank} />
+      <Route path={"/maothink"} component={MaoThinkTank} /> {/* 兼容旧路由 */}
+      <Route path={"/whale-pictures"} component={WhalePictures} />
+      <Route path={"/mao-industry"} component={MaoIndustry} />
+
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />
       <Route path={"/admin/ai-nodes" } component={AdminAiNodes} />
@@ -58,20 +65,23 @@ function Router() {
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       <Route path={"/maoai/sales"} component={MaoAISales} />
+      
       {/* 猫眼内容平台 */}
       <Route path={"/content"} component={ContentDashboard} />
       <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
+      
       {/* 其他功能页面 */}
       <Route path={"/openclaw"} component={OpenClaw} />
       <Route path={"/millennium-clock"} component={MillenniumClock} />
-      <Route path={"/whale-pictures"} component={WhalePictures} />
       <Route path={"/autoclip"} component={AutoClip} />
+      
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
       <Route path={"/admin/logs"} component={AdminLogs} />
       <Route path={"/admin/millennium-clock"} component={AdminMillenniumClock} />
       <Route path={"/admin/nodes"} component={AdminNodes} />
       <Route path={"/admin/routing"} component={AdminRouting} />
+      
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
