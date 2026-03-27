@@ -35,7 +35,7 @@ import AdminRouting from "./pages/AdminRouting";
 import ContentDashboard from "./pages/ContentDashboard";
 import AdminContentJobs from "./pages/AdminContentJobs";
 import AutoClip from "./pages/AutoClip";
-import MaoIndustry from "./pages/MaoIndustry";
+import MaoIndustry from "./components/sections/MaoIndustry";
 
 function Router() {
   return (

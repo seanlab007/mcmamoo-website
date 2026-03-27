@@ -8,6 +8,102 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// drizzle/schema.ts
+var schema_exports = {};
+__export(schema_exports, {
+  briefSubscribers: () => briefSubscribers,
+  maoApplications: () => maoApplications,
+  outreachActivities: () => outreachActivities,
+  outreachTemplates: () => outreachTemplates,
+  salesLeads: () => salesLeads,
+  users: () => users
+});
+import { boolean, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+var users, maoApplications, briefSubscribers, salesLeads, outreachTemplates, outreachActivities;
+var init_schema = __esm({
+  "drizzle/schema.ts"() {
+    "use strict";
+    users = mysqlTable("users", {
+      /**
+       * Surrogate primary key. Auto-incremented numeric value managed by the database.
+       * Use this for relations between tables.
+       */
+      id: int("id").autoincrement().primaryKey(),
+      /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
+      openId: varchar("openId", { length: 64 }).notNull().unique(),
+      name: text("name"),
+      email: varchar("email", { length: 320 }),
+      loginMethod: varchar("loginMethod", { length: 64 }),
+      role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+      lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull()
+    });
+    maoApplications = mysqlTable("mao_applications", {
+      id: int("id").autoincrement().primaryKey(),
+      name: varchar("name", { length: 128 }).notNull(),
+      organization: varchar("organization", { length: 256 }).notNull(),
+      consultType: varchar("consult_type", { length: 128 }).notNull(),
+      description: text("description"),
+      status: mysqlEnum("status", ["pending", "reviewing", "approved", "rejected"]).default("pending").notNull(),
+      notes: text("notes"),
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    });
+    briefSubscribers = mysqlTable("brief_subscribers", {
+      id: int("id").autoincrement().primaryKey(),
+      email: varchar("email", { length: 320 }).notNull().unique(),
+      createdAt: timestamp("createdAt").defaultNow().notNull()
+    });
+    salesLeads = mysqlTable("sales_leads", {
+      id: int("id").autoincrement().primaryKey(),
+      name: varchar("name", { length: 128 }).notNull(),
+      company: varchar("company", { length: 256 }).notNull(),
+      title: varchar("title", { length: 128 }),
+      email: varchar("email", { length: 320 }).notNull(),
+      phone: varchar("phone", { length: 64 }),
+      linkedin: varchar("linkedin", { length: 256 }),
+      website: varchar("website", { length: 256 }),
+      status: mysqlEnum("status", ["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"]).default("new").notNull(),
+      source: mysqlEnum("source", ["website", "linkedin", "referral", "cold_outreach", "event", "other"]).default("other").notNull(),
+      score: int("score").default(0),
+      notes: text("notes"),
+      lastContact: timestamp("lastContact"),
+      nextFollowUp: timestamp("nextFollowUp"),
+      assignedTo: int("assignedTo").references(() => users.id),
+      aiInsights: json("aiInsights").$type(),
+      suggestedActions: json("suggestedActions").$type(),
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    });
+    outreachTemplates = mysqlTable("outreach_templates", {
+      id: int("id").autoincrement().primaryKey(),
+      name: varchar("name", { length: 128 }).notNull(),
+      subject: varchar("subject", { length: 256 }),
+      body: text("body").notNull(),
+      type: mysqlEnum("type", ["email", "linkedin"]).default("email").notNull(),
+      category: varchar("category", { length: 64 }),
+      aiOptimized: boolean("aiOptimized").default(false),
+      createdBy: int("createdBy").references(() => users.id),
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    });
+    outreachActivities = mysqlTable("outreach_activities", {
+      id: int("id").autoincrement().primaryKey(),
+      leadId: int("leadId").notNull().references(() => salesLeads.id),
+      type: mysqlEnum("type", ["email", "linkedin", "call", "meeting", "note"]).notNull(),
+      subject: varchar("subject", { length: 256 }),
+      content: text("content"),
+      status: mysqlEnum("status", ["draft", "sent", "delivered", "opened", "replied", "bounced"]).default("draft").notNull(),
+      sentAt: timestamp("sentAt"),
+      openedAt: timestamp("openedAt"),
+      repliedAt: timestamp("repliedAt"),
+      createdBy: int("createdBy").references(() => users.id),
+      createdAt: timestamp("createdAt").defaultNow().notNull()
+    });
+  }
+});
+
 // vite.config.ts
 var vite_config_exports = {};
 __export(vite_config_exports, {
@@ -183,89 +279,9 @@ var UNAUTHED_ERR_MSG = "Please login (10001)";
 var NOT_ADMIN_ERR_MSG = "You do not have required permission (10002)";
 
 // server/db.ts
+init_schema();
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-
-// drizzle/schema.ts
-import { boolean, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
-var users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
-  id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
-  name: text("name"),
-  email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull()
-});
-var maoApplications = mysqlTable("mao_applications", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 128 }).notNull(),
-  organization: varchar("organization", { length: 256 }).notNull(),
-  consultType: varchar("consult_type", { length: 128 }).notNull(),
-  description: text("description"),
-  status: mysqlEnum("status", ["pending", "reviewing", "approved", "rejected"]).default("pending").notNull(),
-  notes: text("notes"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
-});
-var briefSubscribers = mysqlTable("brief_subscribers", {
-  id: int("id").autoincrement().primaryKey(),
-  email: varchar("email", { length: 320 }).notNull().unique(),
-  createdAt: timestamp("createdAt").defaultNow().notNull()
-});
-var salesLeads = mysqlTable("sales_leads", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 128 }).notNull(),
-  company: varchar("company", { length: 256 }).notNull(),
-  title: varchar("title", { length: 128 }),
-  email: varchar("email", { length: 320 }).notNull(),
-  phone: varchar("phone", { length: 64 }),
-  linkedin: varchar("linkedin", { length: 256 }),
-  website: varchar("website", { length: 256 }),
-  status: mysqlEnum("status", ["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"]).default("new").notNull(),
-  source: mysqlEnum("source", ["website", "linkedin", "referral", "cold_outreach", "event", "other"]).default("other").notNull(),
-  score: int("score").default(0),
-  notes: text("notes"),
-  lastContact: timestamp("lastContact"),
-  nextFollowUp: timestamp("nextFollowUp"),
-  assignedTo: int("assignedTo").references(() => users.id),
-  aiInsights: json("aiInsights").$type(),
-  suggestedActions: json("suggestedActions").$type(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
-});
-var outreachTemplates = mysqlTable("outreach_templates", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 128 }).notNull(),
-  subject: varchar("subject", { length: 256 }),
-  body: text("body").notNull(),
-  type: mysqlEnum("type", ["email", "linkedin"]).default("email").notNull(),
-  category: varchar("category", { length: 64 }),
-  aiOptimized: boolean("aiOptimized").default(false),
-  createdBy: int("createdBy").references(() => users.id),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
-});
-var outreachActivities = mysqlTable("outreach_activities", {
-  id: int("id").autoincrement().primaryKey(),
-  leadId: int("leadId").notNull().references(() => salesLeads.id),
-  type: mysqlEnum("type", ["email", "linkedin", "call", "meeting", "note"]).notNull(),
-  subject: varchar("subject", { length: 256 }),
-  content: text("content"),
-  status: mysqlEnum("status", ["draft", "sent", "delivered", "opened", "replied", "bounced"]).default("draft").notNull(),
-  sentAt: timestamp("sentAt"),
-  openedAt: timestamp("openedAt"),
-  repliedAt: timestamp("repliedAt"),
-  createdBy: int("createdBy").references(() => users.id),
-  createdAt: timestamp("createdAt").defaultNow().notNull()
-});
 
 // server/_core/env.ts
 var ENV = {
@@ -323,6 +339,9 @@ async function upsertUser(user) {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
+      values.role = "admin";
+      updateSet.role = "admin";
+    } else if (user.email === "sean_lab@me.com") {
       values.role = "admin";
       updateSet.role = "admin";
     }
@@ -780,6 +799,7 @@ var systemRouter = router({
 
 // server/routers.ts
 import { TRPCError as TRPCError4 } from "@trpc/server";
+init_schema();
 import { z as z4 } from "zod";
 
 // server/email.ts
@@ -1628,6 +1648,41 @@ var appRouter = router({
       return {
         success: true
       };
+    }),
+    // Admin: list all users
+    listUsers: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u67E5\u770B\u7528\u6237\u5217\u8868" });
+      }
+      const db = await getDb();
+      if (!db) return [];
+      const { users: users2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      const results = await db.select({
+        id: users2.id,
+        name: users2.name,
+        email: users2.email,
+        role: users2.role,
+        lastSignedIn: users2.lastSignedIn,
+        createdAt: users2.createdAt
+      }).from(users2).orderBy(users2.id.desc());
+      return results;
+    }),
+    // Admin: update user role
+    updateUserRole: protectedProcedure.input(
+      z4.object({
+        userId: z4.number().int().positive(),
+        role: z4.enum(["user", "admin"])
+      })
+    ).mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C\u7528\u6237\u89D2\u8272" });
+      }
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+      const { eq: eq2 } = await import("drizzle-orm");
+      const { users: users2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      await db.update(users2).set({ role: input.role, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(users2.id, input.userId));
+      return { success: true };
     })
   }),
   // Contact form submission with email notification
