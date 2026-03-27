@@ -1,22 +1,38 @@
 /*
- * Home Page — 猫眼咨询官网首页
- * Design: 暗夜金融极简主义 — 深黑底色 + 猫眼金点缀
- * Theme: 品牌显贵 · 利润倍增 · 全域增长
- * Sections: Hero → InternationalRecognition → BusinessDivision → About → Methodology → KOL → Services → Cases → GlobalCases → Awards → Team → Contact → Footer
+ * ============================================================
+ * Home Page — 猫眼增长引擎官网首页
+ * ============================================================
+ * Design : 暗夜金融极简主义 — 深黑底色 + 猫眼金点缀
+ * Theme  : 品牌显贵 · 利润倍增 · 全域增长
+ *
+ * Sections（顺序）:
+ *   IPAndWhale（IP授权 + Whale Pictures，首屏视觉冲击）
+ *   → Hero → InternationalRecognition → BusinessDivision
+ *   → About → Awards → KOL → Services（含分级定价）
+ *   → Cases → GlobalCases → Methodology
+ *   → Team → MaoIndustry（猫眼工业，置底）
+ *   → FAQ → Contact → Footer
+ *
+ * ⚠️  PROTECTED FILE — 由 Manus 统一维护
+ *     禁止 Work Buddy / OpenClaw 直接修改本文件。
+ *     如需变更，请通过 Pull Request 并在描述中注明修改目的。
+ * ============================================================
  */
 import { useSEO } from "@/hooks/useSEO";
 import Navbar from "@/components/Navbar";
+import IPAndWhale from "@/components/sections/IPAndWhale";
 import Hero from "@/components/sections/Hero";
 import BusinessDivision from "@/components/sections/BusinessDivision";
 import InternationalRecognition from "@/components/sections/InternationalRecognition";
 import About from "@/components/sections/About";
-import Methodology from "@/components/sections/Methodology";
+import Awards from "@/components/sections/Awards";
 import KOL from "@/components/sections/KOL";
 import Services from "@/components/sections/Services";
 import Cases from "@/components/sections/Cases";
 import GlobalCases from "@/components/sections/GlobalCases";
-import Awards from "@/components/sections/Awards";
+import Methodology from "@/components/sections/Methodology";
 import Team from "@/components/sections/Team";
+import MaoIndustry from "@/components/sections/MaoIndustry";
 import FAQ from "@/components/sections/FAQ";
 import Contact from "@/components/sections/Contact";
 import Footer from "@/components/Footer";
@@ -88,18 +104,35 @@ export default function Home() {
     <div className="min-h-screen bg-[#0A0A0A]">
       <Navbar />
       <main>
+        {/* ── 01 IP授权 + Whale Pictures 联合板块 ── */}
+        <IPAndWhale />
+        {/* ── 02 Hero 主视觉 ── */}
         <Hero />
+        {/* ── 03 国际机构认可 ── */}
         <InternationalRecognition />
+        {/* ── 04 业务板块 ── */}
         <BusinessDivision />
+        {/* ── 05 关于我们 ── */}
         <About />
-        <Methodology />
-        <KOL />
-        <Services />
-        <Cases />
-        <GlobalCases />
+        {/* ── 06 荣誉奖项 ── */}
         <Awards />
+        {/* ── 07 KOL 合作 ── */}
+        <KOL />
+        {/* ── 08 服务体系（含分级定价） ── */}
+        <Services />
+        {/* ── 09 国内案例 ── */}
+        <Cases />
+        {/* ── 10 全球案例 ── */}
+        <GlobalCases />
+        {/* ── 11 方法论 ── */}
+        <Methodology />
+        {/* ── 12 团队 ── */}
         <Team />
+        {/* ── 13 猫眼工业（置底） ── */}
+        <MaoIndustry />
+        {/* ── 14 常见问题 ── */}
         <FAQ />
+        {/* ── 15 联系我们 ── */}
         <Contact />
       </main>
       <Footer />
