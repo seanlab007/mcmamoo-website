@@ -1,0 +1,25 @@
+# ============================================================
+# CODEOWNERS — 核心文件代码所有者配置
+# ============================================================
+# 以下文件的 PR 必须由 @seanlab007 (Manus) 审查通过后才能合并。
+# 这可以防止 Work Buddy / OpenClaw 直接覆盖关键文件。
+#
+# 格式: <文件路径模式>  <GitHub 用户名>
+# ============================================================
+
+# 路由配置 — 禁止未经审查的修改
+client/src/App.tsx                          @seanlab007
+
+# 首页结构 — 包含所有板块的引用
+client/src/pages/Home.tsx                   @seanlab007
+
+# 全局导航 — 包含 IP授权、咨询服务、Whale Pictures 等入口
+client/src/components/Navbar.tsx            @seanlab007
+
+# 核心配置文件
+vite.config.ts                              @seanlab007
+package.json                                @seanlab007
+tsconfig.json                               @seanlab007
+
+# 代码规范文档
+CODE_STANDARDS.md                           @seanlab007
