@@ -66,7 +66,7 @@ function Router() {
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       <Route path={"/maoai/sales"} component={MaoAISales} />
       
-      {/* 猫眼内容平台 */}
+      {/* 猫眼增长引擎内容平台 */}
       <Route path={"/content"} component={ContentDashboard} />
       <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
       

@@ -3,10 +3,11 @@
  * Navbar Component — 导航栏重构
  * ============================================================
  * 逻辑变更：
- * 1. 整合 AutoClip 进入“猫眼内容平台”，不再作为独立一级入口
- * 2. 明确 MaoAI 为“大脑”定位
- * 3. 统一付费用户的内容平台入口逻辑
- * 4. 修正毛智库 (MaoThinkTank) 路由为 /mao-think-tank
+ * 1. 恢复猫眼增长引擎 Logo 视觉
+ * 2. 更新品牌名为 "猫眼增长引擎增长引擎 (Growth Engine)"
+ * 3. 彻底修复下拉菜单交互间隙问题
+ * 4. 整合 AutoClip 进入“猫眼增长引擎内容平台”
+ * 5. 修正毛智库 (MaoThinkTank) 路由
  * ============================================================
  */
 import { useState, useEffect } from "react";
@@ -60,7 +61,7 @@ export default function Navbar() {
 
   const subsidiaries = [
     { label: "Whale Pictures", href: "/whale-pictures", color: "#F59E0B" },
-    { label: "猫眼工业", href: "/mao-industry", color: "#C9A84C" },
+    { label: "猫眼增长引擎工业", href: "/mao-industry", color: "#C9A84C" },
     { label: "毛智库", href: "/mao-think-tank", color: "#E53E3E" },
   ];
 
@@ -69,11 +70,19 @@ export default function Navbar() {
       isScrolled ? "bg-[#0A0A0A]/90 backdrop-blur-md border-b border-white/5 py-4" : "bg-transparent py-8"
     }`}>
       <div className="container flex items-center justify-between">
-        {/* Logo */}
+        {/* Logo & Brand Name */}
         <Link href="/">
-          <a className="relative group">
-            <span className="text-2xl font-bold tracking-[0.2em] text-white font-['DM_Mono']">MC&MAMOO</span>
-            <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#C9A84C] transition-all duration-500 group-hover:w-full" />
+          <a className="flex items-center gap-3 group">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_eye_logo_1a9f9467.png"
+              alt="猫眼增长引擎增长引擎 Logo"
+              className="h-10 w-auto object-contain"
+              style={{ filter: "drop-shadow(0 0 6px rgba(201,168,76,0.5))" }}
+            />
+            <div className="flex flex-col">
+              <span className="text-lg font-bold tracking-[0.2em] text-white font-['DM_Mono'] leading-none">MC&MAMOO</span>
+              <span className="text-[10px] font-bold tracking-[0.3em] text-[#C9A84C] font-['DM_Mono'] mt-1 uppercase">Growth Engine</span>
+            </div>
           </a>
         </Link>
 
@@ -81,13 +90,13 @@ export default function Navbar() {
         <div className="hidden lg:flex items-center gap-10">
           {/* AI 产品 Dropdown */}
           <div className="relative group" onMouseEnter={() => setIsAiDropdownOpen(true)} onMouseLeave={() => setIsAiDropdownOpen(false)}>
-            <button className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors">
+            <button className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors py-2">
               AI Products <ChevronDown size={12} className={`transition-transform duration-300 ${isAiDropdownOpen ? "rotate-180" : ""}`} />
             </button>
-            {/* 隐形缓冲区 */}
-            {isAiDropdownOpen && <div className="absolute top-0 left-0 right-0 h-3" />}
+            {/* 隐形缓冲区：确保鼠标移动到菜单时不会消失 */}
+            <div className={`absolute top-full left-0 right-0 h-8 bg-transparent transition-all ${isAiDropdownOpen ? "block" : "hidden"}`} />
             {isAiDropdownOpen && (
-              <div className="absolute top-full left-0 mt-0 w-64 bg-[#111] border border-white/10 p-4 shadow-2xl rounded-sm">
+              <div className="absolute top-[calc(100%+0.5rem)] left-0 w-64 bg-[#111] border border-white/10 p-4 shadow-2xl rounded-sm backdrop-blur-xl">
                 {aiProducts.map((p) => (
                   <Link key={p.href} href={p.href}>
                     <a className="flex items-start gap-3 p-3 hover:bg-white/5 transition-colors group">
@@ -107,13 +116,13 @@ export default function Navbar() {
 
           {/* 旗下子公司 Dropdown */}
           <div className="relative group" onMouseEnter={() => setIsSubDropdownOpen(true)} onMouseLeave={() => setIsSubDropdownOpen(false)}>
-            <button className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors">
+            <button className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs tracking-widest uppercase font-['DM_Mono'] transition-colors py-2">
               Subsidiaries <ChevronDown size={12} className={`transition-transform duration-300 ${isSubDropdownOpen ? "rotate-180" : ""}`} />
             </button>
             {/* 隐形缓冲区 */}
-            {isSubDropdownOpen && <div className="absolute top-0 left-0 right-0 h-3" />}
+            <div className={`absolute top-full left-0 right-0 h-8 bg-transparent transition-all ${isSubDropdownOpen ? "block" : "hidden"}`} />
             {isSubDropdownOpen && (
-              <div className="absolute top-full left-0 mt-0 w-48 bg-[#111] border border-white/10 p-2 shadow-2xl rounded-sm">
+              <div className="absolute top-[calc(100%+0.5rem)] left-0 w-48 bg-[#111] border border-white/10 p-2 shadow-2xl rounded-sm backdrop-blur-xl">
                 {subsidiaries.map((s) => (
                   <Link key={s.href} href={s.href}>
                     <a className="block p-3 text-white/60 hover:text-white hover:bg-white/5 text-xs tracking-widest uppercase font-['DM_Mono'] transition-all">

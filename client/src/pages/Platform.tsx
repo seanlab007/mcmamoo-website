@@ -1,6 +1,6 @@
 /*
- * Platform Page — 猫眼运营平台
- * 将猫眼自动运营平台嵌入官网
+ * Platform Page — 猫眼增长引擎运营平台
+ * 将猫眼增长引擎自动运营平台嵌入官网
  * 已登录用户：iframe 携带 ?uid= 传入 Supabase user_id，供后端双轨 AI 路由鉴权
  * 未登录：跳转登录页
  * 管理员：显示管理后台入口
@@ -184,7 +184,7 @@ export default function Platform() {
             <span className="font-['Cormorant_Garamond'] tracking-wide">Mc&amp;Mamoo</span>
           </a>
           <span className="text-white/15">/</span>
-          <span className="text-white/50 text-sm">{userIsAdmin ? "管理员后台" : "猫眼运营平台"}</span>
+          <span className="text-white/50 text-sm">{userIsAdmin ? "管理员后台" : "猫眼增长引擎运营平台"}</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -239,7 +239,7 @@ export default function Platform() {
         {(authLoading || loading) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f] z-10 gap-4">
             <Loader2 size={32} className="text-[#C9A84C] animate-spin" />
-            <div className="text-white/50 text-sm">正在加载猫眼运营平台...</div>
+            <div className="text-white/50 text-sm">正在加载猫眼增长引擎运营平台...</div>
           </div>
         )}
 
@@ -281,7 +281,7 @@ export default function Platform() {
               id="platform-iframe"
               src={currentUrl}
               className="w-full h-full border-0"
-              title="猫眼运营平台"
+              title="猫眼增长引擎运营平台"
               onLoad={handleLoad}
               onError={handleError}
               allow="clipboard-read; clipboard-write"

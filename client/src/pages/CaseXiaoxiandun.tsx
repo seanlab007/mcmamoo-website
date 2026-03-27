@@ -67,12 +67,12 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 
 export default function CaseXiaoxiandun() {
   useSEO({
-    title: "小仙炖鲜炖燕窝 · 5年营收20亿 · 天猫品类第一 | 猫眼咨询",
-    description: "猫眼咨询助力小仙炖开创鲜炖燕窝新品类，5年在线营收突破20亿，成为天猫燕窝类目长期第一。通过品类错位+场景错位+陈数入股IP策略，建立竞争壁垒。",
+    title: "小仙炖鲜炖燕窝 · 5年营收20亿 · 天猫品类第一 | 猫眼增长引擎增长引擎 (MaoEye Growth Engine)",
+    description: "猫眼增长引擎增长引擎 (MaoEye Growth Engine)助力小仙炖开创鲜炖燕窝新品类，5年在线营收突破20亿，成为天猫燕窝类目长期第一。通过品类错位+场景错位+陈数入股IP策略，建立竞争壁垒。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoxiandun-hero-MSw4oXFtJRpVC9YWG9wg4G.webp",
     url: "https://www.mcmamoo.com/cases/xiaoxiandun",
     type: "article",
-    keywords: "小仙炖,鲜炖燕窝,燕窝品牌,天猫第一品牌,新消费品牌营销,品类创新,猫眼咨询案例,滋补品牌,燕窝市场",
+    keywords: "小仙炖,鲜炖燕窝,燕窝品牌,天猫第一品牌,新消费品牌营销,品类创新,猫眼增长引擎增长引擎 (MaoEye Growth Engine)案例,滋补品牌,燕窝市场",
     breadcrumbs: [
       { name: "首页", url: "/" },
       { name: "标杆案例", url: "/#cases" },
@@ -83,7 +83,7 @@ export default function CaseXiaoxiandun() {
         "@context": "https://schema.org",
         "@type": "Article",
         "headline": "小仙炖鲜炖燕窝 · 开创品类5年达20亿在线营收 · 天猫燕窝第一",
-        "description": "猫眼咨询助力小仙炖开创鲜炖燕窝品类，通过品类错位+场景错位策略，5年营收突破20亿，成为天猫燕窝类目第一品牌。",
+        "description": "猫眼增长引擎增长引擎 (MaoEye Growth Engine)助力小仙炖开创鲜炖燕窝品类，通过品类错位+场景错位策略，5年营收突破20亿，成为天猫燕窝类目第一品牌。",
         "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoxiandun-hero-MSw4oXFtJRpVC9YWG9wg4G.webp",
         "url": "https://www.mcmamoo.com/cases/xiaoxiandun",
         "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
@@ -152,7 +152,7 @@ export default function CaseXiaoxiandun() {
             <RevealBlock>
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
                 2014年，燕窝市场被传统干燕窝和即食燕窝主导，消费者对燕窝的认知停留在"贵而不实用"的固有印象。
-                猫眼咨询洞察到一个关键空白：<strong style={{ color: "#C9A84C" }}>鲜炖燕窝</strong>——这一兼具营养活性与便捷性的全新品类，
+                猫眼增长引擎增长引擎 (MaoEye Growth Engine)洞察到一个关键空白：<strong style={{ color: "#C9A84C" }}>鲜炖燕窝</strong>——这一兼具营养活性与便捷性的全新品类，
                 市场几乎为零。
               </p>
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
@@ -189,7 +189,7 @@ export default function CaseXiaoxiandun() {
       {/* Strategy */}
       <div className="py-16 px-8 md:px-20" style={{ background: "rgba(201,168,76,0.03)", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
         <div className="max-w-6xl mx-auto">
-          <SectionHeader en="Strategic Execution" zh="猫眼咨询操盘策略" />
+          <SectionHeader en="Strategic Execution" zh="猫眼增长引擎增长引擎 (MaoEye Growth Engine)操盘策略" />
           <div className="grid md:grid-cols-3 gap-6">
             {[
               { step: "01", title: "品类定义", desc: "将「鲜炖燕窝」从无到有打造为独立品类，通过产品创新（冷链配送、72小时新鲜）建立品类壁垒，让小仙炖成为品类代名词。" },
@@ -232,7 +232,7 @@ export default function CaseXiaoxiandun() {
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem" }}>
                 小仙炖案例证明：在传统滋补品赛道，通过<strong style={{ color: "#C9A84C" }}>品类创新 + 场景重构 + 明星深度绑定</strong>，
                 完全可以从零开始打造出具有强大护城河的新消费品牌。
-                猫眼咨询的错位竞争战略，帮助小仙炖在5年内从微商品牌跃升为天猫品类第一，
+                猫眼增长引擎增长引擎 (MaoEye Growth Engine)的错位竞争战略，帮助小仙炖在5年内从微商品牌跃升为天猫品类第一，
                 成为中国新消费滋补赛道不可复制的标杆案例。
               </p>
             </div>
@@ -261,7 +261,7 @@ export default function CaseXiaoxiandun() {
           </Link>
         </div>
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(245,240,232,0.2)", letterSpacing: "0.1em", marginTop: 24 }}>
-          © 2024 Mc&Mamoo Brand Management Inc. · 猫眼咨询 · 小仙炖案例
+          © 2024 Mc&Mamoo Brand Management Inc. · 猫眼增长引擎增长引擎 (MaoEye Growth Engine) · 小仙炖案例
         </p>
       </div>
     </div>

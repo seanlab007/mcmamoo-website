@@ -15,7 +15,7 @@ export default function ShareBar({ title, description }: ShareBarProps) {
   const [showQR, setShowQR] = useState(false);
 
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = `${title} — 猫眼咨询标杆案例 | ${description || ""}`;
+  const shareText = `${title} — 猫眼增长引擎增长引擎 (MaoEye Growth Engine)标杆案例 | ${description || ""}`;
 
   const handleCopyLink = async () => {
     try {

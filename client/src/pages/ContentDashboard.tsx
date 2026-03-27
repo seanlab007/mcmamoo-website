@@ -185,7 +185,7 @@ export default function ContentDashboard() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Cat className="w-6 h-6 text-[#C9A84C]" />
-            <span className="font-['Noto_Serif_SC'] text-white font-semibold text-lg">猫眼内容平台</span>
+            <span className="font-['Noto_Serif_SC'] text-white font-semibold text-lg">猫眼增长引擎内容平台</span>
           </div>
           <div className="flex items-center gap-3">
             {sub?.isAdmin && (
