@@ -971,7 +971,7 @@ export default function MaoAIChat() {
                 href="/content"
                 className="flex items-center gap-2 px-3 py-2 text-xs text-[#40d090]/80 hover:text-[#40d090] hover:bg-[#40d090]/8 border border-transparent hover:border-[#40d090]/20 transition-all rounded"
                 style={{ fontFamily: "'DM Mono', monospace" }}
-                title="前往猫眼自动内容平台"
+                title="前往猫眼增长引擎 (Mc&Mamoo Growth Engine)自动内容平台"
               >
                 <LayoutGrid size={13} className="shrink-0" />
                 <span className="truncate">内容平台</span>
