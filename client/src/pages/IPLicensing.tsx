@@ -38,7 +38,7 @@ const ipData: IPItem[] = [
     tagEn: "Strategic Partner · ABG",
     tagCn: "战略合作 · ABG 集团",
     descEn: "The eternal Hollywood icon. Mc&Mamoo has established a strategic cooperation with Authentic Brands Group (ABG) to bring Marilyn Monroe's timeless image to premium brand collaborations in the Chinese market.",
-    descCn: "永恒的好莱坞偶像。猫眼增长引擎与 Authentic Brands Group（ABG）建立战略合作，将玛丽莲·梦露的经典形象引入中国市场高端品牌联名。",
+    descCn: "永恒的好莱坞偶像。猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎与 Authentic Brands Group（ABG）建立战略合作，将玛丽莲·梦露的经典形象引入中国市场高端品牌联名。",
     industries: ["Fashion", "Beauty", "Luxury", "Entertainment"],
     badge: "ABG 战略合作",
   },
@@ -80,7 +80,7 @@ const ipData: IPItem[] = [
     tagEn: "Strategic Partner · Bruce Lee Enterprises",
     tagCn: "战略合作 · Bruce Lee Enterprises",
     descEn: "The Dragon. Mc&Mamoo facilitates premium licensing partnerships for Chinese brands seeking to leverage this iconic martial arts and philosophy legacy, managed by Bruce Lee Enterprises.",
-    descCn: "李小龙形象由 Bruce Lee Enterprises 管理。猫眼增长引擎协助中国品牌建立高端授权合作，传承这一武术与哲学传奇。",
+    descCn: "李小龙形象由 Bruce Lee Enterprises 管理。猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎协助中国品牌建立高端授权合作，传承这一武术与哲学传奇。",
     industries: ["Sports", "Film", "Fashion", "Gaming"],
     badge: "家族授权合作",
   },
@@ -204,7 +204,7 @@ const ipData: IPItem[] = [
     tagEn: "National-Level Authorization",
     tagCn: "国家级授权",
     descEn: "The revolutionary icon. Mc&Mamoo has established channels with official government institutions to facilitate authorized commercial use of Che Guevara's image for premium brands seeking cultural impact.",
-    descCn: "革命精神的象征。猫眼增长引擎已建立官方政府机构授权渠道，协助高端品牌完成切·格瓦拉形象的合规商业授权。",
+    descCn: "革命精神的象征。猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎已建立官方政府机构授权渠道，协助高端品牌完成切·格瓦拉形象的合规商业授权。",
     industries: ["Fashion", "Art", "Lifestyle", "Culture"],
     badge: "政府授权渠道",
   },
@@ -218,7 +218,7 @@ const ipData: IPItem[] = [
     tagEn: "National-Level Authorization",
     tagCn: "国家级授权",
     descEn: "The eternal rebel. James Dean's image rights are managed through official authorized channels. Mc&Mamoo facilitates compliant licensing for fashion, automotive, and lifestyle brands seeking this iconic American spirit.",
-    descCn: "永恒的反叛者。詹姆斯·迪恩的形象权通过官方授权渠道管理。猫眼增长引擎协助时尚、汽车及生活方式品牌完成合规授权。",
+    descCn: "永恒的反叛者。詹姆斯·迪恩的形象权通过官方授权渠道管理。猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎协助时尚、汽车及生活方式品牌完成合规授权。",
     industries: ["Fashion", "Automotive", "Lifestyle", "Film"],
     badge: "官方授权渠道",
   },
@@ -229,7 +229,7 @@ const categoryConfig = {
     labelEn: "Strategic Partnership",
     labelCn: "战略合作 IP",
     descEn: "Officially authorized through Mc&Mamoo's strategic partnerships with ABG and global IP management agencies",
-    descCn: "通过猫眼增长引擎与 ABG 集团及全球 IP 管理机构的战略合作，提供官方授权服务",
+    descCn: "通过猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎与 ABG 集团及全球 IP 管理机构的战略合作，提供官方授权服务",
     color: "#C9A84C",
     dot: "#C9A84C",
     borderClass: "border-[#C9A84C]/30",
@@ -238,7 +238,7 @@ const categoryConfig = {
     labelEn: "Exclusive License",
     labelCn: "独家授权",
     descEn: "Premium IP resources available for exclusive brand licensing partnerships, curated by Mc&Mamoo",
-    descCn: "猫眼增长引擎精选的高端 IP 资源，可洽谈品牌独家授权合作",
+    descCn: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎精选的高端 IP 资源，可洽谈品牌独家授权合作",
     color: "#60A5FA",
     dot: "#60A5FA",
     borderClass: "border-[#60A5FA]/30",
@@ -247,7 +247,7 @@ const categoryConfig = {
     labelEn: "National-Level Authorization",
     labelCn: "国家级授权",
     descEn: "IP resources accessible through Mc&Mamoo's official government and institutional authorization channels",
-    descCn: "通过猫眼增长引擎官方政府及机构授权渠道可访问的 IP 资源",
+    descCn: "通过猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎官方政府及机构授权渠道可访问的 IP 资源",
     color: "#F87171",
     dot: "#F87171",
     borderClass: "border-[#F87171]/30",
@@ -285,7 +285,7 @@ export default function IPLicensing() {
           <p className="text-white/50 text-sm leading-relaxed max-w-2xl">
             {isEn
               ? "Mc&Mamoo curates the world's most iconic IP resources — from Hollywood legends to global cultural icons — offering brands exclusive licensing partnerships that amplify prestige and drive growth."
-              : "猫眼增长引擎精选全球最具影响力的 IP 资源——从好莱坞传奇到全球文化符号——为品牌提供独家授权合作，提升品牌溢价，驱动增长。"}
+              : "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎精选全球最具影响力的 IP 资源——从好莱坞传奇到全球文化符号——为品牌提供独家授权合作，提升品牌溢价，驱动增长。"}
           </p>
 
           {/* Stats */}
@@ -314,7 +314,7 @@ export default function IPLicensing() {
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Case 1: 猫眼看世界 × 梵高 */}
+            {/* Case 1: 猫眼增长引擎 (Mc&Mamoo Growth Engine)看世界 × 梵高 */}
             <div className="border border-white/8 bg-[#111] overflow-hidden group hover:border-[#C9A84C]/30 transition-all duration-300">
               <div className="flex">
                 <div className="w-32 flex-shrink-0 bg-[#1a1a1a] relative overflow-hidden">
@@ -337,12 +337,12 @@ export default function IPLicensing() {
                     <span className="text-white/20 text-[9px] font-mono">2024</span>
                   </div>
                   <h3 className="font-['Cormorant_Garamond'] text-lg text-white mb-1">
-                    {isEn ? "Maoyan World × Van Gogh" : "猫眼看世界 × 梵高"}
+                    {isEn ? "Maoyan World × Van Gogh" : "猫眼增长引擎 (Mc&Mamoo Growth Engine)看世界 × 梵高"}
                   </h3>
                   <p className="text-white/40 text-xs leading-relaxed mb-4">
                     {isEn
                       ? "Premium home fragrance brand Maoyan World launched a Van Gogh-inspired limited collection, featuring Starry Night and Sunflowers motifs across candles and diffusers."
-                      : "高端家居香氛品牌「猫眼看世界」推出梵高联名限定系列，以《星夜》《向日葵》为主题，覆盖蚕烛、扩香器等全品类。"}
+                      : "高端家居香氛品牌「猫眼增长引擎 (Mc&Mamoo Growth Engine)看世界」推出梵高联名限定系列，以《星夜》《向日葵》为主题，覆盖蚕烛、扩香器等全品类。"}
                   </p>
                   <div className="flex gap-4">
                     <div>
