@@ -88,7 +88,7 @@ export default function Contact() {
             {/* Business card QR code */}
             <div className="mb-8">
               <div className="inline-flex items-center gap-6 p-5 border border-[#C9A84C]/25 bg-[#C9A84C]/5 hover:border-[#C9A84C]/50 transition-all duration-300">
-                {92	                <div className="relative flex-shrink-0">
+                <div className="relative flex-shrink-0">
                   {/* 外层金边框 */}
                   <div className="absolute -inset-1 border border-[#C9A84C]/60" />
                   <div className="absolute -inset-2 border border-[#C9A84C]/20" />
@@ -104,15 +104,15 @@ export default function Contact() {
                       }}
                     />
                   </div>
-                </div>        </div>
-104	                </div>            {/* Info */}
+                </div>
+                {/* Info */}
                 <div>
                   <div className="text-[#C9A84C]/60 text-[0.6rem] font-['DM_Mono'] tracking-[0.2em] uppercase mb-2">SCAN TO ADD WECHAT</div>
                   <div className="text-white font-['Noto_Serif_SC'] text-base font-bold mb-1">Sean DAI</div>
-                  <div className="text-white/50 text-xs mb-2">首席战略专家 · 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)</div>
+                  <div className="text-white/50 text-xs mb-2">首席战略专家 · 猫眼增长引擎 (Mc&Mamoo Growth Engine)</div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-px bg-[#C9A84C]/50" />
-                    <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">Mc&Mamoo Growth Engine.COM</span>
+                    <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">MCMAMOO.COM</span>
                   </div>
                 </div>
               </div>
