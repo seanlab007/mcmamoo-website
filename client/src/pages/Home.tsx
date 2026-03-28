@@ -34,6 +34,7 @@ import Methodology from "@/components/sections/Methodology";
 import Team from "@/components/sections/Team";
 import MaoIndustry from "@/components/sections/MaoIndustry";
 import CaseShowcase from "@/components/sections/CaseShowcase";
+import Awards from "@/components/sections/Awards";
 import FAQ from "@/components/sections/FAQ";
 import Contact from "@/components/sections/Contact";
 import Footer from "@/components/Footer";
@@ -128,7 +129,8 @@ export default function Home() {
         {/* ── 11 方法论 ── */}
         <Methodology />
         {/* ── 11.5 国际奖项与案例墙 ── */}
-        <CaseShowcase />
+        <Awards />
+<CaseShowcase />
         {/* ── 12 团队 ── */}
         <Team />
         {/* ── 13 猫眼增长引擎 (Mc&Mamoo Growth Engine)工业（置底） ── */}
