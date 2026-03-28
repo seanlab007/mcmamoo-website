@@ -16,12 +16,12 @@ interface Case {
 const cases: Case[] = [
   {
     title_zh: '蟹太太',
-    title_en: 'Mrs. Crab',
+    title_en: 'Xie Tai Tai',
     description_zh: '品牌战略升级与全案营销，打造大闸蟹行业领军品牌。',
     description_en: 'Brand strategy upgrade and full-service marketing, creating a leading brand in the hairy crab industry.',
     achievement_zh: '10亿级单品突破',
     achievement_en: 'Billion-level product breakthrough',
-    image: '/assets/brand/page_60.jpg',
+    image: '/assets/brand/page_21.jpg',
     tags: ['品牌全案', '战略咨询']
   },
   {
@@ -31,17 +31,17 @@ const cases: Case[] = [
     description_en: 'Freshly stewed bird\'s nest category creation and brand growth engine.',
     achievement_zh: '品类第一',
     achievement_en: 'Category No.1',
-    image: '/assets/brand/page_61.jpg',
+    image: '/assets/brand/page_26.jpg',
     tags: ['品类创新', '增长引擎']
   },
   {
     title_zh: '小罐茶',
     title_en: 'Xiao Guan Tea',
-    description_zh: '现代派中国茶 brand 战略与高端定位。',
+    description_zh: '现代派中国茶品牌战略与高端定位。',
     description_en: 'Modern Chinese tea brand strategy and high-end positioning.',
     achievement_zh: '高端茶饮标杆',
     achievement_en: 'High-end tea benchmark',
-    image: '/assets/brand/page_62.jpg',
+    image: '/assets/brand/page_46.jpg',
     tags: ['高端定位', '品牌视觉']
   },
   {
@@ -51,17 +51,17 @@ const cases: Case[] = [
     description_en: 'Modern transformation and product breakthrough of traditional pharmaceutical brands.',
     achievement_zh: '国民级单品',
     achievement_en: 'National-level product',
-    image: '/assets/brand/page_70.jpg',
+    image: '/assets/brand/page_41.jpg',
     tags: ['品牌转型', '单品突破']
   },
   {
-    title_zh: '胖哥',
+    title_zh: '胖哥食品',
     title_en: 'Pang Ge',
     description_zh: '休闲食品品牌重塑与全渠道营销。',
     description_en: 'Leisure food brand reshaping and omni-channel marketing.',
     achievement_zh: '市场占有率领先',
     achievement_en: 'Market share leader',
-    image: '/assets/brand/page_71.jpg',
+    image: '/assets/brand/page_16.jpg',
     tags: ['品牌重塑', '渠道营销']
   }
 ];
