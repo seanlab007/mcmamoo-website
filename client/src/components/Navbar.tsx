@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Globe, Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap } from "lucide-react";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -84,10 +85,9 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-8 flex-shrink-0">
-              <div className="flex items-center gap-2 text-white/40 hover:text-white transition-colors cursor-pointer">
-                <Globe size={14} />
-                <span className="text-[0.7rem] font-['DM_Mono'] tracking-widest uppercase">CN / EN</span>
-              </div>
+              {/* 18国语言切换器集成 */}
+              <LanguageSwitcher className="z-[100]" />
+              
               <Button
                 asChild
                 className="bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866] rounded-none px-6 py-5 text-[0.7rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 flex-shrink-0"
@@ -145,12 +145,15 @@ export default function Navbar() {
             <span className="text-white font-['Noto_Serif_SC'] text-sm font-bold tracking-wider">Mc&Mamoo</span>
           </Link>
 
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="text-white p-2"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher compact className="z-[100]" />
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-white p-2"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
