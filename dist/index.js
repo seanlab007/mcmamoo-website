@@ -1849,9 +1849,7 @@ var appRouter = router({
       const { success, failed } = await sendBulkEmails(emails, input.subject, html, input.content);
       return { success: true, sent: success, failed, message: `\u5DF2\u53D1\u9001 ${success} \u5C01\uFF0C\u5931\u8D25 ${failed} \u5C01` };
     })
-  }),
-  // Sales automation router
-  sales: salesRouter
+  })
 });
 
 // server/_core/context.ts
