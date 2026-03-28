@@ -48,24 +48,50 @@ jobs:
             echo "✅ No TODO/FIXME patterns found."
           fi
 
-      # 检查受保护文件的修改
+      # 检查受保护文件的修改（Manus 和管理员白名单）
       - name: Check protected files
         if: github.event_name == 'pull_request'
         run: |
-          echo "🛡️  Checking protected files..."
+          echo "🛡️  Checking protected files and authorization..."
+          
+          # 定义白名单用户
+          ALLOWED_USERS=("seanlab007" "manus-bot" "manus-ai")
+          CURRENT_USER="${{ github.actor }}"
+          
+          echo "Current Actor: $CURRENT_USER"
+          
+          IS_ALLOWED=false
+          for user in "${ALLOWED_USERS[@]}"; do
+            if [[ "$CURRENT_USER" == "$user" ]]; then
+              IS_ALLOWED=true
+              break
+            fi
+          done
+
           PROTECTED_FILES=(
             "client/src/App.tsx"
             "client/src/pages/Home.tsx"
             "server/_core/index.ts"
+            ".github/workflows/code-quality.yml"
           )
           
+          MODIFIED_PROTECTED=()
           for file in "${PROTECTED_FILES[@]}"; do
             if git diff origin/main...HEAD --name-only | grep -q "^$file$"; then
-              echo "⚠️  WARNING: Protected file '$file' was modified."
-              echo "This file should only be modified by authorized maintainers."
-              echo "Please ensure this change is intentional and well-documented."
+              MODIFIED_PROTECTED+=("$file")
             fi
           done
+          
+          if [ ${#MODIFIED_PROTECTED[@]} -gt 0 ]; then
+            if [ "$IS_ALLOWED" = "true" ]; then
+              echo "✅ Authorized modification by $CURRENT_USER to protected files: ${MODIFIED_PROTECTED[*]}"
+            else
+              echo "❌ ERROR: Unauthorized modification to protected files by $CURRENT_USER."
+              echo "The following files are protected: ${MODIFIED_PROTECTED[*]}"
+              echo "Only Manus and Administrator (seanlab007) are allowed to modify these files."
+              exit 1
+            fi
+          fi
 
       # TypeScript 类型检查
       - name: TypeScript type check
