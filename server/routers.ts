@@ -264,9 +264,6 @@ export const appRouter = router({
         return { success: true, sent: success, failed, message: `已发送 ${success} 封，失败 ${failed} 封` };
       }),
   }),
-
-  // Sales automation router
-  sales: salesRouter,
 });
 
 export type AppRouter = typeof appRouter;
