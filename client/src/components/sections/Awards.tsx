@@ -22,7 +22,7 @@ const awards: Award[] = [
     category_en: 'Media',
     level_zh: '银奖',
     level_en: 'Silver',
-    image: '/assets/brand/page_50.jpg'
+    image: '/assets/brand/page_6.jpg'
   },
   {
     year: '2013',
@@ -32,7 +32,7 @@ const awards: Award[] = [
     category_en: 'Design',
     level_zh: '铜奖',
     level_en: 'Bronze',
-    image: '/assets/brand/page_51.jpg'
+    image: '/assets/brand/page_7.jpg'
   },
   {
     year: '2014',
@@ -42,7 +42,7 @@ const awards: Award[] = [
     category_en: 'Design',
     level_zh: '银奖',
     level_en: 'Silver',
-    image: '/assets/brand/page_52.jpg'
+    image: '/assets/brand/page_8.jpg'
   },
   {
     year: '2014',
@@ -52,7 +52,7 @@ const awards: Award[] = [
     category_en: 'Outdoor Lotus',
     level_zh: '铜奖',
     level_en: 'Bronze',
-    image: '/assets/brand/page_53.jpg'
+    image: '/assets/brand/page_9.jpg'
   },
   {
     year: '2023',
@@ -62,7 +62,7 @@ const awards: Award[] = [
     category_en: 'Huanghe Awards',
     level_zh: '金奖',
     level_en: 'Gold',
-    image: '/assets/brand/page_54.jpg'
+    image: '/assets/brand/page_10.jpg'
   }
 ];
 
