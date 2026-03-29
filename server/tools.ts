@@ -3,13 +3,14 @@
  * 工具注册系统和执行引擎
  *
  * 支持的工具：
- * 1. web_search       — 联网搜索（Tavily API，有免费额度）
- * 2. run_code         — 执行 Python/JS 代码（Railway 服务器沙箱）
- * 3. github_push      — 推送文件到 GitHub 仓库
- * 4. github_read      — 读取 GitHub 仓库文件
- * 5. read_url         — 读取网页内容
- * 6. deep_research    — 深度研究（DeerFlow 多智能体框架，需部署 DeerFlow）
- * 7. run_shell        — 执行 Shell 命令（仅管理员）
+ * 1. web_search            — 联网搜索（Tavily API，有免费额度）
+ * 2. run_code              — 执行 Python/JS 代码（Railway 服务器沙箱）
+ * 3. github_push           — 推送文件到 GitHub 仓库
+ * 4. github_read           — 读取 GitHub 仓库文件
+ * 5. read_url              — 读取网页内容
+ * 6. deep_research         — 深度研究（DeerFlow 多智能体框架，需部署 DeerFlow）
+ * 7. self_improving_agent  — HyperAgents 自改进 AI 引擎
+ * 8. run_shell             — 执行 Shell 命令（仅管理员）
  */
 
 import { exec } from "child_process";
@@ -17,6 +18,7 @@ import { promisify } from "util";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
+import { runSelfImprovingAgent } from "./hyperagents";
 
 const execAsync = promisify(exec);
 
@@ -185,6 +187,39 @@ export const TOOL_DEFINITIONS = [
         required: ["query"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "self_improving_agent",
+      description: "使用 HyperAgents 自改进 AI 引擎执行复杂任务。HyperAgents 是 Meta 开发的自引用自改进 Agent，能够通过迭代优化来提升任务完成质量。适合需要代码生成、算法设计、复杂问题求解的任务。",
+      parameters: {
+        type: "object",
+        properties: {
+          task: {
+            type: "string",
+            description: "任务描述，例如：'写一个快速排序算法'、'实现一个神经网络'、'设计一个数据库schema'"
+          },
+          domain: {
+            type: "string",
+            enum: ["coding", "math", "reasoning", "general"],
+            description: "领域类型：coding(代码生成)、math(数学计算)、reasoning(推理分析)、general(通用任务)",
+            default: "general"
+          },
+          max_iterations: {
+            type: "number",
+            description: "最大迭代次数，默认3次，复杂任务可以增加到5-10次",
+            default: 3
+          },
+          model: {
+            type: "string",
+            description: "使用的 LLM 模型，默认 gpt-4",
+            default: "gpt-4"
+          }
+        },
+        required: ["task"]
+      }
+    }
   }
 ];
 
@@ -245,6 +280,8 @@ export async function executeTool(
         return await toolReadUrl(args.url, args.extract_text_only !== false);
       case "deep_research":
         return await toolDeepResearch(args.query, args.mode || "pro", args.max_duration || 300);
+      case "self_improving_agent":
+        return await toolSelfImprovingAgent(args.task, args.domain || "general", args.max_iterations || 3, args.model || "gpt-4");
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -729,6 +766,56 @@ async function toolRunShell(command: string, cwd: string): Promise<ToolResult> {
       success: false,
       output: err.stdout || "",
       error: err.stderr || err.message
+    };
+  }
+}
+
+/**
+ * HyperAgents 自改进 Agent 工具
+ * 
+ * @param task - 任务描述
+ * @param domain - 领域类型
+ * @param maxIterations - 最大迭代次数
+ * @param model - 使用的 LLM 模型
+ * @returns 执行结果
+ */
+async function toolSelfImprovingAgent(
+  task: string,
+  domain: string,
+  maxIterations: number,
+  model: string
+): Promise<ToolResult> {
+  try {
+    const result = await runSelfImprovingAgent({
+      task,
+      domain,
+      maxIterations,
+      model
+    });
+    
+    if (result.success) {
+      return {
+        success: true,
+        output: result.output,
+        metadata: {
+          tool: "hyperagents",
+          domain,
+          iterations: result.iterations,
+          model
+        }
+      };
+    } else {
+      return {
+        success: false,
+        output: "",
+        error: result.error || "HyperAgents 执行失败"
+      };
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      output: "",
+      error: `HyperAgents 调用异常: ${err.message}`
     };
   }
 }
