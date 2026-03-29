@@ -53,7 +53,7 @@ const THINKERS = [
   { name: "L.V.贝塔朗菲", theory: "系统论" },
   { name: "杰克·特劳特", theory: "定位理论" },
   { name: "约瑟夫·熊彼特", theory: "创新理论" },
-  { name: "Sean DAI", theory: "猫眼增长引擎 (Mc&Mamoo Growth Engine)方法论" },
+  { name: "Sean DAI", theory: "猫眼增长引擎 Mc&Mamoo Growth Engine方法论" },
 ];
 
 export default function Methodology() {
@@ -77,7 +77,7 @@ export default function Methodology() {
         <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
           <div className="section-label mb-4">02 — Core Methodology</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
-            猫眼增长引擎 (Mc&Mamoo Growth Engine)方法论
+            猫眼增长引擎 Mc&Mamoo Growth Engine方法论
           </h2>
           <p className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl italic mb-4">
             让品牌显贵，让利润倍增，让增长全域
