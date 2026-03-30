@@ -15,14 +15,14 @@ export default function Footer() {
             <div className="flex items-center gap-3 mb-3">
               <img src="/logo-gold.png" alt="Mc&Mamoo Logo" className="w-10 h-10 object-contain" />
               <span className="text-[#C9A84C] font-['Cormorant_Garamond'] font-semibold text-base tracking-wide">
-                Mc&amp;Mamoo Brand Management Inc.
+                Mc&amp;Mamoo Inc.
               </span>
             </div>
             <p className="text-white/40 text-sm leading-relaxed max-w-md mb-4">
               猫眼增长引擎 Mc&Mamoo Growth Engine 是中国新消费领域领先的品牌战略咨询公司，独创错位竞争理论，服务江中猴姑、小仙炖、小罐茶、蟹太太等10亿级大单品品牌。
             </p>
             <p className="text-white/30 text-xs tracking-wide">
-              猫眼增长引擎企业发展（上海）有限公司 · 全球新消费第一品牌管理公司
+              猫眼企业发展（上海）有限公司 · 全球新消费第一品牌管理公司
             </p>
           </div>
 
@@ -86,7 +86,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6">
           <p className="text-white/20 text-xs">
-            ©2024 Mc&amp;Mamoo Brand Management Inc. 猫眼增长引擎企业发展（上海）有限公司 版权所有
+            ©2024 Mc&amp;Mamoo Inc. 猫眼企业发展（上海）有限公司 版权所有
           </p>
           <div className="flex items-center gap-4">
             <a href="/sitemap.xml" className="text-white/20 text-xs hover:text-[#C9A84C]/60 transition-colors">

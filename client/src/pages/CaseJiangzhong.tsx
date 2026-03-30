@@ -237,7 +237,7 @@ export default function CaseJiangzhong() {
           </Link>
         </div>
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(245,240,232,0.2)", letterSpacing: "0.1em", marginTop: 24 }}>
-          © 2024 Mc&Mamoo Brand Management Inc. · 猫眼增长引擎 Mc&Mamoo Growth Engine和询 · 江中猴姑案例
+          © 2024 Mc&Mamoo Inc. · 猫眼增长引擎 Mc&Mamoo Growth Engine和询 · 江中猴姑案例
         </p>
       </div>
     </div>
