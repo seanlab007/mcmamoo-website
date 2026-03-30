@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猫眼运营平台</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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YDciCUNdaO2nfB7uoUColaTQF343EgBvRQIqzNH038hGFa5i5SeEC20+DZQfNEegKUwKCcC/RVO965GAHBecZxXR9KGJyKjegYTB99G06e1B+7egjBUHgra0IK2tDgnBC4PzPIBWEfcF+/w7ve1RSekmyqDQQt/+3Uhks8sQLQyEq7Sj6Bs4HU6P08H+lbKuGv2MOQAOPvlCawcaQPciAdaMBNFzRMblMDq/lUjDfAQJu8nIPhNm0EzRWwvNzx1ejwbio8AXibSSLJpS5rsrTA3+fXPQvruRVhUuFKxFWkp3cFxYgScd/H8oPFYQpSU+RO0TAh4gMtAvRVpkfnK8c5DG5NCUPayyvR49mzPQ9DJfyzwNreTWIeFs2REGmaGuaQ0H8u0/O9GA24HqHF4b/PvvkJ0JIuEyBmkAO5Dd60E0uD6FfLXuQcJrNCq4sA9NfZ5A08BL0SBfiwzX+el6L0FCck3wdysSMFuD9j2CtKZz0WD/TnDuFiTMjkFTrvrguluQ4f/KYL9NSOspdK9ISg8qsfXmoA03IXeFNcgh9u3oeWxDzzbUsO4IjpmFcot9H2lNx6IMsbPQc/8J5VPtGMaI4AhkfO9BifRC+9ZMtFp1OfrahxpDmJb5EBI+IC3gLDRVzhJpVA4JtXOD/VJIsD1TsE+YLrkNCbJfEXm9Lwh+6wjaAhJGZyEh9C4iO88UJCwzaPC3Bv9+EVGyRldkW0mkHW4M/u02oiyzHw/asB4tAhA8j3BF8t6859MU7N9e5Ho5tLjwcXrb0EK72wsljtmFFibsI38YYC9h8EkhgbUNGdLDKdPzyA2gkAfRwMtfds8hzedNwAeRLWw8UWK80NveoRjHNlRXcR4a7PuQgf0/0RRzOVEw9nFIA+wkMlKH1W4KV6BCh89d9K5Icw9aVfxocM1Cs8RuIlvRLiS485fkDyHh20Zvo/ze4N/zawF0oXqRf0YuE4uR8OtAU9h/Rs8wPzNsBn0wVgIfI8oi24mmm19BflrliswaA4RleRh8mpAxfBLSJNZTvsDCGGSbcchgX5gNoglND6eiAf4smo4V2o9motTMTUjDeILiWTdnIxeMLLJJlStp1RDcyxQkTB4jEjJ1wbmOo+8KXDsSgBng5UhgbA2Od2iqdyISXo8QCdRTg/tsQ+E5hRwZ3OOY4Jh1QbvKMRkJ1glIKK4leYl7wzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzCGIv8f31CMTiDdF9EAAAAASUVORK5CYII=">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#18181f;--bg4:#1e1e28;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:rgba(220,220,235,0.9);--text2:rgba(180,180,200,0.6);--text3:rgba(140,140,160,0.4);
+  --purple:#c87dff;--blue:#5090ff;--green:#40d090;--orange:#ffaa00;--pink:#ff6090;--cyan:#30d0e0;
+  --sidebar:220px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.sidebar-logo{padding:20px 16px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6020c0,#3060c0);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.logo-text{font-size:13px;font-weight:700;color:#fff;line-height:1.3;}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+.sidebar-nav{flex:1;overflow-y:auto;padding:10px 8px;}
+.nav-group-title{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:12px 8px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background 0.15s,color 0.15s;margin-bottom:2px;font-size:13px;color:var(--text2);user-select:none;}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+.nav-item.active{background:rgba(180,100,255,0.12);color:var(--purple);}
+.nav-item .ni{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:rgba(180,100,255,0.2);color:var(--purple);font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;}
+.nav-badge.green{background:rgba(64,208,144,0.2);color:var(--green);}
+.nav-badge.orange{background:rgba(255,170,0,0.2);color:var(--orange);}
+.nav-badge.red{background:rgba(255,80,80,0.2);color:#ff5050;}
+.sidebar-bottom{padding:12px 8px;border-top:1px solid var(--border);}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;}
+.user-card:hover{background:rgba(255,255,255,0.04);}
+.user-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.user-name{font-size:12px;font-weight:600;}
+.user-role{font-size:10px;color:var(--text3);}
+.online-dot{width:7px;height:7px;border-radius:50%;background:#30e080;margin-left:auto;box-shadow:0 0 6px #30e080;}
+.offline-dot{width:7px;height:7px;border-radius:50%;background:#ff5050;margin-left:auto;}
+
+/* MAIN */
+.main-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:52px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;}
+.topbar-title{font-size:15px;font-weight:700;flex:1;}
+.topbar-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;border:none;}
+.btn-primary{background:linear-gradient(135deg,#7030d0,#3060c0);color:#fff;}
+.btn-primary:hover{opacity:0.85;transform:translateY(-1px);}
+.btn-ghost{background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid var(--border);}
+.btn-ghost:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+.btn-green{background:rgba(64,208,144,0.15);color:var(--green);border:1px solid rgba(64,208,144,0.3);}
+.btn-green:hover{background:rgba(64,208,144,0.25);}
+.api-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);padding:4px 10px;border-radius:6px;border:1px solid var(--border);}
+.api-dot{width:6px;height:6px;border-radius:50%;background:#ff5050;}
+.api-dot.online{background:#30e080;box-shadow:0 0 6px #30e080;}
+.content-area{flex:1;overflow-y:auto;padding:24px;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* DASHBOARD */
+.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0;}
+.sc1::before{background:linear-gradient(90deg,#9b30ff,#c87dff);}
+.sc2::before{background:linear-gradient(90deg,#3060ff,#60a0ff);}
+.sc3::before{background:linear-gradient(90deg,#00c864,#5af0e0);}
+.sc4::before{background:linear-gradient(90deg,#ffa000,#ffcc40);}
+.stat-label2{font-size:11px;color:var(--text3);margin-bottom:8px;}
+.stat-val{font-size:26px;font-weight:700;color:#fff;margin-bottom:4px;}
+.stat-sub{font-size:11px;color:var(--green);}
+.stat-ico{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:28px;opacity:0.15;}
+.dash-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.card-title span{font-size:11px;color:var(--purple);cursor:pointer;text-transform:none;letter-spacing:0;}
+.activity-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.act-text{font-size:12px;color:var(--text2);line-height:1.5;flex:1;}
+.act-time{font-size:10px;color:var(--text3);flex-shrink:0;}
+.progress-item{margin-bottom:12px;}
+.prog-head{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;}
+.prog-bar{height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;transition:width 1s;}
+
+/* TASK KANBAN */
+.task-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.filter-btn{padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all 0.15s;}
+.filter-btn.active{background:rgba(180,100,255,0.15);border-color:var(--purple);color:var(--purple);}
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.kanban-col{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;transition:border-color 0.15s;}
+.kanban-col.drag-over{border-color:var(--purple);background:rgba(180,100,255,0.05);}
+.col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.col-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.col-count{font-size:10px;background:rgba(255,255,255,0.07);padding:1px 7px;border-radius:10px;color:var(--text2);}
+.task-card{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;cursor:grab;transition:transform 0.15s,box-shadow 0.15s;}
+.task-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.3);}
+.task-card.dragging{opacity:0.5;transform:rotate(2deg);}
+.task-card-title{font-size:12px;font-weight:600;margin-bottom:6px;line-height:1.4;}
+.task-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.task-tag{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500;}
+.tag-purple{background:rgba(180,100,255,0.15);color:var(--purple);}
+.tag-blue{background:rgba(80,144,255,0.15);color:var(--blue);}
+.tag-green{background:rgba(64,208,144,0.15);color:var(--green);}
+.tag-orange{background:rgba(255,170,0,0.15);color:var(--orange);}
+.tag-pink{background:rgba(255,96,144,0.15);color:var(--pink);}
+.task-card-due{font-size:10px;color:var(--text3);margin-left:auto;}
+.add-task-btn{width:100%;padding:8px;border-radius:8px;border:1px dashed var(--border);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;transition:all 0.15s;margin-top:4px;}
+.add-task-btn:hover{border-color:var(--purple);color:var(--purple);background:rgba(180,100,255,0.05);}
+
+/* AI CHAT */
+.chat-layout{display:grid;grid-template-columns:200px 1fr;gap:0;height:calc(100vh - 112px);border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+.chat-sidebar{background:var(--bg3);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:12px;gap:6px;overflow-y:auto;}
+.new-chat-btn{padding:10px;border-radius:8px;border:1px solid var(--border2);background:rgba(180,100,255,0.1);color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;margin-bottom:6px;}
+.new-chat-btn:hover{background:rgba(180,100,255,0.2);}
+.chat-session{padding:10px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;}
+.chat-session:hover{background:rgba(255,255,255,0.04);}
+.chat-session.active{background:rgba(180,100,255,0.08);border-color:rgba(180,100,255,0.2);}
+.cs-title{font-size:12px;font-weight:600;margin-bottom:3px;}
+.cs-preview{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cs-time{font-size:10px;color:var(--text3);margin-top:3px;}
+.chat-main{display:flex;flex-direction:column;background:var(--bg2);}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+.msg{display:flex;align-items:flex-start;gap:10px;}
+.msg.user{flex-direction:row-reverse;}
+.msg-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.msg-av.ai{background:linear-gradient(135deg,#6020c0,#3060c0);}
+.msg-av.user{background:linear-gradient(135deg,#3060c0,var(--cyan));}
+.msg-bubble{max-width:600px;padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
+.msg.ai .msg-bubble{background:var(--bg4);border:1px solid var(--border);}
+.msg.user .msg-bubble{background:linear-gradient(135deg,rgba(112,48,208,0.3),rgba(48,96,192,0.3));border:1px solid rgba(180,100,255,0.2);}
+.msg.user{align-self:flex-end;}
+.msg-time{font-size:10px;color:var(--text3);margin-top:4px;text-align:right;}
+.msg.ai .msg-time{text-align:left;}
+.typing-indicator{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:typing 1.2s infinite;}
+.typing-dot:nth-child(2){animation-delay:0.2s;}
+.typing-dot:nth-child(3){animation-delay:0.4s;}
+@keyframes typing{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
+.chat-input-area{border-top:1px solid var(--border);padding:12px 16px;background:var(--bg3);}
+.chat-input-toolbar{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.chat-tool-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;transition:all 0.15s;}
+.chat-tool-btn:hover{border-color:var(--purple);color:var(--purple);background:rgba(180,100,255,0.08);}
+.chat-input-row{display:flex;gap:10px;align-items:flex-end;}
+.chat-textarea{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;resize:none;min-height:44px;max-height:120px;outline:none;font-family:inherit;line-height:1.5;transition:border-color 0.15s;}
+.chat-textarea:focus{border-color:var(--purple);}
+.chat-send-btn{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#7030d0,#3060c0);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity 0.15s;}
+.chat-send-btn:hover{opacity:0.85;}
+.chat-send-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.model-badge{font-size:10px;background:rgba(64,208,144,0.1);color:var(--green);border:1px solid rgba(64,208,144,0.2);padding:2px 8px;border-radius:10px;margin-left:auto;}
+
+/* BRAND ANALYSIS */
+.analysis-layout{display:grid;grid-template-columns:300px 1fr;gap:16px;height:calc(100vh - 112px);}
+.analysis-panel{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;overflow-y:auto;}
+.analysis-result{background:var(--bg3);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+.result-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.result-body{flex:1;overflow-y:auto;padding:18px;}
+.panel-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:16px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;display:block;}
+.form-input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:12px;outline:none;}
+.form-input:focus{border-color:var(--purple);}
+.form-select{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:12px;outline:none;}
+.form-textarea{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:12px;outline:none;resize:vertical;min-height:80px;font-family:inherit;}
+.checkbox-group{display:flex;flex-direction:column;gap:6px;}
+.cb-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;}
+.cb-item input{accent-color:var(--purple);}
+.brand-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.brand-chip{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border);color:var(--text3);transition:all 0.15s;}
+.brand-chip.selected{background:rgba(180,100,255,0.15);border-color:var(--purple);color:var(--purple);}
+.brand-chip:hover{border-color:var(--text2);}
+.run-btn{width:100%;padding:11px;border-radius:8px;background:linear-gradient(135deg,#7030d0,#3060c0);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.15s;margin-top:4px;}
+.run-btn:hover{opacity:0.85;}
+.run-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.stream-output{font-size:12px;line-height:1.9;color:var(--text2);white-space:pre-wrap;word-break:break-word;}
+.stream-output h1,.stream-output h2,.stream-output h3{color:var(--purple);margin:12px 0 6px;}
+.stream-output strong{color:var(--text);}
+.stream-output code{background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11px;}
+.stream-output pre{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:12px;overflow-x:auto;margin:8px 0;}
+.stream-output ul,.stream-output ol{margin-left:18px;margin-bottom:8px;}
+.stream-output li{margin-bottom:3px;}
+.placeholder-hint{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3);text-align:center;}
+.placeholder-hint .ph-icon{font-size:48px;opacity:0.3;}
+.placeholder-hint p{font-size:13px;}
+.streaming-cursor{display:inline-block;width:2px;height:14px;background:var(--purple);animation:blink 0.8s infinite;vertical-align:middle;margin-left:2px;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* COPY GEN */
+.copy-layout{display:grid;grid-template-columns:320px 1fr;gap:16px;height:calc(100vh - 112px);}
+.copy-panel{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;overflow-y:auto;}
+.copy-result{background:var(--bg3);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+.style-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.style-chip{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border);color:var(--text3);transition:all 0.15s;}
+.style-chip.selected{background:rgba(64,208,144,0.15);border-color:var(--green);color:var(--green);}
+
+/* TRENDS */
+.trends-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;height:calc(100vh - 112px);}
+.trends-panel{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;overflow-y:auto;}
+.trends-result{background:var(--bg3);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+
+/* FILE UPLOAD */
+.upload-wrap{max-width:800px;margin:0 auto;}
+.drop-zone{border:2px dashed var(--border2);border-radius:16px;padding:60px 40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--purple);background:rgba(180,100,255,0.05);}
+.dz-icon{font-size:48px;margin-bottom:12px;opacity:0.6;}
+.drop-zone h3{font-size:16px;font-weight:600;margin-bottom:8px;}
+.drop-zone p{font-size:12px;color:var(--text3);margin-bottom:16px;}
+.dz-types{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.dz-type{font-size:11px;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--border);}
+.file-list{display:flex;flex-direction:column;gap:8px;}
+.file-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.file-icon{font-size:22px;flex-shrink:0;}
+.file-info{flex:1;min-width:0;}
+.file-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-size{font-size:11px;color:var(--text3);margin-top:2px;}
+.file-prog-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:6px;overflow:hidden;}
+.file-prog-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--cyan));border-radius:2px;transition:width 0.3s;}
+.file-status{font-size:11px;flex-shrink:0;padding:2px 10px;border-radius:10px;}
+.status-uploading{background:rgba(255,170,0,0.1);color:var(--orange);}
+.status-done{background:rgba(64,208,144,0.1);color:var(--green);}
+.file-remove{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:4px;}
+
+/* OVERVIEW */
+.ov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.ov-module{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;cursor:pointer;transition:border-color 0.15s;}
+.ov-module:hover{border-color:var(--border2);}
+.ov-module::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 12px 0 100%;opacity:0.08;}
+.m1::after{background:var(--purple);}
+.m2::after{background:var(--blue);}
+.m3::after{background:var(--green);}
+.m4::after{background:var(--orange);}
+.m5::after{background:var(--pink);}
+.m6::after{background:var(--cyan);}
+.ov-icon{font-size:28px;margin-bottom:12px;}
+.ov-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:6px;}
+.ov-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px;}
+.ov-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.ov-tag{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.05);color:var(--text3);}
+.ov-section-title{font-size:12px;font-weight:600;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;}
+.roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.phase{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.p-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.p-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px;}
+.p-time{font-size:11px;color:var(--purple);margin-bottom:10px;}
+.p-item{font-size:11px;color:var(--text2);margin-bottom:4px;padding-left:10px;position:relative;}
+.p-item::before{content:'·';position:absolute;left:0;color:var(--text3);}
+.ph1{border-top:2px solid var(--purple);}
+.ph2{border-top:2px solid var(--blue);}
+.ph3{border-top:2px solid var(--green);}
+.ph4{border-top:2px solid var(--orange);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg3);border:1px solid var(--border2);border-radius:16px;padding:24px;width:460px;max-width:90vw;position:relative;}
+.modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.07);border:none;color:var(--text2);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:13px;}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:20px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px 18px;font-size:12px;color:var(--text);z-index:999;animation:slideUp 0.3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+/* CALENDAR PAGE */
+.cal-layout{display:grid;grid-template-columns:300px 1fr;gap:16px;height:calc(100vh - 112px);}
+.cal-panel{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;overflow-y:auto;}
+.cal-main{background:var(--bg3);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+.cal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.cal-body{flex:1;overflow-y:auto;padding:16px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+.cal-day-header{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:6px 0;}
+.cal-day{min-height:80px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:6px;cursor:pointer;transition:border-color 0.15s;}
+.cal-day:hover{border-color:var(--purple);}
+.cal-day.today{border-color:var(--purple);background:rgba(180,100,255,0.06);}
+.cal-day.other-month{opacity:0.35;}
+.cal-day-num{font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text2);}
+.cal-day.today .cal-day-num{color:var(--purple);}
+.cal-event{font-size:10px;padding:2px 6px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.ev-red{background:rgba(255,96,144,0.2);color:var(--pink);}
+.ev-purple{background:rgba(180,100,255,0.2);color:var(--purple);}
+.ev-green{background:rgba(64,208,144,0.2);color:var(--green);}
+.ev-blue{background:rgba(80,144,255,0.2);color:var(--blue);}
+.ev-orange{background:rgba(255,170,0,0.2);color:var(--orange);}
+.cal-week-view{display:flex;flex-direction:column;gap:6px;}
+.week-row{display:grid;grid-template-columns:80px 1fr;gap:10px;align-items:start;}
+.week-date{font-size:11px;font-weight:600;color:var(--text3);padding-top:6px;text-align:right;}
+.week-events{display:flex;flex-direction:column;gap:4px;}
+.week-event{padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:transform 0.1s;}
+.week-event:hover{transform:translateX(2px);}
+.week-event .we-title{font-size:12px;font-weight:600;margin-bottom:2px;}
+.week-event .we-meta{font-size:10px;color:var(--text3);}
+.we-purple{background:rgba(180,100,255,0.1);border-color:rgba(180,100,255,0.25);}
+.we-green{background:rgba(64,208,144,0.1);border-color:rgba(64,208,144,0.25);}
+.we-blue{background:rgba(80,144,255,0.1);border-color:rgba(80,144,255,0.25);}
+.we-orange{background:rgba(255,170,0,0.1);border-color:rgba(255,170,0,0.25);}
+.we-pink{background:rgba(255,96,144,0.1);border-color:rgba(255,96,144,0.25);}
+.view-toggle{display:flex;gap:4px;background:var(--bg4);border-radius:8px;padding:3px;}
+.vt-btn{padding:4px 12px;border-radius:6px;border:none;background:transparent;color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.15s;}
+.vt-btn.active{background:var(--bg3);color:var(--purple);box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+
+/* TASK EXECUTE MODAL */
+.task-exec-modal{background:var(--bg3);border:1px solid var(--border2);border-radius:16px;padding:24px;width:700px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;position:relative;}
+.task-exec-result{flex:1;overflow-y:auto;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:16px;min-height:200px;max-height:420px;font-size:12px;line-height:1.9;color:var(--text2);white-space:pre-wrap;word-break:break-word;}
+.task-exec-result h1,.task-exec-result h2,.task-exec-result h3{color:var(--purple);margin:10px 0 4px;}
+.task-exec-result strong{color:var(--text);}
+.task-exec-result code{background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;font-size:11px;}
+.task-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;}
+.ts-pending{background:var(--text3);}
+.ts-running{background:var(--orange);animation:pulse 1s infinite;}
+.ts-done{background:var(--green);}
+.ts-error{background:#ff5050;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon" style="background:none;padding:0;overflow:visible;width:40px;height:40px;">
+      <svg width="40" height="40" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lbg1" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1a0533"/>
+            <stop offset="100%" stop-color="#0d1a3a"/>
+          </linearGradient>
+          <linearGradient id="lbg2" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7c3aed"/>
+            <stop offset="100%" stop-color="#2563eb"/>
+          </linearGradient>
+          <linearGradient id="liris" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#22d3ee"/>
+            <stop offset="50%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#f472b6"/>
+          </linearGradient>
+          <radialGradient id="lglow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="lpupil" cx="40%" cy="35%" r="60%">
+            <stop offset="0%" stop-color="#1e0a3c"/>
+            <stop offset="100%" stop-color="#050510"/>
+          </radialGradient>
+          <filter id="lf1" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="lf2" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="b2"/>
+            <feMerge><feMergeNode in="b2"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <clipPath id="lclip">
+            <rect width="80" height="80" rx="20"/>
+          </clipPath>
+        </defs>
+        <!-- 底色 -->
+        <rect width="80" height="80" rx="20" fill="url(#lbg1)"/>
+        <!-- 渐变光感叠层 -->
+        <rect width="80" height="80" rx="20" fill="url(#lbg2)" opacity="0.55"/>
+        <!-- 背景光晕 -->
+        <ellipse cx="40" cy="44" rx="26" ry="16" fill="url(#lglow)" opacity="0.5"/>
+        <!-- 猫耳左 - 外形 -->
+        <path d="M18 42 L10 18 L32 30 Z" fill="white" opacity="0.92"/>
+        <!-- 猫耳左 - 内耳 -->
+        <path d="M19 40 L13 22 L30 31 Z" fill="#c084fc" opacity="0.7"/>
+        <!-- 猫耳右 - 外形 -->
+        <path d="M62 42 L70 18 L48 30 Z" fill="white" opacity="0.92"/>
+        <!-- 猫耳右 - 内耳 -->
+        <path d="M61 40 L67 22 L50 31 Z" fill="#c084fc" opacity="0.7"/>
+        <!-- 眼眶外发光 -->
+        <ellipse cx="40" cy="47" rx="24" ry="14" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.3" filter="url(#lf2)"/>
+        <!-- 眼眶主线 - 用贝塞尔曲线做杏仁眼形 -->
+        <path d="M16 47 Q40 28 64 47 Q40 66 16 47 Z" fill="rgba(20,8,50,0.6)" stroke="url(#liris)" stroke-width="2"/>
+        <!-- 虹膜外层光晕 -->
+        <circle cx="40" cy="47" r="11" fill="url(#lglow)" opacity="0.6" filter="url(#lf1)"/>
+        <!-- 虹膜主体 -->
+        <circle cx="40" cy="47" r="9.5" fill="url(#liris)" filter="url(#lf1)"/>
+        <!-- 虹膜纹理环 -->
+        <circle cx="40" cy="47" r="9.5" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+        <circle cx="40" cy="47" r="7" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <!-- 瞳孔 -->
+        <ellipse cx="40" cy="47" rx="4.5" ry="6" fill="url(#lpupil)"/>
+        <!-- 高光主 -->
+        <ellipse cx="42.5" cy="43.5" rx="2.2" ry="1.4" fill="white" opacity="0.95" transform="rotate(-20,42.5,43.5)"/>
+        <!-- 高光副 -->
+        <circle cx="37" cy="50" r="0.9" fill="white" opacity="0.4"/>
+        <!-- 眼角细节左 -->
+        <circle cx="17" cy="47" r="1.8" fill="#22d3ee" opacity="0.7" filter="url(#lf1)"/>
+        <!-- 眼角细节右 -->
+        <circle cx="63" cy="47" r="1.8" fill="#f472b6" opacity="0.7" filter="url(#lf1)"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">猫眼运营平台</div>
+      <div class="logo-sub">内容电商自动化</div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-group-title">主导航</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="ni">📊</span>仪表盘</div>
+    <div class="nav-item" onclick="showPage('overview')"><span class="ni">🗺️</span>系统概览</div>
+    <div class="nav-item" onclick="showPage('tasks')"><span class="ni">✅</span>任务看板<span class="nav-badge orange" id="task-count-badge">12</span></div>
+    <div class="nav-item" onclick="showPage('chat')"><span class="ni">💬</span>AI 对话<span class="nav-badge green" id="ai-status-badge">连接中</span></div>
+    <div class="nav-group-title">AI 工具</div>
+    <div class="nav-item" onclick="showPage('brands')"><span class="ni">🔬</span>品牌分析</div>
+    <div class="nav-item" onclick="showPage('viral')"><span class="ni">🚀</span>爆款生成</div>
+    <div class="nav-item" onclick="showPage('trends')"><span class="ni">🔥</span>热点分析</div>
+    <div class="nav-group-title">数据接入</div>
+    <div class="nav-item" onclick="showPage('chanmama')"><span class="ni">🦋</span>蝉妈妈数据<span class="nav-badge" id="cmm-badge">实时</span></div>
+    <div class="nav-item" onclick="showPage('calendar')"><span class="ni">📅</span>内容日历</div>
+    <div class="nav-item" onclick="showPage('library')"><span class="ni">📚</span>文案库<span class="nav-badge green" id="lib-count-badge">0</span></div>
+    <div class="nav-group-title">资源</div>
+    <div class="nav-item" onclick="showPage('upload')"><span class="ni">📁</span>文件管理</div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-av" style="background:none;padding:0;">
+        <svg width="30" height="30" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="avb1" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#1a0533"/><stop offset="100%" stop-color="#0d1a3a"/></linearGradient>
+            <linearGradient id="avb2" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#2563eb"/></linearGradient>
+            <linearGradient id="avir" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="50%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#f472b6"/></linearGradient>
+          </defs>
+          <rect width="80" height="80" rx="40" fill="url(#avb1)"/>
+          <rect width="80" height="80" rx="40" fill="url(#avb2)" opacity="0.55"/>
+          <path d="M18 42 L10 18 L32 30 Z" fill="white" opacity="0.9"/>
+          <path d="M19 40 L13 22 L30 31 Z" fill="#c084fc" opacity="0.65"/>
+          <path d="M62 42 L70 18 L48 30 Z" fill="white" opacity="0.9"/>
+          <path d="M61 40 L67 22 L50 31 Z" fill="#c084fc" opacity="0.65"/>
+          <path d="M16 47 Q40 28 64 47 Q40 66 16 47 Z" fill="rgba(20,8,50,0.6)" stroke="url(#avir)" stroke-width="2"/>
+          <circle cx="40" cy="47" r="9" fill="url(#avir)"/>
+          <ellipse cx="40" cy="47" rx="4" ry="5.5" fill="#050510"/>
+          <ellipse cx="42.5" cy="43.5" rx="2" ry="1.2" fill="white" opacity="0.9" transform="rotate(-20,42.5,43.5)"/>
+        </svg>
+      </div>
+      <div>
+        <div class="user-name">猫眼管理员</div>
+        <div class="user-role">超级运营</div>
+      </div>
+      <div class="online-dot" id="user-online-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">仪表盘</div>
+    <div id="credits-display" style="margin:0 12px;font-size:0.78rem;"></div>
+    <div id="ai-mode-toggle" style="display:flex;align-items:center;margin:0 8px;"></div>
+    <div class="api-status" id="api-status-bar">
+      <div class="api-dot" id="api-dot"></div>
+      <span id="api-status-text">检测中...</span>
+    </div>
+    <button class="topbar-btn btn-ghost" onclick="checkApiStatus()">🔄 刷新</button>
+    <button class="topbar-btn btn-primary" onclick="openModal('task')">＋ 新建任务</button>
+  </div>
+
+  <div class="content-area">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="dash-stats">
+        <div class="stat-card sc1"><div class="stat-label2">今日发布内容</div><div class="stat-val" id="stat-posts">24</div><div class="stat-sub">↑ 8 较昨日</div><div class="stat-ico">📡</div></div>
+        <div class="stat-card sc2"><div class="stat-label2">热点采集条数</div><div class="stat-val">186</div><div class="stat-sub">↑ 32 较昨日</div><div class="stat-ico">🕷️</div></div>
+        <div class="stat-card sc3"><div class="stat-label2">内容触达人数</div><div class="stat-val">4.2K</div><div class="stat-sub">↑ 23% 较上周</div><div class="stat-ico">👁️</div></div>
+        <div class="stat-card sc4"><div class="stat-label2">私域新增用户</div><div class="stat-val">86</div><div class="stat-sub">↑ 12 较昨日</div><div class="stat-ico">💬</div></div>
+      </div>
+      <div class="dash-row">
+        <div class="card">
+          <div class="card-title">最近动态 <span onclick="showPage('tasks')">查看全部</span></div>
+          <div class="activity-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-text">爬虫完成小红书「香水」板块采集，获取 <strong>48</strong> 条热点内容</div><div class="act-time">2分钟前</div></div>
+          <div class="activity-item"><div class="act-dot" style="background:var(--purple)"></div><div class="act-text">AI大脑生成今日内容日历，推荐选题 <strong>6</strong> 个</div><div class="act-time">15分钟前</div></div>
+          <div class="activity-item"><div class="act-dot" style="background:var(--blue)"></div><div class="act-text">内容《沉香与海盐的邂逅》已自动发布至小红书</div><div class="act-time">1小时前</div></div>
+          <div class="activity-item"><div class="act-dot" style="background:var(--orange)"></div><div class="act-text">私域新增咨询用户 <strong>7</strong> 名，AI已自动回复</div><div class="act-time">2小时前</div></div>
+          <div class="activity-item"><div class="act-dot" style="background:var(--cyan)"></div><div class="act-text">电商总控：今日成交 <strong>3</strong> 单，GMV ¥680</div><div class="act-time">3小时前</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">AI 引擎状态 <span onclick="checkApiStatus()">刷新</span></div>
+          <div class="progress-item">
+            <div class="prog-head"><span>🤖 本地大模型 (Ollama)</span><span id="ollama-status-text" style="color:var(--orange)">检测中</span></div>
+            <div class="prog-bar"><div class="prog-fill" id="ollama-prog" style="width:0%;background:linear-gradient(90deg,var(--purple),var(--cyan))"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="prog-head"><span>🧠 AI策略大脑</span><span style="color:var(--green)">就绪</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:100%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="prog-head"><span>✍️ 内容创作引擎</span><span style="color:var(--green)">就绪</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:100%;background:linear-gradient(90deg,var(--green),var(--cyan))"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="prog-head"><span>📡 多平台发布</span><span style="color:var(--orange)">待接入</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:20%;background:linear-gradient(90deg,var(--orange),#ffcc40)"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="prog-head"><span>💬 私域运营</span><span style="color:var(--orange)">待接入</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:10%;background:linear-gradient(90deg,var(--pink),var(--orange))"></div></div>
+          </div>
+          <div id="model-info" style="margin-top:10px;font-size:11px;color:var(--text3);">正在检测本地模型...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="page" id="page-overview">
+      <div class="ov-grid">
+        <div class="ov-module m1" onclick="showPage('trends')"><div class="ov-icon">🕷️</div><div class="ov-title">爬虫采集引擎</div><div class="ov-desc">24/7 监控小红书、抖音、INS、X.com，自动抓取香水香氛赛道热点内容</div><div class="ov-tags"><span class="ov-tag">Playwright</span><span class="ov-tag">代理IP池</span><span class="ov-tag">关键词库</span></div></div>
+        <div class="ov-module m2" onclick="showPage('brands')"><div class="ov-icon">🧠</div><div class="ov-title">AI 策略大脑</div><div class="ov-desc">识别爆款规律，生成每日选题库和发布计划，支持本地 Ollama 大模型驱动</div><div class="ov-tags"><span class="ov-tag">qwen2.5:7b</span><span class="ov-tag">LangChain</span><span class="ov-tag">RAG</span></div></div>
+        <div class="ov-module m3" onclick="showPage('viral')"><div class="ov-icon">✍️</div><div class="ov-title">内容深度创作</div><div class="ov-desc">图文/视频/文案三合一，模仿爆款风格进行深度再创作，支持批量生产</div><div class="ov-tags"><span class="ov-tag">Ollama本地</span><span class="ov-tag">Midjourney</span><span class="ov-tag">Kling</span></div></div>
+        <div class="ov-module m4"><div class="ov-icon">📡</div><div class="ov-title">多平台自动发布</div><div class="ov-desc">多账号矩阵，定时发布，数据实时入库，支持小红书/抖音/INS/微博</div><div class="ov-tags"><span class="ov-tag">PostgreSQL</span><span class="ov-tag">Celery</span><span class="ov-tag">平台API</span></div></div>
+        <div class="ov-module m5"><div class="ov-icon">💬</div><div class="ov-title">私域流量池</div><div class="ov-desc">微信/WhatsApp AI机器人，客户分层管理，自动转化和业绩追踪</div><div class="ov-tags"><span class="ov-tag">CRM</span><span class="ov-tag">AI客服</span><span class="ov-tag">转化漏斗</span></div></div>
+        <div class="ov-module m6"><div class="ov-icon">🏪</div><div class="ov-title">电商总控中心</div><div class="ov-desc">AI店长，管理选品/定价/库存/客服/数据，对接速卖通/淘宝/抖音小店</div><div class="ov-tags"><span class="ov-tag">电商API</span><span class="ov-tag">AI选品</span><span class="ov-tag">数据看板</span></div></div>
+      </div>
+      <div class="ov-section-title">落地计划</div>
+      <div class="roadmap">
+        <div class="phase ph1"><div class="p-label">Phase 1</div><div class="p-title">MVP搭建</div><div class="p-time">第1-4周</div><div class="p-item">爬虫采集</div><div class="p-item">AI文案流水线</div><div class="p-item">内容数据库</div></div>
+        <div class="phase ph2"><div class="p-label">Phase 2</div><div class="p-title">自动化发布</div><div class="p-time">第5-8周</div><div class="p-item">多平台发布系统</div><div class="p-item">AI策略大脑</div><div class="p-item">管理后台</div></div>
+        <div class="phase ph3"><div class="p-label">Phase 3</div><div class="p-title">私域转化</div><div class="p-time">第9-12周</div><div class="p-item">微信AI机器人</div><div class="p-item">CRM系统</div><div class="p-item">转化漏斗追踪</div></div>
+        <div class="phase ph4"><div class="p-label">Phase 4</div><div class="p-title">电商闭环</div><div class="p-time">第13-16周</div><div class="p-item">电商API接入</div><div class="p-item">AI店长上线</div><div class="p-item">全链路分析</div></div>
+      </div>
+    </div>
+
+    <!-- TASK BOARD -->
+    <div class="page" id="page-tasks">
+      <div class="task-toolbar">
+        <button class="filter-btn active">全部</button>
+        <button class="filter-btn">爬虫采集</button>
+        <button class="filter-btn">内容创作</button>
+        <button class="filter-btn">发布计划</button>
+        <button class="filter-btn">私域运营</button>
+        <button class="filter-btn">电商</button>
+        <div style="margin-left:auto"><button class="topbar-btn btn-primary" onclick="openModal('task')">＋ 新建任务</button></div>
+      </div>
+      <div class="kanban" id="kanban-board">
+        <div class="kanban-col" id="col-todo" ondragover="onDragOver(event)" ondrop="onDrop(event,'todo')">
+          <div class="col-header"><div class="col-title"><span style="color:var(--text3)">●</span> 待处理</div><div class="col-count" id="count-todo">4</div></div>
+          <div id="cards-todo">
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"><div class="task-card-title">小红书香水板块关键词扩充</div><div class="task-card-meta"><span class="task-tag tag-purple">爬虫采集</span><span class="task-card-due">03/15</span></div></div>
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"
+              data-ai-config='{"brand":"祖马龙 英国梨与小苍兰","platform":"抖音","content_type":"视频脚本","style":"情绪共鸣"}'>
+              <div class="task-card-title">本周抖音爆款脚本×3篇</div>
+              <div class="task-card-meta"><span class="task-tag tag-green">内容创作</span><span onclick="execTaskCard(this);event.stopPropagation();" style="margin-left:auto;font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(180,100,255,0.2);color:var(--purple);cursor:pointer;">⚡ 执行</span></div>
+            </div>
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"><div class="task-card-title">WhatsApp群发春季上新活动</div><div class="task-card-meta"><span class="task-tag tag-pink">私域运营</span><span class="task-card-due">03/18</span></div></div>
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"><div class="task-card-title">速卖通新品上架 ×5 SKU</div><div class="task-card-meta"><span class="task-tag tag-orange">电商</span><span class="task-card-due">03/20</span></div></div>
+          </div>
+          <button class="add-task-btn" onclick="openModal('task')">＋ 添加任务</button>
+        </div>
+        <div class="kanban-col" id="col-doing" ondragover="onDragOver(event)" ondrop="onDrop(event,'doing')">
+          <div class="col-header"><div class="col-title"><span style="color:var(--blue)">●</span> 进行中</div><div class="col-count" id="count-doing">3</div></div>
+          <div id="cards-doing">
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"
+              data-ai-config='{"brand":"INS香氛生活方式","platform":"INS","content_type":"图文笔记","style":"场景化描写"}'>
+              <div class="task-card-title">INS香氛图文内容创作×10篇</div>
+              <div class="task-card-meta"><span class="task-tag tag-green">内容创作</span><span onclick="execTaskCard(this);event.stopPropagation();" style="margin-left:auto;font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(180,100,255,0.2);color:var(--purple);cursor:pointer;">⚡ 执行</span></div>
+            </div>
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"><div class="task-card-title">每日热点采集自动化配置</div><div class="task-card-meta"><span class="task-tag tag-purple">爬虫采集</span><span class="task-card-due">03/14</span></div></div>
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"><div class="task-card-title">微信私域欢迎语AI话术优化</div><div class="task-card-meta"><span class="task-tag tag-pink">私域运营</span><span class="task-card-due">03/15</span></div></div>
+          </div>
+          <button class="add-task-btn" onclick="openModal('task')">＋ 添加任务</button>
+        </div>
+        <div class="kanban-col" id="col-review" ondragover="onDragOver(event)" ondrop="onDrop(event,'review')">
+          <div class="col-header"><div class="col-title"><span style="color:var(--orange)">●</span> 待审核</div><div class="col-count" id="count-review">3</div></div>
+          <div id="cards-review">
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"><div class="task-card-title">小红书「沉香」主题图文×5</div><div class="task-card-meta"><span class="task-tag tag-blue">发布计划</span><span class="task-card-due">03/14</span></div></div>
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"><div class="task-card-title">抖音视频封面设计优化</div><div class="task-card-meta"><span class="task-tag tag-green">内容创作</span><span class="task-card-due">03/13</span></div></div>
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)"><div class="task-card-title">本月电商数据分析报告</div><div class="task-card-meta"><span class="task-tag tag-orange">电商</span><span class="task-card-due">03/14</span></div></div>
+          </div>
+          <button class="add-task-btn" onclick="openModal('task')">＋ 添加任务</button>
+        </div>
+        <div class="kanban-col" id="col-done" ondragover="onDragOver(event)" ondrop="onDrop(event,'done')">
+          <div class="col-header"><div class="col-title"><span style="color:var(--green)">●</span> 已完成</div><div class="col-count" id="count-done">2</div></div>
+          <div id="cards-done">
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)" style="opacity:0.6"><div class="task-card-title">平台账号矩阵整理</div><div class="task-card-meta"><span class="task-tag tag-blue">发布计划</span><span class="task-card-due">✓</span></div></div>
+            <div class="task-card" draggable="true" ondragstart="onDragStart(event,this)" style="opacity:0.6"><div class="task-card-title">竞品账号分析（前10名）</div><div class="task-card-meta"><span class="task-tag tag-purple">爬虫采集</span><span class="task-card-due">✓</span></div></div>
+          </div>
+          <button class="add-task-btn" onclick="openModal('task')">＋ 添加任务</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI CHAT (真实接入Ollama) -->
+    <div class="page" id="page-chat">
+      <div class="chat-layout">
+        <div class="chat-sidebar">
+          <button class="new-chat-btn" onclick="newChat()">＋ 新建对话</button>
+          <div class="chat-session active" onclick="switchSession(this,'策略规划')"><div class="cs-title">🧠 内容策略规划</div><div class="cs-preview">帮我分析本周香水赛道...</div><div class="cs-time">刚刚</div></div>
+          <div class="chat-session" onclick="switchSession(this,'文案生成')"><div class="cs-title">✍️ 小红书文案生成</div><div class="cs-preview">写一篇关于沉香的笔记...</div><div class="cs-time">2小时前</div></div>
+          <div class="chat-session" onclick="switchSession(this,'数据分析')"><div class="cs-title">📊 数据分析报告</div><div class="cs-preview">分析上周发布数据表现...</div><div class="cs-time">昨天</div></div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-messages" id="chat-messages">
+            <div class="msg ai">
+              <div class="msg-av ai">🐱</div>
+              <div>
+                <div class="msg-bubble">你好！我是猫眼运营平台的 AI 助理，由本地 <strong>Ollama</strong> 大模型驱动（非假对话）。<br><br>我可以帮你：<br>• 📊 分析香水品牌投放策略和热点趋势<br>• ✍️ 创作小红书/抖音/INS 爆款文案<br>• 🔬 拆解爆款内容结构和规律<br>• 📅 规划多平台内容发布日历<br><br>直接输入你的问题或需求，我会给你真实的分析结果 👇</div>
+                <div class="msg-time">现在 · <span id="chat-model-badge" style="color:var(--green)">检测模型中...</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <div class="chat-input-toolbar">
+              <button class="chat-tool-btn" onclick="insertPrompt('分析diptyque、祖马龙在小红书的爆款内容规律，包括标题公式和情绪触发点')">🔍 品牌热点</button>
+              <button class="chat-tool-btn" onclick="insertPrompt('帮我写一篇小红书爆款笔记，主题：沉香木香水测评，要有情绪共鸣和场景描写')">✍️ 写爆款</button>
+              <button class="chat-tool-btn" onclick="insertPrompt('制定本周香水香氛内容发布计划，覆盖小红书和抖音，每天发布时间和内容主题')">📅 发布计划</button>
+              <button class="chat-tool-btn" onclick="insertPrompt('分析香水赛道头部账号的爆款视频结构，给出可复用的脚本模板')">🎬 视频脚本</button>
+              <button class="chat-tool-btn" onclick="insertPrompt('给出5个最近在香水香氛赛道最火的内容选题，并分析为什么会爆')">🔥 爆款选题</button>
+            </div>
+            <div class="chat-input-row">
+              <textarea class="chat-textarea" id="chat-input" placeholder="输入问题... (Enter发送, Shift+Enter换行，支持拖入文件)" rows="1"
+                onkeydown="handleChatKey(event)"
+                ondragover="event.preventDefault()"
+                ondrop="handleChatFileDrop(event)"></textarea>
+              <button class="chat-send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRAND ANALYSIS (真实Ollama分析) -->
+    <div class="page" id="page-brands">
+      <div class="analysis-layout">
+        <div class="analysis-panel">
+          <div class="panel-title">🔬 品牌分析配置</div>
+          <div class="form-group">
+            <div class="form-label">选择品牌</div>
+            <div class="brand-chips" id="brand-chips">
+              <span class="brand-chip selected" onclick="toggleBrand(this,'diptyque')">diptyque</span>
+              <span class="brand-chip selected" onclick="toggleBrand(this,'祖马龙')">祖马龙</span>
+              <span class="brand-chip selected" onclick="toggleBrand(this,'独特艾琳')">独特艾琳</span>
+              <span class="brand-chip selected" onclick="toggleBrand(this,'冰希黎')">冰希黎</span>
+              <span class="brand-chip" onclick="toggleBrand(this,'阿蒂仙')">阿蒂仙</span>
+              <span class="brand-chip" onclick="toggleBrand(this,'蒂普提克')">蒂普提克</span>
+              <span class="brand-chip" onclick="toggleBrand(this,'凯利安')">凯利安</span>
+              <span class="brand-chip" onclick="toggleBrand(this,'宝格丽')">宝格丽</span>
+              <span class="brand-chip" onclick="toggleBrand(this,'馥马尔')">馥马尔</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">自定义品牌</div>
+            <input class="form-input" id="custom-brand" placeholder="输入品牌名，回车添加" onkeydown="addCustomBrand(event)">
+          </div>
+          <div class="form-group">
+            <div class="form-label">分析平台</div>
+            <div class="checkbox-group">
+              <label class="cb-item"><input type="checkbox" checked value="小红书"> 小红书</label>
+              <label class="cb-item"><input type="checkbox" checked value="抖音"> 抖音</label>
+              <label class="cb-item"><input type="checkbox" value="INS"> INS / Instagram</label>
+              <label class="cb-item"><input type="checkbox" value="微博"> 微博</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">分析模型</div>
+            <select class="form-select" id="brand-model">
+              <option value="qwen2.5:7b">qwen2.5:7b（推荐）</option>
+              <option value="qwen2.5:3b">qwen2.5:3b（快速）</option>
+              <option value="deepseek-v3.1:671b-cloud">deepseek-v3.1（云端）</option>
+            </select>
+          </div>
+          <button class="run-btn" id="brand-run-btn" onclick="runBrandAnalysis()">🚀 开始深度分析</button>
+        </div>
+        <div class="analysis-result">
+          <div class="result-header">
+            <span style="font-size:13px;font-weight:700;">分析结果</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span id="brand-status" style="font-size:11px;color:var(--text3)">等待分析...</span>
+              <button class="topbar-btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="copyResult('brand-output')">复制</button>
+            </div>
+          </div>
+          <div class="result-body">
+            <div id="brand-output">
+              <div class="placeholder-hint">
+                <div class="ph-icon">🔬</div>
+                <p>选择品牌和平台，点击「开始深度分析」</p>
+                <p style="font-size:11px;margin-top:4px;">将调用本地 Ollama 大模型进行真实分析</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIRAL COPY GEN (真实Ollama生成) -->
+    <div class="page" id="page-viral">
+      <div class="copy-layout">
+        <div class="copy-panel">
+          <div class="panel-title">🚀 爆款文案生成</div>
+          <div class="form-group">
+            <div class="form-label">品牌/产品名</div>
+            <input class="form-input" id="copy-brand" placeholder="如：祖马龙 英国梨与小苍兰" value="祖马龙 英国梨与小苍兰">
+          </div>
+          <div class="form-group">
+            <div class="form-label">目标平台</div>
+            <select class="form-select" id="copy-platform">
+              <option value="小红书">小红书</option>
+              <option value="抖音">抖音</option>
+              <option value="INS">INS / Instagram</option>
+              <option value="微博">微博</option>
+              <option value="X.com">X.com</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">内容类型</div>
+            <select class="form-select" id="copy-type">
+              <option value="图文笔记">图文笔记</option>
+              <option value="视频脚本">视频脚本</option>
+              <option value="短文案">短文案</option>
+              <option value="种草长文">种草长文</option>
+              <option value="测评报告">测评报告</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">内容风格</div>
+            <div class="style-chips" id="style-chips">
+              <span class="style-chip selected" onclick="selectStyle(this)">情绪共鸣</span>
+              <span class="style-chip" onclick="selectStyle(this)">场景化描写</span>
+              <span class="style-chip" onclick="selectStyle(this)">成分故事</span>
+              <span class="style-chip" onclick="selectStyle(this)">对比测评</span>
+              <span class="style-chip" onclick="selectStyle(this)">日常分享</span>
+              <span class="style-chip" onclick="selectStyle(this)">专业科普</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">关键词（可选）</div>
+            <input class="form-input" id="copy-keywords" placeholder="如：沉香木 秋冬 温柔">
+          </div>
+          <div class="form-group">
+            <div class="form-label">爆款拆解分析</div>
+            <textarea class="form-textarea" id="viral-content" placeholder="粘贴一篇爆款内容，AI将拆解其结构并模仿创作..."></textarea>
+          </div>
+          <button class="run-btn" id="viral-run-btn" onclick="runViralGen()">✨ 生成爆款文案</button>
+        </div>
+        <div class="copy-result">
+          <div class="result-header">
+            <span style="font-size:13px;font-weight:700;">生成结果</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span id="viral-status" style="font-size:11px;color:var(--text3)">等待生成...</span>
+              <button class="topbar-btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="copyResult('viral-output')">复制</button>
+            </div>
+          </div>
+          <div class="result-body">
+            <div id="viral-output">
+              <div class="placeholder-hint">
+                <div class="ph-icon">✍️</div>
+                <p>填写品牌信息，点击「生成爆款文案」</p>
+                <p style="font-size:11px;margin-top:4px;">AI将生成标题、正文、话题标签和爆款分析</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRENDS (热点分析) -->
+    <div class="page" id="page-trends">
+      <div class="trends-layout">
+        <div class="trends-panel">
+          <div class="panel-title">🔥 热点分析</div>
+          <div class="form-group">
+            <div class="form-label">搜索关键词</div>
+            <input class="form-input" id="trend-keyword" placeholder="如：香水 沉香 香氛" value="香水">
+          </div>
+          <div class="form-group">
+            <div class="form-label">目标平台</div>
+            <select class="form-select" id="trend-platform">
+              <option value="小红书">小红书</option>
+              <option value="抖音">抖音</option>
+              <option value="INS">INS</option>
+              <option value="全平台">全平台综合</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">快捷热词</div>
+            <div class="brand-chips" style="margin-top:0">
+              <span class="brand-chip" onclick="setTrendKw(this,'香水')">香水</span>
+              <span class="brand-chip" onclick="setTrendKw(this,'香氛')">香氛</span>
+              <span class="brand-chip" onclick="setTrendKw(this,'沉香木')">沉香木</span>
+              <span class="brand-chip" onclick="setTrendKw(this,'小众香')">小众香</span>
+              <span class="brand-chip" onclick="setTrendKw(this,'祖马龙')">祖马龙</span>
+              <span class="brand-chip" onclick="setTrendKw(this,'轻奢香水')">轻奢香水</span>
+              <span class="brand-chip" onclick="setTrendKw(this,'东方香')">东方香</span>
+              <span class="brand-chip" onclick="setTrendKw(this,'花香调')">花香调</span>
+            </div>
+          </div>
+          <button class="run-btn" id="trend-run-btn" onclick="runTrendAnalysis()">🔍 分析热点趋势</button>
+          <div style="margin-top:12px;padding:10px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">💡 爆款内容拆解</div>
+            <textarea class="form-textarea" id="viral-analyze-content" placeholder="粘贴任意爆款内容，AI帮你拆解爆款结构..." style="min-height:60px;font-size:11px;"></textarea>
+            <button class="run-btn" style="margin-top:8px;background:rgba(64,208,144,0.15);color:var(--green);border:1px solid rgba(64,208,144,0.3);" onclick="runViralAnalyze()">🔍 拆解爆款结构</button>
+          </div>
+        </div>
+        <div class="trends-result">
+          <div class="result-header">
+            <span style="font-size:13px;font-weight:700;">热点分析结果</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span id="trend-status" style="font-size:11px;color:var(--text3)">等待分析...</span>
+              <button class="topbar-btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="copyResult('trend-output')">复制</button>
+            </div>
+          </div>
+          <div class="result-body">
+            <div id="trend-output">
+              <div class="placeholder-hint">
+                <div class="ph-icon">🔥</div>
+                <p>输入关键词，分析平台热点趋势</p>
+                <p style="font-size:11px;margin-top:4px;">或粘贴爆款内容进行结构拆解</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILE UPLOAD -->
+    <!-- ===== 文案库页面 ===== -->
+    <div class="page" id="page-library">
+      <div class="lib-toolbar">
+        <input class="lib-filter-input" id="lib-filter-brand" placeholder="按品牌筛选" oninput="libraryFilter.brand=this.value;loadLibrary(true)">
+        <select class="lib-filter-input" id="lib-filter-platform" onchange="libraryFilter.platform=this.value;loadLibrary(true)">
+          <option value="">全部平台</option>
+          <option value="小红书">小红书</option>
+          <option value="抖音">抖音</option>
+          <option value="INS">INS</option>
+          <option value="微博">微博</option>
+        </select>
+        <button class="topbar-btn btn-ghost" style="padding:5px 12px;font-size:11px;" onclick="libraryFilter.starred=!libraryFilter.starred;this.style.color=libraryFilter.starred?'var(--orange)':'';loadLibrary(true)">⭐ 只看收藏</button>
+        <button class="topbar-btn btn-ghost" style="padding:5px 12px;font-size:11px;" onclick="libraryFilter={brand:'',platform:'',starred:false};document.getElementById('lib-filter-brand').value='';document.getElementById('lib-filter-platform').value='';loadLibrary(true)">🔄 重置</button>
+        <div class="lib-stats" id="lib-stats"></div>
+      </div>
+      <div id="lib-list">
+        <div style="color:var(--text3);padding:40px;text-align:center">点击左侧「文案库」进入后自动加载</div>
+      </div>
+    </div>
+
+    <div class="page" id="page-upload">
+      <div class="upload-wrap">
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <div class="dz-icon">📂</div>
+          <h3>拖拽文件到这里，或点击选择</h3>
+          <p>支持批量上传，文件将用于内容创作、素材库管理</p>
+          <div class="dz-types">
+            <span class="dz-type">📷 图片 JPG/PNG/WEBP</span>
+            <span class="dz-type">🎬 视频 MP4/MOV</span>
+            <span class="dz-type">📄 文档 PDF/DOCX</span>
+            <span class="dz-type">🎵 音频 MP3/WAV</span>
+            <span class="dz-type">📊 数据 CSV/XLSX</span>
+          </div>
+        </div>
+        <input type="file" id="file-input" multiple style="display:none" onchange="handleFileSelect(event)">
+        <div class="file-list" id="file-list"></div>
+      </div>
+    </div>
+
+    <!-- 蝉妈妈数据 -->
+    <div class="page" id="page-chanmama">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:4px;">🦋 蝉妈妈数据中心</div>
+          <div style="font-size:12px;color:var(--text3);">香水香氛品牌达人数据 · 爆款笔记分析 · 实时接入</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="api-status" id="cmm-status-bar" style="cursor:pointer" onclick="checkCmmStatus()">
+            <div class="api-dot" id="cmm-dot"></div>
+            <span id="cmm-status-text">检测中...</span>
+          </div>
+          <button class="topbar-btn btn-ghost" onclick="openCmmTokenModal()">🔑 配置Token</button>
+          <button class="topbar-btn btn-primary" onclick="loadCmmData()">🔄 刷新数据</button>
+        </div>
+      </div>
+      <!-- 品牌概览卡片 -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;" id="cmm-overview-grid">
+        <div class="stat-card sc1" style="cursor:pointer" onclick="filterCmmBrand('祖马龙')">
+          <div class="stat-label2">祖马龙</div><div class="stat-val" id="cmm-jm-views">--</div>
+          <div class="stat-sub" id="cmm-jm-authors">-- 位达人</div><div class="stat-ico">🌹</div>
+        </div>
+        <div class="stat-card sc2" style="cursor:pointer" onclick="filterCmmBrand('独特艾琳')">
+          <div class="stat-label2">独特艾琳</div><div class="stat-val" id="cmm-elin-views">--</div>
+          <div class="stat-sub" id="cmm-elin-authors">-- 位达人</div><div class="stat-ico">✨</div>
+        </div>
+        <div class="stat-card sc3" style="cursor:pointer" onclick="filterCmmBrand('冰希黎')">
+          <div class="stat-label2">冰希黎</div><div class="stat-val" id="cmm-bsl-views">--</div>
+          <div class="stat-sub" id="cmm-bsl-authors">-- 位达人</div><div class="stat-ico">❄️</div>
+        </div>
+        <div class="stat-card sc4" style="cursor:pointer" onclick="filterCmmBrand('diptyque')">
+          <div class="stat-label2">diptyque</div><div class="stat-val" id="cmm-dip-views">--</div>
+          <div class="stat-sub" id="cmm-dip-authors">-- 位达人</div><div class="stat-ico">🕯️</div>
+        </div>
+      </div>
+      <!-- 标签筛选 -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="cmm-brand-filter">
+        <button class="filter-btn active" onclick="filterCmmBrand('all',this)">全部品牌</button>
+        <button class="filter-btn" onclick="filterCmmBrand('祖马龙',this)">🌹 祖马龙</button>
+        <button class="filter-btn" onclick="filterCmmBrand('独特艾琳',this)">✨ 独特艾琳</button>
+        <button class="filter-btn" onclick="filterCmmBrand('冰希黎',this)">❄️ 冰希黎</button>
+        <button class="filter-btn" onclick="filterCmmBrand('diptyque',this)">🕯️ diptyque</button>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="filter-btn" id="cmm-sort-views" onclick="setCmmSort('views',this)">按播放量</button>
+          <button class="filter-btn active" id="cmm-sort-likes" onclick="setCmmSort('likes',this)">按点赞</button>
+          <button class="filter-btn" id="cmm-sort-engage" onclick="setCmmSort('engage_rate',this)">按互动率</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card" style="overflow:hidden;">
+          <div class="card-title">达人矩阵 <span id="cmm-author-count" style="color:var(--text3);font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;"></span></div>
+          <div id="cmm-authors-list" style="display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;">
+            <div style="text-align:center;padding:40px;color:var(--text3);">加载中...</div>
+          </div>
+        </div>
+        <div class="card" style="overflow:hidden;">
+          <div class="card-title">爆款笔记/内容 <span id="cmm-note-count" style="color:var(--text3);font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;"></span></div>
+          <div id="cmm-notes-list" style="display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;">
+            <div style="text-align:center;padding:40px;color:var(--text3);">加载中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内容日历 -->
+    <div class="page" id="page-calendar">
+      <div class="cal-layout">
+        <div class="cal-panel">
+          <div class="panel-title">📅 内容日历规划</div>
+          <div class="form-group">
+            <div class="form-label">选择品牌</div>
+            <select class="form-select" id="cal-brand">
+              <option value="祖马龙">祖马龙</option>
+              <option value="diptyque">diptyque</option>
+              <option value="独特艾琳">独特艾琳</option>
+              <option value="冰希黎">冰希黎</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">目标平台</div>
+            <div class="checkbox-group">
+              <label class="cb-item"><input type="checkbox" checked value="小红书" class="cal-platform"> 小红书</label>
+              <label class="cb-item"><input type="checkbox" checked value="抖音" class="cal-platform"> 抖音</label>
+              <label class="cb-item"><input type="checkbox" value="INS" class="cal-platform"> INS</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">规划天数</div>
+            <select class="form-select" id="cal-days">
+              <option value="7">7天</option>
+              <option value="14">14天</option>
+              <option value="30">30天</option>
+            </select>
+          </div>
+          <button class="run-btn" id="cal-gen-btn" onclick="generateCalendar()">🗓️ AI 智能规划</button>
+          <div style="margin-top:20px;padding:12px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:600;">📌 快捷添加事件</div>
+            <input class="form-input" id="quick-event-title" placeholder="事件标题" style="margin-bottom:6px;">
+            <select class="form-select" id="quick-event-platform" style="margin-bottom:6px;">
+              <option>小红书</option><option>抖音</option><option>INS</option><option>微博</option>
+            </select>
+            <input class="form-input" id="quick-event-date" type="date" style="margin-bottom:6px;">
+            <button class="run-btn" style="background:rgba(64,208,144,0.15);color:var(--green);border:1px solid rgba(64,208,144,0.3);" onclick="addQuickEvent()">+ 添加</button>
+          </div>
+          <div style="margin-top:16px;">
+            <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;">🎯 本周目标</div>
+            <div id="cal-week-goals" style="display:flex;flex-direction:column;gap:6px;">
+              <div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg4);border-radius:6px;">📕 小红书发布 3 篇</div>
+              <div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg4);border-radius:6px;">🎵 抖音发布 2 个视频</div>
+              <div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg4);border-radius:6px;">📊 互动率目标 ≥ 8%</div>
+            </div>
+          </div>
+        </div>
+        <div class="cal-main">
+          <div class="cal-header">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <button class="topbar-btn btn-ghost" style="padding:4px 10px;" onclick="calPrev()">‹</button>
+              <span id="cal-month-title" style="font-size:14px;font-weight:700;color:#fff;min-width:100px;text-align:center;"></span>
+              <button class="topbar-btn btn-ghost" style="padding:4px 10px;" onclick="calNext()">›</button>
+              <button class="topbar-btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="calToday()">今天</button>
+            </div>
+            <div class="view-toggle">
+              <button class="vt-btn active" id="vt-month" onclick="setCalView('month',this)">月</button>
+              <button class="vt-btn" id="vt-week" onclick="setCalView('week',this)">周</button>
+            </div>
+          </div>
+          <div class="cal-body" id="cal-body"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /main-wrap -->
+
+<!-- MODAL: Token配置 -->
+<div class="modal-overlay" id="modal-cmm-token">
+  <div class="modal" style="width:520px;">
+    <button class="modal-close" onclick="closeModal('cmm-token')">✕</button>
+    <h3>🔑 配置蝉妈妈 Token</h3>
+    <div class="form-group">
+      <label class="form-label">蝉妈妈登录Token</label>
+      <textarea class="form-textarea" id="cmm-token-input" placeholder="在浏览器登录蝉妈妈后，打开开发者工具(F12) → Network → 找任意 api-service.chanmama.com 请求 → 复制 Authorization 或 token header 的值粘贴在这里" style="min-height:100px;font-family:monospace;font-size:11px;"></textarea>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:-8px;margin-bottom:14px;line-height:1.7;">
+      💡 <strong>如何获取Token：</strong><br>
+      1. 在浏览器打开 <a href="https://www.chanmama.com" target="_blank" style="color:var(--purple)">chanmama.com</a> 并登录账号<br>
+      2. 按 F12 打开开发者工具 → Network 标签<br>
+      3. 点击任意一个 <code>api-service.chanmama.com</code> 的请求<br>
+      4. 在 Request Headers 中找到 <code>token</code> 或 <code>Authorization</code> 字段，复制其值
+    </div>
+    <div id="cmm-token-result" style="display:none;padding:10px;border-radius:8px;font-size:12px;margin-bottom:12px;"></div>
+    <div class="modal-footer">
+      <button class="topbar-btn btn-ghost" onclick="closeModal('cmm-token')">取消</button>
+      <button class="topbar-btn btn-primary" onclick="saveCmmToken()">💾 保存并验证</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: New Task -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal" style="width:520px;">
+    <button class="modal-close" onclick="closeModal('task')">✕</button>
+    <h3>➕ 新建任务</h3>
+    <div class="form-group"><label class="form-label">任务标题 *</label><input class="form-input" type="text" placeholder="输入任务名称..." id="new-task-title"></div>
+    <div class="form-group"><label class="form-label">所属模块</label>
+      <select class="form-select" id="new-task-module" onchange="onTaskModuleChange(this)">
+        <option value="purple">爬虫采集</option>
+        <option value="green" selected>内容创作</option>
+        <option value="blue">发布计划</option>
+        <option value="pink">私域运营</option>
+        <option value="orange">电商</option>
+      </select>
+    </div>
+    <!-- AI执行配置（内容创作时显示） -->
+    <div id="ai-task-config" style="background:rgba(180,100,255,0.06);border:1px solid rgba(180,100,255,0.2);border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:10px;">🤖 AI 自动执行配置</div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">品牌/产品</label>
+        <input class="form-input" id="at-brand" placeholder="如：祖马龙 英国梨与小苍兰" value="祖马龙 英国梨与小苍兰">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label class="form-label">目标平台</label>
+          <select class="form-select" id="at-platform">
+            <option value="小红书">小红书</option>
+            <option value="抖音">抖音</option>
+            <option value="INS">INS</option>
+            <option value="微博">微博</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">内容类型</label>
+          <select class="form-select" id="at-type">
+            <option value="图文笔记">图文笔记</option>
+            <option value="视频脚本">视频脚本</option>
+            <option value="种草长文">种草长文</option>
+            <option value="测评报告">测评报告</option>
+            <option value="短文案">短文案</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">内容风格</label>
+        <select class="form-select" id="at-style">
+          <option>情绪共鸣</option><option>场景化描写</option><option>成分故事</option>
+          <option>对比测评</option><option>日常分享</option><option>专业科普</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">截止日期</label><input class="form-input" type="date" id="new-task-due"></div>
+    <div class="form-group"><label class="form-label">任务描述（可选）</label><textarea class="form-textarea" placeholder="补充任务详情..." id="new-task-desc" style="min-height:60px;"></textarea></div>
+    <div class="modal-footer">
+      <button class="topbar-btn btn-ghost" onclick="closeModal('task')">取消</button>
+      <button class="topbar-btn btn-green" id="create-and-run-btn" onclick="createAndRunTask()">⚡ 创建并立即执行</button>
+      <button class="topbar-btn btn-primary" onclick="createTask()">创建任务</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Task Execute Result -->
+<div class="modal-overlay" id="modal-task-exec">
+  <div class="task-exec-modal">
+    <button class="modal-close" onclick="closeModal('task-exec')">✕</button>
+    <h3 id="task-exec-title">⚡ AI 执行中...</h3>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <span class="task-status-dot ts-running" id="exec-status-dot"></span>
+      <span id="exec-status-text" style="font-size:12px;color:var(--text2);">正在调用 Ollama 生成内容...</span>
+    </div>
+    <div class="task-exec-result stream-output" id="task-exec-output">
+      <div style="color:var(--text3);text-align:center;padding:40px;">
+        <div style="font-size:24px;margin-bottom:8px;">⏳</div>
+        AI 正在生成中，请稍候...
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end;">
+      <button class="topbar-btn btn-ghost" style="font-size:11px;" onclick="copyExecResult()">📋 复制结果</button>
+      <button class="topbar-btn btn-green" style="font-size:11px;" onclick="useAsViralCopy()">✍️ 发送到爆款生成</button>
+      <button class="topbar-btn btn-ghost" style="font-size:11px;" onclick="closeModal('task-exec')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8766';
+
+// ============================================================
+// 用户身份管理（积分计费）
+// 从 URL 参数或 localStorage 读取 user_id
+// 官网跳转时携带 ?uid=xxx，本地管理员不传则走 Ollama
+// ============================================================
+const _urlUid = new URLSearchParams(location.search).get('uid') || '';
+if (_urlUid) localStorage.setItem('maoyan_uid', _urlUid);
+const CURRENT_USER_ID = localStorage.getItem('maoyan_uid') || '';
+
+// 管理员 AI 模式：ollama/deepseek/groq/gemini/kimi/glm/claude/openai/''(跟随服务器)
+let ADMIN_AI_MODE = localStorage.getItem('maoyan_ai_mode') || '';
+
+// 所有 AI 提供商定义
+const AI_PROVIDERS = [
+  { mode: '',         label: '⚙️ 服务器默认', tag: '',       free: true,  desc: '跟随后端 ADMIN_AI_MODE 配置' },
+  { mode: 'ollama',   label: '🖥️ 本地 Ollama', tag: '本地',  free: true,  desc: '本地模型，完全免费，需开 Ollama' },
+  { mode: 'deepseek', label: '🔵 DeepSeek',    tag: '免费',   free: true,  desc: 'GPT-4级，免费层很大，推荐' },
+  { mode: 'groq',     label: '⚡ Groq Llama3', tag: '免费',   free: true,  desc: 'Llama 3.3 70B，极速免费' },
+  { mode: 'gemini',   label: '♊ Google Gemini', tag: '免费',  free: true,  desc: 'Gemini 1.5 Flash，免费层' },
+  { mode: 'kimi',     label: '🌙 Moonshot Kimi', tag: '免费', free: true,  desc: '国产，长上下文，有免费额度' },
+  { mode: 'glm',      label: '🧠 智谱 GLM-4',   tag: '免费',  free: true,  desc: 'glm-4-flash 完全免费' },
+  { mode: 'claude',   label: '🟤 Claude',        tag: '付费',  free: false, desc: '需购买 API Key（暂未启用）' },
+  { mode: 'openai',   label: '🟢 OpenAI GPT',    tag: '付费',  free: false, desc: '需购买 API Key（暂未启用）' },
+];
+
+// 统一请求头工厂
+function apiHeaders(extra = {}) {
+  const h = { 'Content-Type': 'application/json', ...extra };
+  if (CURRENT_USER_ID) h['X-User-Id'] = CURRENT_USER_ID;
+  if (ADMIN_AI_MODE) h['X-AI-Mode'] = ADMIN_AI_MODE;
+  return h;
+}
+
+// 切换管理员 AI 模式
+function setAdminAiMode(mode) {
+  ADMIN_AI_MODE = mode;
+  localStorage.setItem('maoyan_ai_mode', mode);
+  renderAiModeToggle();
+  // 更新顶部状态标识
+  const badge = document.getElementById('current-ai-badge');
+  if (badge) {
+    const p = AI_PROVIDERS.find(x => x.mode === mode) || AI_PROVIDERS[0];
+    badge.textContent = p.label;
+    badge.style.color = p.free ? 'var(--green)' : '#f59e0b';
+  }
+}
+
+function renderAiModeToggle() {
+  const el = document.getElementById('ai-mode-toggle');
+  if (!el) return;
+
+  // 构建选项 HTML
+  const options = AI_PROVIDERS.map(p => {
+    const selected = p.mode === ADMIN_AI_MODE ? 'selected' : '';
+    const tagHtml = p.tag ? ` [${p.tag}]` : '';
+    return `<option value="${p.mode}" ${selected}>${p.label}${tagHtml}</option>`;
+  }).join('');
+
+  // 当前提供商信息
+  const current = AI_PROVIDERS.find(x => x.mode === ADMIN_AI_MODE) || AI_PROVIDERS[0];
+  const tagColor = current.free ? '#10b981' : '#f59e0b';
+  const tagBg = current.free ? '#052e16' : '#1c1007';
+
+  el.innerHTML = `
+    <span style="font-size:12px;color:#888;margin-right:6px;white-space:nowrap;">AI 后端:</span>
+    <div style="position:relative;display:inline-flex;align-items:center;gap:6px;">
+      <select id="ai-mode-select"
+        onchange="setAdminAiMode(this.value)"
+        style="padding:3px 24px 3px 8px;border-radius:6px;border:1px solid #374151;
+               background:#1e1e2e;color:#e2e8f0;font-size:12px;cursor:pointer;
+               appearance:none;-webkit-appearance:none;outline:none;min-width:160px;">
+        ${options}
+      </select>
+      <span style="position:absolute;right:6px;pointer-events:none;color:#888;">▼</span>
+    </div>
+    ${current.tag ? `<span style="font-size:11px;padding:1px 6px;border-radius:10px;
+      background:${tagBg};color:${tagColor};border:1px solid ${tagColor}40;">${current.tag}</span>` : ''}
+    <span id="current-ai-badge" style="font-size:11px;color:#666;">${current.desc}</span>
+  `;
+}
+
+// 积分余额缓存
+let _creditsBalance = null;
+
+async function loadCredits() {
+  if (!CURRENT_USER_ID) return;
+  try {
+    const r = await fetch(API + '/api/credits/balance', {
+      headers: apiHeaders({'Content-Type': undefined})
+    });
+    const d = await r.json();
+    _creditsBalance = d.balance;
+    renderCredits(d);
+  } catch(e) { /* ignore */ }
+}
+
+function renderCredits(d) {
+  const el = document.getElementById('credits-display');
+  if (!el) return;
+  if (d.role === 'admin') {
+    el.innerHTML = `<span style="color:var(--green)">👑 管理员 · 免费使用</span>`;
+  } else {
+    const b = d.balance ?? 0;
+    const color = b >= 50 ? 'var(--green)' : b >= 10 ? '#f59e0b' : 'var(--red, #ef4444)';
+    el.innerHTML = `<span style="color:${color}">💎 积分余额：<strong>${b}</strong></span>`;
+  }
+}
+
+// 检查 SSE 流中的积分错误
+function checkCreditError(data) {
+  if (data.code === 'INSUFFICIENT_CREDITS') {
+    alert(`⚠️ 积分不足\n\n需要 ${data.cost} 积分，当前余额 ${data.balance} 积分\n\n请前往官网充值后再使用。`);
+    return true;
+  }
+  if (data.code === 'NO_ACCOUNT') {
+    alert('⚠️ 账户未找到，请从官网登录后进入运营平台');
+    return true;
+  }
+  if (data.code === 'DEDUCT_FAILED') {
+    alert('⚠️ 扣积分失败，请重试');
+    return true;
+  }
+  // 积分扣减成功通知：静默更新余额显示
+  if (data.system === 'credits_deducted') {
+    if (_creditsBalance !== null) {
+      _creditsBalance = data.balance_after;
+      renderCredits({ role: 'user', balance: _creditsBalance });
+    }
+    return true; // 跳过这条消息，不显示给用户
+  }
+  return false;
+}
+
+
+const pageNames = {
+  dashboard:'仪表盘', overview:'系统概览', tasks:'任务看板', chat:'AI 对话',
+  brands:'品牌分析', viral:'爆款生成', trends:'热点分析', upload:'文件管理',
+  chanmama:'蝉妈妈数据', calendar:'内容日历', library:'📚 文案库'
+};
+
+// 蝉妈妈数据状态
+let cmmData = { authors: [], notes: [], currentBrand: 'all', sortBy: 'likes' };
+
+// ============================================================
+// API 状态检测
+// ============================================================
+async function checkApiStatus(){
+  const dot = document.getElementById('api-dot');
+  const txt = document.getElementById('api-status-text');
+  const badge = document.getElementById('ai-status-badge');
+  const ollamaTxt = document.getElementById('ollama-status-text');
+  const ollamaProg = document.getElementById('ollama-prog');
+  const modelInfo = document.getElementById('model-info');
+  const chatModelBadge = document.getElementById('chat-model-badge');
+
+  try {
+    const r = await fetch(API+'/api/health', {
+      signal: AbortSignal.timeout(5000),
+      headers: CURRENT_USER_ID ? {'X-User-Id': CURRENT_USER_ID} : {}
+    });
+    const data = await r.json();
+    const isOnline = data.status === 'ok';
+    dot.className = 'api-dot ' + (isOnline ? 'online' : '');
+    txt.textContent = isOnline ? '后端在线' : '后端异常';
+    badge.textContent = isOnline ? '在线' : '异常';
+    badge.className = 'nav-badge ' + (isOnline ? 'green' : 'red');
+
+    // AI 状态展示（多提供商版）
+    const isAdmin = data.is_admin === true;
+    const defaultMode = data.default_ai_mode || ADMIN_AI_MODE || 'ollama';
+
+    // Ollama 状态
+    if (data.ollama === 'online') {
+      ollamaTxt.textContent = '在线';
+      ollamaTxt.style.color = 'var(--green)';
+      ollamaProg.style.width = '100%';
+    } else {
+      ollamaTxt.textContent = '未检测到';
+      ollamaTxt.style.color = '#888';
+      ollamaProg.style.width = '10%';
+    }
+
+    // 当前生效的 AI 提供商
+    const currentMode = ADMIN_AI_MODE || defaultMode;
+    const pInfo = AI_PROVIDERS.find(p => p.mode === currentMode) || AI_PROVIDERS[0];
+    const modeLabel = pInfo ? pInfo.label : currentMode;
+    const providers = data.providers || {};
+    const providerConfigured = currentMode === 'ollama' || currentMode === ''
+      ? (data.ollama === 'online')
+      : (providers[currentMode] ? providers[currentMode].configured : false);
+
+    if (modelInfo) {
+      if (isAdmin) {
+        const statusColor = providerConfigured ? 'var(--green)' : '#f59e0b';
+        const statusNote = providerConfigured ? '' : ' ⚠️ Key未配置';
+        modelInfo.innerHTML = `<span style="color:var(--green)">👑 管理员</span> · <span style="color:${statusColor}">${modeLabel}${statusNote}</span>`;
+      } else {
+        const claudeOk = providers.claude && providers.claude.configured;
+        const claudeColor = claudeOk ? 'var(--purple)' : '#f59e0b';
+        modelInfo.innerHTML = `<span style="color:${claudeColor}">用户模式 · Claude API${claudeOk ? '' : '（未配置）'}</span><span style="color:var(--text3);margin-left:8px;">每次调用消耗积分</span>`;
+      }
+    }
+
+    if (chatModelBadge) chatModelBadge.textContent = modeLabel || defaultMode;
+
+    // 加载 Ollama 模型下拉（如果在线）
+    if (isAdmin && data.ollama === 'online') {
+      try {
+        const mr = await fetch(API+'/api/providers', {signal: AbortSignal.timeout(3000)});
+        const md = await mr.json();
+        // /api/providers 返回 providers.ollama.models 数组
+        const ollamaProvider = (md.providers || {}).ollama || {};
+        const models = ollamaProvider.models || [];
+        if (document.getElementById('brand-model')) {
+          document.getElementById('brand-model').innerHTML = models.map(m=>`<option value="${m}">${m}</option>`).join('');
+        }
+      } catch(e) {}
+    }
+  } catch(e){
+    dot.className = 'api-dot';
+    txt.textContent = '后端离线';
+    badge.textContent = '离线';
+    badge.className = 'nav-badge red';
+    ollamaTxt.textContent = '未运行';
+    ollamaTxt.style.color = '#ff5050';
+    ollamaProg.style.width = '5%';
+    modelInfo.innerHTML = `<span style="color:#ff5050">⚠ 后端未启动，请运行：<code>python3 backend/server.py</code></span>`;
+    if(chatModelBadge) chatModelBadge.textContent = '离线';
+  }
+}
+
+// ============================================================
+// Navigation
+// ============================================================
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg = document.getElementById('page-'+name);
+  if(pg) pg.classList.add('active');
+  document.getElementById('topbar-title').textContent = pageNames[name]||name;
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    const oc = n.getAttribute('onclick')||'';
+    if(oc.includes("'"+name+"'")) n.classList.add('active');
+  });
+  // 进入蝉妈妈页面时自动加载数据
+  if (name === 'chanmama') {
+    checkCmmStatus();
+    loadCmmData();
+  }
+  // 进入日历页面时初始化
+  if (name === 'calendar') {
+    initCalendar();
+  }
+  // 进入文案库时自动加载
+  if (name === 'library') {
+    loadLibrary(true);
+  }
+}
+
+// ============================================================
+// Modal
+// ============================================================
+function openModal(name){ document.getElementById('modal-'+name).classList.add('open'); }
+function closeModal(name){ document.getElementById('modal-'+name).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+
+// ============================================================
+// Task Kanban — 带 AI 执行
+// ============================================================
+let draggingCard = null;
+let lastExecResult = '';
+
+function onTaskModuleChange(sel){
+  const aiConfig = document.getElementById('ai-task-config');
+  const createAndRunBtn = document.getElementById('create-and-run-btn');
+  const isContent = sel.value === 'green';
+  aiConfig.style.display = isContent ? 'block' : 'none';
+  createAndRunBtn.style.display = isContent ? 'inline-flex' : 'none';
+}
+
+function onDragStart(e,el){ draggingCard=el; el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+document.addEventListener('dragend',()=>{ if(draggingCard) draggingCard.classList.remove('dragging'); document.querySelectorAll('.kanban-col').forEach(c=>c.classList.remove('drag-over')); });
+function onDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDrop(e,colId){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if(draggingCard){ document.getElementById('cards-'+colId).appendChild(draggingCard); updateColCounts(); draggingCard.style.opacity=(colId==='done')?'0.6':'1'; draggingCard=null; } }
+function updateColCounts(){ ['todo','doing','review','done'].forEach(id=>{ document.getElementById('count-'+id).textContent=document.getElementById('cards-'+id).querySelectorAll('.task-card').length; }); }
+
+function createTask(){
+  const title=document.getElementById('new-task-title').value.trim();
+  if(!title){showToast('请输入任务标题');return;}
+  const module=document.getElementById('new-task-module').value;
+  const due=document.getElementById('new-task-due').value;
+  const dueStr=due?due.replace(/^\d{4}-/,''):'无期限';
+  const moduleNames={purple:'爬虫采集',green:'内容创作',blue:'发布计划',pink:'私域运营',orange:'电商'};
+  const card=document.createElement('div');
+  card.className='task-card'; card.draggable=true;
+  card.setAttribute('ondragstart','onDragStart(event,this)');
+  // 内容创作任务存储 AI 配置
+  let aiData = {};
+  if(module === 'green'){
+    aiData = {
+      brand: document.getElementById('at-brand').value.trim() || title,
+      platform: document.getElementById('at-platform').value,
+      content_type: document.getElementById('at-type').value,
+      style: document.getElementById('at-style').value,
+    };
+    card.dataset.aiConfig = JSON.stringify(aiData);
+  }
+  const execBtn = module === 'green'
+    ? `<span onclick="execTaskCard(this);event.stopPropagation();" style="margin-left:auto;font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(180,100,255,0.2);color:var(--purple);cursor:pointer;border:none;">⚡ 执行</span>`
+    : `<span class="task-card-due">${dueStr}</span>`;
+  card.innerHTML=`<div class="task-card-title">${title}</div><div class="task-card-meta"><span class="task-tag tag-${module}">${moduleNames[module]}</span>${execBtn}</div>`;
+  document.getElementById('cards-todo').appendChild(card);
+  updateColCounts(); closeModal('task');
+  document.getElementById('new-task-title').value=''; document.getElementById('new-task-desc').value='';
+  showToast('任务已创建 ✓');
+}
+
+function createAndRunTask(){
+  const title=document.getElementById('new-task-title').value.trim();
+  if(!title){showToast('请输入任务标题');return;}
+  createTask();
+  // 找到刚创建的卡片（在 todo 列最后一个）
+  const cards = document.getElementById('cards-todo').querySelectorAll('.task-card');
+  const lastCard = cards[cards.length-1];
+  if(lastCard) execTaskCard(lastCard.querySelector('[onclick*="execTaskCard"]'));
+}
+
+async function execTaskCard(btn){
+  const card = btn.closest('.task-card');
+  const configStr = card.dataset.aiConfig;
+  if(!configStr){ showToast('此任务类型不支持 AI 执行'); return; }
+  const config = JSON.parse(configStr);
+  const title = card.querySelector('.task-card-title').textContent;
+
+  // 移到进行中列
+  document.getElementById('cards-doing').appendChild(card);
+  updateColCounts();
+
+  // 打开执行弹窗
+  document.getElementById('task-exec-title').textContent = `⚡ ${title}`;
+  document.getElementById('exec-status-dot').className = 'task-status-dot ts-running';
+  document.getElementById('exec-status-text').textContent = `正在调用 Ollama 生成 ${config.platform} ${config.content_type}...`;
+  document.getElementById('task-exec-output').innerHTML = '<div style="color:var(--text3);text-align:center;padding:40px;"><div style="font-size:24px;margin-bottom:8px;">⏳</div>AI 正在生成中，请稍候...</div>';
+  openModal('task-exec');
+
+  lastExecResult = '';
+  try {
+    const resp = await fetch(API+'/api/generate/copy', {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        brand: config.brand,
+        platform: config.platform,
+        content_type: config.content_type,
+        style: config.style,
+        keywords: []
+      })
+    });
+
+    const outputEl = document.getElementById('task-exec-output');
+    outputEl.innerHTML = '';
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      for(const line of decoder.decode(value).split('\n')){
+        if(line.startsWith('data:')){
+          try{
+            const data = JSON.parse(line.slice(5));
+            if(checkCreditError(data)) continue;
+            lastExecResult += data.chunk || '';
+            outputEl.innerHTML = formatMd(lastExecResult) + (data.done?'':'<span class="streaming-cursor"></span>');
+            outputEl.scrollTop = outputEl.scrollHeight;
+            if(data.done) break;
+          }catch(e){}
+        }
+      }
+    }
+
+    // 移到待审核列
+    document.getElementById('cards-review').appendChild(card);
+    updateColCounts();
+    document.getElementById('exec-status-dot').className = 'task-status-dot ts-done';
+    document.getElementById('exec-status-text').textContent = '✅ 生成完成，已移至待审核';
+    const cursor = document.getElementById('task-exec-output').querySelector('.streaming-cursor');
+    if(cursor) cursor.remove();
+  } catch(e) {
+    document.getElementById('exec-status-dot').className = 'task-status-dot ts-error';
+    document.getElementById('exec-status-text').textContent = '❌ 执行失败：'+e.message;
+    document.getElementById('task-exec-output').innerHTML = `<div style="color:#ff5050;">⚠ 错误：${e.message}<br><br>请确认后端已启动：<code>http://localhost:8766</code></div>`;
+  }
+}
+
+function copyExecResult(){
+  if(!lastExecResult){ showToast('暂无内容可复制'); return; }
+  navigator.clipboard.writeText(lastExecResult).then(()=>showToast('已复制到剪贴板 ✓')).catch(()=>{
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = lastExecResult; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('已复制到剪贴板 ✓');
+  });
+}
+
+function useAsViralCopy(){
+  // 把结果发到爆款生成页面
+  closeModal('task-exec');
+  showPage('viral');
+  document.getElementById('viral-content').value = lastExecResult.substring(0, 500);
+  showToast('内容已发送到爆款生成页面');
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn=>{ btn.addEventListener('click',function(){ document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active'); }); });
+
+// ============================================================
+// AI CHAT — 真实接入 Ollama 流式 API
+// ============================================================
+let chatHistory = [];
+let isStreaming = false;
+
+async function sendMessage(){
+  if(isStreaming) return;
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text) return;
+
+  input.value = '';
+  input.style.height = '44px';
+  appendMsg('user', text);
+  chatHistory.push({role:'user', content:text});
+
+  const sendBtn = document.getElementById('send-btn');
+  sendBtn.disabled = true;
+  isStreaming = true;
+
+  // 添加 typing 动画
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'msg ai'; typingDiv.id = 'typing';
+  typingDiv.innerHTML = `<div class="msg-av ai">🐱</div><div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;
+  document.getElementById('chat-messages').appendChild(typingDiv);
+  scrollChat();
+
+  let fullReply = '';
+  let aiMsgDiv = null;
+
+  try {
+    const resp = await fetch(API+'/api/chat', {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({message: text, context: chatHistory.slice(-10), stream: true})
+    });
+
+    // 移除 typing
+    const t = document.getElementById('typing');
+    if(t) t.remove();
+
+    // 创建流式消息气泡
+    const msgs = document.getElementById('chat-messages');
+    const now = new Date();
+    const timeStr = now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+    aiMsgDiv = document.createElement('div');
+    aiMsgDiv.className = 'msg ai';
+    aiMsgDiv.innerHTML = `<div class="msg-av ai">🐱</div><div><div class="msg-bubble" id="stream-bubble"></div><div class="msg-time">${timeStr}</div></div>`;
+    msgs.appendChild(aiMsgDiv);
+
+    const bubble = document.getElementById('stream-bubble');
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      const lines = decoder.decode(value).split('\n');
+      for(const line of lines){
+        if(line.startsWith('data:')){
+          try{
+            const data = JSON.parse(line.slice(5));
+            if(checkCreditError(data)) continue;
+            if(data.error){ bubble.textContent = '⚠ '+data.error; break; }
+            fullReply += data.content||'';
+            bubble.innerHTML = formatMd(fullReply) + (data.done?'':'<span class="streaming-cursor"></span>');
+            scrollChat();
+            if(data.done) break;
+          }catch(e){}
+        }
+      }
+    }
+
+    // 移除光标
+    const cursor = bubble.querySelector('.streaming-cursor');
+    if(cursor) cursor.remove();
+
+    chatHistory.push({role:'assistant', content:fullReply});
+
+  } catch(e) {
+    const t = document.getElementById('typing');
+    if(t) t.remove();
+    appendMsg('ai', `⚠ 无法连接到后端服务。\n\n请先启动后端：\n\`\`\`\ncd /Users/daiyan/WorkBuddy/20260314214658\npython3 backend/server.py\n\`\`\``);
+  }
+
+  isStreaming = false;
+  sendBtn.disabled = false;
+  document.getElementById('chat-input').focus();
+}
+
+function formatMd(text){
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```([\s\S]*?)```/g,'<pre><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/^#{3} (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^#{2} (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\n/g,'<br>');
+}
+
+function appendMsg(role, text){
+  const msgs = document.getElementById('chat-messages');
+  const now = new Date();
+  const timeStr = now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  const div = document.createElement('div');
+  div.className = 'msg '+role;
+  div.innerHTML = `<div class="msg-av ${role}">${role==='ai'?'🐱':'👤'}</div><div><div class="msg-bubble">${formatMd(text)}</div><div class="msg-time">${timeStr}</div></div>`;
+  msgs.appendChild(div);
+  scrollChat();
+}
+
+function scrollChat(){ const m=document.getElementById('chat-messages'); m.scrollTop=m.scrollHeight; }
+function handleChatKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} e.target.style.height='auto'; e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'; }
+function insertPrompt(text){ const inp=document.getElementById('chat-input'); inp.value=text; inp.focus(); inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,120)+'px'; }
+function newChat(){ chatHistory=[]; document.getElementById('chat-messages').innerHTML=`<div class="msg ai"><div class="msg-av ai">🐱</div><div><div class="msg-bubble">新对话开始！请问有什么我可以帮你的？</div><div class="msg-time">现在</div></div></div>`; }
+function switchSession(el){ document.querySelectorAll('.chat-session').forEach(s=>s.classList.remove('active')); el.classList.add('active'); }
+function handleChatFileDrop(e){ e.preventDefault(); const files=Array.from(e.dataTransfer.files); if(files.length){ insertPrompt(`已附加文件：${files.map(f=>f.name).join(', ')}，请帮我分析这些内容的运营价值和使用方向`); } }
+
+// ============================================================
+// 品牌分析 — 真实Ollama流式
+// ============================================================
+let selectedBrands = ['diptyque','祖马龙','独特艾琳','冰希黎'];
+
+function toggleBrand(el, brand){
+  el.classList.toggle('selected');
+  if(el.classList.contains('selected')){ if(!selectedBrands.includes(brand)) selectedBrands.push(brand); }
+  else { selectedBrands = selectedBrands.filter(b=>b!==brand); }
+}
+
+function addCustomBrand(e){
+  if(e.key!=='Enter') return;
+  const val = e.target.value.trim();
+  if(!val) return;
+  const chips = document.getElementById('brand-chips');
+  const chip = document.createElement('span');
+  chip.className = 'brand-chip selected';
+  chip.textContent = val;
+  chip.onclick = function(){ toggleBrand(this, val); };
+  chips.appendChild(chip);
+  selectedBrands.push(val);
+  e.target.value = '';
+}
+
+async function runBrandAnalysis(){
+  if(!selectedBrands.length){ showToast('请至少选择一个品牌'); return; }
+  const btn = document.getElementById('brand-run-btn');
+  const output = document.getElementById('brand-output');
+  const status = document.getElementById('brand-status');
+  const model = document.getElementById('brand-model').value;
+  const platforms = Array.from(document.querySelectorAll('#page-brands .checkbox-group input:checked')).map(c=>c.value);
+
+  btn.disabled = true; btn.textContent = '⏳ 分析中...';
+  status.textContent = '正在调用 '+model+'...';
+  output.innerHTML = '<div class="stream-output" id="brand-stream"></div>';
+
+  const streamDiv = document.getElementById('brand-stream');
+  let full = '';
+
+  try{
+    const resp = await fetch(API+'/api/analyze/brands',{
+      method:'POST', headers: apiHeaders(),
+      body: JSON.stringify({brands:selectedBrands, platforms, model})
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    while(true){
+      const {done,value} = await reader.read();
+      if(done) break;
+      const lines = decoder.decode(value).split('\n');
+      for(const line of lines){
+        if(line.startsWith('data:')){
+          try{
+            const data = JSON.parse(line.slice(5));
+            if(checkCreditError(data)) continue;
+            full += data.chunk||'';
+            streamDiv.innerHTML = formatMd(full) + (data.done?'':'<span class="streaming-cursor"></span>');
+            streamDiv.scrollIntoView({block:'end',behavior:'smooth'});
+            if(data.done) break;
+          }catch(e){}
+        }
+      }
+    }
+    status.textContent = '✓ 分析完成';
+  }catch(e){
+    output.innerHTML = `<div style="color:#ff5050;padding:20px;">⚠ 连接失败：${e.message}<br><br>请确认后端服务已启动：<br><code>python3 backend/server.py</code></div>`;
+    status.textContent = '连接失败';
+  }
+
+  btn.disabled = false; btn.textContent = '🚀 开始深度分析';
+}
+
+// ============================================================
+// 爆款生成 — 真实Ollama流式
+// ============================================================
+let selectedStyle = '情绪共鸣';
+
+function selectStyle(el){
+  document.querySelectorAll('.style-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedStyle = el.textContent;
+}
+
+async function runViralGen(){
+  const brand = document.getElementById('copy-brand').value.trim();
+  const platform = document.getElementById('copy-platform').value;
+  const type = document.getElementById('copy-type').value;
+  const keywords = document.getElementById('copy-keywords').value.split(/[,，\s]+/).filter(Boolean);
+  const viralContent = document.getElementById('viral-content').value.trim();
+
+  if(!brand){ showToast('请输入品牌/产品名'); return; }
+
+  const btn = document.getElementById('viral-run-btn');
+  const output = document.getElementById('viral-output');
+  const status = document.getElementById('viral-status');
+
+  btn.disabled = true; btn.textContent = '⏳ 生成中...';
+  status.textContent = '正在生成...';
+  output.innerHTML = '<div class="stream-output" id="viral-stream"></div>';
+
+  const streamDiv = document.getElementById('viral-stream');
+  let full = '';
+
+  // 如果有爆款内容，先拆解再生成
+  let endpoint = '/api/generate/copy';
+  let body = {brand, platform, content_type:type, style:selectedStyle, keywords};
+
+  if(viralContent){
+    endpoint = '/api/analyze/viral';
+    body = {content: `品牌：${brand}\n参考爆款：\n${viralContent}\n\n请基于以上信息生成${platform}平台${type}爆款内容，风格：${selectedStyle}`, platform};
+  }
+
+  try{
+    const resp = await fetch(API+endpoint,{
+      method:'POST', headers: apiHeaders(),
+      body: JSON.stringify(body)
+    });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    while(true){
+      const {done,value} = await reader.read();
+      if(done) break;
+      const lines = decoder.decode(value).split('\n');
+      for(const line of lines){
+        if(line.startsWith('data:')){
+          try{
+            const data = JSON.parse(line.slice(5));
+            if(checkCreditError(data)) continue;
+            full += data.chunk||data.content||'';
+            streamDiv.innerHTML = formatMd(full) + (data.done?'':'<span class="streaming-cursor"></span>');
+            streamDiv.parentElement.scrollTop = streamDiv.parentElement.scrollHeight;
+            if(data.done) break;
+          }catch(e){}
+        }
+      }
+    }
+    status.textContent = '✓ 生成完成';
+  }catch(e){
+    output.innerHTML = `<div style="color:#ff5050;padding:20px;">⚠ 连接失败，请启动后端服务</div>`;
+    status.textContent = '连接失败';
+  }
+
+  btn.disabled = false; btn.textContent = '✨ 生成爆款文案';
+}
+
+// ============================================================
+// 热点分析 — 真实Ollama流式
+// ============================================================
+function setTrendKw(el, kw){ document.getElementById('trend-keyword').value=kw; }
+
+async function runTrendAnalysis(){
+  const keyword = document.getElementById('trend-keyword').value.trim();
+  const platform = document.getElementById('trend-platform').value;
+  if(!keyword){ showToast('请输入关键词'); return; }
+
+  const btn = document.getElementById('trend-run-btn');
+  const output = document.getElementById('trend-output');
+  const status = document.getElementById('trend-status');
+
+  btn.disabled = true; btn.textContent = '⏳ 分析中...';
+  status.textContent = '正在分析...';
+  output.innerHTML = '<div class="stream-output" id="trend-stream"></div>';
+
+  const streamDiv = document.getElementById('trend-stream');
+  let full = '';
+
+  try{
+    const resp = await fetch(`${API}/api/search/trends?keyword=${encodeURIComponent(keyword)}&platform=${encodeURIComponent(platform)}`);
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    while(true){
+      const {done,value} = await reader.read();
+      if(done) break;
+      const lines = decoder.decode(value).split('\n');
+      for(const line of lines){
+        if(line.startsWith('data:')){
+          try{
+            const data = JSON.parse(line.slice(5));
+            if(checkCreditError(data)) continue;
+            full += data.chunk||'';
+            streamDiv.innerHTML = formatMd(full) + (data.done?'':'<span class="streaming-cursor"></span>');
+            streamDiv.parentElement.scrollTop = streamDiv.parentElement.scrollHeight;
+            if(data.done) break;
+          }catch(e){}
+        }
+      }
+    }
+    status.textContent = '✓ 分析完成';
+  }catch(e){
+    output.innerHTML = `<div style="color:#ff5050;padding:20px;">⚠ 连接失败，请启动后端服务</div>`;
+    status.textContent = '连接失败';
+  }
+
+  btn.disabled = false; btn.textContent = '🔍 分析热点趋势';
+}
+
+async function runViralAnalyze(){
+  const content = document.getElementById('viral-analyze-content').value.trim();
+  const platform = document.getElementById('trend-platform').value;
+  if(!content){ showToast('请粘贴要拆解的爆款内容'); return; }
+
+  const output = document.getElementById('trend-output');
+  const status = document.getElementById('trend-status');
+  status.textContent = '正在拆解...';
+  output.innerHTML = '<div class="stream-output" id="trend-stream"></div>';
+  const streamDiv = document.getElementById('trend-stream');
+  let full = '';
+
+  try{
+    const resp = await fetch(API+'/api/analyze/viral',{
+      method:'POST', headers: apiHeaders(),
+      body: JSON.stringify({content, platform})
+    });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    while(true){
+      const {done,value} = await reader.read();
+      if(done) break;
+      for(const line of decoder.decode(value).split('\n')){
+        if(line.startsWith('data:')){
+          try{
+            const data = JSON.parse(line.slice(5));
+            if(checkCreditError(data)) continue;
+            full += data.chunk||'';
+            streamDiv.innerHTML = formatMd(full) + (data.done?'':'<span class="streaming-cursor"></span>');
+            streamDiv.parentElement.scrollTop = streamDiv.parentElement.scrollHeight;
+            if(data.done) break;
+          }catch(e){}
+        }
+      }
+    }
+    status.textContent = '✓ 拆解完成';
+  }catch(e){
+    output.innerHTML = `<div style="color:#ff5050;padding:20px;">⚠ 连接失败</div>`;
+    status.textContent = '连接失败';
+  }
+}
+
+// ============================================================
+// 蝉妈妈数据 — 达人搜索 & 笔记列表
+// ============================================================
+
+async function checkCmmStatus(){
+  const dot = document.getElementById('cmm-dot');
+  const txt = document.getElementById('cmm-status-text');
+  const badge = document.getElementById('cmm-badge');
+  txt.textContent = '检测中...';
+  try {
+    const r = await fetch(API + '/api/chanmama/status');
+    const d = await r.json();
+    if (d.connected) {
+      dot.className = 'api-dot online';
+      txt.textContent = '已连接' + (d.user ? ` · ${d.user.nickname || ''}` : '');
+      badge.textContent = '实时';
+      badge.className = 'nav-badge green';
+    } else {
+      dot.className = 'api-dot';
+      txt.textContent = 'Mock模式';
+      badge.textContent = 'Mock';
+      badge.className = 'nav-badge orange';
+    }
+  } catch(e) {
+    dot.className = 'api-dot';
+    txt.textContent = '后端离线';
+  }
+}
+
+async function loadCmmData(){
+  const brand = cmmData.currentBrand === 'all' ? '香水' : cmmData.currentBrand;
+  showToast('正在拉取蝉妈妈数据...');
+
+  try {
+    // 并行获取达人数据和笔记数据
+    const [authorsRes, notesRes, overviewRes] = await Promise.all([
+      fetch(`${API}/api/chanmama/author/search?keyword=${encodeURIComponent(brand)}&page_size=20`).then(r=>r.json()),
+      fetch(`${API}/api/chanmama/notes/list?keyword=${encodeURIComponent(brand)}&sort_by=${cmmData.sortBy}&page_size=20`).then(r=>r.json()),
+      fetch(`${API}/api/chanmama/brands/overview?brands=祖马龙,独特艾琳,冰希黎,diptyque`).then(r=>r.json()),
+    ]);
+
+    cmmData.authors = authorsRes.data?.list || [];
+    cmmData.notes = notesRes.data?.list || [];
+
+    renderCmmAuthors();
+    renderCmmNotes();
+    renderCmmOverview(overviewRes.data || []);
+
+    const src = authorsRes.source === 'chanmama_live' ? '✅ 蝉妈妈实时数据' : '📦 Mock模式数据';
+    showToast(`${src} · ${cmmData.authors.length}位达人 · ${cmmData.notes.length}条笔记`);
+  } catch(e) {
+    showToast('⚠️ 数据加载失败，请检查后端是否运行');
+  }
+}
+
+function renderCmmOverview(data){
+  const brandMap = {
+    '祖马龙': ['cmm-jm-views','cmm-jm-authors'],
+    '独特艾琳': ['cmm-elin-views','cmm-elin-authors'],
+    '冰希黎': ['cmm-bsl-views','cmm-bsl-authors'],
+    'diptyque': ['cmm-dip-views','cmm-dip-authors'],
+  };
+  data.forEach(item => {
+    const ids = brandMap[item.brand];
+    if (!ids) return;
+    const views = item.total_views >= 10000 ? (item.total_views/10000).toFixed(1)+'万' : item.total_views.toLocaleString();
+    document.getElementById(ids[0]).textContent = views;
+    document.getElementById(ids[1]).textContent = `${item.author_count}位达人 · 互动率${item.avg_engage_rate}%`;
+  });
+}
+
+function renderCmmAuthors(){
+  const list = document.getElementById('cmm-authors-list');
+  const count = document.getElementById('cmm-author-count');
+  count.textContent = `共 ${cmmData.authors.length} 位`;
+
+  if (!cmmData.authors.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">暂无数据</div>';
+    return;
+  }
+
+  list.innerHTML = cmmData.authors.map(a => {
+    const fans = a.fans >= 10000 ? (a.fans/10000).toFixed(1)+'万' : a.fans;
+    const views = a.avg_views >= 10000 ? (a.avg_views/10000).toFixed(1)+'万' : a.avg_views;
+    const platform = a.platform === 'douyin' ? '🎵 抖音' : '📕 小红书';
+    const cooperate = a.brand_cooperate ? '<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(64,208,144,0.15);color:var(--green);">有合作</span>' : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👤</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.nickname}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">${platform} · ${a.category}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--purple);">${fans}</div>
+        <div style="font-size:10px;color:var(--text3);">粉丝</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:6px;">
+        <div style="font-size:12px;font-weight:600;color:var(--green);">${a.engage_rate}%</div>
+        <div style="font-size:10px;color:var(--text3);">互动率</div>
+      </div>
+      ${cooperate}
+    </div>`;
+  }).join('');
+}
+
+function renderCmmNotes(){
+  const list = document.getElementById('cmm-notes-list');
+  const count = document.getElementById('cmm-note-count');
+  count.textContent = `共 ${cmmData.notes.length} 条`;
+
+  if (!cmmData.notes.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">暂无数据</div>';
+    return;
+  }
+
+  list.innerHTML = cmmData.notes.map(n => {
+    const views = n.views >= 10000 ? (n.views/10000).toFixed(1)+'万' : n.views;
+    const likes = n.likes >= 10000 ? (n.likes/10000).toFixed(1)+'万' : n.likes;
+    const platform = n.platform === 'douyin' ? '🎵' : '📕';
+    const type = n.content_type === '视频' ? '🎬' : '🖼️';
+    const tagsHtml = (n.tags||[]).slice(0,3).map(t=>`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(180,100,255,0.12);color:var(--purple);">#${t}</span>`).join('');
+    return `<div style="padding:10px;background:var(--bg4);border-radius:8px;border:1px solid var(--border);cursor:pointer;" onclick="analyzeNote('${encodeURIComponent(n.title)}')">
+      <div style="font-size:12px;font-weight:600;line-height:1.4;margin-bottom:6px;">${type} ${platform} ${n.title}</div>
+      <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-bottom:6px;">
+        <span>👁 ${views}</span>
+        <span>❤️ ${likes}</span>
+        <span>💬 ${n.comments}</span>
+        <span style="color:var(--green)">互动 ${n.engage_rate}%</span>
+        <span style="margin-left:auto;color:var(--text3);">${n.date}</span>
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">${tagsHtml}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">By ${n.author}</div>
+    </div>`;
+  }).join('');
+}
+
+function analyzeNote(encodedTitle){
+  const title = decodeURIComponent(encodedTitle);
+  showPage('chat');
+  setTimeout(()=>{
+    insertPrompt(`请帮我深度拆解这条爆款内容的逻辑：「${title}」\n请分析：1.标题结构 2.爆款核心原因 3.仿写模板 4.优化建议`);
+  }, 300);
+}
+
+function filterCmmBrand(brand, btn){
+  cmmData.currentBrand = brand;
+  // 更新按钮状态
+  if (btn) {
+    document.querySelectorAll('#cmm-brand-filter .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  loadCmmData();
+}
+
+function setCmmSort(sort, btn){
+  cmmData.sortBy = sort;
+  document.querySelectorAll('#cmm-brand-filter .filter-btn').forEach(b => {
+    if (b.id && b.id.startsWith('cmm-sort-')) b.classList.remove('active');
+  });
+  if (btn) btn.classList.add('active');
+  loadCmmData();
+}
+
+function openCmmTokenModal(){
+  document.getElementById('modal-cmm-token').classList.add('open');
+  document.getElementById('cmm-token-result').style.display = 'none';
+}
+
+async function saveCmmToken(){
+  const token = document.getElementById('cmm-token-input').value.trim();
+  if (!token) { showToast('请输入Token'); return; }
+
+  const resultEl = document.getElementById('cmm-token-result');
+  resultEl.style.display = 'block';
+  resultEl.style.background = 'rgba(255,170,0,0.1)';
+  resultEl.style.color = 'var(--orange)';
+  resultEl.textContent = '正在验证Token...';
+
+  try {
+    const r = await fetch(API + '/api/chanmama/config/token', {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({token})
+    });
+    const d = await r.json();
+    if (d.status === 'ok') {
+      resultEl.style.background = 'rgba(64,208,144,0.1)';
+      resultEl.style.color = 'var(--green)';
+      resultEl.textContent = '✅ ' + d.message;
+      setTimeout(() => {
+        closeModal('cmm-token');
+        checkCmmStatus();
+        loadCmmData();
+      }, 1500);
+    } else {
+      resultEl.style.background = 'rgba(255,170,0,0.1)';
+      resultEl.style.color = 'var(--orange)';
+      resultEl.textContent = '⚠️ ' + d.message;
+    }
+  } catch(e) {
+    resultEl.style.background = 'rgba(255,80,80,0.1)';
+    resultEl.style.color = '#ff5050';
+    resultEl.textContent = '❌ 保存失败：后端未启动';
+  }
+}
+
+// ============================================================
+// 复制结果
+// ============================================================
+function copyResult(elId){
+  const el = document.getElementById(elId);
+  const text = el.innerText || el.textContent;
+  navigator.clipboard.writeText(text).then(()=>showToast('已复制到剪贴板 ✓')).catch(()=>showToast('复制失败，请手动选取'));
+}
+
+// ============================================================
+// File Upload
+// ============================================================
+function handleDragOver(e){ e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function handleDragLeave(){ document.getElementById('drop-zone').classList.remove('drag-over'); }
+function handleDrop(e){ e.preventDefault(); document.getElementById('drop-zone').classList.remove('drag-over'); processFiles(Array.from(e.dataTransfer.files)); }
+function handleFileSelect(e){ processFiles(Array.from(e.target.files)); }
+function processFiles(files){
+  const list = document.getElementById('file-list');
+  files.forEach(file=>{
+    const ext = file.name.split('.').pop().toLowerCase();
+    const icons={jpg:'🖼️',jpeg:'🖼️',png:'🖼️',webp:'🖼️',gif:'🖼️',mp4:'🎬',mov:'🎬',pdf:'📄',docx:'📝',doc:'📝',csv:'📊',xlsx:'📊',mp3:'🎵',wav:'🎵'};
+    const icon = icons[ext]||'📎';
+    const size = (file.size/1024/1024).toFixed(2)+'MB';
+    const item = document.createElement('div');
+    item.className='file-item';
+    const uid='f'+Date.now()+Math.random().toString(36).slice(2);
+    item.innerHTML=`<div class="file-icon">${icon}</div><div class="file-info"><div class="file-name">${file.name}</div><div class="file-size">${size}</div><div class="file-prog-bar"><div class="file-prog-fill" id="${uid}" style="width:0%"></div></div></div><div class="file-status status-uploading" id="st-${uid}">上传中...</div><button class="file-remove" onclick="this.parentElement.remove()">✕</button>`;
+    list.appendChild(item);
+    let prog=0;
+    const iv=setInterval(()=>{ prog+=Math.random()*25+5; if(prog>=100){prog=100;clearInterval(iv); document.getElementById('st-'+uid).textContent='✓ 完成'; document.getElementById('st-'+uid).className='file-status status-done'; } const el=document.getElementById(uid); if(el) el.style.width=prog+'%'; },200+Math.random()*300);
+  });
+}
+
+// ============================================================
+// 内容日历
+// ============================================================
+let calState = {
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),
+  view: 'month', // 'month' | 'week'
+  events: [
+    // 预置一些示例事件
+    {id:1, title:'🌹 祖马龙新品种草', date:'2026-03-15', platform:'小红书', type:'图文', color:'purple'},
+    {id:2, title:'🎵 香水开箱视频', date:'2026-03-16', platform:'抖音', type:'视频', color:'blue'},
+    {id:3, title:'🕯️ diptyque春日香氛', date:'2026-03-17', platform:'小红书', type:'图文', color:'green'},
+    {id:4, title:'🔥 香水赛道周报', date:'2026-03-18', platform:'全平台', type:'分析', color:'orange'},
+    {id:5, title:'✨ 独特艾琳测评', date:'2026-03-20', platform:'小红书', type:'图文', color:'purple'},
+    {id:6, title:'❄️ 冰希黎限定款', date:'2026-03-22', platform:'抖音', type:'视频', color:'blue'},
+    {id:7, title:'🌸 春季上新内容策划', date:'2026-03-25', platform:'全平台', type:'规划', color:'pink'},
+    {id:8, title:'📊 月度数据复盘', date:'2026-03-28', platform:'内部', type:'报告', color:'orange'},
+  ]
+};
+let nextEventId = 100;
+
+function initCalendar(){
+  renderCalendar();
+  // 设置默认日期为今天
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2,'0');
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const el = document.getElementById('quick-event-date');
+  if(el) el.value = `${today.getFullYear()}-${mm}-${dd}`;
+}
+
+function calPrev(){
+  if(calState.view === 'month'){ calState.month--; if(calState.month<0){calState.month=11;calState.year--;} }
+  else { calState.year*100+calState.month; const d=new Date(calState.year, calState.month, 1); d.setDate(d.getDate()-7); calState.year=d.getFullYear(); calState.month=d.getMonth(); }
+  renderCalendar();
+}
+function calNext(){
+  if(calState.view === 'month'){ calState.month++; if(calState.month>11){calState.month=0;calState.year++;} }
+  else { const d=new Date(calState.year, calState.month, 1); d.setDate(d.getDate()+7); calState.year=d.getFullYear(); calState.month=d.getMonth(); }
+  renderCalendar();
+}
+function calToday(){ const t=new Date(); calState.year=t.getFullYear(); calState.month=t.getMonth(); renderCalendar(); }
+function setCalView(v, btn){ calState.view=v; document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderCalendar(); }
+
+function renderCalendar(){
+  const months = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('cal-month-title').textContent = `${calState.year}年 ${months[calState.month]}`;
+  const body = document.getElementById('cal-body');
+  if(calState.view === 'month') renderMonthView(body);
+  else renderWeekView(body);
+}
+
+function getEventsForDate(dateStr){
+  return calState.events.filter(e => e.date === dateStr);
+}
+
+function renderMonthView(container){
+  const year = calState.year, month = calState.month;
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  const dayHeaders = ['日','一','二','三','四','五','六'];
+  let html = '<div class="cal-grid">';
+  dayHeaders.forEach(d => { html += `<div class="cal-day-header">${d}</div>`; });
+
+  let day = 1, nextDay = 1;
+  for(let i=0; i<42; i++){
+    let curDay, curMonth = month, curYear = year, cls = 'cal-day';
+    if(i < firstDay){ curDay = daysInPrev - firstDay + i + 1; curMonth = month-1; if(curMonth<0){curMonth=11;curYear--;} cls += ' other-month'; }
+    else if(day > daysInMonth){ curDay = nextDay++; curMonth = month+1; if(curMonth>11){curMonth=0;curYear++;} cls += ' other-month'; }
+    else { curDay = day++; }
+
+    const dateStr = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(curDay).padStart(2,'0')}`;
+    if(dateStr === todayStr) cls += ' today';
+
+    const evs = getEventsForDate(dateStr);
+    const evsHtml = evs.slice(0,3).map(e =>
+      `<div class="cal-event ev-${e.color}" title="${e.title}" onclick="showEventDetail(${e.id});event.stopPropagation();">${e.title}</div>`
+    ).join('') + (evs.length > 3 ? `<div style="font-size:10px;color:var(--text3);">+${evs.length-3}...</div>` : '');
+
+    html += `<div class="${cls}" onclick="calDayClick('${dateStr}')"><div class="cal-day-num">${curDay}</div>${evsHtml}</div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderWeekView(container){
+  const today = new Date();
+  // 找本周第一天（周日）
+  const startOfWeek = new Date(calState.year, calState.month, 1);
+  // 调整到本周开始
+  const dayOfWeek = today.getDay();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - dayOfWeek);
+
+  const dayNames = ['周日','周一','周二','周三','周四','周五','周六'];
+  let html = '<div class="cal-week-view">';
+
+  for(let i=0; i<7; i++){
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const evs = getEventsForDate(dateStr);
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+
+    const evsHtml = evs.length
+      ? evs.map(e => `<div class="week-event we-${e.color}" onclick="showEventDetail(${e.id})"><div class="we-title">${e.title}</div><div class="we-meta">${e.platform} · ${e.type} · ${dateStr}</div></div>`).join('')
+      : `<div style="font-size:11px;color:var(--text3);padding:8px;font-style:italic;">暂无内容安排</div>`;
+
+    html += `<div class="week-row">
+      <div class="week-date" style="${isToday?'color:var(--purple);':''}">
+        <div style="font-size:14px;font-weight:700;">${d.getDate()}</div>
+        <div style="font-size:10px;">${dayNames[i]}</div>
+      </div>
+      <div class="week-events">${evsHtml}</div>
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function calDayClick(dateStr){
+  const el = document.getElementById('quick-event-date');
+  if(el) el.value = dateStr;
+  showToast(`已选择 ${dateStr}，填写右侧表单添加事件`);
+}
+
+function showEventDetail(id){
+  const ev = calState.events.find(e => e.id === id);
+  if(!ev) return;
+  showToast(`📌 ${ev.title} · ${ev.platform} · ${ev.date}`);
+}
+
+function addQuickEvent(){
+  const title = document.getElementById('quick-event-title').value.trim();
+  const platform = document.getElementById('quick-event-platform').value;
+  const date = document.getElementById('quick-event-date').value;
+  if(!title){ showToast('请输入事件标题'); return; }
+  if(!date){ showToast('请选择日期'); return; }
+
+  const colors = {小红书:'purple', 抖音:'blue', INS:'pink', 微博:'orange', 全平台:'green'};
+  calState.events.push({
+    id: nextEventId++,
+    title,
+    date,
+    platform,
+    type: '图文',
+    color: colors[platform] || 'purple'
+  });
+
+  document.getElementById('quick-event-title').value = '';
+  renderCalendar();
+  showToast(`✓ 已添加：${title}`);
+}
+
+async function generateCalendar(){
+  const brand = document.getElementById('cal-brand').value;
+  const days = parseInt(document.getElementById('cal-days').value);
+  const platforms = Array.from(document.querySelectorAll('.cal-platform:checked')).map(c=>c.value);
+
+  if(!platforms.length){ showToast('请至少选择一个平台'); return; }
+
+  const btn = document.getElementById('cal-gen-btn');
+  btn.disabled = true; btn.textContent = '⏳ AI规划中...';
+
+  try {
+    const resp = await fetch(API+'/api/plan/calendar', {
+      method:'POST', headers: apiHeaders(),
+      body: JSON.stringify({brand, platforms, days})
+    });
+
+    let full = '';
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      for(const line of decoder.decode(value).split('\n')){
+        if(line.startsWith('data:')){
+          try{
+            const data = JSON.parse(line.slice(5));
+            if(checkCreditError(data)) continue;
+            full += data.chunk || '';
+            if(data.done) break;
+          }catch(e){}
+        }
+      }
+    }
+
+    // 尝试解析 JSON 并把事件加到日历
+    try {
+      const parsed = JSON.parse(full.trim().replace(/^```json\n?/,'').replace(/\n?```$/,''));
+      if(parsed.calendar){
+        const today = new Date();
+        parsed.calendar.forEach((day, idx) => {
+          const d = new Date(today);
+          d.setDate(today.getDate() + idx);
+          const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+          (day.posts || []).forEach(post => {
+            const colors = {小红书:'purple', 抖音:'blue', INS:'pink', 微博:'orange'};
+            calState.events.push({
+              id: nextEventId++,
+              title: `${post.platform === '小红书' ? '📕' : post.platform === '抖音' ? '🎵' : '📸'} ${post.title || day.theme}`,
+              date: dateStr,
+              platform: post.platform,
+              type: post.content_type || '图文',
+              color: colors[post.platform] || 'purple'
+            });
+          });
+        });
+        renderCalendar();
+        showToast(`✅ AI规划完成！已生成 ${days} 天内容日历`);
+      }
+    } catch(e) {
+      showToast('AI响应已获取，但格式解析失败。请检查后手动添加。');
+    }
+  } catch(e) {
+    showToast('⚠️ 连接失败，请检查后端是否运行');
+  }
+
+  btn.disabled = false; btn.textContent = '🗓️ AI 智能规划';
+}
+
+// ============================================================
+// Toast
+// ============================================================
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2500);
+}
+
+// ============================================================
+// 文案库（Supabase 持久化）
+// ============================================================
+let libraryPage = 1;
+let libraryFilter = { brand: '', platform: '', starred: false };
+
+async function loadLibrary(resetPage = false) {
+  if (resetPage) libraryPage = 1;
+  const el = document.getElementById('lib-list');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--text3);padding:40px;text-align:center">加载中...</div>';
+
+  const params = new URLSearchParams({
+    page: libraryPage,
+    page_size: 20,
+  });
+  if (libraryFilter.brand) params.set('brand', libraryFilter.brand);
+  if (libraryFilter.platform) params.set('platform', libraryFilter.platform);
+  if (libraryFilter.starred) params.set('is_starred', 'true');
+
+  try {
+    const r = await fetch(`/api/copywriting/list?${params}`);
+    const data = await r.json();
+    const items = data.data || [];
+
+    // 更新 badge
+    const statsR = await fetch('/api/copywriting/stats/summary');
+    const stats = await statsR.json();
+    const badge = document.getElementById('lib-count-badge');
+    if (badge) badge.textContent = stats.total || 0;
+
+    // 更新统计
+    const statsEl = document.getElementById('lib-stats');
+    if (statsEl && stats) {
+      statsEl.innerHTML = `
+        <span style="color:var(--text2)">共 <strong style="color:#fff">${stats.total}</strong> 条</span>
+        <span style="color:var(--orange);margin-left:14px">⭐ 收藏 ${stats.starred}</span>
+        ${Object.entries(stats.by_brand || {}).map(([b,c]) => 
+          `<span style="color:var(--text3);margin-left:10px">${b} ${c}</span>`).join('')}
+      `;
+    }
+
+    if (!items.length) {
+      el.innerHTML = `<div style="color:var(--text3);padding:60px;text-align:center;font-size:14px">
+        📭 文案库暂无内容<br>
+        <span style="font-size:12px;margin-top:8px;display:block">在「爆款生成」页面生成文案，自动保存到这里</span>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = items.map(item => {
+      const titles = (item.titles || []).join('<br>');
+      const tags = (item.tags || []).slice(0, 4).join(' ');
+      const date = item.created_at ? new Date(item.created_at).toLocaleDateString('zh-CN') : '';
+      const starIcon = item.is_starred ? '⭐' : '☆';
+      const starColor = item.is_starred ? 'var(--orange)' : 'var(--text3)';
+      return `
+      <div class="lib-card" id="lib-card-${item.id}">
+        <div class="lib-card-top">
+          <span class="lib-brand-tag">${item.brand}</span>
+          <span class="lib-plat-tag">${item.platform}</span>
+          <span class="lib-type-tag">${item.content_type}</span>
+          <span class="lib-date">${date}</span>
+          <span class="lib-actions">
+            <button class="lib-btn" onclick="toggleStar('${item.id}')" title="收藏" style="color:${starColor}">${starIcon}</button>
+            <button class="lib-btn" onclick="viewCopy('${item.id}')" title="查看">👁️</button>
+            <button class="lib-btn" onclick="deleteCopy('${item.id}')" title="删除" style="color:var(--pink)">🗑️</button>
+          </span>
+        </div>
+        <div class="lib-titles">${titles || '(无标题)'}</div>
+        <div class="lib-tags">${tags}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--pink);padding:40px;text-align:center">加载失败: ${e.message}<br><small>请确认后端已启动</small></div>`;
+  }
+}
+
+async function toggleStar(id) {
+  const r = await fetch(`/api/copywriting/${id}/star`, { method: 'PATCH' });
+  const data = await r.json();
+  showToast(data.is_starred ? '已收藏 ⭐' : '已取消收藏');
+  loadLibrary();
+}
+
+async function deleteCopy(id) {
+  if (!confirm('确认删除这条文案？')) return;
+  const r = await fetch(`/api/copywriting/${id}`, { method: 'DELETE' });
+  if (r.ok) {
+    showToast('已删除');
+    loadLibrary();
+  } else {
+    showToast('删除失败');
+  }
+}
+
+async function viewCopy(id) {
+  const r = await fetch(`/api/copywriting/${id}`);
+  const item = await r.json();
+  const modal = document.getElementById('lib-modal');
+  const body = document.getElementById('lib-modal-body');
+  if (!modal || !body) return;
+  
+  const titles = (item.titles || []).map((t,i) => `<div style="margin-bottom:6px">${i+1}. ${t}</div>`).join('');
+  const tags = (item.tags || []).join(' ');
+  
+  body.innerHTML = `
+    <div style="margin-bottom:16px">
+      <span class="lib-brand-tag">${item.brand}</span>
+      <span class="lib-plat-tag">${item.platform}</span>
+      <span class="lib-type-tag">${item.content_type}</span>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">
+      生成时间：${new Date(item.created_at).toLocaleString('zh-CN')}
+    </div>
+    
+    <div class="lib-section-title">📌 爆款标题</div>
+    <div class="lib-section-content">${titles}</div>
+    
+    <div class="lib-section-title">📝 正文内容</div>
+    <div class="lib-section-content" style="white-space:pre-wrap">${item.content || item.raw_output || ''}</div>
+    
+    ${tags ? `<div class="lib-section-title">🏷️ 话题标签</div><div class="lib-section-content">${tags}</div>` : ''}
+    ${item.post_advice ? `<div class="lib-section-title">📅 发布建议</div><div class="lib-section-content">${item.post_advice}</div>` : ''}
+    ${item.viral_analysis ? `<div class="lib-section-title">🚀 爆款分析</div><div class="lib-section-content">${item.viral_analysis}</div>` : ''}
+    
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="topbar-btn btn-primary" onclick="copyText(\`${(item.content||'').replace(/`/g,"'")}\`)">复制正文</button>
+      <button class="topbar-btn btn-ghost" onclick="copyText(\`${(item.titles||[]).join('\\n').replace(/`/g,"'")}\`)">复制标题</button>
+      <button class="topbar-btn btn-ghost" onclick="closeLibModal()">关闭</button>
+    </div>
+  `;
+  modal.style.display = 'flex';
+}
+
+function closeLibModal() {
+  const modal = document.getElementById('lib-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板'));
+}
+
+// ============================================================
+// Init
+// ============================================================
+window.addEventListener('load', ()=>{
+  checkApiStatus();
+  loadCredits();       // 加载积分余额
+  renderAiModeToggle(); // 渲染管理员 AI 模式切换按钮
+  // 每30秒检测一次
+  setInterval(checkApiStatus, 30000);
+  showPage('dashboard');
+});
+</script>
+
+<!-- 文案库页面 -->
+<style>
+.lib-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.lib-filter-input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text);font-size:12px;outline:none;width:130px;}
+.lib-filter-input:focus{border-color:var(--purple);}
+.lib-stats{font-size:12px;flex:1;}
+.lib-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;transition:border-color 0.15s;}
+.lib-card:hover{border-color:var(--border2);}
+.lib-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.lib-brand-tag{background:rgba(180,100,255,0.15);color:var(--purple);font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;}
+.lib-plat-tag{background:rgba(80,144,255,0.15);color:var(--blue);font-size:11px;padding:2px 8px;border-radius:5px;}
+.lib-type-tag{background:rgba(64,208,144,0.12);color:var(--green);font-size:11px;padding:2px 8px;border-radius:5px;}
+.lib-date{font-size:11px;color:var(--text3);margin-left:auto;}
+.lib-actions{display:flex;gap:4px;}
+.lib-btn{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 5px;border-radius:4px;transition:background 0.1s;}
+.lib-btn:hover{background:rgba(255,255,255,0.08);}
+.lib-titles{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:6px;}
+.lib-tags{font-size:11px;color:var(--text3);}
+/* Modal */
+.lib-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;}
+.lib-modal-box{background:var(--bg3);border:1px solid var(--border2);border-radius:14px;width:680px;max-width:95vw;max-height:85vh;overflow-y:auto;padding:24px;}
+.lib-section-title{font-size:11px;font-weight:700;color:var(--purple);letter-spacing:1px;text-transform:uppercase;margin:14px 0 6px;}
+.lib-section-content{font-size:13px;color:var(--text);line-height:1.7;background:var(--bg4);border-radius:8px;padding:10px 12px;}
+</style>
+
+<!-- 文案库 Modal -->
+<div class="lib-modal-overlay" id="lib-modal" onclick="if(event.target===this)closeLibModal()">
+  <div class="lib-modal-box">
+    <div id="lib-modal-body"></div>
+  </div>
+</div>
+
+</body>
+</html>
