@@ -1,3 +1,4 @@
+import { MAOAI_ROUTES } from "@/features/maoai";
 /**
  * AdminContentJobs — 管理员内容调度控制台
  *
@@ -265,7 +266,7 @@ export default function AdminContentJobs() {
       <div className="border-b border-white/10 bg-[#0D0D0D]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/mao-ai">
+            <Link href={MAOAI_ROUTES.CHAT}>
               <button className="text-white/30 hover:text-white/60 transition-colors">
                 <ChevronLeft className="w-5 h-5" />
               </button>

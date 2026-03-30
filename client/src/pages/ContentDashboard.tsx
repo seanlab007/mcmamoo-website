@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
+import { MAOAI_ROUTES } from "@/features/maoai";
 import {
   Zap, Crown, Cat, Loader2, RefreshCw, Play,
   CheckCircle2, XCircle, Clock, AlertCircle,
@@ -160,7 +161,7 @@ export default function ContentDashboard() {
         <div className="text-center">
           <Cat className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
           <p className="text-white/60 mb-4">请先登录</p>
-          <Link href="/mao-ai">
+          <Link href={MAOAI_ROUTES.CHAT}>
             <button className="px-6 py-2 bg-[#C9A84C] text-black font-semibold rounded-lg text-sm hover:bg-[#D4B55A] transition-colors">
               前往 MaoAI
             </button>
@@ -196,7 +197,7 @@ export default function ContentDashboard() {
                 </button>
               </Link>
             )}
-            <Link href="/mao-ai">
+            <Link href={MAOAI_ROUTES.CHAT}>
               <button className="flex items-center gap-1 text-white/40 hover:text-white/70 text-sm transition-colors">
                 MaoAI <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -236,7 +237,7 @@ export default function ContentDashboard() {
                     到期：{new Date(sub.expiresAt).toLocaleDateString("zh-CN")}
                   </div>
                 )}
-                <Link href="/mao-ai-pricing">
+                <Link href={MAOAI_ROUTES.PRICING}>
                   <button className="mt-auto text-xs text-[#C9A84C] hover:text-[#D4B55A] transition-colors flex items-center gap-1">
                     升级套餐 <ChevronRight className="w-3 h-3" />
                   </button>
@@ -365,7 +366,7 @@ export default function ContentDashboard() {
                           触发
                         </button>
                       ) : (
-                        <Link href="/mao-ai-pricing">
+                        <Link href={MAOAI_ROUTES.PRICING}>
                           <button className="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/10 text-white/40 text-xs rounded-lg hover:bg-white/10 transition-all">
                             升级解锁
                           </button>
