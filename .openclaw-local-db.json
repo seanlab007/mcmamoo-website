@@ -1,0 +1,238 @@
+{
+  "nodes": {
+    "1": {
+      "id": 1,
+      "name": "Marketing Claw (OpenClaw)",
+      "baseUrl": "http://localhost:8080/v1",
+      "type": "openclaw",
+      "modelId": "claude-sonnet-4",
+      "isOnline": false,
+      "isLocal": true,
+      "isActive": true,
+      "skillsChecksum": "sha256:ddaa979e",
+      "token": "",
+      "lastHeartbeatAt": "2026-03-26T09:00:29.839Z",
+      "lastPingAt": "2026-03-26T09:00:29.839Z"
+    }
+  },
+  "skills": {
+    "1:marketing-claw:pulse": {
+      "id": "1:marketing-claw:pulse",
+      "nodeId": 1,
+      "skillId": "marketing-claw:pulse",
+      "name": "Pulse — Daily Analytics Digest",
+      "version": "1.0.0",
+      "description": "每日早 8 点自动推送营销数据摘要，涵盖流量、热门内容、转化信号及今日关注点，异常自动标记。",
+      "triggers": [
+        "日报",
+        "流量",
+        "数据摘要",
+        "analytics",
+        "pulse",
+        "每日分析",
+        "转化"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:hype": {
+      "id": "1:marketing-claw:hype",
+      "nodeId": 1,
+      "skillId": "marketing-claw:hype",
+      "name": "Hype — Daily Content Briefing",
+      "version": "1.0.0",
+      "description": "每日早 9 点生成社交内容简报，提供 3 条完整文案创意，贴合品牌调性与当前平台趋势。",
+      "triggers": [
+        "内容简报",
+        "发帖建议",
+        "社交内容",
+        "hype",
+        "content brief",
+        "文案创意"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:megaphone": {
+      "id": "1:marketing-claw:megaphone",
+      "nodeId": 1,
+      "skillId": "marketing-claw:megaphone",
+      "name": "Megaphone — Social Posting Engine",
+      "version": "1.0.0",
+      "description": "每日早 10 点从审核队列自动执行社交媒体发帖，并记录已发内容日志。",
+      "triggers": [
+        "自动发帖",
+        "社交发布",
+        "megaphone",
+        "social post",
+        "发布内容"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:mingle": {
+      "id": "1:marketing-claw:mingle",
+      "nodeId": 1,
+      "skillId": "marketing-claw:mingle",
+      "name": "Mingle — Social Engagement Engine",
+      "version": "1.0.0",
+      "description": "每日 11 点和 16 点各运行一次，识别高价值回复机会、起草互动回复，在 X/LinkedIn 上增强品牌存在感。",
+      "triggers": [
+        "互动",
+        "回复",
+        "涨粉",
+        "mingle",
+        "engagement",
+        "社区运营"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:ghost": {
+      "id": "1:marketing-claw:ghost",
+      "nodeId": 1,
+      "skillId": "marketing-claw:ghost",
+      "name": "Ghost — Blog Content Engine",
+      "version": "1.0.0",
+      "description": "每周二、周四早 9 点从编辑日历取下一个选题，生成完整博客草稿或提纲，待审核后发布。",
+      "triggers": [
+        "博客",
+        "文章",
+        "ghost",
+        "blog",
+        "写作",
+        "内容生产"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:scout": {
+      "id": "1:marketing-claw:scout",
+      "nodeId": 1,
+      "skillId": "marketing-claw:scout",
+      "name": "Scout — Community Intelligence Monitor",
+      "version": "1.0.0",
+      "description": "每日早 8:30 监控 Reddit、X 及相关社区，捕捉品牌提及、竞品动态、ICP 信号与互动机会。",
+      "triggers": [
+        "品牌监控",
+        "社区监控",
+        "scout",
+        "竞品",
+        "舆情",
+        "community"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:oracle": {
+      "id": "1:marketing-claw:oracle",
+      "nodeId": 1,
+      "skillId": "marketing-claw:oracle",
+      "name": "Oracle — Weekly Editorial Intelligence",
+      "version": "1.0.0",
+      "description": "每周一早 7 点提供编辑情报周报：本周热点话题、内容缺口、竞品定位变化及推荐选题方向。",
+      "triggers": [
+        "编辑日历",
+        "选题",
+        "oracle",
+        "editorial",
+        "趋势分析",
+        "内容规划"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:quill": {
+      "id": "1:marketing-claw:quill",
+      "nodeId": 1,
+      "skillId": "marketing-claw:quill",
+      "name": "Quill — Newsletter Drafting Engine",
+      "version": "1.0.0",
+      "description": "每周三早 10 点从零生成完整 Newsletter 草稿，供审核、编辑后通过邮件平台发送。",
+      "triggers": [
+        "newsletter",
+        "邮件",
+        "quill",
+        "通讯",
+        "weekly email",
+        "邮件营销"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:judge": {
+      "id": "1:marketing-claw:judge",
+      "nodeId": 1,
+      "skillId": "marketing-claw:judge",
+      "name": "Judge — Content Performance Scorer",
+      "version": "1.0.0",
+      "description": "每周五下午 3 点对当周所有社交、博客、Newsletter 内容打分，分析哪些内容有效、为何有效，并给出下周建议。",
+      "triggers": [
+        "内容评分",
+        "效果分析",
+        "judge",
+        "performance",
+        "复盘",
+        "ROI"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:hunter": {
+      "id": "1:marketing-claw:hunter",
+      "nodeId": 1,
+      "skillId": "marketing-claw:hunter",
+      "name": "Hunter — Warm Outbound Lead Finder",
+      "version": "1.0.0",
+      "description": "每日早 7:30 识别正在主动寻找解决方案的潜在客户，打分后将最热线索加入今日外联队列。",
+      "triggers": [
+        "线索",
+        "潜客",
+        "hunter",
+        "lead",
+        "outbound",
+        "外联",
+        "销售线索"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:prospector": {
+      "id": "1:marketing-claw:prospector",
+      "nodeId": 1,
+      "skillId": "marketing-claw:prospector",
+      "name": "Prospector — Lead Generation Batch",
+      "version": "1.0.0",
+      "description": "每周一、三、五早 6 点批量从多平台系统化挖掘 ICP 匹配潜客，打分并丰富销售管道。",
+      "triggers": [
+        "潜客挖掘",
+        "prospector",
+        "ICP",
+        "lead gen",
+        "开发客户",
+        "获客"
+      ],
+      "category": "marketing",
+      "isActive": true
+    },
+    "1:marketing-claw:standup": {
+      "id": "1:marketing-claw:standup",
+      "nodeId": 1,
+      "skillId": "marketing-claw:standup",
+      "name": "Standup — Daily Agent Audit",
+      "version": "1.0.0",
+      "description": "每日早 9:30 审查所有智能体的运行状态，输出简报：哪些已完成、哪些待处理、是否有阻塞项。",
+      "triggers": [
+        "状态报告",
+        "智能体审计",
+        "standup",
+        "agent status",
+        "运行状态",
+        "日检"
+      ],
+      "category": "marketing",
+      "isActive": true
+    }
+  },
+  "nextNodeId": 2
+}

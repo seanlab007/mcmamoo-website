@@ -1,175 +1,181 @@
-/*
- * Navbar — 猫眼咨询官网导航
- * Design: 透明渐变 → 深色固定导航，金色 hover 线条
- */
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
-
-const navItems = [
-  { label: "关于我们", href: "#about" },
-  { label: "KOL合作", href: "#kol" },
-  { label: "服务体系", href: "#services" },
-  { label: "全球案例", href: "#global-cases" },
-  { label: "荣誉奖项", href: "#awards" },
-  { label: "联系我们", href: "#contact" },
-];
-
-const specialItems = [
-  { label: "毛智库", href: "/maothink", external: true },
-  { label: "运营平台", href: "/platform", external: true },
-];
+import { Link, useLocation } from "wouter";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Menu, X, Zap } from "lucide-react";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { MAOAI_ROUTES } from "@/features/maoai";
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [location] = useLocation();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleNav = (href: string) => {
-    setMenuOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
+  const navLinksRow1 = [
+    { name: "MaoAI", href: MAOAI_ROUTES.CHAT },
+    { name: "猫眼内容平台", href: "/media-matrix-system.html" },
+    { name: "Whale Pictures", href: "/whale-pictures" },
+    { name: "猫眼工业", href: "/mao-industry" },
+    { name: "IP Licensing", href: "/ip-licensing" },
+  ];
+
+  const navLinksRow2 = [
+    { name: "猫眼内容平台", href: "/content" },
+    { name: "小龙虾 AI", href: "/openclaw" },
+    { name: "毛智库", href: "/mao-think-tank" },
+  ];
+
+  const rightLinks = [
+    { name: "Consulting", href: "/pricing" },
+    { name: "Press", href: "/press" },
+  ];
 
   return (
-    <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled
-            ? "bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5"
-            : "bg-transparent"
-        }`}
-      >
-        <div className="container flex items-center justify-between h-16 lg:h-20">
-          {/* Logo */}
-          <a
-            href="#"
-            onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-            className="flex items-center gap-3 group"
-          >
-            {/* Cat-eye logo from business card */}
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_eye_logo_1a9f9467.png"
-              alt="猫眼咋询 Logo"
-              className="h-10 w-auto object-contain"
-              style={{ filter: 'drop-shadow(0 0 6px rgba(201,168,76,0.5))' }}
-            />
-            <div>
-              <div className="text-[#C9A84C] font-['Cormorant_Garamond'] font-semibold text-lg leading-none tracking-wide">
-                Mc&amp;Mamoo
-              </div>
-              <div className="text-white/40 text-[9px] tracking-[0.2em] uppercase leading-none mt-0.5">
-                Brand Management
+    <nav
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b",
+        isScrolled
+          ? "bg-[#0A0A0A]/95 backdrop-blur-md border-white/5 py-2"
+          : "bg-transparent border-transparent py-4"
+      )}
+    >
+      <div className="container mx-auto px-8">
+        {/* Desktop Navigation - Double Row */}
+        <div className="hidden lg:flex flex-col gap-5">
+          {/* Row 1: Logo + Main Links */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-16">
+              <Link href="/" className="flex items-center gap-4 group flex-shrink-0">
+                <div className="relative w-10 h-10 overflow-hidden">
+                  <img 
+                    src="/logo-gold.png" 
+                    alt="Mc&Mamoo Logo" 
+                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-white font-['Noto_Serif_SC'] text-lg font-bold tracking-wider leading-tight">
+                    Mc&Mamoo <span className="text-[#C9A84C] text-xs align-top ml-1">AI</span>
+                  </span>
+                  <span className="text-white/40 text-[0.6rem] font-['DM_Mono'] tracking-[0.3em] uppercase leading-none">
+                    Growth Engine Products
+                  </span>
+                </div>
+              </Link>
+
+              <div className="flex items-center gap-12 flex-1">
+                {navLinksRow1.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "text-[0.75rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
+                      location === link.href ? "text-[#C9A84C]" : "text-white/60"
+                    )}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
               </div>
             </div>
-          </a>
 
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {navItems.map((item) => (
-              <button
-                key={item.href}
-                onClick={() => handleNav(item.href)}
-                className="relative text-white/70 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 hover-gold-line py-1"
+            <div className="flex items-center gap-8 flex-shrink-0">
+              <LanguageSwitcher />
+              <Button
+                asChild
+                className="bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866] rounded-none px-6 py-5 text-[0.7rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 flex-shrink-0"
               >
-                {item.label}
-              </button>
-            ))}
-            <a
-              href="/maothink"
-              className="relative text-[#8B1A1A] hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
-            >
-              <span style={{ width: 6, height: 6, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block", flexShrink: 0 }} />
-              毛智库
-            </a>
-            <a
-              href="/platform"
-              className="relative text-[#40d090]/80 hover:text-[#40d090] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
-            >
-              <span style={{ width: 6, height: 6, background: "#40d090", borderRadius: "50%", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px #40d090" }} />
-              运营平台
-            </a>
-            <a
-              href="/chat"
-              className="relative text-[#C9A84C]/80 hover:text-[#C9A84C] text-sm tracking-wide transition-colors duration-300 py-1 flex items-center gap-1.5"
-              style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.1em" }}
-            >
-              <span style={{ width: 6, height: 6, background: "#C9A84C", borderRadius: "2px", display: "inline-block", flexShrink: 0, boxShadow: "0 0 6px rgba(201,168,76,0.6)" }} />
-              MaoAI
-            </a>
-            <button
-              onClick={() => handleNav("#contact")}
-              className="ml-4 px-5 py-2 border border-[#C9A84C]/60 text-[#C9A84C] text-sm tracking-wide hover:bg-[#C9A84C]/10 transition-all duration-300"
-            >
-              预约咨询
-            </button>
-          </nav>
+                <Link href="/pricing">预约咨询</Link>
+              </Button>
+            </div>
+          </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className="lg:hidden text-white/70 hover:text-[#C9A84C] transition-colors"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          {/* Row 2: Secondary Links + Right Actions */}
+          <div className="flex items-center justify-between border-t border-white/5 pt-4">
+            <div className="flex items-center gap-14">
+              {navLinksRow2.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
+                    location === link.href ? "text-[#C9A84C]" : "text-white/40"
+                  )}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-10">
+              {rightLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
+                    location === link.href ? "text-[#C9A84C]" : "text-white/40"
+                  )}
+                >
+                  {link.name}
+                </Link>
+              ))}
+              <Link
+                href="/platform"
+                className="flex items-center gap-2 px-3 py-1 border border-[#C9A84C]/30 bg-[#C9A84C]/5 text-[#C9A84C] text-[0.65rem] font-bold tracking-[0.2em] uppercase hover:bg-[#C9A84C]/10 transition-all whitespace-nowrap flex-shrink-0"
+              >
+                <Zap size={10} className="animate-pulse" />
+                Platform
+              </Link>
+            </div>
+          </div>
         </div>
-      </header>
 
-      {/* Mobile Menu */}
-      <div
-        className={`fixed inset-0 z-40 bg-[#0A0A0A]/98 backdrop-blur-lg transition-all duration-400 lg:hidden ${
-          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="flex flex-col items-center justify-center h-full gap-8">
-          {navItems.map((item, i) => (
-            <button
-              key={item.href}
-              onClick={() => handleNav(item.href)}
-              className="text-white/80 hover:text-[#C9A84C] text-2xl font-['Noto_Serif_SC'] transition-colors duration-300"
-              style={{ animationDelay: `${i * 0.05}s` }}
-            >
-              {item.label}
-            </button>
-          ))}
-          <a
-            href="/maothink"
-            className="text-[#8B1A1A] hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
-            style={{ fontFamily: "'DM Mono', monospace" }}
-          >
-            <span style={{ width: 8, height: 8, background: "#8B1A1A", transform: "rotate(45deg)", display: "inline-block" }} />
-            毛智库
-          </a>
-          <a
-            href="/platform"
-            className="text-[#40d090]/80 hover:text-[#40d090] text-xl transition-colors duration-300 flex items-center gap-2"
-            style={{ fontFamily: "'DM Mono', monospace" }}
-          >
-            <span style={{ width: 8, height: 8, background: "#40d090", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #40d090" }} />
-            运营平台
-          </a>
-          <a
-            href="/chat"
-            className="text-[#C9A84C]/80 hover:text-[#C9A84C] text-xl transition-colors duration-300 flex items-center gap-2"
-            style={{ fontFamily: "'DM Mono', monospace" }}
-          >
-            <span style={{ width: 8, height: 8, background: "#C9A84C", borderRadius: "2px", display: "inline-block", boxShadow: "0 0 8px rgba(201,168,76,0.6)" }} />
-            MaoAI
-          </a>
+        {/* Mobile Navigation */}
+        <div className="lg:hidden flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <img src="/logo-gold.png" alt="Logo" className="w-8 h-8 object-contain" />
+            <span className="text-white font-['Noto_Serif_SC'] text-sm font-bold tracking-wider">Mc&Mamoo</span>
+          </Link>
+
           <button
-            onClick={() => handleNav("#contact")}
-            className="mt-4 px-8 py-3 border border-[#C9A84C] text-[#C9A84C] text-lg hover:bg-[#C9A84C]/10 transition-all duration-300"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="text-white p-2"
           >
-            预约咨询
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
-    </>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 top-[72px] bg-[#0A0A0A] z-40 flex flex-col p-8 gap-6 overflow-y-auto">
+          {[...navLinksRow1, ...navLinksRow2, ...rightLinks].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-white/70 text-lg font-medium tracking-widest hover:text-[#C9A84C]"
+            >
+              {link.name}
+            </Link>
+          ))}
+          <Button
+            asChild
+            className="bg-[#C9A84C] text-[#0A0A0A] w-full py-6 rounded-none mt-4"
+          >
+            <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)}>
+              预约咨询
+            </Link>
+          </Button>
+        </div>
+      )}
+    </nav>
   );
 }

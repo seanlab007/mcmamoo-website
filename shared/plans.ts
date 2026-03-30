@@ -44,6 +44,15 @@ export interface PlanLimits {
   apiAccess: boolean;
   /** Team seats included */
   teamSeats: number;
+  // ── 猫眼自动内容平台 ───────────────────────────────
+  /** Monthly content production quota. 0 = no access. -1 = unlimited */
+  contentQuota: number;
+  /** Access to auto content platform dashboard */
+  contentPlatform: boolean;
+  /** Configurable auto-publish schedules */
+  contentSchedule: boolean;
+  /** Platforms supported: xiaohongshu / douyin / weibo / wechat */
+  contentPlatforms: string[];
 }
 
 export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
@@ -60,6 +69,10 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     customPersona: false,
     apiAccess: false,
     teamSeats: 1,
+    contentQuota: 0,
+    contentPlatform: false,
+    contentSchedule: false,
+    contentPlatforms: [],
   },
   pro: {
     dailyChatMessages: 1000,
@@ -74,6 +87,10 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     customPersona: true,
     apiAccess: true,
     teamSeats: 3,
+    contentQuota: 50,
+    contentPlatform: true,
+    contentSchedule: false,
+    contentPlatforms: ["xiaohongshu", "weibo"],
   },
   flagship: {
     dailyChatMessages: -1,
@@ -88,6 +105,10 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     customPersona: true,
     apiAccess: true,
     teamSeats: 10,
+    contentQuota: -1,
+    contentPlatform: true,
+    contentSchedule: true,
+    contentPlatforms: ["xiaohongshu", "douyin", "weibo", "wechat"],
   },
 };
 
@@ -278,6 +299,27 @@ export const FEATURE_ROWS: FeatureRow[] = [
     key: "support", category: "客服支持",
     label: { zh: "客服支持", en: "Customer support" },
     starter: "社区论坛", pro: "邮件优先响应", flagship: "专属 1v1 微信",
+  },
+  // ── 猫眼自动内容平台 ──────────────────────────────────────────────────────
+  {
+    key: "contentPlatform", category: "猫眼自动内容平台",
+    label: { zh: "内容平台访问", en: "Content platform access" },
+    starter: false, pro: true, flagship: true,
+  },
+  {
+    key: "contentQuota", category: "猫眼自动内容平台",
+    label: { zh: "每月内容生产配额", en: "Monthly content quota" },
+    starter: "不包含", pro: "50 篇/月", flagship: "无限制",
+  },
+  {
+    key: "contentSchedule", category: "猫眼自动内容平台",
+    label: { zh: "自定义定时发布策略", en: "Custom auto-publish schedules" },
+    starter: false, pro: false, flagship: true,
+  },
+  {
+    key: "contentPlatforms", category: "猫眼自动内容平台",
+    label: { zh: "支持发布平台", en: "Supported platforms" },
+    starter: "—", pro: "小红书、微博", flagship: "小红书、抖音、微博、微信公众号",
   },
 ];
 

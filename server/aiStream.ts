@@ -1,10 +1,13 @@
 import { Router, Request, Response } from "express";
 import { MODEL_CONFIGS } from "./routers";
 import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog, getNodeSkills, getAllNodeSkills, upsertNodeSkill, deleteNodeSkill, deleteAllNodeSkills, setNodeSkillEnabled } from "./db";
+import { dbFetch } from "./aiNodes";
 import { sdk } from "./_core/sdk";
 import mammoth from "mammoth";
 // pdf-parse is loaded dynamically to avoid DOMMatrix crash at startup
 import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
+import { checkSkillPermission } from "./contentPlatform";
+import { getAgentSystemPrompt } from "./agents";
 
 const aiStreamRouter = Router();
 
@@ -129,11 +132,94 @@ async function streamFromNode(
   }
 }
 
+// ─── Skill Match Helper ───────────────────────────────────────────────────────
+// Finds the best matching skill for a user message from online local nodes.
+// Returns the matched skill row (with nodeId, skillId, invokeMode, systemPrompt, etc.)
+// or null if no match / no online nodes.
+async function matchSkillForMessage(userMessage: string): Promise<{
+  nodeId: number;
+  skillId: string;
+  name: string;
+  description: string | null;
+  invokeMode: string;        // 'prompt' | 'invoke'
+  systemPrompt: string | null;
+  inputSchema: Record<string, unknown> | null;
+  requiredPlan: string;      // 'free' | 'content' | 'strategic' | 'admin'
+  node: { baseUrl: string; token: string; name: string } | null;
+} | null> {
+  try {
+    // Get all online local nodes
+    const nodesRes = await dbFetch("/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id,name,baseUrl,token");
+    const onlineNodes = nodesRes.data as { id: number; name: string; baseUrl: string; token: string }[] | [];
+    if (!onlineNodes || onlineNodes.length === 0) return null;
+
+    const nodeIds = onlineNodes.map((n) => n.id);
+    const skillsRes = await dbFetch(
+      `/node_skills?nodeId=in.(${nodeIds.join(",")})&isActive=eq.true&select=*`
+    );
+    const skills = skillsRes.data as Array<{
+      nodeId: number;
+      skillId: string;
+      name: string;
+      triggers: string[] | null;
+      description: string | null;
+      invokeMode: string | null;
+      systemPrompt: string | null;
+      inputSchema: Record<string, unknown> | null;
+      required_plan: string | null;
+    }> | [];
+
+    if (!skills || skills.length === 0) return null;
+
+    // Keyword matching (same logic as skill/match endpoint)
+    const msgLower = userMessage.toLowerCase();
+    const matched = skills.filter((skill) => {
+      const triggers = skill.triggers ?? [];
+      return triggers.some((t: string) => msgLower.includes(t.toLowerCase()));
+    });
+
+    if (matched.length === 0) return null;
+
+    // Pick highest-priority match (first matched, or refine by trigger specificity)
+    const best = matched.sort((a, b) => {
+      const aMaxLen = Math.max(...(a.triggers ?? [""]).map((t) => t.length));
+      const bMaxLen = Math.max(...(b.triggers ?? [""]).map((t) => t.length));
+      return bMaxLen - aMaxLen; // prefer longer (more specific) trigger
+    })[0];
+
+    const node = onlineNodes.find((n) => n.id === best.nodeId) || null;
+
+    return {
+      nodeId: best.nodeId,
+      skillId: best.skillId,
+      name: best.name,
+      description: best.description ?? null,
+      invokeMode: best.invokeMode ?? "prompt",
+      systemPrompt: best.systemPrompt ?? null,
+      inputSchema: best.inputSchema ?? null,
+      requiredPlan: best.required_plan ?? "free",
+      node: node ? { baseUrl: node.baseUrl, token: node.token, name: node.name } : null,
+    };
+  } catch (err) {
+    console.warn("[SkillMatch] Error during skill matching:", err);
+    return null;
+  }
+}
+
 // ─── Main Chat Stream ─────────────────────────────────────────────────────────
 // model: cloud model ID (e.g. "deepseek-chat") or "local:<nodeId>" for local node
 // useLocal: true = admin-only, force local node routing
+// agent: Agent ID to load specialized system prompt
 aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
-  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId } = req.body;
+  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId, agent: agentId } = req.body;
+
+  // 如果指定了 agent，加载对应的系统提示词
+  if (agentId && !systemPrompt) {
+    const agentPrompt = getAgentSystemPrompt(agentId);
+    if (agentPrompt) {
+      systemPrompt = agentPrompt;
+    }
+  }
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -149,6 +235,131 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     const currentCfg = MODEL_CONFIGS[model];
     if (!currentCfg?.supportsVision) {
       model = "glm-4v-flash"; // auto-switch to vision model
+    }
+  }
+
+  // ── Skill Match Pre-processing ─────────────────────────────────────────────
+  // Only run for cloud chat (not local node mode), and only on non-image messages.
+  // Extract the last user message to match against skill triggers.
+  let matchedSkill: Awaited<ReturnType<typeof matchSkillForMessage>> = null;
+
+  // Identify calling user for permission checks (best-effort, non-blocking)
+  let callerOpenId = "";
+  let callerRole = "user";
+  try {
+    const callerUser = await sdk.authenticateRequest(req) as any;
+    callerOpenId = callerUser?.openId ?? "";
+    callerRole = callerUser?.role ?? "user";
+  } catch { /* 未登录用户跳过，权限校验时视为 free */ }
+
+  if (!useLocal && !String(model).startsWith("local:") && !hasImage) {
+    const lastUserMsg = [...(messages ?? [])].reverse().find((m: any) => m.role === "user");
+    const userText = typeof lastUserMsg?.content === "string"
+      ? lastUserMsg.content
+      : Array.isArray(lastUserMsg?.content)
+        ? lastUserMsg.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
+        : "";
+
+    if (userText.trim()) {
+      matchedSkill = await matchSkillForMessage(userText);
+      if (matchedSkill) {
+        console.log(`[SkillMatch] Matched skill "${matchedSkill.skillId}" (mode=${matchedSkill.invokeMode}, requiredPlan=${matchedSkill.requiredPlan}) on node ${matchedSkill.nodeId}`);
+
+        // ── 权限校验 ────────────────────────────────────────────────────────
+        if (matchedSkill.requiredPlan && matchedSkill.requiredPlan !== "free") {
+          const perm = await checkSkillPermission(callerOpenId, callerRole, matchedSkill.requiredPlan);
+          if (!perm.allowed) {
+            // 以 SSE 格式返回权限不足的友好提示，然后结束流
+            res.write(`data: ${JSON.stringify({
+              skillMatch: { skillId: matchedSkill.skillId, name: matchedSkill.name, mode: "blocked" }
+            })}\n\n`);
+            res.write(`data: ${JSON.stringify({ content: `🔒 **权限不足**\n\n${perm.reason}\n\n如需升级套餐，请联系管理员或访问订阅页面。` })}\n\n`);
+            res.write("data: [DONE]\n\n");
+            res.end();
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  // ── Skill Invoke Mode: forward to local node and stream result ───────────────
+  if (matchedSkill?.invokeMode === "invoke" && matchedSkill.node) {
+    const { skillId, nodeId, name: skillName, node, inputSchema } = matchedSkill;
+
+    // Notify frontend: skill is being invoked
+    res.write(`data: ${JSON.stringify({
+      skillMatch: { skillId, nodeId, name: skillName, mode: "invoke" }
+    })}\n\n`);
+
+    try {
+      // Use LLM to extract structured params from user message if inputSchema provided
+      let params: Record<string, unknown> = {};
+      if (inputSchema) {
+        const lastUserMsg = [...(messages ?? [])].reverse().find((m: any) => m.role === "user");
+        const userText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : "";
+        try {
+          const cfg = MODEL_CONFIGS["deepseek-chat"];
+          if (cfg?.apiKey) {
+            const extractRes = await fetch(`${cfg.baseUrl}/chat/completions`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
+              body: JSON.stringify({
+                model: cfg.model,
+                messages: [
+                  { role: "system", content: `你是参数提取助手。从用户输入中提取符合以下 JSON Schema 的参数，只返回 JSON 对象，不要其他内容。\n\nSchema:\n${JSON.stringify(inputSchema)}` },
+                  { role: "user", content: userText },
+                ],
+                stream: false,
+                max_tokens: 512,
+              }),
+            });
+            if (extractRes.ok) {
+              const extractData = await extractRes.json();
+              const raw = extractData.choices?.[0]?.message?.content || "{}";
+              params = JSON.parse(raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, ""));
+            }
+          }
+        } catch (e) {
+          console.warn("[SkillMatch] Param extraction failed:", e);
+        }
+      }
+
+      // Call /skill/invoke on the local node
+      const invokeRes = await fetch(`${node.baseUrl}/skill/invoke`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${node.token}`,
+        },
+        body: JSON.stringify({ skillId, params, requestId: `chat-${Date.now()}` }),
+      });
+
+      if (!invokeRes.ok) {
+        const errText = await invokeRes.text();
+        res.write(`data: ${JSON.stringify({ error: `Skill invoke failed (${invokeRes.status}): ${errText.slice(0, 200)}` })}\n\n`);
+        res.write("data: [DONE]\n\n");
+        res.end();
+        return;
+      }
+
+      const invokeData = await invokeRes.json();
+      const output = invokeData.output ?? invokeData.result ?? JSON.stringify(invokeData);
+
+      // Stream the output as content chunks
+      const chunkSize = 100;
+      for (let i = 0; i < output.length; i += chunkSize) {
+        res.write(`data: ${JSON.stringify({ content: output.slice(i, i + chunkSize) })}\n\n`);
+      }
+      res.write("data: [DONE]\n\n");
+      res.end();
+      return;
+    } catch (err: any) {
+      console.error("[SkillMatch] Invoke error:", err);
+      res.write(`data: ${JSON.stringify({ error: `Skill "${skillId}" invoke error: ${err.message}` })}\n\n`);
+      res.write("data: [DONE]\n\n");
+      res.end();
+      return;
     }
   }
 
@@ -168,7 +379,25 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     };
   });
 
-  const rawMessages = systemPrompt ? [{ role: "system", content: systemPrompt }, ...messages] : messages;
+  // ── Skill Prompt Mode: inject skill systemPrompt into conversation ─────────
+  // If a skill matched with invokeMode='prompt', prepend its systemPrompt as a
+  // system message (after any user-provided systemPrompt).
+  let effectiveSystemPrompt = systemPrompt;
+  if (matchedSkill?.invokeMode !== "invoke" && matchedSkill?.systemPrompt) {
+    // Merge: user systemPrompt (if any) + skill systemPrompt
+    effectiveSystemPrompt = [systemPrompt, matchedSkill.systemPrompt].filter(Boolean).join("\n\n---\n\n");
+    // Notify frontend about the matched skill
+    res.write(`data: ${JSON.stringify({
+      skillMatch: {
+        skillId: matchedSkill.skillId,
+        nodeId: matchedSkill.nodeId,
+        name: matchedSkill.name,
+        mode: "prompt",
+      }
+    })}\n\n`);
+  }
+
+  const rawMessages = effectiveSystemPrompt ? [{ role: "system", content: effectiveSystemPrompt }, ...messages] : messages;
   const allMessages = hasImage ? normalizeMessagesForVision(rawMessages) : rawMessages;
 
   // ── Local node routing (admin only) ────────────────────────────────────────────────────────────────────────────

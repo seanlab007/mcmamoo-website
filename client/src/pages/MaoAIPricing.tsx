@@ -12,7 +12,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Check, X, Zap, Crown, Cat, ArrowRight, Loader2,
   CreditCard, Globe, ChevronDown, ChevronUp, Sparkles,
-  Shield, Users, Infinity, Star,
+  Shield, Users, Infinity, Star, LayoutGrid,
 } from "lucide-react";
 import type { PlanTier, Currency, BillingCycle } from "@shared/plans";
 import {
@@ -322,10 +322,20 @@ export default function MaoAIPricing() {
                       text: t("品牌战略 AI 报告 + 专属顾问", "Brand strategy AI + Account manager", currency),
                       ok: limits.brandStrategy,
                     },
+                    {
+                      icon: <LayoutGrid size={12} />,
+                      text: limits.contentQuota === 0
+                        ? t("猫眼增长引擎 Mc&Mamoo Growth Engine内容平台（不含）", "Content platform (not included)", currency)
+                        : limits.contentQuota === -1
+                        ? t("猫眼增长引擎 Mc&Mamoo Growth Engine内容平台 · 无限生产 · 全平台", "Content platform · Unlimited · All channels", currency)
+                        : t(`猫眼增长引擎 Mc&Mamoo Growth Engine内容平台 · ${limits.contentQuota}篇/月 · ${limits.contentPlatforms.length}个平台`, `Content platform · ${limits.contentQuota}/mo · ${limits.contentPlatforms.length} channels`, currency),
+                      ok: limits.contentPlatform,
+                      highlight: limits.contentPlatform,
+                    },
                   ].map((item, idx) => (
-                    <li key={idx} className={`flex items-start gap-2.5 text-xs ${item.ok ? "text-white/70" : "text-white/20"}`}>
+                    <li key={idx} className={`flex items-start gap-2.5 text-xs ${item.ok ? (item as any).highlight ? "text-[#40d090]/90" : "text-white/70" : "text-white/20"}`}>
                       {item.ok
-                        ? <Check size={13} className={`${meta.accentColor} shrink-0 mt-0.5`} />
+                        ? <Check size={13} className={`${(item as any).highlight ? "text-[#40d090]" : meta.accentColor} shrink-0 mt-0.5`} />
                         : <X size={13} className="text-white/15 shrink-0 mt-0.5" />
                       }
                       <span className={item.ok ? "" : "line-through"}>{item.text}</span>

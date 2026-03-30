@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{BRAND}} — Social Content Board</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #6366f1;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #475569;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .brand-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .topbar h1 { font-size: 17px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #5254d4; }
+  .btn-ghost { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--border); color: var(--text); }
+
+  /* Stats row */
+  .stats-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    gap: 24px;
+    overflow-x: auto;
+  }
+  .stat-item { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-ideas2 { background: #6366f1; }
+  .dot-ready { background: #22c55e; }
+  .dot-scheduled { background: #eab308; }
+  .dot-posted { background: #94a3b8; }
+  .stat-label { font-size: 12px; color: var(--text-dim); }
+  .stat-num { font-size: 13px; font-weight: 700; }
+
+  /* Board */
+  .board {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    min-height: calc(100vh - 102px);
+    align-items: flex-start;
+  }
+
+  /* Columns */
+  .column {
+    flex: 0 0 300px;
+    min-width: 300px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 124px);
+  }
+  .column-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 14px 14px 0 0;
+    background: inherit;
+  }
+  .column-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .column-title { font-weight: 700; font-size: 14px; flex: 1; }
+  .column-count {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 22px;
+    text-align: center;
+  }
+  .column-body {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .column-body.drag-over {
+    background: rgba(99,102,241,0.05);
+    border-radius: 0 0 14px 14px;
+  }
+
+  .add-card-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .add-card-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(99,102,241,0.05); }
+
+  /* Social Cards */
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: grab;
+    transition: all 0.15s;
+    user-select: none;
+    position: relative;
+  }
+  .card:hover { border-color: rgba(99,102,241,0.5); box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
+  .card.dragging { opacity: 0.4; transform: rotate(1deg); }
+  .card-platform {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .platform-icon {
+    font-size: 14px;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border);
+  }
+  .platform-name { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+  .card-menu { margin-left: auto; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+  .card-menu:hover { background: var(--border); color: var(--text); }
+  .post-copy {
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 120px;
+    overflow: hidden;
+    position: relative;
+  }
+  .post-copy-fade {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, var(--surface2));
+  }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .tag-x { background: rgba(255,255,255,0.08); color: var(--text-dim); }
+  .tag-li { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  .tag-thread { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+  .tag-post { background: rgba(34,197,94,0.15); color: #86efac; }
+  .tag-expertise { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+  .tag-story { background: rgba(168,85,247,0.2); color: #d8b4fe; }
+  .tag-utility { background: rgba(34,197,94,0.2); color: #86efac; }
+  .tag-perspective { background: rgba(245,158,11,0.2); color: #fcd34d; }
+  .tag-proof { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-schedule { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .card-schedule.today { color: var(--yellow); font-weight: 600; }
+  .card-schedule.overdue { color: var(--red); font-weight: 600; }
+  .card-engagement {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .engagement-stat { display: flex; align-items: center; gap: 3px; }
+
+  /* Priority bar */
+  .priority-indicator {
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    border-radius: 10px 0 0 10px;
+  }
+  .priority-high { background: var(--red); }
+  .priority-med { background: var(--yellow); }
+  .priority-low { background: var(--green); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 540px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; display: block; letter-spacing: 0.04em; text-transform: uppercase; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 120px; }
+  .form-select option { background: var(--surface); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .char-count { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
+  .char-count.warn { color: var(--yellow); }
+  .char-count.over { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="brand-badge">Marketing Claw</span>
+    <h1>{{BRAND}} — Social Board</h1>
+  </div>
+  <div class="topbar-right">
+    <a href="command-center.html" class="btn btn-ghost">← Command Center</a>
+    <a href="editorial-kanban.html" class="btn btn-ghost">Editorial</a>
+    <button class="btn btn-primary" onclick="openModal()">+ Add Post</button>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar">
+  <!-- Populated by JS -->
+</div>
+
+<div class="board" id="board">
+  <!-- Populated by JS -->
+</div>
+
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>Add Social Post</h2>
+    <div class="form-group">
+      <label class="form-label">Post Copy</label>
+      <textarea class="form-textarea" id="postCopy" placeholder="Write your post here..." oninput="updateCharCount()"></textarea>
+      <div class="char-count" id="charCount">0 / 280 characters</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Platform</label>
+        <select class="form-select" id="postPlatform">
+          <option value="x">X (Twitter)</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Format</label>
+        <select class="form-select" id="postFormat">
+          <option value="post">Post</option>
+          <option value="thread">Thread</option>
+          <option value="carousel">Carousel</option>
+          <option value="video">Video</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Content Pillar</label>
+        <select class="form-select" id="postPillar">
+          <option value="expertise">Expertise</option>
+          <option value="story">Story</option>
+          <option value="utility">Utility</option>
+          <option value="perspective">Perspective</option>
+          <option value="proof">Social Proof</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Column</label>
+        <select class="form-select" id="postColumn">
+          <option value="ideas">Ideas</option>
+          <option value="ready">Ready</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="posted">Posted</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Schedule Date/Time</label>
+        <input class="form-input" id="postSchedule" type="datetime-local" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="postPriority">
+          <option value="">None</option>
+          <option value="high">High</option>
+          <option value="med">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addCard()">Add to Board</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLUMNS = [
+  { id: 'ideas', label: 'Ideas', dot: '#6366f1', desc: 'Raw ideas from Hype' },
+  { id: 'ready', label: 'Ready', dot: '#22c55e', desc: 'Approved, ready to post' },
+  { id: 'scheduled', label: 'Scheduled', dot: '#eab308', desc: 'Queued for Megaphone' },
+  { id: 'posted', label: 'Posted', dot: '#94a3b8', desc: 'Live on platform' },
+];
+
+const PLATFORM_ICONS = { x: '𝕏', linkedin: 'in', both: '𝕏+in' };
+
+function todayDT() {
+  const d = new Date();
+  d.setHours(10,0,0,0);
+  return d.toISOString().slice(0,16);
+}
+function tomorrowDT() {
+  const d = new Date();
+  d.setDate(d.getDate()+1);
+  d.setHours(9,0,0,0);
+  return d.toISOString().slice(0,16);
+}
+function nextDayDT(n, h=9) {
+  const d = new Date();
+  d.setDate(d.getDate()+n);
+  d.setHours(h,0,0,0);
+  return d.toISOString().slice(0,16);
+}
+function pastDT(n) {
+  const d = new Date();
+  d.setDate(d.getDate()-n);
+  d.setHours(10,0,0,0);
+  return d.toISOString().slice(0,16);
+}
+
+const DEFAULT_CARDS = [
+  { id: 1, col: 'ideas', platform: 'x', format: 'thread', pillar: 'expertise', copy: 'After running an AI marketing squad for 6 months, here\'s what I learned that nobody tells you:\n\n(A thread on what actually works vs. what sounds good)', schedule: '', priority: 'high', engagement: null },
+  { id: 2, col: 'ideas', platform: 'x', format: 'post', pillar: 'perspective', copy: 'Hot take: Most "content strategies" are just excuses to not talk to customers.\n\nThe brands that grow fastest post less and listen more.', schedule: '', priority: 'med', engagement: null },
+  { id: 3, col: 'ideas', platform: 'linkedin', format: 'post', pillar: 'utility', copy: '5 questions I ask before publishing any piece of content:\n\n1. Does this make someone smarter?\n2. Would my ideal customer share this?\n3. Does it represent our actual POV?\n4. Is the hook strong enough to stop a scroll?\n5. Does it end with a clear action?\n\nIf I can\'t answer yes to all 5 — back to the draft.', schedule: '', priority: '', engagement: null },
+  { id: 4, col: 'ready', platform: 'x', format: 'post', pillar: 'story', copy: 'We almost shut down our newsletter 3 months in.\n\n37% open rate. 2% click rate. Zero replies.\n\nThen we made one change that turned it around. Here\'s what it was:', schedule: todayDT(), priority: 'high', engagement: null },
+  { id: 5, col: 'ready', platform: 'both', format: 'post', pillar: 'utility', copy: 'The content calendar that actually works (for a 2-person marketing team):\n\n→ Mon: Perspective post\n→ Tue: Expertise thread\n→ Wed: Newsletter\n→ Thu: Utility roundup\n→ Fri: Social proof\n\nConsistency beats complexity.', schedule: tomorrowDT(), priority: '', engagement: null },
+  { id: 6, col: 'scheduled', platform: 'x', format: 'thread', pillar: 'expertise', copy: 'The 5 content pillars that drive 90% of our growth:\n\n1. Expertise (30%) — non-obvious insights\n2. Story (20%) — specific moments, real stakes\n3. Utility (25%) — frameworks they can use today\n4. Perspective (15%) — defensible contrarian takes\n5. Social proof (10%) — real results, real numbers\n\nMix them. Track which pillar your audience loves most.\n\nThread below ↓', schedule: nextDayDT(2, 9), priority: 'med', engagement: null },
+  { id: 7, col: 'scheduled', platform: 'linkedin', format: 'post', pillar: 'proof', copy: 'Client went from 800 to 4,200 newsletter subscribers in 90 days.\n\nNo paid ads. No viral post. No hacks.\n\nJust: 1 weekly newsletter, 5 social posts, 2 blog posts.\n\nConsistency compounding over time. That\'s it.', schedule: nextDayDT(3, 8), priority: '', engagement: null },
+  { id: 8, col: 'posted', platform: 'x', format: 'post', pillar: 'perspective', copy: 'The worst marketing advice I ever followed: "post more content."\n\nPosting more mediocre content just builds a mediocre audience faster.\n\nPost better. Then post more.', schedule: pastDT(2), priority: '', engagement: { likes: 284, replies: 47, reposts: 83 } },
+  { id: 9, col: 'posted', platform: 'both', format: 'post', pillar: 'utility', copy: '3 tools that run my entire content operation:\n\n1. OpenClaw (12 AI agents doing the work)\n2. {{NEWSLETTER_PLATFORM}} (newsletter)\n3. {{ANALYTICS_TOOL}} (analytics)\n\nTotal cost: less than one contractor day.\nTotal output: more than a full team.', schedule: pastDT(4), priority: '', engagement: { likes: 412, replies: 61, reposts: 124 } },
+];
+
+let cards = [];
+let nextId = 100;
+
+function load() {
+  const stored = localStorage.getItem('mc_social_cards');
+  if (stored) {
+    try { cards = JSON.parse(stored); nextId = Math.max(...cards.map(c=>c.id||0))+1; }
+    catch(e) { cards = [...DEFAULT_CARDS]; }
+  } else {
+    cards = [...DEFAULT_CARDS];
+  }
+}
+
+function save() { localStorage.setItem('mc_social_cards', JSON.stringify(cards)); }
+
+function formatSchedule(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  const now = new Date();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  if (d < now) return `Posted ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})} at ${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`;
+  if (d >= today && d < tomorrow) return `Today at ${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`;
+  if (d >= tomorrow && d < new Date(tomorrow.getTime()+86400000)) return `Tomorrow at ${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`;
+  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) + ' at ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+
+function isToday(dt) {
+  if (!dt) return false;
+  const d = new Date(dt);
+  const t = new Date(); t.setHours(0,0,0,0);
+  const t2 = new Date(t); t2.setDate(t2.getDate()+1);
+  return d >= t && d < t2;
+}
+
+function isPast(dt) { return dt && new Date(dt) < new Date(); }
+
+const TAG_CLASSES = {
+  expertise: 'tag-expertise', story: 'tag-story', utility: 'tag-utility',
+  perspective: 'tag-perspective', proof: 'tag-proof',
+  x: 'tag-x', linkedin: 'tag-li', both: 'tag-x',
+  thread: 'tag-thread', post: 'tag-post'
+};
+
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderCard(card) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.dataset.id = card.id;
+  el.draggable = true;
+  const schedText = formatSchedule(card.schedule);
+  const today = isToday(card.schedule);
+  const past = isPast(card.schedule) && card.col !== 'posted';
+  const icon = PLATFORM_ICONS[card.platform] || card.platform;
+  const initials = '{{USER_NAME}}'.substring(0,2).toUpperCase() || '??';
+
+  let engagementHtml = '';
+  if (card.engagement) {
+    engagementHtml = `
+      <div class="card-engagement">
+        <span class="engagement-stat">❤️ ${card.engagement.likes}</span>
+        <span class="engagement-stat">💬 ${card.engagement.replies}</span>
+        <span class="engagement-stat">🔁 ${card.engagement.reposts}</span>
+      </div>`;
+  }
+
+  const copyPreview = (card.copy || '').substring(0, 200);
+  const isTruncated = (card.copy || '').length > 200;
+
+  el.innerHTML = `
+    ${card.priority ? `<div class="priority-indicator priority-${card.priority}"></div>` : ''}
+    <div class="card-platform">
+      <div class="platform-icon">${icon}</div>
+      <span class="platform-name">${card.platform === 'both' ? 'X + LinkedIn' : card.platform === 'x' ? 'X (Twitter)' : 'LinkedIn'}</span>
+      <div class="card-menu" onclick="deleteCard(${card.id}, event)">⋯</div>
+    </div>
+    <div class="post-copy">${escHtml(copyPreview)}${isTruncated ? '…' : ''}${isTruncated ? '<div class="post-copy-fade"></div>' : ''}</div>
+    <div class="card-tags">
+      <span class="tag ${TAG_CLASSES[card.format] || ''}">${card.format}</span>
+      <span class="tag ${TAG_CLASSES[card.pillar] || ''}">${card.pillar}</span>
+    </div>
+    <div class="card-footer">
+      <span class="card-schedule ${today ? 'today' : past ? 'overdue' : ''}">
+        ${schedText ? (today ? '⏰ ' : past ? '⚠️ ' : '📅 ') + schedText : '—'}
+      </span>
+      ${engagementHtml || `<div style="width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${initials}</div>`}
+    </div>
+  `;
+  el.addEventListener('dragstart', e => { dragCard = card; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+  el.addEventListener('dragend', () => { el.classList.remove('dragging'); dragCard = null; });
+  return el;
+}
+
+let dragCard = null;
+
+function deleteCard(id, e) {
+  e.stopPropagation();
+  if (confirm('Remove this post?')) {
+    cards = cards.filter(c => c.id !== id);
+    save();
+    render();
+  }
+}
+
+function renderStats() {
+  const bar = document.getElementById('statsBar');
+  const counts = {};
+  COLUMNS.forEach(c => { counts[c.id] = cards.filter(x => x.col === c.id).length; });
+  const dotStyles = { ideas: '#6366f1', ready: '#22c55e', scheduled: '#eab308', posted: '#94a3b8' };
+  bar.innerHTML = COLUMNS.map(c => `
+    <div class="stat-item">
+      <div class="stat-dot" style="background:${dotStyles[c.id]}"></div>
+      <span class="stat-label">${c.label}:</span>
+      <span class="stat-num">${counts[c.id]}</span>
+    </div>
+  `).join('') + `
+    <div class="stat-item" style="margin-left:auto">
+      <span class="stat-label">Total posts:</span>
+      <span class="stat-num">${cards.length}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Ready today:</span>
+      <span class="stat-num" style="color:var(--yellow)">${cards.filter(c=>isToday(c.schedule)&&(c.col==='ready'||c.col==='scheduled')).length}</span>
+    </div>
+  `;
+}
+
+function render() {
+  renderStats();
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  COLUMNS.forEach(col => {
+    const colCards = cards.filter(c => c.col === col.id);
+    const colEl = document.createElement('div');
+    colEl.className = 'column';
+    colEl.innerHTML = `
+      <div class="column-header">
+        <div class="column-dot" style="background:${col.dot}"></div>
+        <div class="column-title">${col.label}</div>
+        <div class="column-count">${colCards.length}</div>
+      </div>
+    `;
+    const body = document.createElement('div');
+    body.className = 'column-body';
+    colCards.forEach(card => body.appendChild(renderCard(card)));
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-card-btn';
+    addBtn.textContent = '+ Add post';
+    addBtn.onclick = () => { document.getElementById('postColumn').value = col.id; openModal(); };
+    body.appendChild(addBtn);
+    body.addEventListener('dragover', e => { e.preventDefault(); body.classList.add('drag-over'); });
+    body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
+    body.addEventListener('drop', e => {
+      e.preventDefault();
+      body.classList.remove('drag-over');
+      if (dragCard && dragCard.col !== col.id) {
+        const c = cards.find(c => c.id === dragCard.id);
+        if (c) c.col = col.id;
+        save();
+        render();
+      }
+    });
+    colEl.appendChild(body);
+    board.appendChild(colEl);
+  });
+}
+
+function updateCharCount() {
+  const txt = document.getElementById('postCopy').value;
+  const el = document.getElementById('charCount');
+  const len = txt.length;
+  el.textContent = `${len} / 280 characters`;
+  el.className = 'char-count' + (len > 280 ? ' over' : len > 240 ? ' warn' : '');
+}
+
+function openModal() {
+  document.getElementById('postCopy').value = '';
+  document.getElementById('postSchedule').value = todayDT();
+  document.getElementById('postPriority').value = '';
+  updateCharCount();
+  document.getElementById('addModal').classList.add('open');
+  document.getElementById('postCopy').focus();
+}
+
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+
+function addCard() {
+  const copy = document.getElementById('postCopy').value.trim();
+  if (!copy) { document.getElementById('postCopy').focus(); return; }
+  const card = {
+    id: nextId++,
+    col: document.getElementById('postColumn').value,
+    platform: document.getElementById('postPlatform').value,
+    format: document.getElementById('postFormat').value,
+    pillar: document.getElementById('postPillar').value,
+    copy,
+    schedule: document.getElementById('postSchedule').value,
+    priority: document.getElementById('postPriority').value,
+    engagement: null
+  };
+  cards.push(card);
+  save();
+  render();
+  closeModal();
+}
+
+document.getElementById('addModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+load();
+render();
+</script>
+</body>
+</html>
