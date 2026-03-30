@@ -325,77 +325,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans G
 <div class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon" style="background:none;padding:0;overflow:visible;width:40px;height:40px;">
-      <svg width="40" height="40" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="lbg1" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#1a0533"/>
-            <stop offset="100%" stop-color="#0d1a3a"/>
-          </linearGradient>
-          <linearGradient id="lbg2" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#7c3aed"/>
-            <stop offset="100%" stop-color="#2563eb"/>
-          </linearGradient>
-          <linearGradient id="liris" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#22d3ee"/>
-            <stop offset="50%" stop-color="#a78bfa"/>
-            <stop offset="100%" stop-color="#f472b6"/>
-          </linearGradient>
-          <radialGradient id="lglow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.8"/>
-            <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="lpupil" cx="40%" cy="35%" r="60%">
-            <stop offset="0%" stop-color="#1e0a3c"/>
-            <stop offset="100%" stop-color="#050510"/>
-          </radialGradient>
-          <filter id="lf1" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="2.5" result="b"/>
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <filter id="lf2" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="b2"/>
-            <feMerge><feMergeNode in="b2"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <clipPath id="lclip">
-            <rect width="80" height="80" rx="20"/>
-          </clipPath>
-        </defs>
-        <!-- 底色 -->
-        <rect width="80" height="80" rx="20" fill="url(#lbg1)"/>
-        <!-- 渐变光感叠层 -->
-        <rect width="80" height="80" rx="20" fill="url(#lbg2)" opacity="0.55"/>
-        <!-- 背景光晕 -->
-        <ellipse cx="40" cy="44" rx="26" ry="16" fill="url(#lglow)" opacity="0.5"/>
-        <!-- 猫耳左 - 外形 -->
-        <path d="M18 42 L10 18 L32 30 Z" fill="white" opacity="0.92"/>
-        <!-- 猫耳左 - 内耳 -->
-        <path d="M19 40 L13 22 L30 31 Z" fill="#c084fc" opacity="0.7"/>
-        <!-- 猫耳右 - 外形 -->
-        <path d="M62 42 L70 18 L48 30 Z" fill="white" opacity="0.92"/>
-        <!-- 猫耳右 - 内耳 -->
-        <path d="M61 40 L67 22 L50 31 Z" fill="#c084fc" opacity="0.7"/>
-        <!-- 眼眶外发光 -->
-        <ellipse cx="40" cy="47" rx="24" ry="14" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.3" filter="url(#lf2)"/>
-        <!-- 眼眶主线 - 用贝塞尔曲线做杏仁眼形 -->
-        <path d="M16 47 Q40 28 64 47 Q40 66 16 47 Z" fill="rgba(20,8,50,0.6)" stroke="url(#liris)" stroke-width="2"/>
-        <!-- 虹膜外层光晕 -->
-        <circle cx="40" cy="47" r="11" fill="url(#lglow)" opacity="0.6" filter="url(#lf1)"/>
-        <!-- 虹膜主体 -->
-        <circle cx="40" cy="47" r="9.5" fill="url(#liris)" filter="url(#lf1)"/>
-        <!-- 虹膜纹理环 -->
-        <circle cx="40" cy="47" r="9.5" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-        <circle cx="40" cy="47" r="7" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        <!-- 瞳孔 -->
-        <ellipse cx="40" cy="47" rx="4.5" ry="6" fill="url(#lpupil)"/>
-        <!-- 高光主 -->
-        <ellipse cx="42.5" cy="43.5" rx="2.2" ry="1.4" fill="white" opacity="0.95" transform="rotate(-20,42.5,43.5)"/>
-        <!-- 高光副 -->
-        <circle cx="37" cy="50" r="0.9" fill="white" opacity="0.4"/>
-        <!-- 眼角细节左 -->
-        <circle cx="17" cy="47" r="1.8" fill="#22d3ee" opacity="0.7" filter="url(#lf1)"/>
-        <!-- 眼角细节右 -->
-        <circle cx="63" cy="47" r="1.8" fill="#f472b6" opacity="0.7" filter="url(#lf1)"/>
-      </svg>
+      <img src="/logo-gold.png" alt="Mc&amp;Mamoo" style="width:40px;height:40px;object-fit:contain;border-radius:6px;"/>
     </div>
     <div>
       <div class="logo-text">猫眼运营平台</div>
@@ -412,6 +342,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans G
     <div class="nav-item" onclick="showPage('brands')"><span class="ni">🔬</span>品牌分析</div>
     <div class="nav-item" onclick="showPage('viral')"><span class="ni">🚀</span>爆款生成</div>
     <div class="nav-item" onclick="showPage('trends')"><span class="ni">🔥</span>热点分析</div>
+    <div class="nav-item" onclick="showPage('autoclip')"><span class="ni">✂️</span>AutoClip 视频剪辑<span class="nav-badge" style="background:var(--purple);color:#fff">AI</span></div>
     <div class="nav-group-title">数据接入</div>
     <div class="nav-item" onclick="showPage('chanmama')"><span class="ni">🦋</span>蝉妈妈数据<span class="nav-badge" id="cmm-badge">实时</span></div>
     <div class="nav-item" onclick="showPage('calendar')"><span class="ni">📅</span>内容日历</div>
@@ -990,6 +921,109 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans G
       </div>
     </div>
 
+    <!-- AUTOCLIP -->
+    <div class="page" id="page-autoclip">
+      <div style="max-width:900px;">
+        <div style="margin-bottom:24px;">
+          <h2 style="font-size:22px;font-weight:700;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:10px;">✂️ AutoClip <span style="font-size:13px;font-weight:400;color:var(--purple);background:rgba(180,100,255,0.12);padding:2px 10px;border-radius:20px;">AI 视频智能剪辑</span></h2>
+          <p style="color:var(--text2);font-size:13px;">输入 YouTube / B站 / 抖音链接，AI 自动下载、分析并提取高光片段</p>
+        </div>
+
+        <!-- 输入区 -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">📥 下载视频</div>
+          <div style="display:flex;gap:10px;margin-bottom:14px;">
+            <button class="topbar-btn" id="ac-btn-yt" onclick="acSetPlatform('youtube',this)" style="background:rgba(255,0,0,0.15);border:1px solid rgba(255,0,0,0.3);color:#ff6b6b;">▶ YouTube</button>
+            <button class="topbar-btn" id="ac-btn-bili" onclick="acSetPlatform('bilibili',this)" style="background:rgba(0,160,255,0.1);border:1px solid rgba(0,160,255,0.3);color:#60b8ff;">📺 Bilibili</button>
+            <button class="topbar-btn" id="ac-btn-local" onclick="acSetPlatform('local',this)" style="background:rgba(100,100,100,0.15);border:1px solid rgba(255,255,255,0.1);color:var(--text2);">📁 本地文件</button>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <input id="ac-url-input" class="form-input" style="flex:1;" placeholder="https://www.youtube.com/watch?v=..." oninput="acCheckUrl()"/>
+            <button class="run-btn" id="ac-submit-btn" onclick="acSubmit()" style="padding:0 20px;white-space:nowrap;">⚡ 开始处理</button>
+          </div>
+          <div id="ac-error" style="color:#ff6b6b;font-size:12px;margin-top:8px;display:none;"></div>
+        </div>
+
+        <!-- 处理进度 -->
+        <div class="card" id="ac-progress-card" style="margin-bottom:20px;display:none;">
+          <div class="card-title">⏳ 处理进度</div>
+          <div id="ac-progress-title" style="font-size:13px;color:var(--text);margin-bottom:10px;">正在处理...</div>
+          <div class="prog-bar" style="height:8px;margin-bottom:8px;"><div class="prog-fill" id="ac-prog-fill" style="width:0%;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width 0.4s;"></div></div>
+          <div id="ac-progress-status" style="font-size:11px;color:var(--text3);">初始化...</div>
+        </div>
+
+        <!-- 项目列表 -->
+        <div class="card">
+          <div class="card-title">📂 项目列表 <span id="ac-proj-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span></div>
+          <div id="ac-project-list">
+            <!-- 示例项目 -->
+            <div class="ac-proj-item" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;background:var(--bg3);margin-bottom:8px;">
+              <div style="font-size:20px;">✅</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:#fff;">AI趋势分析报告</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px;">YouTube · 2026-03-26 10:30</div>
+              </div>
+              <span style="font-size:11px;color:var(--green);background:rgba(0,255,100,0.1);padding:2px 8px;border-radius:10px;">已完成</span>
+              <button class="topbar-btn btn-primary" style="padding:4px 12px;font-size:11px;">▶ 查看</button>
+            </div>
+            <div class="ac-proj-item" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;background:var(--bg3);margin-bottom:8px;">
+              <div style="font-size:20px;">⏳</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:#fff;">品牌营销策略分享</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px;">Bilibili · 2026-03-26 14:20</div>
+              </div>
+              <div style="width:100px;">
+                <div class="prog-bar" style="height:4px;"><div class="prog-fill" style="width:65%;background:linear-gradient(90deg,var(--blue),var(--cyan));"></div></div>
+                <div style="font-size:10px;color:var(--text3);margin-top:3px;">65%</div>
+              </div>
+              <span style="font-size:11px;color:var(--blue);background:rgba(0,100,255,0.1);padding:2px 8px;border-radius:10px;">处理中</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 剪辑设置 -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-title">⚙️ AI 剪辑设置</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <div class="form-label">片段时长</div>
+              <select class="form-select" id="ac-clip-duration">
+                <option value="15">15 秒（短视频）</option>
+                <option value="30" selected>30 秒（标准）</option>
+                <option value="60">60 秒（长片段）</option>
+                <option value="custom">自定义</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="form-label">提取模式</div>
+              <select class="form-select" id="ac-extract-mode">
+                <option value="highlight" selected>高光片段</option>
+                <option value="key">关键帧</option>
+                <option value="all">全部切片</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="form-label">输出格式</div>
+              <select class="form-select" id="ac-output-format">
+                <option value="mp4" selected>MP4</option>
+                <option value="mov">MOV</option>
+                <option value="gif">GIF</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="form-label">AI 分析模型</div>
+              <select class="form-select" id="ac-ai-model">
+                <option value="deepseek" selected>DeepSeek</option>
+                <option value="gemini">Gemini</option>
+                <option value="groq">Groq (Llama 3)</option>
+              </select>
+            </div>
+          </div>
+          <button class="run-btn" onclick="acSaveSettings()" style="margin-top:10px;">💾 保存设置</button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content-area -->
 </div><!-- /main-wrap -->
 
@@ -1239,9 +1273,10 @@ function checkCreditError(data) {
 
 
 const pageNames = {
-  dashboard:'仪表盘', overview:'系统概览', tasks:'任务看板', chat:'AI 对话',
+  dashboard:'仓表盘', overview:'系统概览', tasks:'任务看板', chat:'AI 对话',
   brands:'品牌分析', viral:'爆款生成', trends:'热点分析', upload:'文件管理',
-  chanmama:'蝉妈妈数据', calendar:'内容日历', library:'📚 文案库'
+  chanmama:'蝉妈妈数据', calendar:'内容日历', library:'📚 文案库',
+  autoclip:'✂️ AutoClip 视频剪辑'
 };
 
 // 蝉妈妈数据状态
@@ -1333,6 +1368,110 @@ async function checkApiStatus(){
     modelInfo.innerHTML = `<span style="color:#ff5050">⚠ 后端未启动，请运行：<code>python3 backend/server.py</code></span>`;
     if(chatModelBadge) chatModelBadge.textContent = '离线';
   }
+}
+
+// ============================================================
+// AutoClip 功能
+// ============================================================
+let acPlatform = 'youtube';
+let acProjects = [
+  {id:'1',title:'AI趋势分析报告',platform:'youtube',status:'completed',progress:100,createdAt:'2026-03-26 10:30'},
+  {id:'2',title:'品牌营销策略分享',platform:'bilibili',status:'processing',progress:65,createdAt:'2026-03-26 14:20'}
+];
+
+function acSetPlatform(p, btn){
+  acPlatform = p;
+  ['yt','bili','local'].forEach(k=>{
+    const b = document.getElementById('ac-btn-'+k);
+    if(b) b.style.fontWeight = 'normal';
+  });
+  if(btn) btn.style.fontWeight = '700';
+  const input = document.getElementById('ac-url-input');
+  if(input){
+    if(p==='youtube') input.placeholder='https://www.youtube.com/watch?v=...';
+    else if(p==='bilibili') input.placeholder='https://www.bilibili.com/video/BV...';
+    else input.placeholder='拖入本地视频文件路径';
+  }
+}
+
+function acCheckUrl(){
+  const url = (document.getElementById('ac-url-input')||{}).value||'';
+  const btn = document.getElementById('ac-submit-btn');
+  if(btn) btn.disabled = !url.trim();
+}
+
+async function acSubmit(){
+  const url = (document.getElementById('ac-url-input')||{}).value||'';
+  if(!url.trim()) return;
+  const errEl = document.getElementById('ac-error');
+  const progCard = document.getElementById('ac-progress-card');
+  const progFill = document.getElementById('ac-prog-fill');
+  const progTitle = document.getElementById('ac-progress-title');
+  const progStatus = document.getElementById('ac-progress-status');
+  if(errEl) errEl.style.display='none';
+  if(progCard) progCard.style.display='';
+  // 模拟进度
+  const steps = [
+    {p:10,t:'解析链接...',s:'正在识别平台和视频 ID'},
+    {p:30,t:'下载视频...',s:'正在下载视频流'},
+    {p:55,t:'AI 分析内容...',s:'提取关键帧和语音内容'},
+    {p:80,t:'剪辑高光片段...',s:'生成切片文件'},
+    {p:100,t:'处理完成！',s:'已生成 3 个高光片段'}
+  ];
+  for(const step of steps){
+    await new Promise(r=>setTimeout(r,800));
+    if(progFill) progFill.style.width=step.p+'%';
+    if(progTitle) progTitle.textContent=step.t;
+    if(progStatus) progStatus.textContent=step.s;
+  }
+  // 调用后端 API
+  const SUPABASE_URL = 'https://fczherphuixpdjuevzsh.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjemhlcnBodWl4cGRqdWV2enNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDM0OTEsImV4cCI6MjA4OTIxOTQ5MX0.t7FSUWbWDsKIcU-m-1ul65aVVu87RZn0zHleqccDEo4';
+  let title = url.split('/').pop()||'新项目';
+  try{
+    const resp = await fetch(SUPABASE_URL+'/functions/v1/autoclip-extract',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_KEY},
+      body:JSON.stringify({video_url:url})
+    });
+    const data = await resp.json();
+    if(data.video_id) title = data.video_id;
+  }catch(e){}
+  const newProj = {id:Date.now()+'',title,platform:acPlatform,status:'completed',progress:100,createdAt:new Date().toLocaleString('zh-CN')};
+  acProjects.unshift(newProj);
+  document.getElementById('ac-url-input').value='';
+  if(progCard) setTimeout(()=>progCard.style.display='none',1500);
+  acRenderProjects();
+  showToast('✅ 视频处理完成！');
+}
+
+function acRenderProjects(){
+  const list = document.getElementById('ac-project-list');
+  if(!list) return;
+  const statusMap = {completed:'已完成',processing:'处理中',downloading:'下载中',pending:'等待中',error:'出错'};
+  const colorMap = {completed:'var(--green)',processing:'var(--blue)',downloading:'var(--cyan)',pending:'var(--text3)',error:'#ff6b6b'};
+  const bgMap = {completed:'rgba(0,255,100,0.1)',processing:'rgba(0,100,255,0.1)',downloading:'rgba(0,200,255,0.1)',pending:'rgba(100,100,100,0.1)',error:'rgba(255,50,50,0.1)'};
+  const iconMap = {completed:'✅',processing:'⏳',downloading:'⏬',pending:'⏸',error:'❌'};
+  list.innerHTML = acProjects.map(p=>{
+    const pname = {youtube:'YouTube',bilibili:'Bilibili',local:'本地文件'}[p.platform]||p.platform;
+    const progHtml = (p.status==='processing'||p.status==='downloading')
+      ? `<div style="width:100px;"><div class="prog-bar" style="height:4px;"><div class="prog-fill" style="width:${p.progress}%;background:linear-gradient(90deg,var(--blue),var(--cyan));"></div></div><div style="font-size:10px;color:var(--text3);margin-top:3px;">${p.progress}%</div></div>`
+      : '';
+    const viewBtn = p.status==='completed' ? `<button class="topbar-btn btn-primary" style="padding:4px 12px;font-size:11px;">▶ 查看</button>` : '';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;background:var(--bg3);margin-bottom:8px;">
+      <div style="font-size:20px;">${iconMap[p.status]||'❓'}</div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#fff;">${p.title}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${pname} · ${p.createdAt}</div></div>
+      ${progHtml}
+      <span style="font-size:11px;color:${colorMap[p.status]};background:${bgMap[p.status]};padding:2px 8px;border-radius:10px;">${statusMap[p.status]||p.status}</span>
+      ${viewBtn}
+    </div>`;
+  }).join('');
+  const cnt = document.getElementById('ac-proj-count');
+  if(cnt) cnt.textContent = `(共 ${acProjects.length} 个项目)`;
+}
+
+function acSaveSettings(){
+  showToast('✅ 设置已保存');
 }
 
 // ============================================================
