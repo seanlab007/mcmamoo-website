@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import "./lib/i18n"; // 初始化 18国语言 i18n
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
