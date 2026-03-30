@@ -17,7 +17,7 @@ interface SEOProps {
   breadcrumbs?: Array<{ name: string; url: string }>;
 }
 
-const SITE_NAME = "猫眼增长引擎 Mc&Mamoo Growth Engine · Mc&Mamoo Brand Management Inc.";
+const SITE_NAME = "猫眼增长引擎 Mc&Mamoo Growth Engine · Mc&Mamoo Inc.";
 const BASE_URL = "https://www.mcmamoo.com";
 
 export function useSEO({

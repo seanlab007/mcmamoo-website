@@ -18,14 +18,14 @@ const PRESS_RELEASES = [
     city: "Davos, Switzerland",
     excerpt_zh: "在2025年达沃斯全球战略创新论坛上，猫眼增长引擎 Mc&Mamoo Growth Engine（Mc&Mamoo）凭借其在AI驱动品牌战略咨询领域的全球领先地位，荣获年度最高荣誉——达沃斯全球战略咨询创新领袖奖。这是猫眼增长引擎 Mc&Mamoo Growth Engine连续第17年在国际舞台获得顶级机构认可。",
     excerpt_en: "At the 2025 Davos Global Strategic Innovation Forum, Mc&Mamoo was honored with the highest annual award — the Davos Global Strategic Consulting Innovation Leadership Award — recognizing its global leadership in AI-driven brand strategy consulting. This marks Mc&Mamoo's 17th consecutive year of recognition by top international institutions.",
-    body_zh: `达沃斯，瑞士，2025年1月22日——猫眼增长引擎 Mc&Mamoo Growth Engine（Mc&Mamoo Brand Management Inc.）今日宣布，公司荣获达沃斯全球战略创新论坛颁发的"全球战略咨询创新领袖奖"。
+    body_zh: `达沃斯，瑞士，2025年1月22日——猫眼增长引擎 Mc&Mamoo Growth Engine（Mc&Mamoo Inc.）今日宣布，公司荣获达沃斯全球战略创新论坛颁发的"全球战略咨询创新领袖奖"。
 
 本次获奖是对猫眼增长引擎 Mc&Mamoo Growth Engine在人工智能驱动的品牌战略咨询领域所取得成就的高度认可。评审委员会特别指出，猫眼增长引擎 Mc&Mamoo Growth Engine独创的"猫眼增长引擎 Mc&Mamoo Growth Engine"方法论——涵盖品牌溢价、利润倍增与全域增长三大核心模块——在过去十六年间帮助超过200个中国消费品牌实现了平均3-8倍的溢价提升。
 
 猫眼增长引擎 Mc&Mamoo Growth Engine创始人表示："这个奖项属于我们服务过的每一个品牌。我们的使命从未改变——让中国品牌在全球市场卖出更高的价格、赚取更多的利润、实现更快的增长。"
 
 关于达沃斯全球战略创新论坛：该论坛每年在瑞士达沃斯举办，汇聚全球顶级战略咨询机构、政府决策者和企业领袖，共同探讨全球战略创新趋势。`,
-    body_en: `Davos, Switzerland, January 22, 2025 — Mc&Mamoo Brand Management Inc. today announced it has been honored with the "Global Strategic Consulting Innovation Leadership Award" by the Davos Global Strategic Innovation Forum.
+    body_en: `Davos, Switzerland, January 22, 2025 — Mc&Mamoo Inc. today announced it has been honored with the "Global Strategic Consulting Innovation Leadership Award" by the Davos Global Strategic Innovation Forum.
 
 This recognition highlights Mc&Mamoo's achievements in AI-driven brand strategy consulting. The evaluation committee specifically noted Mc&Mamoo's proprietary "Growth Engine" methodology — encompassing brand premium elevation, profit multiplication, and omni-channel growth — which has helped over 200 Chinese consumer brands achieve an average 3-8x premium increase over the past sixteen years.
 
@@ -179,7 +179,7 @@ export default function Press() {
           </h1>
           <p className="text-white/40 text-sm max-w-2xl leading-relaxed mb-8">
             {isEn
-              ? "Official press releases and award announcements from Mc&Mamoo Brand Management Inc. — documenting 17 years of international recognition from Istanbul to Davos."
+              ? "Official press releases and award announcements from Mc&Mamoo Inc. — documenting 17 years of international recognition from Istanbul to Davos."
               : "猫眼增长引擎 Mc&Mamoo Growth Engine（Mc&Mamoo）官方新闻稿与获奖公告，记录17年来从伊斯坦布尔到达沃斯的全球荣誉历程。"}
           </p>
 

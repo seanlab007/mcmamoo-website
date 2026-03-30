@@ -104,7 +104,7 @@ export default function About() {
           {/* Left: Company intro */}
           <div ref={ref2 as React.RefObject<HTMLDivElement>} className="reveal">
             <p className="text-white/70 text-base leading-relaxed mb-6">
-              <strong className="text-white font-semibold">Mc&amp;Mamoo Brand Management Inc.</strong>（猫眼增长引擎 Mc&Mamoo Growth Engine）是一家发源于美国芝加哥、根植中国上海的国际顶级品牌管理公司，由<span className="text-[#C9A84C]">暗物质资本（Dark Matter Capital）</span>投资创立。
+              <strong className="text-white font-semibold">Mc&amp;Mamoo Inc.</strong>（猫眼增长引擎 Mc&Mamoo Growth Engine）是一家发源于美国芝加哥、根植中国上海的国际顶级品牌管理公司，由<span className="text-[#C9A84C]">暗物质资本（Dark Matter Capital）</span>投资创立。
             </p>
             <p className="text-white/70 text-base leading-relaxed mb-6">
               公司团队汇聚来自麦肯锡（McKinsey）、波士顿咨询（BCG）、贝恩咨询（Bain）及德勤咨询（Deloitte）等全球顶尖机构的精英人才，专注于帮助品牌实现<span className="text-[#C9A84C] font-semibold">显贵化升级、利润倍增与全域增长</span>。
