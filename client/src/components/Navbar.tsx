@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Globe, Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap } from "lucide-react";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -24,7 +25,7 @@ export default function Navbar() {
   ];
 
   const navLinksRow2 = [
-    { name: "运营平台", href: "/platform" },
+    { name: "猫眼内容平台", href: "/content" },
     { name: "小龙虾 AI", href: "/openclaw" },
     { name: "毛智库", href: "/mao-think-tank" },
   ];
@@ -84,10 +85,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-8 flex-shrink-0">
-              <div className="flex items-center gap-2 text-white/40 hover:text-white transition-colors cursor-pointer">
-                <Globe size={14} />
-                <span className="text-[0.7rem] font-['DM_Mono'] tracking-widest uppercase">CN / EN</span>
-              </div>
+              <LanguageSwitcher />
               <Button
                 asChild
                 className="bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866] rounded-none px-6 py-5 text-[0.7rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 flex-shrink-0"
@@ -162,7 +160,7 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-white/70 text-lg font-medium tracking-widest uppercase hover:text-[#C9A84C]"
+              className="text-white/70 text-lg font-medium tracking-widest hover:text-[#C9A84C]"
             >
               {link.name}
             </Link>
