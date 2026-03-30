@@ -8,7 +8,7 @@
     "awards": "荣誉奖项",
     "contact": "联系我们",
     "bookConsultation": "预约咨询",
-    "maoIndustry": "猫眼工业",
+    "maoIndustry": "猫眼增长引擎 (Mc&Mamoo Growth Engine)工业",
     "maoIndustryHome": "工业板块首页",
     "millenniumClock": "万年钟详情",
     "cooperation": "合作咨询"
@@ -16,7 +16,7 @@
   "hero": {
     "label": "Global Premium Brand Management · 全球顶奢品牌管理",
     "subtitle": "Multiply Your Brand Profits",
-    "brandName": "猫眼增长引擎",
+    "brandName": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎",
     "tagline": "让品牌显贵，让利润倍增，让增长全域",
     "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
     "cta1": "预约品牌诊断",
@@ -26,8 +26,8 @@
   },
   "about": {
     "title": "关于我们",
-    "subtitle": "猫眼增长引擎",
-    "description": "猫眼增长引擎是中国领先的品牌增长咨询机构，深耕消费品牌领域超过10年。我们以数据驱动、创意赋能为核心，帮助品牌实现可持续的高速增长。",
+    "subtitle": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎",
+    "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎是中国领先的品牌增长咨询机构，深耕消费品牌领域超过10年。我们以数据驱动、创意赋能为核心，帮助品牌实现可持续的高速增长。",
     "mission": "使命",
     "missionText": "让每一个有价值的品牌被更多人看见",
     "vision": "愿景",
@@ -48,7 +48,7 @@
     "growthDesc": "数据驱动的增长策略，实现GMV持续突破"
   },
   "maoIndustry": {
-    "title": "猫眼工业",
+    "title": "猫眼增长引擎 (Mc&Mamoo Growth Engine)工业",
     "subtitle": "Mao Industry",
     "description": "面向未来的工业科技版图，从月球能源到军工制造，构建人类文明的下一个支点。",
     "helium3": "月球氦³能源",
@@ -59,7 +59,7 @@
     "militaryDesc": "高精度军工零部件制造与系统集成，服务国防现代化建设",
     "partners": "战略合作伙伴",
     "cooperationTitle": "战略合作申请",
-    "cooperationDesc": "如您有意与猫眼工业开展战略合作，请填写以下信息，我们将在48小时内与您联系。"
+    "cooperationDesc": "如您有意与猫眼增长引擎 (Mc&Mamoo Growth Engine)工业开展战略合作，请填写以下信息，我们将在48小时内与您联系。"
   },
   "millenniumClock": {
     "title": "万年钟",
