@@ -133,7 +133,7 @@ export default function Hero() {
                 Mc&amp;Mamoo
               </span>
               <span className="block text-3xl md:text-4xl lg:text-5xl font-light text-[#C9A84C] mt-1 tracking-wide">
-                Brand Management Inc.
+                Mc&amp;Mamoo Inc.
               </span>
             </h1>
 

@@ -495,7 +495,7 @@ export default function CaseXieTaitai() {
         className="py-8 px-8 md:px-20 text-center text-xs"
         style={{ borderTop: "1px solid rgba(201,168,76,0.1)", color: "rgba(255,255,255,0.2)" }}
       >
-        © 2024 Mc&Mamoo Brand Management Inc. · 猫眼增长引擎 Mc&Mamoo Growth Engine和询 · 蟹太太案例
+        © 2024 Mc&Mamoo Inc. · 猫眼增长引擎 Mc&Mamoo Growth Engine和询 · 蟹太太案例
       </div>
     </div>
   );

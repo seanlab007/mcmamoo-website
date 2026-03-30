@@ -93,8 +93,8 @@ const HOME_JSON_LD = [
 
 export default function Home() {
   useSEO({
-    title: "猫眼增长引擎 Mc&Mamoo Growth Engine · Mc&Mamoo Brand Management Inc. | 中国新消费第一品牌战略咨询公司",
-    description: "猫眼增长引擎 Mc&Mamoo Growth Engine（Mc&Mamoo Brand Management Inc.）独创错位竞争理论，服务江中猴姑、小鲜炖、小罐茶、蟹太太等10亿级大单品。品牌显贵·利润倍增·全域增长，成为您的深度战略合伙人。",
+    title: "猫眼增长引擎 Mc&Mamoo Growth Engine · Mc&Mamoo Inc. | 中国新消费第一品牌战略咨询公司",
+    description: "猫眼增长引擎 Mc&Mamoo Growth Engine（Mc&Mamoo Inc.）独创错位竞争理论，服务江中猴姑、小鲜炖、小罐茶、蟹太太等10亿级大单品。品牌显贵·利润倍增·全域增长，成为您的深度战略合伙人。",
     url: "https://www.mcmamoo.com/",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-bg-d7eizqgBbqatPTyug6Apqv.webp",
     keywords: "猫眼增长引擎 Mc&Mamoo Growth Engine,Mc&Mamoo,品牌战略咨询,新消费品牌,错位竞争,品牌定位,爆品策划,天猫运营,品牌管理公司,战略咨询,消费品牌升级,品类战略",
