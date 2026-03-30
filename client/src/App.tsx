@@ -18,13 +18,18 @@ import AdminAiNodes from "./pages/AdminAiNodes";
 import Platform from "./pages/Platform";
 import Chat from "./pages/Chat";
 import Notes from "./pages/Notes";
-import MaoAISales from "./pages/MaoAISales";
 import WechatFloat from "./components/WechatFloat";
 import IPLicensing from "./pages/IPLicensing";
 import Pricing from "./pages/Pricing";
 import Press from "./pages/Press";
-import MaoAIChat from "./pages/MaoAIChat";
-import MaoAIPricing from "./pages/MaoAIPricing";
+// MaoAI Feature — all pages and routes from the unified feature folder
+import {
+  MaoAIChat,
+  MaoAILogin,
+  MaoAIPricing,
+  MaoAISales,
+  MAOAI_ROUTES,
+} from "./features/maoai";
 import OpenClaw from "./pages/OpenClaw";
 import MillenniumClock from "./pages/MillenniumClock";
 import WhalePictures from "./pages/WhalePictures";
@@ -63,9 +68,12 @@ function Router() {
       <Route path={"/ip-licensing"} component={IPLicensing} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/press"} component={Press} />
-      <Route path={"/mao-ai"} component={MaoAIChat} />
-      <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
-      <Route path={"/maoai/sales"} component={MaoAISales} />
+      <Route path={"/mao-ai"} component={MaoAIChat} />         {/* legacy alias → /maoai */}
+      <Route path={MAOAI_ROUTES.CHAT} component={MaoAIChat} />
+      <Route path={MAOAI_ROUTES.LOGIN} component={MaoAILogin} />
+      <Route path={"/mao-ai-pricing"} component={MaoAIPricing} /> {/* legacy alias → /maoai/pricing */}
+      <Route path={MAOAI_ROUTES.PRICING} component={MaoAIPricing} />
+      <Route path={MAOAI_ROUTES.SALES} component={MaoAISales} />
       
       {/* 猫眼增长引擎 Mc&Mamoo Growth Engine内容平台 */}
       <Route path={"/content"} component={ContentDashboard} />

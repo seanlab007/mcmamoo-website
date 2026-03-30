@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { MAOAI_ROUTES } from "@/features/maoai";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -17,7 +18,7 @@ export default function Navbar() {
   }, []);
 
   const navLinksRow1 = [
-    { name: "MaoAI", href: "/mao-ai" },
+    { name: "MaoAI", href: MAOAI_ROUTES.CHAT },
     { name: "猫眼内容平台", href: "/media-matrix-system.html" },
     { name: "Whale Pictures", href: "/whale-pictures" },
     { name: "猫眼工业", href: "/mao-industry" },
