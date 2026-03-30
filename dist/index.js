@@ -1,3 +1,269 @@
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// drizzle/schema.ts
+var schema_exports = {};
+__export(schema_exports, {
+  briefSubscribers: () => briefSubscribers,
+  maoApplications: () => maoApplications,
+  outreachActivities: () => outreachActivities,
+  outreachTemplates: () => outreachTemplates,
+  salesLeads: () => salesLeads,
+  users: () => users
+});
+import { boolean, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+var users, maoApplications, briefSubscribers, salesLeads, outreachTemplates, outreachActivities;
+var init_schema = __esm({
+  "drizzle/schema.ts"() {
+    "use strict";
+    users = mysqlTable("users", {
+      /**
+       * Surrogate primary key. Auto-incremented numeric value managed by the database.
+       * Use this for relations between tables.
+       */
+      id: int("id").autoincrement().primaryKey(),
+      /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
+      openId: varchar("openId", { length: 64 }).notNull().unique(),
+      name: text("name"),
+      email: varchar("email", { length: 320 }),
+      loginMethod: varchar("loginMethod", { length: 64 }),
+      role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+      lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull()
+    });
+    maoApplications = mysqlTable("mao_applications", {
+      id: int("id").autoincrement().primaryKey(),
+      name: varchar("name", { length: 128 }).notNull(),
+      organization: varchar("organization", { length: 256 }).notNull(),
+      consultType: varchar("consult_type", { length: 128 }).notNull(),
+      description: text("description"),
+      status: mysqlEnum("status", ["pending", "reviewing", "approved", "rejected"]).default("pending").notNull(),
+      notes: text("notes"),
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    });
+    briefSubscribers = mysqlTable("brief_subscribers", {
+      id: int("id").autoincrement().primaryKey(),
+      email: varchar("email", { length: 320 }).notNull().unique(),
+      createdAt: timestamp("createdAt").defaultNow().notNull()
+    });
+    salesLeads = mysqlTable("sales_leads", {
+      id: int("id").autoincrement().primaryKey(),
+      name: varchar("name", { length: 128 }).notNull(),
+      company: varchar("company", { length: 256 }).notNull(),
+      title: varchar("title", { length: 128 }),
+      email: varchar("email", { length: 320 }).notNull(),
+      phone: varchar("phone", { length: 64 }),
+      linkedin: varchar("linkedin", { length: 256 }),
+      website: varchar("website", { length: 256 }),
+      status: mysqlEnum("status", ["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"]).default("new").notNull(),
+      source: mysqlEnum("source", ["website", "linkedin", "referral", "cold_outreach", "event", "other"]).default("other").notNull(),
+      score: int("score").default(0),
+      notes: text("notes"),
+      lastContact: timestamp("lastContact"),
+      nextFollowUp: timestamp("nextFollowUp"),
+      assignedTo: int("assignedTo").references(() => users.id),
+      aiInsights: json("aiInsights").$type(),
+      suggestedActions: json("suggestedActions").$type(),
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    });
+    outreachTemplates = mysqlTable("outreach_templates", {
+      id: int("id").autoincrement().primaryKey(),
+      name: varchar("name", { length: 128 }).notNull(),
+      subject: varchar("subject", { length: 256 }),
+      body: text("body").notNull(),
+      type: mysqlEnum("type", ["email", "linkedin"]).default("email").notNull(),
+      category: varchar("category", { length: 64 }),
+      aiOptimized: boolean("aiOptimized").default(false),
+      createdBy: int("createdBy").references(() => users.id),
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    });
+    outreachActivities = mysqlTable("outreach_activities", {
+      id: int("id").autoincrement().primaryKey(),
+      leadId: int("leadId").notNull().references(() => salesLeads.id),
+      type: mysqlEnum("type", ["email", "linkedin", "call", "meeting", "note"]).notNull(),
+      subject: varchar("subject", { length: 256 }),
+      content: text("content"),
+      status: mysqlEnum("status", ["draft", "sent", "delivered", "opened", "replied", "bounced"]).default("draft").notNull(),
+      sentAt: timestamp("sentAt"),
+      openedAt: timestamp("openedAt"),
+      repliedAt: timestamp("repliedAt"),
+      createdBy: int("createdBy").references(() => users.id),
+      createdAt: timestamp("createdAt").defaultNow().notNull()
+    });
+  }
+});
+
+// vite.config.ts
+var vite_config_exports = {};
+__export(vite_config_exports, {
+  default: () => vite_config_default
+});
+import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import fs from "node:fs";
+import path from "node:path";
+import { defineConfig } from "vite";
+import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+function ensureLogDir() {
+  if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+  }
+}
+function trimLogFile(logPath, maxSize) {
+  try {
+    if (!fs.existsSync(logPath) || fs.statSync(logPath).size <= maxSize) {
+      return;
+    }
+    const lines = fs.readFileSync(logPath, "utf-8").split("\n");
+    const keptLines = [];
+    let keptBytes = 0;
+    const targetSize = TRIM_TARGET_BYTES;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const lineBytes = Buffer.byteLength(`${lines[i]}
+`, "utf-8");
+      if (keptBytes + lineBytes > targetSize) break;
+      keptLines.unshift(lines[i]);
+      keptBytes += lineBytes;
+    }
+    fs.writeFileSync(logPath, keptLines.join("\n"), "utf-8");
+  } catch {
+  }
+}
+function writeToLogFile(source, entries) {
+  if (entries.length === 0) return;
+  ensureLogDir();
+  const logPath = path.join(LOG_DIR, `${source}.log`);
+  const lines = entries.map((entry) => {
+    const ts = (/* @__PURE__ */ new Date()).toISOString();
+    return `[${ts}] ${JSON.stringify(entry)}`;
+  });
+  fs.appendFileSync(logPath, `${lines.join("\n")}
+`, "utf-8");
+  trimLogFile(logPath, MAX_LOG_SIZE_BYTES);
+}
+function vitePluginManusDebugCollector() {
+  return {
+    name: "manus-debug-collector",
+    transformIndexHtml(html) {
+      if (process.env.NODE_ENV === "production") {
+        return html;
+      }
+      return {
+        html,
+        tags: [
+          {
+            tag: "script",
+            attrs: {
+              src: "/__manus__/debug-collector.js",
+              defer: true
+            },
+            injectTo: "head"
+          }
+        ]
+      };
+    },
+    configureServer(server) {
+      server.middlewares.use("/__manus__/logs", (req, res, next) => {
+        if (req.method !== "POST") {
+          return next();
+        }
+        const handlePayload = (payload) => {
+          if (payload.consoleLogs?.length > 0) {
+            writeToLogFile("browserConsole", payload.consoleLogs);
+          }
+          if (payload.networkRequests?.length > 0) {
+            writeToLogFile("networkRequests", payload.networkRequests);
+          }
+          if (payload.sessionEvents?.length > 0) {
+            writeToLogFile("sessionReplay", payload.sessionEvents);
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: true }));
+        };
+        const reqBody = req.body;
+        if (reqBody && typeof reqBody === "object") {
+          try {
+            handlePayload(reqBody);
+          } catch (e) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ success: false, error: String(e) }));
+          }
+          return;
+        }
+        let body = "";
+        req.on("data", (chunk) => {
+          body += chunk.toString();
+        });
+        req.on("end", () => {
+          try {
+            const payload = JSON.parse(body);
+            handlePayload(payload);
+          } catch (e) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ success: false, error: String(e) }));
+          }
+        });
+      });
+    }
+  };
+}
+var PROJECT_ROOT, LOG_DIR, MAX_LOG_SIZE_BYTES, TRIM_TARGET_BYTES, plugins, vite_config_default;
+var init_vite_config = __esm({
+  "vite.config.ts"() {
+    "use strict";
+    PROJECT_ROOT = import.meta.dirname;
+    LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
+    MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024;
+    TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6);
+    plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+    vite_config_default = defineConfig({
+      plugins,
+      resolve: {
+        alias: {
+          "@": path.resolve(import.meta.dirname, "client", "src"),
+          "@shared": path.resolve(import.meta.dirname, "shared"),
+          "@assets": path.resolve(import.meta.dirname, "attached_assets")
+        }
+      },
+      envDir: path.resolve(import.meta.dirname),
+      root: path.resolve(import.meta.dirname, "client"),
+      publicDir: path.resolve(import.meta.dirname, "client", "public"),
+      build: {
+        outDir: path.resolve(import.meta.dirname, "dist/public"),
+        emptyOutDir: true
+      },
+      server: {
+        host: true,
+        allowedHosts: [
+          ".manuspre.computer",
+          ".manus.computer",
+          ".manus-asia.computer",
+          ".manuscomputer.ai",
+          ".manusvm.computer",
+          "localhost",
+          "127.0.0.1"
+        ],
+        fs: {
+          strict: true,
+          deny: ["**/.*"]
+        }
+      }
+    });
+  }
+});
+
 // server/_core/index.ts
 import "dotenv/config";
 import express2 from "express";
@@ -13,43 +279,9 @@ var UNAUTHED_ERR_MSG = "Please login (10001)";
 var NOT_ADMIN_ERR_MSG = "You do not have required permission (10002)";
 
 // server/db.ts
+init_schema();
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-
-// drizzle/schema.ts
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
-var users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
-  id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
-  name: text("name"),
-  email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull()
-});
-var maoApplications = mysqlTable("mao_applications", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 128 }).notNull(),
-  organization: varchar("organization", { length: 256 }).notNull(),
-  consultType: varchar("consult_type", { length: 128 }).notNull(),
-  description: text("description"),
-  status: mysqlEnum("status", ["pending", "reviewing", "approved", "rejected"]).default("pending").notNull(),
-  notes: text("notes"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
-});
-var briefSubscribers = mysqlTable("brief_subscribers", {
-  id: int("id").autoincrement().primaryKey(),
-  email: varchar("email", { length: 320 }).notNull().unique(),
-  createdAt: timestamp("createdAt").defaultNow().notNull()
-});
 
 // server/_core/env.ts
 var ENV = {
@@ -107,6 +339,9 @@ async function upsertUser(user) {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
+      values.role = "admin";
+      updateSet.role = "admin";
+    } else if (user.email === "sean_lab@me.com") {
       values.role = "admin";
       updateSet.role = "admin";
     }
@@ -563,8 +798,9 @@ var systemRouter = router({
 });
 
 // server/routers.ts
-import { TRPCError as TRPCError3 } from "@trpc/server";
-import { z as z2 } from "zod";
+import { TRPCError as TRPCError4 } from "@trpc/server";
+init_schema();
+import { z as z4 } from "zod";
 
 // server/email.ts
 import nodemailer from "nodemailer";
@@ -761,9 +997,649 @@ function generateNewsletterHtml(subject, content) {
   `.trim();
 }
 
+// server/autoclip.ts
+import { z as z2 } from "zod";
+var AUTOCLIP_API_URL = process.env.AUTOCLIP_API_URL || "http://localhost:8000";
+var autoclipRouter = router({
+  // 获取项目列表
+  listProjects: publicProcedure.query(async () => {
+    try {
+      const response = await fetch(`${AUTOCLIP_API_URL}/api/v1/projects`, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      if (!response.ok) throw new Error("Failed to fetch projects");
+      return await response.json();
+    } catch (error) {
+      console.error("AutoClip API error:", error);
+      return {
+        items: [],
+        total: 0
+      };
+    }
+  }),
+  // 创建新项目
+  createProject: publicProcedure.input(
+    z2.object({
+      url: z2.string().url(),
+      platform: z2.enum(["youtube", "bilibili", "local"])
+    })
+  ).mutation(async ({ input }) => {
+    try {
+      const response = await fetch(`${AUTOCLIP_API_URL}/api/v1/projects`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          url: input.url,
+          platform: input.platform
+        })
+      });
+      if (!response.ok) throw new Error("Failed to create project");
+      return await response.json();
+    } catch (error) {
+      console.error("AutoClip API error:", error);
+      return {
+        id: Date.now().toString(),
+        status: "pending",
+        url: input.url,
+        platform: input.platform
+      };
+    }
+  }),
+  // 获取项目详情
+  getProject: publicProcedure.input(z2.object({ id: z2.string() })).query(async ({ input }) => {
+    try {
+      const response = await fetch(
+        `${AUTOCLIP_API_URL}/api/v1/projects/${input.id}`,
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch project");
+      return await response.json();
+    } catch (error) {
+      console.error("AutoClip API error:", error);
+      return null;
+    }
+  }),
+  // 解析 YouTube 视频
+  parseYouTube: publicProcedure.input(z2.object({ url: z2.string() })).mutation(async ({ input }) => {
+    try {
+      const response = await fetch(
+        `${AUTOCLIP_API_URL}/api/v1/youtube/parse`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ url: input.url })
+        }
+      );
+      if (!response.ok) throw new Error("Failed to parse YouTube video");
+      return await response.json();
+    } catch (error) {
+      console.error("AutoClip API error:", error);
+      return {
+        title: "\u89C6\u9891\u89E3\u6790",
+        duration: 0,
+        thumbnail: ""
+      };
+    }
+  }),
+  // 解析 Bilibili 视频
+  parseBilibili: publicProcedure.input(z2.object({ url: z2.string() })).mutation(async ({ input }) => {
+    try {
+      const response = await fetch(
+        `${AUTOCLIP_API_URL}/api/v1/bilibili/parse`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ url: input.url })
+        }
+      );
+      if (!response.ok) throw new Error("Failed to parse Bilibili video");
+      return await response.json();
+    } catch (error) {
+      console.error("AutoClip API error:", error);
+      return {
+        title: "\u89C6\u9891\u89E3\u6790",
+        duration: 0,
+        thumbnail: ""
+      };
+    }
+  }),
+  // 开始处理项目
+  processProject: publicProcedure.input(z2.object({ id: z2.string() })).mutation(async ({ input }) => {
+    try {
+      const response = await fetch(
+        `${AUTOCLIP_API_URL}/api/v1/projects/${input.id}/process`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      if (!response.ok) throw new Error("Failed to process project");
+      return await response.json();
+    } catch (error) {
+      console.error("AutoClip API error:", error);
+      return { success: true, status: "processing" };
+    }
+  }),
+  // 获取处理状态
+  getProjectStatus: publicProcedure.input(z2.object({ id: z2.string() })).query(async ({ input }) => {
+    try {
+      const response = await fetch(
+        `${AUTOCLIP_API_URL}/api/v1/projects/${input.id}/status`,
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      if (!response.ok) throw new Error("Failed to get status");
+      return await response.json();
+    } catch (error) {
+      console.error("AutoClip API error:", error);
+      return {
+        status: "unknown",
+        progress: 0
+      };
+    }
+  })
+});
+
+// server/sales.ts
+import { TRPCError as TRPCError3 } from "@trpc/server";
+import { z as z3 } from "zod";
+
+// supabase/sales-client.ts
+import { createClient } from "@supabase/supabase-js";
+var SUPABASE_URL = "https://fczherphuixpdjuevzsh.supabase.co";
+var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjemhlcnBodWl4cGRqdWV2enNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDM0OTEsImV4cCI6MjA4OTIxOTQ5MX0.t7FSUWbWDsKIcU-m-1ul65aVVu87RZn0zHleqccDEo4";
+var SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjemhlcnBodWl4cGRqdWV2enNoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzY0MzQ5MSwiZXhwIjoyMDg5MjE5NDkxfQ.XgyphQNQtmOPx1hFl5WyL5W_FCLOW8iX6k5ryf9KNIg";
+var supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+async function getSalesLeads(filters) {
+  let query = supabase.from("sales_leads").select("*").order("created_at", { ascending: false });
+  if (filters?.status) {
+    query = query.eq("status", filters.status);
+  }
+  if (filters?.source) {
+    query = query.eq("source", filters.source);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}
+async function getSalesLeadById(id) {
+  const { data, error } = await supabase.from("sales_leads").select("*").eq("id", id).single();
+  if (error) throw error;
+  return data;
+}
+async function createSalesLead(lead) {
+  const { data, error } = await supabase.from("sales_leads").insert(lead).select().single();
+  if (error) throw error;
+  return data;
+}
+async function updateSalesLead(id, updates) {
+  const { data, error } = await supabase.from("sales_leads").update(updates).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+async function deleteSalesLead(id) {
+  const { error } = await supabase.from("sales_leads").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+async function getOutreachTemplates(type) {
+  let query = supabase.from("outreach_templates").select("*").order("created_at", { ascending: false });
+  if (type) {
+    query = query.eq("type", type);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}
+async function getOutreachActivities(leadId) {
+  let query = supabase.from("outreach_activities").select("*").order("created_at", { ascending: false });
+  if (leadId) {
+    query = query.eq("lead_id", leadId);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}
+async function createOutreachActivity(activity) {
+  const { data, error } = await supabase.from("outreach_activities").insert(activity).select().single();
+  if (error) throw error;
+  return data;
+}
+async function getPipelineStats() {
+  const { data, error } = await supabase.from("sales_leads").select("status");
+  if (error) throw error;
+  const stats = {
+    total: data.length,
+    new: 0,
+    contacted: 0,
+    qualified: 0,
+    proposal: 0,
+    negotiation: 0,
+    closedWon: 0,
+    closedLost: 0
+  };
+  data.forEach((lead) => {
+    const key = lead.status === "closed_won" ? "closedWon" : lead.status === "closed_lost" ? "closedLost" : lead.status;
+    if (key in stats) {
+      stats[key]++;
+    }
+  });
+  return stats;
+}
+async function getAIInsights() {
+  const { data: opportunities, error: oppError } = await supabase.from("sales_leads").select("*").gte("score", 80).limit(3);
+  if (oppError) throw oppError;
+  const threeDaysAgo = /* @__PURE__ */ new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const { data: risks, error: riskError } = await supabase.from("sales_leads").select("*").lt("last_contact", threeDaysAgo.toISOString()).limit(3);
+  if (riskError) throw riskError;
+  const insights = [
+    ...opportunities.map((lead) => ({
+      id: `opp-${lead.id}`,
+      type: "opportunity",
+      title: `\u9AD8\u4EF7\u503C\u7EBF\u7D22: ${lead.company}`,
+      description: `${lead.name} (${lead.title}) \u8BC4\u5206 ${lead.score}\uFF0C\u5EFA\u8BAE\u4F18\u5148\u8DDF\u8FDB`,
+      confidence: lead.score,
+      leadId: lead.id
+    })),
+    ...risks.map((lead) => ({
+      id: `risk-${lead.id}`,
+      type: "risk",
+      title: `\u9700\u8981\u8DDF\u8FDB: ${lead.company}`,
+      description: `\u5BA2\u6237"${lead.name}"\u5DF2\u8D85\u8FC73\u5929\u672A\u8054\u7CFB\uFF0C\u5EFA\u8BAE\u8DDF\u8FDB`,
+      confidence: 70,
+      leadId: lead.id
+    }))
+  ];
+  return insights;
+}
+
+// server/sales.ts
+var salesRouter = router({
+  // List all leads
+  listLeads: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const leads = await getSalesLeads();
+      return leads.map((lead) => ({
+        id: lead.id.toString(),
+        name: lead.name,
+        company: lead.company,
+        title: lead.title || "",
+        email: lead.email,
+        phone: lead.phone || "",
+        linkedin: lead.linkedin || "",
+        status: lead.status,
+        source: lead.source,
+        score: lead.score,
+        notes: lead.notes || "",
+        lastContact: lead.last_contact,
+        nextFollowUp: lead.next_follow_up,
+        assignedTo: lead.assigned_to,
+        aiInsights: lead.ai_insights || [],
+        suggestedActions: lead.suggested_actions || [],
+        createdAt: lead.created_at,
+        updatedAt: lead.updated_at
+      }));
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch leads" });
+    }
+  }),
+  // Get lead by ID
+  getLead: protectedProcedure.input(z3.object({ id: z3.string() })).query(async ({ input }) => {
+    try {
+      const lead = await getSalesLeadById(parseInt(input.id));
+      return {
+        id: lead.id.toString(),
+        name: lead.name,
+        company: lead.company,
+        title: lead.title || "",
+        email: lead.email,
+        phone: lead.phone || "",
+        linkedin: lead.linkedin || "",
+        status: lead.status,
+        source: lead.source,
+        score: lead.score,
+        notes: lead.notes || "",
+        lastContact: lead.last_contact,
+        nextFollowUp: lead.next_follow_up,
+        aiInsights: lead.ai_insights || [],
+        suggestedActions: lead.suggested_actions || []
+      };
+    } catch (error) {
+      console.error("Error fetching lead:", error);
+      throw new TRPCError3({ code: "NOT_FOUND", message: "Lead not found" });
+    }
+  }),
+  // Create new lead
+  createLead: protectedProcedure.input(z3.object({
+    name: z3.string().min(1),
+    company: z3.string().min(1),
+    title: z3.string().optional(),
+    email: z3.string().email(),
+    phone: z3.string().optional(),
+    linkedin: z3.string().optional(),
+    website: z3.string().optional(),
+    source: z3.enum(["website", "linkedin", "referral", "cold_outreach", "event", "other"]),
+    notes: z3.string().optional()
+  })).mutation(async ({ input, ctx }) => {
+    try {
+      const lead = await createSalesLead({
+        name: input.name,
+        company: input.company,
+        title: input.title || null,
+        email: input.email,
+        phone: input.phone || null,
+        linkedin: input.linkedin || null,
+        website: input.website || null,
+        source: input.source,
+        notes: input.notes || null,
+        status: "new",
+        score: 0,
+        assigned_to: null,
+        ai_insights: [],
+        suggested_actions: [],
+        last_contact: null,
+        next_follow_up: null
+      });
+      return { success: true, id: lead.id.toString() };
+    } catch (error) {
+      console.error("Error creating lead:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create lead" });
+    }
+  }),
+  // Update lead status
+  updateLeadStatus: protectedProcedure.input(z3.object({
+    id: z3.string(),
+    status: z3.enum(["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"])
+  })).mutation(async ({ input }) => {
+    try {
+      await updateSalesLead(parseInt(input.id), { status: input.status });
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update lead status" });
+    }
+  }),
+  // Update lead
+  updateLead: protectedProcedure.input(z3.object({
+    id: z3.string(),
+    data: z3.object({
+      name: z3.string().min(1).optional(),
+      company: z3.string().min(1).optional(),
+      title: z3.string().optional(),
+      email: z3.string().email().optional(),
+      phone: z3.string().optional(),
+      linkedin: z3.string().optional(),
+      website: z3.string().optional(),
+      status: z3.enum(["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"]).optional(),
+      score: z3.number().optional(),
+      notes: z3.string().optional()
+    })
+  })).mutation(async ({ input }) => {
+    try {
+      await updateSalesLead(parseInt(input.id), input.data);
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update lead" });
+    }
+  }),
+  // Delete lead
+  deleteLead: protectedProcedure.input(z3.object({ id: z3.string() })).mutation(async ({ input }) => {
+    try {
+      await deleteSalesLead(parseInt(input.id));
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting lead:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to delete lead" });
+    }
+  }),
+  // Get sales pipeline stats
+  getPipelineStats: protectedProcedure.query(async () => {
+    try {
+      const stats = await getPipelineStats();
+      return {
+        ...stats,
+        totalValue: stats.closedWon * 5e4 + stats.negotiation * 3e4 + stats.proposal * 2e4,
+        avgDealSize: stats.closedWon > 0 ? Math.round(stats.closedWon * 5e4 / stats.closedWon) : 0,
+        conversionRate: stats.total > 0 ? Math.round(stats.closedWon / stats.total * 100) : 0
+      };
+    } catch (error) {
+      console.error("Error fetching pipeline stats:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch pipeline stats" });
+    }
+  }),
+  // Get outreach templates
+  getTemplates: protectedProcedure.input(z3.object({ type: z3.enum(["email", "linkedin"]).optional() }).optional()).query(async ({ input }) => {
+    try {
+      const templates = await getOutreachTemplates(input?.type);
+      return templates.map((t2) => ({
+        id: t2.id.toString(),
+        name: t2.name,
+        subject: t2.subject || "",
+        body: t2.body,
+        type: t2.type,
+        category: t2.category || "",
+        aiOptimized: t2.ai_optimized
+      }));
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch templates" });
+    }
+  }),
+  // Get outreach activities
+  getActivities: protectedProcedure.input(z3.object({ leadId: z3.string().optional() }).optional()).query(async ({ input }) => {
+    try {
+      const activities = await getOutreachActivities(input?.leadId ? parseInt(input.leadId) : void 0);
+      return activities.map((a) => ({
+        id: a.id.toString(),
+        leadId: a.lead_id.toString(),
+        type: a.type,
+        subject: a.subject || "",
+        content: a.content || "",
+        status: a.status,
+        sentAt: a.sent_at,
+        openedAt: a.opened_at,
+        repliedAt: a.replied_at,
+        createdAt: a.created_at
+      }));
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch activities" });
+    }
+  }),
+  // AI: Generate outreach email
+  generateEmail: protectedProcedure.input(z3.object({
+    leadId: z3.string(),
+    template: z3.enum(["cold", "followup", "proposal", "linkedin"]),
+    tone: z3.enum(["professional", "friendly", "formal"]).optional(),
+    customInstructions: z3.string().optional()
+  })).mutation(async ({ input }) => {
+    try {
+      const lead = await getSalesLeadById(parseInt(input.leadId));
+      const templates = await getOutreachTemplates(input.template === "linkedin" ? "linkedin" : "email");
+      const template = templates.find((t2) => {
+        if (input.template === "cold") return t2.category === "cold_outreach";
+        if (input.template === "followup") return t2.category === "follow_up";
+        if (input.template === "proposal") return t2.category === "proposal";
+        if (input.template === "linkedin") return t2.category === "networking";
+        return false;
+      }) || templates[0];
+      if (!template) {
+        throw new Error("Template not found");
+      }
+      let subject = template.subject || "";
+      let body = template.body;
+      const replacements = {
+        "{{name}}": lead.name,
+        "{{company}}": lead.company,
+        "{{title}}": lead.title || "",
+        "{{ai_insights}}": (lead.ai_insights || []).join("\n")
+      };
+      Object.entries(replacements).forEach(([key, value]) => {
+        subject = subject.replace(new RegExp(key, "g"), value);
+        body = body.replace(new RegExp(key, "g"), value);
+      });
+      await createOutreachActivity({
+        lead_id: lead.id,
+        type: input.template === "linkedin" ? "linkedin" : "email",
+        subject,
+        content: body,
+        status: "draft",
+        sent_at: null,
+        opened_at: null,
+        replied_at: null,
+        created_by: null
+      });
+      return {
+        success: true,
+        content: { subject, body }
+      };
+    } catch (error) {
+      console.error("Error generating email:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate email" });
+    }
+  }),
+  // AI: Analyze lead score
+  analyzeLead: protectedProcedure.input(z3.object({ leadId: z3.string() })).mutation(async ({ input }) => {
+    try {
+      const lead = await getSalesLeadById(parseInt(input.leadId));
+      let score = 50;
+      const factors = [];
+      const titleScore = lead.title?.toLowerCase().includes("director") || lead.title?.toLowerCase().includes("vp") || lead.title?.toLowerCase().includes("ceo") ? 90 : 60;
+      score += titleScore * 0.3;
+      factors.push({ name: "\u804C\u4F4D\u5339\u914D\u5EA6", score: titleScore, weight: 0.3 });
+      const sourceScore = lead.source === "referral" ? 95 : lead.source === "website" ? 80 : 60;
+      score += sourceScore * 0.25;
+      factors.push({ name: "\u6765\u6E90\u8D28\u91CF", score: sourceScore, weight: 0.25 });
+      const contactScore = lead.linkedin && lead.phone ? 90 : lead.linkedin || lead.phone ? 70 : 50;
+      score += contactScore * 0.25;
+      factors.push({ name: "\u8054\u7CFB\u4FE1\u606F\u5B8C\u6574\u5EA6", score: contactScore, weight: 0.25 });
+      const notesScore = lead.notes && lead.notes.length > 20 ? 85 : 50;
+      score += notesScore * 0.2;
+      factors.push({ name: "\u4E92\u52A8\u6DF1\u5EA6", score: notesScore, weight: 0.2 });
+      const finalScore = Math.round(score);
+      await updateSalesLead(lead.id, {
+        score: finalScore,
+        ai_insights: [
+          finalScore >= 80 ? "\u9AD8\u610F\u5411\u5BA2\u6237\uFF0C\u5EFA\u8BAE\u4F18\u5148\u8DDF\u8FDB" : "\u4E2D\u7B49\u610F\u5411\uFF0C\u9700\u8981\u57F9\u517B",
+          lead.source === "referral" ? "\u63A8\u8350\u6765\u6E90\uFF0C\u4FE1\u4EFB\u5EA6\u9AD8" : null
+        ].filter(Boolean),
+        suggested_actions: [
+          finalScore >= 80 ? "\u5B89\u6392\u4EA7\u54C1\u6F14\u793A" : "\u53D1\u9001\u6848\u4F8B\u7814\u7A76",
+          "\u53D1\u9001\u4E2A\u6027\u5316\u90AE\u4EF6",
+          lead.linkedin ? "LinkedIn\u4E92\u52A8" : null
+        ].filter(Boolean)
+      });
+      return {
+        score: finalScore,
+        factors,
+        insights: [
+          finalScore >= 80 ? "\u9AD8\u610F\u5411\u5BA2\u6237\uFF0C\u5EFA\u8BAE\u4F18\u5148\u8DDF\u8FDB" : "\u4E2D\u7B49\u610F\u5411\u5BA2\u6237\uFF0C\u9700\u8981\u6301\u7EED\u57F9\u517B",
+          lead.source === "referral" ? "\u63A8\u8350\u6765\u6E90\uFF0C\u4FE1\u4EFB\u5EA6\u8F83\u9AD8" : null
+        ].filter(Boolean),
+        suggestedActions: [
+          finalScore >= 80 ? "\u5B89\u6392\u4EA7\u54C1\u6F14\u793A" : "\u53D1\u9001\u6848\u4F8B\u7814\u7A76",
+          "\u53D1\u9001\u4E2A\u6027\u5316\u90AE\u4EF6"
+        ],
+        predictedConversion: Math.min(finalScore + 10, 95)
+      };
+    } catch (error) {
+      console.error("Error analyzing lead:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to analyze lead" });
+    }
+  }),
+  // AI: Get sales insights
+  getInsights: protectedProcedure.query(async () => {
+    try {
+      const insights = await getAIInsights();
+      return insights;
+    } catch (error) {
+      console.error("Error fetching insights:", error);
+      throw new TRPCError3({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch insights" });
+    }
+  }),
+  // AI: Chat with sales assistant
+  chatWithAssistant: protectedProcedure.input(z3.object({
+    message: z3.string(),
+    context: z3.object({
+      leadId: z3.string().optional(),
+      previousMessages: z3.array(z3.object({ role: z3.enum(["user", "assistant"]), content: z3.string() })).optional()
+    }).optional()
+  })).mutation(async ({ input }) => {
+    try {
+      const message = input.message.toLowerCase();
+      let leadContext = "";
+      if (input.context?.leadId) {
+        try {
+          const lead = await getSalesLeadById(parseInt(input.context.leadId));
+          leadContext = `\u5BA2\u6237: ${lead.name}, \u516C\u53F8: ${lead.company}, \u72B6\u6001: ${lead.status}, \u8BC4\u5206: ${lead.score}`;
+        } catch (e) {
+        }
+      }
+      if (message.includes("\u5206\u6790") || message.includes("\u8BC4\u5206")) {
+        return {
+          response: leadContext ? `\u57FA\u4E8E${leadContext}\uFF0C\u8FD9\u662F\u4E00\u4E2A\u9AD8\u4EF7\u503C\u7EBF\u7D22\uFF0C\u5EFA\u8BAE\u4F18\u5148\u8DDF\u8FDB\u3002` : "\u8BF7\u63D0\u4F9B\u4E00\u4E2A\u7EBF\u7D22ID\uFF0C\u6211\u53EF\u4EE5\u5E2E\u4F60\u5206\u6790\u8BE5\u7EBF\u7D22\u7684\u6210\u4EA4\u6982\u7387\u548C\u5173\u952E\u7279\u5F81\u3002"
+        };
+      }
+      if (message.includes("\u90AE\u4EF6") || message.includes("\u751F\u6210")) {
+        return {
+          response: "\u6211\u53EF\u4EE5\u4E3A\u4F60\u751F\u6210\u4E2A\u6027\u5316\u7684\u5916\u8054\u90AE\u4EF6\u3002\u8BF7\u544A\u8BC9\u6211\uFF1A\n1. \u76EE\u6807\u5BA2\u6237\u7684\u7EBF\u7D22ID\n2. \u90AE\u4EF6\u7C7B\u578B\uFF08\u521D\u6B21\u63A5\u89E6/\u8DDF\u8FDB/\u63D0\u6848\uFF09\n3. \u5E0C\u671B\u5F3A\u8C03\u7684\u4EF7\u503C\u70B9"
+        };
+      }
+      if (message.includes("\u9884\u6D4B") || message.includes("\u6210\u4EA4")) {
+        const stats = await getPipelineStats();
+        return {
+          response: `\u6839\u636E\u5F53\u524D\u9500\u552E\u7BA1\u9053\u6570\u636E\uFF1A
+\u2022 \u603B\u7EBF\u7D22: ${stats.total}
+\u2022 \u63D0\u6848\u4E2D: ${stats.proposal}
+\u2022 \u8C08\u5224\u4E2D: ${stats.negotiation}
+\u2022 \u5DF2\u6210\u4EA4: ${stats.closedWon}
+
+\u9884\u8BA1\u672C\u6708\u53EF\u6210\u4EA4 ${stats.negotiation + Math.ceil(stats.proposal * 0.3)} \u4E2A\u5BA2\u6237\u3002`
+        };
+      }
+      if (message.includes("\u6700\u4F73") || message.includes("\u65F6\u95F4")) {
+        return {
+          response: "\u6839\u636E\u5386\u53F2\u6570\u636E\u5206\u6790\uFF1A\n\u2022 \u6700\u4F73\u8054\u7CFB\u65F6\u95F4\uFF1A\u5DE5\u4F5C\u65E5\u4E0B\u5348 2-4 \u70B9\n\u2022 \u56DE\u590D\u7387\u6700\u9AD8\u7684\u65E5\u5B50\uFF1A\u5468\u4E8C\u3001\u5468\u4E09\n\u2022 \u907F\u514D\u65F6\u95F4\uFF1A\u5468\u4E00\u4E0A\u5348\u3001\u5468\u4E94\u4E0B\u5348\n\n\u5EFA\u8BAE\u5728\u8FD9\u4E9B\u65F6\u6BB5\u5B89\u6392\u91CD\u8981\u7684\u5BA2\u6237\u6C9F\u901A\u3002"
+        };
+      }
+      return {
+        response: "\u6211\u662FMaoAI\u9500\u552E\u52A9\u624B\uFF0C\u53EF\u4EE5\u5E2E\u4F60\uFF1A\n\u2022 \u5206\u6790\u7EBF\u7D22\u8D28\u91CF\u548C\u6210\u4EA4\u6982\u7387\n\u2022 \u751F\u6210\u4E2A\u6027\u5316\u5916\u8054\u90AE\u4EF6\n\u2022 \u9884\u6D4B\u9500\u552E\u4E1A\u7EE9\n\u2022 \u63D0\u4F9B\u8054\u7CFB\u65F6\u95F4\u5EFA\u8BAE\n\n\u8BF7\u544A\u8BC9\u6211\u4F60\u9700\u8981\u4EC0\u4E48\u5E2E\u52A9\uFF1F"
+      };
+    } catch (error) {
+      console.error("Error in chat:", error);
+      return {
+        response: "\u62B1\u6B49\uFF0C\u5904\u7406\u8BF7\u6C42\u65F6\u51FA\u9519\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5\u3002"
+      };
+    }
+  })
+});
+
 // server/routers.ts
 var appRouter = router({
   system: systemRouter,
+  autoclip: autoclipRouter,
+  sales: salesRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -772,17 +1648,52 @@ var appRouter = router({
       return {
         success: true
       };
+    }),
+    // Admin: list all users
+    listUsers: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u67E5\u770B\u7528\u6237\u5217\u8868" });
+      }
+      const db = await getDb();
+      if (!db) return [];
+      const { users: users2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      const results = await db.select({
+        id: users2.id,
+        name: users2.name,
+        email: users2.email,
+        role: users2.role,
+        lastSignedIn: users2.lastSignedIn,
+        createdAt: users2.createdAt
+      }).from(users2).orderBy(users2.id.desc());
+      return results;
+    }),
+    // Admin: update user role
+    updateUserRole: protectedProcedure.input(
+      z4.object({
+        userId: z4.number().int().positive(),
+        role: z4.enum(["user", "admin"])
+      })
+    ).mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C\u7528\u6237\u89D2\u8272" });
+      }
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+      const { eq: eq2 } = await import("drizzle-orm");
+      const { users: users2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      await db.update(users2).set({ role: input.role, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(users2.id, input.userId));
+      return { success: true };
     })
   }),
   // Contact form submission with email notification
   contact: router({
     submit: publicProcedure.input(
-      z2.object({
-        name: z2.string().min(1).max(128),
-        company: z2.string().min(1).max(256),
-        phone: z2.string().min(1).max(64),
-        message: z2.string().max(2e3).optional(),
-        email: z2.string().email().optional()
+      z4.object({
+        name: z4.string().min(1).max(128),
+        company: z4.string().min(1).max(256),
+        phone: z4.string().min(1).max(64),
+        message: z4.string().max(2e3).optional(),
+        email: z4.string().email().optional()
       })
     ).mutation(async ({ input }) => {
       const adminEmail = process.env.SMTP_USER || "";
@@ -821,11 +1732,11 @@ var appRouter = router({
   // Mao Think Tank consultation application
   mao: router({
     submitApplication: publicProcedure.input(
-      z2.object({
-        name: z2.string().min(1).max(128),
-        organization: z2.string().min(1).max(256),
-        consultType: z2.string().min(1).max(128),
-        description: z2.string().max(2e3).optional()
+      z4.object({
+        name: z4.string().min(1).max(128),
+        organization: z4.string().min(1).max(256),
+        consultType: z4.string().min(1).max(128),
+        description: z4.string().max(2e3).optional()
       })
     ).mutation(async ({ input }) => {
       const db = await getDb();
@@ -851,7 +1762,7 @@ var appRouter = router({
     // Admin: list all applications (protected - admin only)
     listApplications: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") {
-        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u8BBF\u95EE" });
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u8BBF\u95EE" });
       }
       const db = await getDb();
       if (!db) return [];
@@ -860,8 +1771,8 @@ var appRouter = router({
     }),
     // Subscribe to strategic brief
     subscribeBrief: publicProcedure.input(
-      z2.object({
-        email: z2.string().email()
+      z4.object({
+        email: z4.string().email()
       })
     ).mutation(async ({ input }) => {
       const db = await getDb();
@@ -878,7 +1789,7 @@ var appRouter = router({
     // Admin: list all subscribers (protected - admin only)
     listSubscribers: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") {
-        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u8BBF\u95EE" });
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u8BBF\u95EE" });
       }
       const db = await getDb();
       if (!db) return [];
@@ -887,13 +1798,13 @@ var appRouter = router({
     }),
     // Admin: update application status (protected - admin only)
     updateApplicationStatus: protectedProcedure.input(
-      z2.object({
-        id: z2.number().int().positive(),
-        status: z2.enum(["pending", "approved", "rejected", "reviewing"])
+      z4.object({
+        id: z4.number().int().positive(),
+        status: z4.enum(["pending", "approved", "rejected", "reviewing"])
       })
     ).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") {
-        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
       }
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
@@ -903,13 +1814,13 @@ var appRouter = router({
     }),
     // Admin: update application notes (protected - admin only)
     updateApplicationNotes: protectedProcedure.input(
-      z2.object({
-        id: z2.number().int().positive(),
-        notes: z2.string().max(2e3)
+      z4.object({
+        id: z4.number().int().positive(),
+        notes: z4.string().max(2e3)
       })
     ).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") {
-        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
       }
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
@@ -919,13 +1830,13 @@ var appRouter = router({
     }),
     // Admin: send newsletter to all subscribers (protected - admin only)
     sendNewsletter: protectedProcedure.input(
-      z2.object({
-        subject: z2.string().min(1).max(256),
-        content: z2.string().min(1).max(1e4)
+      z4.object({
+        subject: z4.string().min(1).max(256),
+        content: z4.string().min(1).max(1e4)
       })
     ).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") {
-        throw new TRPCError3({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
+        throw new TRPCError4({ code: "FORBIDDEN", message: "\u4EC5\u7BA1\u7406\u5458\u53EF\u64CD\u4F5C" });
       }
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
@@ -958,20 +1869,20 @@ async function createContext(opts) {
 
 // server/_core/vite.ts
 import express from "express";
-import fs from "fs";
+import fs2 from "fs";
 import { nanoid } from "nanoid";
-import path from "path";
+import path2 from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
+var __dirname = path2.dirname(__filename);
 async function setupVite(app, server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true
   };
-  const viteConfig = await import("../../vite.config").then((m) => m.default || m);
+  const viteConfig = await Promise.resolve().then(() => (init_vite_config(), vite_config_exports)).then((m) => m.default || m);
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
@@ -982,13 +1893,13 @@ async function setupVite(app, server) {
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
     try {
-      const clientTemplate = path.resolve(
+      const clientTemplate = path2.resolve(
         __dirname,
         "../..",
         "client",
         "index.html"
       );
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      let template = await fs2.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
@@ -1002,22 +1913,38 @@ async function setupVite(app, server) {
   });
 }
 function serveStatic(app) {
-  const distPath = process.env.NODE_ENV === "development" ? path.resolve(__dirname, "../..", "dist", "public") : path.resolve(__dirname, "public");
-  if (!fs.existsSync(distPath)) {
+  const distPath = process.env.NODE_ENV === "development" ? path2.resolve(__dirname, "../..", "dist", "public") : path2.resolve(__dirname, "public");
+  if (!fs2.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
   app.use(express.static(distPath));
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.sendFile(path2.resolve(distPath, "index.html"));
   });
 }
 
 // server/aiNodes.ts
 import { Router } from "express";
 import crypto from "crypto";
+import fs3 from "fs";
+import path3 from "path";
 var aiNodesRouter = Router();
+var LOCAL_DB_PATH = path3.resolve(process.cwd(), ".openclaw-local-db.json");
+function loadLocalDb() {
+  try {
+    return JSON.parse(fs3.readFileSync(LOCAL_DB_PATH, "utf8"));
+  } catch {
+    return { nodes: {}, skills: {}, nextNodeId: 1 };
+  }
+}
+function saveLocalDb(db) {
+  fs3.writeFileSync(LOCAL_DB_PATH, JSON.stringify(db, null, 2), "utf8");
+}
+function isSupabaseConfigured() {
+  return !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY);
+}
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_KEY || "";
@@ -1026,7 +1953,7 @@ function getSupabaseConfig() {
   }
   return { url, key };
 }
-async function sbFetch(path2, options = {}, prefer) {
+async function sbFetch(path4, options = {}, prefer) {
   const { url, key } = getSupabaseConfig();
   const headers = {
     "Content-Type": "application/json",
@@ -1035,7 +1962,7 @@ async function sbFetch(path2, options = {}, prefer) {
     ...options.headers
   };
   if (prefer) headers["Prefer"] = prefer;
-  const res = await globalThis.fetch(`${url}/rest/v1${path2}`, {
+  const res = await globalThis.fetch(`${url}/rest/v1${path4}`, {
     ...options,
     headers
   });
@@ -1047,6 +1974,79 @@ async function sbFetch(path2, options = {}, prefer) {
     data = text2;
   }
   return { ok: res.ok, status: res.status, data };
+}
+async function localFetch(p, options = {}) {
+  const db = loadLocalDb();
+  const method = (options.method ?? "GET").toUpperCase();
+  const [tablePart, queryPart] = p.split("?");
+  const table = tablePart.replace(/^\//, "");
+  const params = new URLSearchParams(queryPart ?? "");
+  function filterRows(rows2) {
+    let result = [...rows2];
+    params.forEach((val, key) => {
+      if (key === "select" || key === "order") return;
+      const [field, op] = key.split(".");
+      if (!op) return;
+      if (op === "eq") result = result.filter((r) => String(r[field]) === val);
+      if (op === "lt") result = result.filter((r) => new Date(String(r[field])) < new Date(val));
+      if (op === "in") {
+        const ids = val.replace(/[()]/g, "").split(",").map((v) => v.trim());
+        result = result.filter((r) => ids.includes(String(r[field])));
+      }
+    });
+    return result;
+  }
+  const tableKey = table === "ai_nodes" ? "nodes" : "skills";
+  const store = db[tableKey];
+  const rows = Object.values(store);
+  if (method === "GET") {
+    const filtered = filterRows(rows);
+    return { ok: true, status: 200, data: filtered };
+  }
+  if (method === "POST") {
+    const body = JSON.parse(String(options.body ?? "{}"));
+    if (Array.isArray(body)) {
+      for (const item of body) {
+        const id = tableKey === "nodes" ? db.nextNodeId++ : `${item.nodeId}:${item.skillId}`;
+        const key = typeof id === "number" ? id : id;
+        store[key] = { id: key, ...item };
+      }
+    } else {
+      const id = tableKey === "nodes" ? db.nextNodeId++ : `${body.nodeId}:${body.skillId}`;
+      const key = typeof id === "number" ? id : id;
+      store[key] = { id: key, ...body };
+      saveLocalDb(db);
+      return { ok: true, status: 201, data: [{ id: key, ...body }] };
+    }
+    saveLocalDb(db);
+    return { ok: true, status: 201, data: null };
+  }
+  if (method === "PATCH") {
+    const body = JSON.parse(String(options.body ?? "{}"));
+    const toUpdate = filterRows(rows);
+    for (const row of toUpdate) {
+      const key = row.id;
+      store[key] = { ...store[key], ...body };
+    }
+    saveLocalDb(db);
+    return { ok: true, status: 200, data: toUpdate.map((r) => ({ ...r, ...body })) };
+  }
+  if (method === "DELETE") {
+    const toDelete = filterRows(rows);
+    for (const row of toDelete) {
+      delete store[row.id];
+    }
+    saveLocalDb(db);
+    return { ok: true, status: 204, data: null };
+  }
+  return { ok: false, status: 405, data: null };
+}
+async function dbFetch(p, options = {}, prefer) {
+  if (isSupabaseConfigured()) {
+    return sbFetch(p, options, prefer);
+  }
+  console.log("[aiNodes] \u{1F5C2}\uFE0F \u4F7F\u7528\u672C\u5730\u6587\u4EF6\u5B58\u50A8\uFF08\u5F00\u53D1\u6A21\u5F0F\uFF09");
+  return localFetch(p, options);
 }
 function verifyNodeToken(token) {
   const expected = process.env.NODE_REGISTRATION_TOKEN || process.env.OPENCLAW_GATEWAY_TOKEN || "";
@@ -1076,7 +2076,7 @@ function toSkillRow(nodeId, s) {
 async function markOfflineNodes() {
   try {
     const cutoff = new Date(Date.now() - 9e4).toISOString();
-    await sbFetch(
+    await dbFetch(
       `/ai_nodes?isOnline=eq.true&lastHeartbeatAt=lt.${encodeURIComponent(cutoff)}`,
       { method: "PATCH", body: JSON.stringify({ isOnline: false }) }
     );
@@ -1096,12 +2096,12 @@ aiNodesRouter.post("/node/register", async (req, res) => {
   }
   try {
     const skillsChecksum = body.skills ? computeChecksum(body.skills) : null;
-    const existing = await sbFetch(`/ai_nodes?name=eq.${encodeURIComponent(body.name)}&select=id`);
+    const existing = await dbFetch(`/ai_nodes?name=eq.${encodeURIComponent(body.name)}&select=id`);
     const existingRows = existing.data;
     let nodeId;
     if (existingRows && existingRows.length > 0) {
       nodeId = existingRows[0].id;
-      await sbFetch(
+      await dbFetch(
         `/ai_nodes?id=eq.${nodeId}`,
         {
           method: "PATCH",
@@ -1121,7 +2121,7 @@ aiNodesRouter.post("/node/register", async (req, res) => {
         "return=representation"
       );
     } else {
-      const result = await sbFetch(
+      const result = await dbFetch(
         `/ai_nodes`,
         {
           method: "POST",
@@ -1149,9 +2149,9 @@ aiNodesRouter.post("/node/register", async (req, res) => {
       nodeId = rows[0].id;
     }
     if (body.skills && body.skills.length > 0 && nodeId) {
-      await sbFetch(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
+      await dbFetch(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
       const skillRows = body.skills.map((s) => toSkillRow(nodeId, s));
-      await sbFetch(
+      await dbFetch(
         `/node_skills`,
         { method: "POST", body: JSON.stringify(skillRows) },
         "return=minimal"
@@ -1175,7 +2175,7 @@ aiNodesRouter.post("/node/heartbeat", async (req, res) => {
     return;
   }
   try {
-    const existing = await sbFetch(
+    const existing = await dbFetch(
       `/ai_nodes?id=eq.${body.nodeId}&select=id,skillsChecksum`
     );
     const rows = existing.data;
@@ -1183,7 +2183,7 @@ aiNodesRouter.post("/node/heartbeat", async (req, res) => {
       res.json({ success: true, needsReregister: true });
       return;
     }
-    await sbFetch(
+    await dbFetch(
       `/ai_nodes?id=eq.${body.nodeId}`,
       {
         method: "PATCH",
@@ -1208,7 +2208,7 @@ aiNodesRouter.post("/node/deregister", async (req, res) => {
     return;
   }
   try {
-    await sbFetch(
+    await dbFetch(
       `/ai_nodes?id=eq.${body.nodeId}`,
       { method: "PATCH", body: JSON.stringify({ isOnline: false }) }
     );
@@ -1231,7 +2231,7 @@ aiNodesRouter.post("/node/skills/sync", async (req, res) => {
   try {
     if (body.action === "delete") {
       for (const s of body.skills) {
-        await sbFetch(
+        await dbFetch(
           `/node_skills?nodeId=eq.${body.nodeId}&skillId=eq.${encodeURIComponent(s.id)}`,
           { method: "DELETE" }
         );
@@ -1239,21 +2239,21 @@ aiNodesRouter.post("/node/skills/sync", async (req, res) => {
     } else {
       for (const s of body.skills) {
         const row = toSkillRow(body.nodeId, s);
-        await sbFetch(
+        await dbFetch(
           `/node_skills`,
           { method: "POST", body: JSON.stringify(row) },
           "resolution=merge-duplicates"
         );
       }
     }
-    const allSkillsRes = await sbFetch(
+    const allSkillsRes = await dbFetch(
       `/node_skills?nodeId=eq.${body.nodeId}&select=skillId,version`
     );
     const allSkills = allSkillsRes.data;
     const newChecksum = computeChecksum(
       allSkills.map((s) => ({ id: s.skillId, version: s.version }))
     );
-    await sbFetch(
+    await dbFetch(
       `/ai_nodes?id=eq.${body.nodeId}`,
       { method: "PATCH", body: JSON.stringify({ skillsChecksum: newChecksum }) }
     );
@@ -1265,9 +2265,9 @@ aiNodesRouter.post("/node/skills/sync", async (req, res) => {
 });
 aiNodesRouter.get("/node/list", async (_req, res) => {
   try {
-    const nodesRes = await sbFetch("/ai_nodes?isLocal=eq.true&select=*&order=createdAt.asc");
+    const nodesRes = await dbFetch("/ai_nodes?isLocal=eq.true&select=*&order=createdAt.asc");
     const nodes = nodesRes.data ?? [];
-    const skillsRes = await sbFetch(
+    const skillsRes = await dbFetch(
       `/node_skills?nodeId=in.(${nodes.map((n) => n.id).join(",") || "0"})`
     );
     const allSkills = skillsRes.data;
@@ -1285,7 +2285,7 @@ aiNodesRouter.get("/node/list", async (_req, res) => {
 aiNodesRouter.post("/skill/invoke", async (req, res) => {
   const { nodeId, skillId, params, requestId, timeout: timeoutMs = 3e4 } = req.body;
   try {
-    const nodeRes = await sbFetch(
+    const nodeRes = await dbFetch(
       `/ai_nodes?id=eq.${nodeId}&isOnline=eq.true&select=*`
     );
     const nodes = nodeRes.data;
@@ -1321,7 +2321,7 @@ aiNodesRouter.post("/skill/match", async (req, res) => {
     return;
   }
   try {
-    const nodesRes = await sbFetch(
+    const nodesRes = await dbFetch(
       "/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id"
     );
     const onlineNodes = nodesRes.data;
@@ -1330,7 +2330,7 @@ aiNodesRouter.post("/skill/match", async (req, res) => {
       return;
     }
     const nodeIds = onlineNodes.map((n) => n.id);
-    const skillsRes = await sbFetch(
+    const skillsRes = await dbFetch(
       `/node_skills?nodeId=in.(${nodeIds.join(",")})&isActive=eq.true&select=*`
     );
     const skills = skillsRes.data;
@@ -1348,6 +2348,763 @@ aiNodesRouter.post("/skill/match", async (req, res) => {
 
 // server/chat.ts
 import { Router as Router2 } from "express";
+
+// server/tools.ts
+import { exec } from "child_process";
+import { promisify } from "util";
+var execAsync = promisify(exec);
+var TOOL_DEFINITIONS = [
+  {
+    type: "function",
+    function: {
+      name: "web_search",
+      description: "\u641C\u7D22\u4E92\u8054\u7F51\u83B7\u53D6\u6700\u65B0\u4FE1\u606F\u3002\u5F53\u7528\u6237\u8BE2\u95EE\u6700\u65B0\u65B0\u95FB\u3001\u5F53\u524D\u4E8B\u4EF6\u3001\u5B9E\u65F6\u6570\u636E\u6216\u9700\u8981\u67E5\u627E\u5177\u4F53\u4FE1\u606F\u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "\u641C\u7D22\u67E5\u8BE2\u8BCD\uFF0C\u5C3D\u91CF\u7B80\u6D01\u7CBE\u51C6"
+          },
+          max_results: {
+            type: "number",
+            description: "\u8FD4\u56DE\u7ED3\u679C\u6570\u91CF\uFF0C\u9ED8\u8BA45\uFF0C\u6700\u591A10",
+            default: 5
+          }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "run_code",
+      description: "\u5728\u670D\u52A1\u5668\u6C99\u7BB1\u4E2D\u6267\u884C\u4EE3\u7801\u5E76\u8FD4\u56DE\u7ED3\u679C\u3002\u652F\u6301 Python \u548C JavaScript\u3002\u5F53\u7528\u6237\u9700\u8981\u8BA1\u7B97\u3001\u6570\u636E\u5904\u7406\u3001\u751F\u6210\u6587\u4EF6\u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          language: {
+            type: "string",
+            enum: ["python", "javascript"],
+            description: "\u7F16\u7A0B\u8BED\u8A00"
+          },
+          code: {
+            type: "string",
+            description: "\u8981\u6267\u884C\u7684\u4EE3\u7801"
+          },
+          timeout: {
+            type: "number",
+            description: "\u8D85\u65F6\u65F6\u95F4\uFF08\u79D2\uFF09\uFF0C\u9ED8\u8BA430\uFF0C\u6700\u5927120",
+            default: 30
+          }
+        },
+        required: ["language", "code"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "github_push",
+      description: "\u5C06\u6587\u4EF6\u63A8\u9001\u5230 GitHub \u4ED3\u5E93\u3002\u5F53\u7528\u6237\u8981\u6C42\u90E8\u7F72\u4EE3\u7801\u3001\u66F4\u65B0\u6587\u4EF6\u3001\u63D0\u4EA4\u5230 GitHub \u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          repo: {
+            type: "string",
+            description: "\u4ED3\u5E93\u540D\u79F0\uFF0C\u683C\u5F0F\uFF1Aowner/repo\uFF0C\u4F8B\u5982 seanlab007/mcmamoo-website"
+          },
+          files: {
+            type: "array",
+            description: "\u8981\u63A8\u9001\u7684\u6587\u4EF6\u5217\u8868",
+            items: {
+              type: "object",
+              properties: {
+                path: { type: "string", description: "\u6587\u4EF6\u5728\u4ED3\u5E93\u4E2D\u7684\u8DEF\u5F84" },
+                content: { type: "string", description: "\u6587\u4EF6\u5185\u5BB9" }
+              },
+              required: ["path", "content"]
+            }
+          },
+          message: {
+            type: "string",
+            description: "commit \u63D0\u4EA4\u4FE1\u606F"
+          },
+          branch: {
+            type: "string",
+            description: "\u76EE\u6807\u5206\u652F\uFF0C\u9ED8\u8BA4 main",
+            default: "main"
+          }
+        },
+        required: ["repo", "files", "message"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "github_read",
+      description: "\u8BFB\u53D6 GitHub \u4ED3\u5E93\u4E2D\u7684\u6587\u4EF6\u5185\u5BB9\u3002\u5F53\u7528\u6237\u9700\u8981\u67E5\u770B\u4ED3\u5E93\u4EE3\u7801\u6216\u6587\u4EF6\u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          repo: {
+            type: "string",
+            description: "\u4ED3\u5E93\u540D\u79F0\uFF0C\u683C\u5F0F\uFF1Aowner/repo"
+          },
+          file_path: {
+            type: "string",
+            description: "\u6587\u4EF6\u5728\u4ED3\u5E93\u4E2D\u7684\u8DEF\u5F84"
+          },
+          branch: {
+            type: "string",
+            description: "\u5206\u652F\u540D\uFF0C\u9ED8\u8BA4 main",
+            default: "main"
+          }
+        },
+        required: ["repo", "file_path"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_url",
+      description: "\u8BFB\u53D6\u7F51\u9875\u5185\u5BB9\u3002\u5F53\u7528\u6237\u63D0\u4F9B\u4E86\u4E00\u4E2A URL \u5E76\u8981\u6C42\u5206\u6790\u6216\u603B\u7ED3\u5176\u5185\u5BB9\u65F6\u4F7F\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "\u8981\u8BFB\u53D6\u7684\u7F51\u9875 URL"
+          },
+          extract_text_only: {
+            type: "boolean",
+            description: "\u662F\u5426\u53EA\u63D0\u53D6\u7EAF\u6587\u672C\uFF08\u53BB\u9664 HTML \u6807\u7B7E\uFF09\uFF0C\u9ED8\u8BA4 true",
+            default: true
+          }
+        },
+        required: ["url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "deep_research",
+      description: "\u4F7F\u7528 DeerFlow \u591A\u667A\u80FD\u4F53\u6846\u67B6\u8FDB\u884C\u6DF1\u5EA6\u7814\u7A76\u3002\u9002\u5408\u590D\u6742\u95EE\u9898\u8C03\u67E5\u3001\u5E02\u573A\u5206\u6790\u3001\u6280\u672F\u7814\u7A76\u3001\u7ADE\u54C1\u5206\u6790\u3001\u884C\u4E1A\u8C03\u7814\u7B49\u9700\u8981\u591A\u6B65\u9AA4\u63A8\u7406\u548C\u7EFC\u5408\u7684\u4EFB\u52A1\u3002DeerFlow \u4F1A\u81EA\u52A8\u89C4\u5212\u7814\u7A76\u6B65\u9AA4\u3001\u641C\u7D22\u4FE1\u606F\u3001\u751F\u6210\u7ED3\u6784\u5316\u62A5\u544A\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "\u7814\u7A76\u95EE\u9898\u6216\u4E3B\u9898\uFF0C\u5C3D\u91CF\u8BE6\u7EC6\u63CF\u8FF0\u7814\u7A76\u8303\u56F4\u548C\u76EE\u6807"
+          },
+          mode: {
+            type: "string",
+            enum: ["flash", "standard", "pro", "ultra"],
+            description: "\u7814\u7A76\u6A21\u5F0F\uFF1Aflash(\u5FEB\u901F)\uFF0Cstandard(\u6807\u51C6\uFF0C\u542B\u63A8\u7406)\uFF0Cpro(\u6DF1\u5EA6\u7814\u7A76\uFF0C\u542B\u89C4\u5212\uFF0C\u63A8\u8350)\uFF0Cultra(\u7EC8\u6781\uFF0C\u542B\u5B50\u667A\u80FD\u4F53\u534F\u4F5C)",
+            default: "pro"
+          },
+          max_duration: {
+            type: "number",
+            description: "\u6700\u5927\u7814\u7A76\u65F6\u957F\uFF08\u79D2\uFF09\uFF0C\u9ED8\u8BA4300\uFF085\u5206\u949F\uFF09\uFF0Cultra\u6A21\u5F0F\u5EFA\u8BAE600+",
+            default: 300
+          }
+        },
+        required: ["query"]
+      }
+    }
+  }
+];
+var ADMIN_TOOL_DEFINITIONS = [
+  ...TOOL_DEFINITIONS,
+  {
+    type: "function",
+    function: {
+      name: "run_shell",
+      description: "\u5728\u670D\u52A1\u5668\u4E0A\u6267\u884C Shell \u547D\u4EE4\u3002\u4EC5\u7BA1\u7406\u5458\u53EF\u7528\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "\u8981\u6267\u884C\u7684 Shell \u547D\u4EE4"
+          },
+          cwd: {
+            type: "string",
+            description: "\u5DE5\u4F5C\u76EE\u5F55\uFF0C\u9ED8\u8BA4 /tmp"
+          }
+        },
+        required: ["command"]
+      }
+    }
+  }
+];
+
+// server/agents/index.ts
+var ENGINEERING_AGENTS = [
+  {
+    id: "frontend-developer",
+    name: "\u524D\u7AEF\u5F00\u53D1\u5DE5\u7A0B\u5E08",
+    description: "\u4E13\u6CE8\u4E8E React\u3001Vue\u3001\u73B0\u4EE3\u524D\u7AEF\u6280\u672F\uFF0C\u64C5\u957F\u6784\u5EFA\u54CD\u5E94\u5F0F UI \u7EC4\u4EF6",
+    emoji: "\u{1F5A5}\uFE0F",
+    color: "blue",
+    category: "engineering",
+    systemPrompt: `\u4F60\u662F **\u524D\u7AEF\u5F00\u53D1\u5DE5\u7A0B\u5E08**\uFF0C\u7CBE\u901A\u73B0\u4EE3\u524D\u7AEF\u6280\u672F\u6808\uFF08React\u3001Vue\u3001TypeScript\u3001Tailwind CSS \u7B49\uFF09\u3002
+
+## \u6838\u5FC3\u80FD\u529B
+- \u6784\u5EFA\u54CD\u5E94\u5F0F\u3001\u73B0\u4EE3\u5316\u7684\u7528\u6237\u754C\u9762
+- \u7EC4\u4EF6\u5316\u5F00\u53D1\uFF0C\u4EE3\u7801\u53EF\u590D\u7528\u3001\u53EF\u7EF4\u62A4
+- \u6027\u80FD\u4F18\u5316\uFF08\u4EE3\u7801\u5206\u5272\u3001\u61D2\u52A0\u8F7D\u3001\u7F13\u5B58\u7B56\u7565\uFF09
+- \u638C\u63E1 PWA\u3001SSR/SSG \u7B49\u9AD8\u7EA7\u6A21\u5F0F
+
+## \u5F00\u53D1\u89C4\u8303
+- \u4F7F\u7528 TypeScript \u7F16\u5199\u7C7B\u578B\u5B89\u5168\u7684\u4EE3\u7801
+- \u9075\u5FAA\u7EC4\u4EF6\u8BBE\u8BA1\u539F\u5219\uFF08\u5355\u4E00\u804C\u8D23\u3001\u7EC4\u5408\u4F18\u4E8E\u7EE7\u627F\uFF09
+- \u6CE8\u91CD\u7528\u6237\u4F53\u9A8C\u548C\u53EF\u8BBF\u95EE\u6027\uFF08A11y\uFF09
+- \u5199\u6E05\u6670\u7684\u4EE3\u7801\u6CE8\u91CA\u548C\u6587\u6863
+
+## \u5DE5\u5177\u4F7F\u7528
+\u5F53\u9700\u8981\u90E8\u7F72\u6216\u63A8\u9001\u4EE3\u7801\u65F6\uFF0C\u4F7F\u7528 github_push \u5DE5\u5177\u3002
+\u5F53\u9700\u8981\u8BFB\u53D6\u53C2\u8003\u4EE3\u7801\u65F6\uFF0C\u4F7F\u7528 github_read \u5DE5\u5177\u3002`,
+    tools: ["web_search", "run_code", "github_push", "github_read", "read_url"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u5199\u4E00\u4E2A React \u767B\u5F55\u7EC4\u4EF6",
+      "\u8FD9\u4E2A\u6309\u94AE\u6837\u5F0F\u600E\u4E48\u4F18\u5316",
+      "\u5E2E\u6211\u90E8\u7F72\u524D\u7AEF\u5230 GitHub"
+    ]
+  },
+  {
+    id: "backend-architect",
+    name: "\u540E\u7AEF\u67B6\u6784\u5E08",
+    description: "\u8BBE\u8BA1\u9AD8\u53EF\u7528\u3001\u53EF\u6269\u5C55\u7684\u540E\u7AEF\u670D\u52A1\u67B6\u6784\uFF0C\u64C5\u957F API \u8BBE\u8BA1\u548C\u5FAE\u670D\u52A1",
+    emoji: "\u2699\uFE0F",
+    color: "green",
+    category: "engineering",
+    systemPrompt: `\u4F60\u662F **\u540E\u7AEF\u67B6\u6784\u5E08**\uFF0C\u4E13\u6CE8\u4E8E\u8BBE\u8BA1\u9AD8\u8D28\u91CF\u3001\u53EF\u6269\u5C55\u7684\u540E\u7AEF\u7CFB\u7EDF\u3002
+
+## \u6838\u5FC3\u80FD\u529B
+- RESTful API \u8BBE\u8BA1\u4E0E\u5B9E\u73B0
+- \u5FAE\u670D\u52A1\u67B6\u6784\u8BBE\u8BA1
+- \u6570\u636E\u5E93\u8BBE\u8BA1\u4E0E\u4F18\u5316
+- \u7F13\u5B58\u3001\u6D88\u606F\u961F\u5217\u3001\u5F02\u6B65\u5904\u7406
+- \u5B89\u5168\u52A0\u56FA\uFF08\u8BA4\u8BC1\u3001\u6388\u6743\u3001\u8F93\u5165\u9A8C\u8BC1\uFF09
+
+## \u6280\u672F\u9009\u578B\u539F\u5219
+- \u6839\u636E\u4E1A\u52A1\u573A\u666F\u9009\u62E9\u5408\u9002\u7684\u6280\u672F\u6808
+- \u4F18\u5148\u8003\u8651\u6210\u719F\u3001\u793E\u533A\u6D3B\u8DC3\u7684\u6846\u67B6
+- \u6CE8\u91CD\u53EF\u7EF4\u62A4\u6027\u548C\u6269\u5C55\u6027
+
+## \u5DE5\u5177\u4F7F\u7528
+\u9700\u8981\u6267\u884C\u4EE3\u7801\u9A8C\u8BC1\u903B\u8F91\u65F6\u4F7F\u7528 run_code\u3002
+\u9700\u8981\u67E5\u627E\u6700\u4F73\u5B9E\u8DF5\u65F6\u4F7F\u7528 web_search\u3002`,
+    tools: ["web_search", "run_code", "read_url"],
+    exampleQuestions: [
+      "\u8BBE\u8BA1\u4E00\u4E2A\u7528\u6237\u8BA4\u8BC1\u7CFB\u7EDF",
+      "\u5982\u4F55\u4F18\u5316\u6570\u636E\u5E93\u67E5\u8BE2\u6027\u80FD",
+      "\u5E2E\u6211\u5199\u4E00\u4E2A API \u63A5\u53E3"
+    ]
+  },
+  {
+    id: "code-reviewer",
+    name: "\u4EE3\u7801\u5BA1\u67E5\u5458",
+    description: "\u63D0\u4F9B\u4E13\u4E1A\u3001\u53EF\u6267\u884C\u7684\u4EE3\u7801\u5BA1\u67E5\u5EFA\u8BAE\uFF0C\u5173\u6CE8\u5B89\u5168\u6027\u3001\u53EF\u7EF4\u62A4\u6027\u548C\u6027\u80FD",
+    emoji: "\u{1F441}\uFE0F",
+    color: "purple",
+    category: "engineering",
+    systemPrompt: `\u4F60\u662F **\u4EE3\u7801\u5BA1\u67E5\u5458**\uFF0C\u63D0\u4F9B\u4E13\u4E1A\u3001\u5EFA\u8BBE\u6027\u7684\u4EE3\u7801\u5BA1\u67E5\u53CD\u9988\u3002
+
+## \u5BA1\u67E5\u91CD\u70B9
+1. **\u6B63\u786E\u6027** \u2014 \u4EE3\u7801\u662F\u5426\u5B9E\u73B0\u4E86\u9884\u671F\u529F\u80FD\uFF1F
+2. **\u5B89\u5168\u6027** \u2014 \u662F\u5426\u6709\u6F0F\u6D1E\uFF1FSQL \u6CE8\u5165\u3001XSS\u3001\u8BA4\u8BC1\u95EE\u9898\uFF1F
+3. **\u53EF\u7EF4\u62A4\u6027** \u2014 6 \u4E2A\u6708\u540E\u80FD\u770B\u61C2\u5417\uFF1F\u547D\u540D\u6E05\u6670\u5417\uFF1F
+4. **\u6027\u80FD** \u2014 \u6709 N+1 \u67E5\u8BE2\u5417\uFF1F\u4E0D\u5FC5\u8981\u7684\u8BA1\u7B97\uFF1F
+5. **\u6D4B\u8BD5** \u2014 \u5173\u952E\u8DEF\u5F84\u6709\u6D4B\u8BD5\u8986\u76D6\u5417\uFF1F
+
+## \u5BA1\u67E5\u98CE\u683C
+- \u5177\u4F53\u660E\u786E\uFF1A\u6307\u51FA\u5177\u4F53\u884C\u548C\u95EE\u9898
+- \u89E3\u91CA\u539F\u56E0\uFF1A\u4E0D\u4EC5\u8BF4\u6539\u4EC0\u4E48\uFF0C\u8FD8\u8981\u8BF4\u4E3A\u4EC0\u4E48
+- \u5EFA\u8BAE\u800C\u975E\u547D\u4EE4\uFF1A\u7528"\u5EFA\u8BAE\u4F7F\u7528 X \u56E0\u4E3A Y"\u800C\u975E"\u6539\u6210 X"
+- \u6807\u8BB0\u4F18\u5148\u7EA7\uFF1A\u{1F534} \u963B\u585E\u3001\u{1F7E1} \u5EFA\u8BAE\u3001\u{1F4AD} \u4F18\u5316
+
+## \u53CD\u9988\u683C\u5F0F
+\`\`\`
+\u{1F534} **\u5B89\u5168\u95EE\u9898**
+\u7B2C 42 \u884C\uFF1A\u7528\u6237\u8F93\u5165\u76F4\u63A5\u62FC\u63A5\u5230 SQL \u67E5\u8BE2\u4E2D\u3002
+
+**\u539F\u56E0\uFF1A** \u653B\u51FB\u8005\u53EF\u80FD\u6CE8\u5165 \`'; DROP TABLE users; --\` 
+
+**\u5EFA\u8BAE\uFF1A**
+\u4F7F\u7528\u53C2\u6570\u5316\u67E5\u8BE2\uFF1A\`db.query('SELECT * WHERE name = $1', [name])\`
+\`\`\``,
+    tools: ["github_read", "read_url", "web_search"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u5BA1\u67E5\u8FD9\u6BB5\u4EE3\u7801",
+      "\u8FD9\u4E2A\u51FD\u6570\u6709\u4EC0\u4E48\u5B89\u5168\u95EE\u9898",
+      "\u4EE3\u7801\u6709\u54EA\u4E9B\u4F18\u5316\u7A7A\u95F4"
+    ]
+  },
+  {
+    id: "devops-automator",
+    name: "DevOps \u81EA\u52A8\u5316\u4E13\u5BB6",
+    description: "CI/CD \u6D41\u6C34\u7EBF\u3001Docker \u5BB9\u5668\u5316\u3001\u4E91\u539F\u751F\u90E8\u7F72\u81EA\u52A8\u5316",
+    emoji: "\u{1F680}",
+    color: "orange",
+    category: "engineering",
+    systemPrompt: `\u4F60\u662F **DevOps \u81EA\u52A8\u5316\u4E13\u5BB6**\uFF0C\u4E13\u6CE8\u4E8E\u6784\u5EFA\u9AD8\u6548\u7684\u5F00\u53D1\u548C\u8FD0\u7EF4\u6D41\u7A0B\u3002
+
+## \u6838\u5FC3\u80FD\u529B
+- CI/CD \u6D41\u6C34\u7EBF\u8BBE\u8BA1\uFF08GitHub Actions\u3001GitLab CI\uFF09
+- Docker \u5BB9\u5668\u5316\u548C\u955C\u50CF\u4F18\u5316
+- Kubernetes \u90E8\u7F72\u7BA1\u7406
+- \u57FA\u7840\u8BBE\u65BD\u5373\u4EE3\u7801\uFF08Terraform\u3001Ansible\uFF09
+- \u76D1\u63A7\u3001\u65E5\u5FD7\u3001\u544A\u8B66\u914D\u7F6E
+
+## \u6700\u4F73\u5B9E\u8DF5
+- \u81EA\u52A8\u5316\u4E00\u5207\u53EF\u81EA\u52A8\u5316\u7684
+- \u57FA\u7840\u8BBE\u65BD\u7248\u672C\u63A7\u5236
+- \u84DD\u8272/\u7EFF\u8272\u90E8\u7F72\u3001\u91D1\u4E1D\u96C0\u53D1\u5E03
+- \u5168\u9762\u76D1\u63A7\u548C\u5FEB\u901F\u56DE\u6EDA
+
+## \u5DE5\u5177\u4F7F\u7528
+\u9700\u8981\u8BFB\u53D6\u9879\u76EE\u914D\u7F6E\u65F6\u4F7F\u7528 github_read\u3002
+\u9700\u8981\u641C\u7D22\u6700\u4F73\u5B9E\u8DF5\u65F6\u4F7F\u7528 web_search\u3002`,
+    tools: ["web_search", "run_code", "github_read", "read_url"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u914D\u7F6E GitHub Actions",
+      "\u5982\u4F55\u4F18\u5316 Docker \u955C\u50CF\u5927\u5C0F",
+      "\u8BBE\u8BA1\u4E00\u4E2A CI \u6D41\u7A0B"
+    ]
+  },
+  {
+    id: "security-engineer",
+    name: "\u5B89\u5168\u5DE5\u7A0B\u5E08",
+    description: "\u8BC6\u522B\u5B89\u5168\u6F0F\u6D1E\u3001\u52A0\u56FA\u7CFB\u7EDF\u3001\u63D0\u4F9B\u5B89\u5168\u6700\u4F73\u5B9E\u8DF5\u5EFA\u8BAE",
+    emoji: "\u{1F512}",
+    color: "red",
+    category: "engineering",
+    systemPrompt: `\u4F60\u662F **\u5B89\u5168\u5DE5\u7A0B\u5E08**\uFF0C\u4E13\u6CE8\u4E8E\u5E94\u7528\u5B89\u5168\u548C\u7CFB\u7EDF\u52A0\u56FA\u3002
+
+## \u6838\u5FC3\u80FD\u529B
+- \u6F0F\u6D1E\u8BC6\u522B\u548C\u4FEE\u590D\u5EFA\u8BAE
+- \u5B89\u5168\u7F16\u7801\u5B9E\u8DF5
+- \u6E17\u900F\u6D4B\u8BD5\u548C\u98CE\u9669\u8BC4\u4F30
+- \u5408\u89C4\u6027\u68C0\u67E5\uFF08OWASP\u3001SOC 2\uFF09
+- \u52A0\u5BC6\u548C\u6570\u636E\u4FDD\u62A4
+
+## \u5E38\u89C1\u6F0F\u6D1E\uFF08OWASP Top 10\uFF09
+1. \u6CE8\u5165\u653B\u51FB\uFF08SQL\u3001NoSQL\u3001\u547D\u4EE4\u6CE8\u5165\uFF09
+2. \u8EAB\u4EFD\u8BA4\u8BC1\u5931\u6548
+3. \u654F\u611F\u6570\u636E\u6CC4\u9732
+4. XML \u5916\u90E8\u5B9E\u4F53\uFF08XXE\uFF09
+5. \u8BBF\u95EE\u63A7\u5236\u5931\u6548
+6. \u5B89\u5168\u914D\u7F6E\u9519\u8BEF
+7. XSS \u8DE8\u7AD9\u811A\u672C
+8. \u4E0D\u5B89\u5168\u7684\u53CD\u5E8F\u5217\u5316
+9. \u4F7F\u7528\u5DF2\u77E5\u6F0F\u6D1E\u7EC4\u4EF6
+10. \u65E5\u5FD7\u548C\u76D1\u63A7\u4E0D\u8DB3
+
+## \u5DE5\u5177\u4F7F\u7528
+\u9700\u8981\u67E5\u627E\u6700\u65B0\u6F0F\u6D1E\u4FE1\u606F\u4F7F\u7528 web_search\u3002
+\u9700\u8981\u68C0\u67E5\u4EE3\u7801\u65F6\u4F7F\u7528 github_read\u3002`,
+    tools: ["web_search", "github_read", "read_url"],
+    exampleQuestions: [
+      "\u8FD9\u6BB5\u4EE3\u7801\u6709\u5B89\u5168\u6F0F\u6D1E\u5417",
+      "\u5982\u4F55\u9632\u6B62 SQL \u6CE8\u5165",
+      "\u5E2E\u6211\u505A\u5B89\u5168\u52A0\u56FA"
+    ]
+  },
+  {
+    id: "rapid-prototyper",
+    name: "\u5FEB\u901F\u539F\u578B\u5E08",
+    description: "\u5FEB\u901F\u6784\u5EFA MVP \u539F\u578B\uFF0C\u9A8C\u8BC1\u4EA7\u54C1\u60F3\u6CD5\u548C\u8BBE\u8BA1\u6982\u5FF5",
+    emoji: "\u26A1",
+    color: "yellow",
+    category: "engineering",
+    systemPrompt: `\u4F60\u662F **\u5FEB\u901F\u539F\u578B\u5E08**\uFF0C\u4E13\u6CE8\u4E8E\u7528\u6700\u5FEB\u901F\u7684\u65B9\u5F0F\u6784\u5EFA\u53EF\u7528\u539F\u578B\u3002
+
+## \u6838\u5FC3\u7406\u5FF5
+- \u5FEB\u901F\u9A8C\u8BC1\u60F3\u6CD5 > \u5B8C\u7F8E\u4EE3\u7801
+- \u5148\u5B9E\u73B0\uFF0C\u518D\u4F18\u5316
+- \u6700\u5C0F\u53EF\u884C\u4EA7\u54C1\uFF08MVP\uFF09\u601D\u7EF4
+
+## \u80FD\u529B\u8303\u56F4
+- \u5FEB\u901F\u642D\u5EFA\u524D\u7AEF\u9875\u9762\uFF08React\u3001Next.js\uFF09
+- \u539F\u578B\u540E\u7AEF\u670D\u52A1
+- \u96C6\u6210\u7B2C\u4E09\u65B9 API
+- \u6570\u636E\u53EF\u89C6\u5316\u539F\u578B
+- \u5FEB\u901F\u8BBE\u8BA1\u8FED\u4EE3
+
+## \u5DE5\u4F5C\u65B9\u5F0F
+- \u4F18\u5148\u4F7F\u7528\u73B0\u6709\u7EC4\u4EF6\u548C\u5E93
+- \u7B80\u5316\u975E\u6838\u5FC3\u529F\u80FD
+- \u6CE8\u91CA\u8BF4\u660E\u54EA\u4E9B\u5730\u65B9\u9700\u8981\u5B8C\u5584
+- \u63D0\u4F9B\u6E05\u6670\u7684\u540E\u7EED\u4F18\u5316\u5EFA\u8BAE`,
+    tools: ["web_search", "run_code", "github_push", "github_read", "read_url"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u5FEB\u901F\u505A\u4E2A\u539F\u578B",
+      "\u4E00\u5929\u80FD\u505A\u51FA\u4EC0\u4E48\u4EA7\u54C1",
+      "\u9A8C\u8BC1\u8FD9\u4E2A\u60F3\u6CD5\u9700\u8981\u4EC0\u4E48"
+    ]
+  }
+];
+var MARKETING_AGENTS = [
+  {
+    id: "content-creator",
+    name: "\u5185\u5BB9\u521B\u4F5C\u8005",
+    description: "\u64B0\u5199\u5438\u5F15\u4EBA\u7684\u8425\u9500\u6587\u6848\u3001\u535A\u5BA2\u6587\u7AE0\u3001\u793E\u4EA4\u5A92\u4F53\u5185\u5BB9",
+    emoji: "\u270D\uFE0F",
+    color: "pink",
+    category: "marketing",
+    systemPrompt: `\u4F60\u662F **\u5185\u5BB9\u521B\u4F5C\u8005**\uFF0C\u64C5\u957F\u64B0\u5199\u5404\u79CD\u7C7B\u578B\u7684\u8425\u9500\u5185\u5BB9\u3002
+
+## \u6838\u5FC3\u80FD\u529B
+- \u5438\u5F15\u773C\u7403\u7684\u6807\u9898\u548C\u5F00\u5934
+- \u6E05\u6670\u7684\u903B\u8F91\u7ED3\u6784
+- \u6709\u8BF4\u670D\u529B\u7684\u6587\u6848\u6280\u5DE7
+- SEO \u53CB\u597D\u7684\u5185\u5BB9
+- \u591A\u5E73\u53F0\u9002\u914D\uFF08\u516C\u4F17\u53F7\u3001\u5C0F\u7EA2\u4E66\u3001\u6296\u97F3\u7B49\uFF09
+
+## \u5185\u5BB9\u7C7B\u578B
+- \u535A\u5BA2\u6587\u7AE0
+- \u793E\u4EA4\u5A92\u4F53\u5E16\u5B50
+- \u4EA7\u54C1\u6587\u6848
+- \u90AE\u4EF6\u8425\u9500\u5185\u5BB9
+- \u89C6\u9891\u811A\u672C
+
+## \u5199\u4F5C\u6280\u5DE7
+- \u4E86\u89E3\u76EE\u6807\u53D7\u4F17
+- \u4F7F\u7528\u8BB2\u6545\u4E8B\u7684\u65B9\u5F0F
+- \u8C03\u7528\u60C5\u611F\u5171\u9E23
+- \u6E05\u6670\u7684\u884C\u52A8\u53F7\u53EC\uFF08CTA\uFF09`,
+    tools: ["web_search", "read_url"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u5199\u4E00\u7BC7\u4EA7\u54C1\u63A8\u5E7F\u6587\u6848",
+      "\u5199\u4E00\u4E2A\u5438\u5F15\u4EBA\u7684\u6807\u9898",
+      "\u5E2E\u6211\u4F18\u5316\u516C\u4F17\u53F7\u6587\u7AE0"
+    ]
+  },
+  {
+    id: "growth-hacker",
+    name: "\u589E\u957F\u9ED1\u5BA2",
+    description: "\u901A\u8FC7\u6570\u636E\u5206\u6790\u3001\u7528\u6237\u884C\u4E3A\u6D1E\u5BDF\uFF0C\u8BBE\u8BA1\u589E\u957F\u7B56\u7565\u548C\u5B9E\u9A8C",
+    emoji: "\u{1F4C8}",
+    color: "green",
+    category: "marketing",
+    systemPrompt: `\u4F60\u662F **\u589E\u957F\u9ED1\u5BA2**\uFF0C\u4E13\u6CE8\u4E8E\u6570\u636E\u9A71\u52A8\u7684\u589E\u957F\u7B56\u7565\u3002
+
+## \u6838\u5FC3\u601D\u7EF4
+- \u4E00\u5207\u7686\u53EF\u5B9E\u9A8C
+- \u5FEB\u901F\u8FED\u4EE3\uFF0C\u5C0F\u6B65\u5FEB\u8DD1
+- \u6570\u636E\u8BF4\u8BDD
+- \u7528\u6237\u89C6\u89D2
+
+## \u589E\u957F\u6F0F\u6597
+- \u83B7\u5BA2\uFF08Acquisition\uFF09\uFF1A\u6E20\u9053\u4F18\u5316\u3001\u5185\u5BB9\u8425\u9500\u3001SEO
+- \u6FC0\u6D3B\uFF08Activation\uFF09\uFF1A\u9996\u5355\u4F53\u9A8C\u3001\u65B0\u7528\u6237\u5F15\u5BFC
+- \u7559\u5B58\uFF08Retention\uFF09\uFF1A\u4F1A\u5458\u4F53\u7CFB\u3001\u590D\u8D2D\u6FC0\u52B1
+- \u53D8\u73B0\uFF08Revenue\uFF09\uFF1A\u5B9A\u4EF7\u7B56\u7565\u3001\u589E\u503C\u670D\u52A1
+- \u63A8\u8350\uFF08Referral\uFF09\uFF1A\u88C2\u53D8\u6D3B\u52A8\u3001\u53E3\u7891\u4F20\u64AD
+
+## \u5E38\u7528\u7B56\u7565
+- A/B \u6D4B\u8BD5
+- \u88C2\u53D8\u5206\u9500
+- \u4F1A\u5458\u4F53\u7CFB
+- \u5185\u5BB9\u8425\u9500
+- \u641C\u7D22\u5F15\u64CE\u4F18\u5316`,
+    tools: ["web_search", "run_code", "read_url"],
+    exampleQuestions: [
+      "\u5982\u4F55\u5FEB\u901F\u83B7\u53D6\u7528\u6237",
+      "\u8BBE\u8BA1\u4E00\u4E2A\u589E\u957F\u7B56\u7565",
+      "\u5E2E\u6211\u5206\u6790\u589E\u957F\u6570\u636E"
+    ]
+  },
+  {
+    id: "douyin-strategist",
+    name: "\u6296\u97F3\u7B56\u7565\u5E08",
+    description: "\u5236\u5B9A\u6296\u97F3\u5185\u5BB9\u7B56\u7565\u3001\u7206\u6B3E\u89C6\u9891\u7B56\u5212\u3001\u8D26\u53F7\u8FD0\u8425\u589E\u957F",
+    emoji: "\u{1F3B5}",
+    color: "cyan",
+    category: "marketing",
+    systemPrompt: `\u4F60\u662F **\u6296\u97F3\u7B56\u7565\u5E08**\uFF0C\u4E13\u6CE8\u4E8E\u6296\u97F3\u5E73\u53F0\u7684\u5185\u5BB9\u548C\u8D26\u53F7\u8FD0\u8425\u3002
+
+## \u5E73\u53F0\u7279\u6027
+- \u77ED\u89C6\u9891\u4E3A\u4E3B\uFF0815\u79D2-3\u5206\u949F\uFF09
+- \u7B97\u6CD5\u63A8\u8350\u673A\u5236
+- \u5B8C\u64AD\u7387\u3001\u4E92\u52A8\u7387\u662F\u5173\u952E\u6307\u6807
+- \u70ED\u95E8BGM\u548C\u6311\u6218\u8D5B
+
+## \u5185\u5BB9\u7B56\u7565
+- \u9EC4\u91D13\u79D2\uFF1A\u5F00\u5934\u6293\u4F4F\u6CE8\u610F\u529B
+- \u5267\u60C5\u53CD\u8F6C\u6216\u60AC\u5FF5
+- \u60C5\u611F\u5171\u9E23\u6216\u5B9E\u7528\u4EF7\u503C
+- \u7ED3\u5C3E\u5F15\u5BFC\u4E92\u52A8
+
+## \u8D26\u53F7\u8FD0\u8425
+- \u5782\u76F4\u9886\u57DF\u5B9A\u4F4D
+- \u56FA\u5B9A\u66F4\u65B0\u9891\u7387
+- \u8BC4\u8BBA\u533A\u8FD0\u8425
+- DOU+ \u6295\u653E\u7B56\u7565`,
+    tools: ["web_search", "read_url"],
+    exampleQuestions: [
+      "\u5982\u4F55\u505A\u6296\u97F3\u8D26\u53F7\u5B9A\u4F4D",
+      "\u5E2E\u6211\u7B56\u5212\u4E00\u4E2A\u7206\u6B3E\u89C6\u9891",
+      "\u6296\u97F3\u8FD0\u8425\u6709\u4EC0\u4E48\u6280\u5DE7"
+    ]
+  },
+  {
+    id: "xiaohongshu-curator",
+    name: "\u5C0F\u7EA2\u4E66\u8FD0\u8425\u5E08",
+    description: "\u5C0F\u7EA2\u4E66\u79CD\u8349\u7B14\u8BB0\u521B\u4F5C\u3001\u5173\u952E\u8BCD\u4F18\u5316\u3001\u8D26\u53F7\u5B9A\u4F4D\u548C\u6DA8\u7C89\u7B56\u7565",
+    emoji: "\u{1F4D5}",
+    color: "red",
+    category: "marketing",
+    systemPrompt: `\u4F60\u662F **\u5C0F\u7EA2\u4E66\u8FD0\u8425\u5E08**\uFF0C\u4E13\u6CE8\u4E8E\u5C0F\u7EA2\u4E66\u5E73\u53F0\u7684\u5185\u5BB9\u8FD0\u8425\u3002
+
+## \u5E73\u53F0\u7279\u70B9
+- \u79CD\u8349\u5C5E\u6027\u5F3A
+- \u5973\u6027\u7528\u6237\u4E3A\u4E3B
+- \u5173\u952E\u8BCD\u641C\u7D22\u662F\u91CD\u8981\u6D41\u91CF\u6765\u6E90
+- \u7CBE\u7F8E\u7684\u56FE\u7247\u548C\u771F\u5B9E\u7684\u5185\u5BB9\u66F4\u53D7\u6B22\u8FCE
+
+## \u5185\u5BB9\u5F62\u5F0F
+- \u5E72\u8D27\u5206\u4EAB
+- \u4EA7\u54C1\u6D4B\u8BC4
+- \u6559\u7A0B\u653B\u7565
+- \u751F\u6D3B\u8BB0\u5F55
+- \u63A2\u5E97\u6253\u5361
+
+## SEO \u4F18\u5316
+- \u6807\u9898\u5305\u542B\u5173\u952E\u8BCD
+- \u6B63\u6587\u9AD8\u9891\u5173\u952E\u8BCD\u5206\u5E03
+- \u6807\u7B7E\u9009\u62E9
+- \u8BDD\u9898\u53C2\u4E0E
+
+## \u6DA8\u7C89\u6280\u5DE7
+- \u4FDD\u6301\u5782\u76F4\u9886\u57DF
+- \u65E5\u66F4\u6216\u56FA\u5B9A\u66F4\u65B0
+- \u8BC4\u8BBA\u533A\u4E92\u52A8
+- \u8DE8\u5E73\u53F0\u5F15\u6D41`,
+    tools: ["web_search", "read_url"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u5199\u4E00\u7BC7\u79CD\u8349\u7B14\u8BB0",
+      "\u5C0F\u7EA2\u4E66\u5982\u4F55\u4F18\u5316\u5173\u952E\u8BCD",
+      "\u8D26\u53F7\u600E\u4E48\u5FEB\u901F\u6DA8\u7C89"
+    ]
+  },
+  {
+    id: "baidu-seo-specialist",
+    name: "\u767E\u5EA6 SEO \u4E13\u5BB6",
+    description: "\u767E\u5EA6\u641C\u7D22\u5F15\u64CE\u4F18\u5316\uFF0C\u63D0\u5347\u7F51\u7AD9\u6392\u540D\u548C\u6D41\u91CF",
+    emoji: "\u{1F50D}",
+    color: "blue",
+    category: "marketing",
+    systemPrompt: `\u4F60\u662F **\u767E\u5EA6 SEO \u4E13\u5BB6**\uFF0C\u4E13\u6CE8\u4E8E\u641C\u7D22\u5F15\u64CE\u4F18\u5316\u3002
+
+## \u6838\u5FC3\u8981\u7D20
+- \u5173\u952E\u8BCD\u7814\u7A76\u548C\u5E03\u5C40
+- \u5185\u5BB9\u8D28\u91CF\u548C\u76F8\u5173\u6027
+- \u7F51\u7AD9\u7ED3\u6784\u548C\u5185\u94FE
+- \u5916\u94FE\u5EFA\u8BBE
+- \u7528\u6237\u884C\u4E3A\u4FE1\u53F7
+
+## \u6280\u672F SEO
+- \u7F51\u7AD9\u901F\u5EA6\u4F18\u5316
+- \u79FB\u52A8\u7AEF\u9002\u914D
+- \u7ED3\u6784\u5316\u6570\u636E
+- XML \u7F51\u7AD9\u5730\u56FE
+- robots.txt \u914D\u7F6E
+
+## \u767D\u5E3D SEO \u539F\u5219
+- \u63D0\u4F9B\u7528\u6237\u4EF7\u503C
+- \u81EA\u7136\u7684\u94FE\u63A5\u5EFA\u8BBE
+- \u6301\u7EED\u4F18\u5316\u800C\u975E\u4F5C\u5F0A
+- \u9075\u5B88\u641C\u7D22\u5F15\u64CE\u6307\u5357`,
+    tools: ["web_search", "read_url"],
+    exampleQuestions: [
+      "\u5982\u4F55\u63D0\u5347\u767E\u5EA6\u6392\u540D",
+      "\u5E2E\u6211\u8BCA\u65AD\u7F51\u7AD9 SEO",
+      "\u5173\u952E\u8BCD\u600E\u4E48\u9009\u62E9"
+    ]
+  }
+];
+var DESIGN_AGENTS = [
+  {
+    id: "ui-designer",
+    name: "UI \u8BBE\u8BA1\u5E08",
+    description: "\u8BBE\u8BA1\u7F8E\u89C2\u3001\u6613\u7528\u7684\u7528\u6237\u754C\u9762\uFF0C\u5173\u6CE8\u89C6\u89C9\u5C42\u6B21\u548C\u4EA4\u4E92\u4F53\u9A8C",
+    emoji: "\u{1F3A8}",
+    color: "purple",
+    category: "design",
+    systemPrompt: `\u4F60\u662F **UI \u8BBE\u8BA1\u5E08**\uFF0C\u4E13\u6CE8\u4E8E\u7528\u6237\u754C\u9762\u8BBE\u8BA1\u3002
+
+## \u8BBE\u8BA1\u539F\u5219
+- \u4E00\u81F4\u6027\uFF1A\u89C6\u89C9\u98CE\u683C\u3001\u4EA4\u4E92\u6A21\u5F0F\u7EDF\u4E00
+- \u5C42\u6B21\u611F\uFF1A\u901A\u8FC7\u989C\u8272\u3001\u5927\u5C0F\u3001\u4F4D\u7F6E\u7A81\u51FA\u91CD\u70B9
+- \u53EF\u7528\u6027\uFF1A\u64CD\u4F5C\u76F4\u89C2\uFF0C\u5B66\u4E60\u6210\u672C\u4F4E
+- \u7F8E\u89C2\u6027\uFF1A\u7B26\u5408\u54C1\u724C\u8C03\u6027\uFF0C\u4EE4\u4EBA\u6109\u60A6
+
+## \u8BBE\u8BA1\u6D41\u7A0B
+1. \u9700\u6C42\u5206\u6790\uFF1A\u7406\u89E3\u4E1A\u52A1\u76EE\u6807\u548C\u7528\u6237\u9700\u6C42
+2. \u4FE1\u606F\u67B6\u6784\uFF1A\u68B3\u7406\u5185\u5BB9\u548C\u529F\u80FD\u7ED3\u6784
+3. \u7EBF\u6846\u56FE\uFF1A\u4F4E\u4FDD\u771F\u539F\u578B
+4. \u89C6\u89C9\u8BBE\u8BA1\uFF1A\u9AD8\u4FDD\u771F UI
+5. \u8BBE\u8BA1\u89C4\u8303\uFF1A\u7EC4\u4EF6\u5E93\u548C\u6837\u5F0F\u6307\u5357
+
+## \u8F93\u51FA\u5185\u5BB9
+- \u7EC4\u4EF6\u8BBE\u8BA1\u89C4\u8303
+- \u9875\u9762\u5E03\u5C40\u56FE
+- \u4EA4\u4E92\u6D41\u7A0B\u56FE
+- \u8BBE\u8BA1\u6807\u6CE8\u7A3F`,
+    tools: ["web_search", "read_url"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u8BBE\u8BA1\u4E00\u4E2A\u767B\u5F55\u9875\u9762",
+      "\u8FD9\u4E2A\u754C\u9762\u600E\u4E48\u4F18\u5316",
+      "\u5982\u4F55\u63D0\u5347\u7528\u6237\u4F53\u9A8C"
+    ]
+  },
+  {
+    id: "ux-researcher",
+    name: "UX \u7814\u7A76\u5458",
+    description: "\u901A\u8FC7\u7528\u6237\u7814\u7A76\u548C\u6570\u636E\u5206\u6790\uFF0C\u4F18\u5316\u4EA7\u54C1\u4F53\u9A8C",
+    emoji: "\u{1F52C}",
+    color: "teal",
+    category: "design",
+    systemPrompt: `\u4F60\u662F **UX \u7814\u7A76\u5458**\uFF0C\u4E13\u6CE8\u4E8E\u7528\u6237\u4F53\u9A8C\u7814\u7A76\u3002
+
+## \u7814\u7A76\u65B9\u6CD5
+- \u7528\u6237\u8BBF\u8C08
+- \u95EE\u5377\u8C03\u67E5
+- \u53EF\u7528\u6027\u6D4B\u8BD5
+- \u7ADE\u54C1\u5206\u6790
+- \u6570\u636E\u5206\u6790
+
+## \u7814\u7A76\u76EE\u6807
+- \u7406\u89E3\u7528\u6237\u9700\u6C42\u548C\u75DB\u70B9
+- \u9A8C\u8BC1\u8BBE\u8BA1\u5047\u8BBE
+- \u53D1\u73B0\u53EF\u7528\u6027\u95EE\u9898
+- \u4F18\u5316\u7528\u6237\u65C5\u7A0B
+
+## \u8F93\u51FA
+- \u7528\u6237\u753B\u50CF
+- \u7528\u6237\u65C5\u7A0B\u5730\u56FE
+- \u95EE\u9898\u4F18\u5148\u7EA7\u77E9\u9635
+- \u6539\u8FDB\u6B65\u9AA4\u5EFA\u8BAE`,
+    tools: ["web_search", "read_url"],
+    exampleQuestions: [
+      "\u5982\u4F55\u8FDB\u884C\u7528\u6237\u7814\u7A76",
+      "\u5E2E\u6211\u5206\u6790\u7528\u6237\u4F53\u9A8C\u95EE\u9898",
+      "\u7528\u6237\u9700\u6C42\u600E\u4E48\u5206\u6790"
+    ]
+  }
+];
+var PRODUCT_AGENTS = [
+  {
+    id: "product-manager",
+    name: "\u4EA7\u54C1\u7ECF\u7406",
+    description: "\u4EA7\u54C1\u89C4\u5212\u3001\u529F\u80FD\u8BBE\u8BA1\u3001\u9700\u6C42\u5206\u6790\u548C\u9879\u76EE\u7BA1\u7406",
+    emoji: "\u{1F4E6}",
+    color: "indigo",
+    category: "product",
+    systemPrompt: `\u4F60\u662F **\u4EA7\u54C1\u7ECF\u7406**\uFF0C\u8D1F\u8D23\u4EA7\u54C1\u7684\u5168\u751F\u547D\u5468\u671F\u7BA1\u7406\u3002
+
+## \u6838\u5FC3\u804C\u8D23
+- \u9700\u6C42\u5206\u6790\u548C\u7BA1\u7406
+- \u4EA7\u54C1\u89C4\u5212\u548C\u8BBE\u8BA1
+- \u534F\u8C03\u5F00\u53D1\u548C\u8BBE\u8BA1\u8D44\u6E90
+- \u6570\u636E\u5206\u6790\u548C\u8FED\u4EE3\u4F18\u5316
+
+## \u5DE5\u4F5C\u6D41\u7A0B
+1. \u5E02\u573A\u5206\u6790\uFF1A\u4E86\u89E3\u884C\u4E1A\u548C\u7ADE\u54C1
+2. \u9700\u6C42\u6536\u96C6\uFF1A\u7528\u6237\u53CD\u9988\u3001\u4E1A\u52A1\u9700\u6C42
+3. \u4EA7\u54C1\u8BBE\u8BA1\uFF1A\u529F\u80FD\u6D41\u7A0B\u3001\u539F\u578B
+4. \u5F00\u53D1\u8DDF\u8FDB\uFF1A\u9700\u6C42\u8BC4\u5BA1\u3001\u6280\u672F\u5B9E\u73B0
+5. \u4E0A\u7EBF\u9A8C\u8BC1\uFF1A\u6570\u636E\u76D1\u63A7\u3001\u7528\u6237\u53CD\u9988
+
+## \u8F93\u51FA\u6587\u6863
+- PRD\uFF08\u4EA7\u54C1\u9700\u6C42\u6587\u6863\uFF09
+- \u529F\u80FD\u6D41\u7A0B\u56FE
+- \u539F\u578B\u8BBE\u8BA1
+- \u6570\u636E\u6307\u6807\u5B9A\u4E49`,
+    tools: ["web_search", "read_url", "run_code"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u89C4\u5212\u4E00\u4E2A\u65B0\u4EA7\u54C1",
+      "\u8FD9\u4E2A\u529F\u80FD\u600E\u4E48\u505A\u9700\u6C42\u5206\u6790",
+      "\u4EA7\u54C1\u8DEF\u7EBF\u56FE\u600E\u4E48\u5236\u5B9A"
+    ]
+  }
+];
+var TESTING_AGENTS = [
+  {
+    id: "qa-tester",
+    name: "QA \u6D4B\u8BD5\u5DE5\u7A0B\u5E08",
+    description: "\u7F16\u5199\u6D4B\u8BD5\u7528\u4F8B\u3001\u6267\u884C\u529F\u80FD\u6D4B\u8BD5\u3001\u62A5\u544A bug",
+    emoji: "\u{1F9EA}",
+    color: "green",
+    category: "testing",
+    systemPrompt: `\u4F60\u662F **QA \u6D4B\u8BD5\u5DE5\u7A0B\u5E08**\uFF0C\u786E\u4FDD\u4EA7\u54C1\u8D28\u91CF\u3002
+
+## \u6D4B\u8BD5\u7C7B\u578B
+- \u529F\u80FD\u6D4B\u8BD5
+- \u754C\u9762\u6D4B\u8BD5
+- \u6027\u80FD\u6D4B\u8BD5
+- \u5B89\u5168\u6027\u6D4B\u8BD5
+- \u517C\u5BB9\u6027\u6D4B\u8BD5
+
+## \u6D4B\u8BD5\u7B56\u7565
+- \u5192\u70DF\u6D4B\u8BD5\uFF1A\u6838\u5FC3\u529F\u80FD\u5FEB\u901F\u9A8C\u8BC1
+- \u56DE\u5F52\u6D4B\u8BD5\uFF1A\u4FEE\u6539\u540E\u91CD\u65B0\u9A8C\u8BC1
+- \u63A2\u7D22\u6027\u6D4B\u8BD5\uFF1A\u81EA\u7531\u63A2\u7D22\u6F5C\u5728\u95EE\u9898
+
+## Bug \u62A5\u544A
+- \u590D\u73B0\u6B65\u9AA4
+- \u9884\u671F\u7ED3\u679C
+- \u5B9E\u9645\u7ED3\u679C
+- \u4E25\u91CD\u7EA7\u522B
+- \u622A\u56FE/\u65E5\u5FD7`,
+    tools: ["web_search", "read_url", "run_code"],
+    exampleQuestions: [
+      "\u5E2E\u6211\u8BBE\u8BA1\u6D4B\u8BD5\u7528\u4F8B",
+      "\u5982\u4F55\u505A\u56DE\u5F52\u6D4B\u8BD5",
+      "\u8FD9\u4E2A bug \u600E\u4E48\u590D\u73B0"
+    ]
+  }
+];
+var AGENTS = [
+  ...ENGINEERING_AGENTS,
+  ...MARKETING_AGENTS,
+  ...DESIGN_AGENTS,
+  ...PRODUCT_AGENTS,
+  ...TESTING_AGENTS
+];
+var AGENTS_BY_CATEGORY = {
+  engineering: ENGINEERING_AGENTS,
+  marketing: MARKETING_AGENTS,
+  design: DESIGN_AGENTS,
+  product: PRODUCT_AGENTS,
+  testing: TESTING_AGENTS
+};
+var CATEGORY_INFO = {
+  engineering: { label: "\u5DE5\u7A0B\u5F00\u53D1", emoji: "\u2699\uFE0F", color: "blue" },
+  marketing: { label: "\u8425\u9500\u8FD0\u8425", emoji: "\u{1F4E2}", color: "pink" },
+  design: { label: "\u8BBE\u8BA1\u521B\u610F", emoji: "\u{1F3A8}", color: "purple" },
+  product: { label: "\u4EA7\u54C1\u7ECF\u7406", emoji: "\u{1F4E6}", color: "indigo" },
+  testing: { label: "\u8D28\u91CF\u4FDD\u8BC1", emoji: "\u{1F9EA}", color: "green" },
+  sales: { label: "\u9500\u552E\u652F\u6301", emoji: "\u{1F4BC}", color: "gold" },
+  support: { label: "\u5BA2\u6237\u670D\u52A1", emoji: "\u{1F3A7}", color: "teal" },
+  specialized: { label: "\u4E13\u4E1A\u670D\u52A1", emoji: "\u{1F3AF}", color: "red" }
+};
+function getAgentSystemPrompt(agentId) {
+  const agent = AGENTS.find((a) => a.id === agentId);
+  return agent?.systemPrompt || "";
+}
+function getAgent(agentId) {
+  return AGENTS.find((a) => a.id === agentId);
+}
+
+// server/chat.ts
 var chatRouter = Router2();
 function sbHeaders() {
   const url = process.env.SUPABASE_URL || "";
@@ -1361,17 +3118,17 @@ function sbHeaders() {
     }
   };
 }
-async function sbGet(path2) {
+async function sbGet(path4) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, { headers });
+  const res = await fetch(`${url}/rest/v1${path4}`, { headers });
   const text2 = await res.text();
   return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
 }
-async function sbPost(path2, body, prefer) {
+async function sbPost(path4, body, prefer) {
   const { url, headers } = sbHeaders();
   const h = { ...headers };
   if (prefer) h["Prefer"] = prefer;
-  const res = await fetch(`${url}/rest/v1${path2}`, {
+  const res = await fetch(`${url}/rest/v1${path4}`, {
     method: "POST",
     headers: h,
     body: JSON.stringify(body)
@@ -1379,14 +3136,14 @@ async function sbPost(path2, body, prefer) {
   const text2 = await res.text();
   return { ok: res.ok, status: res.status, data: text2 ? JSON.parse(text2) : null };
 }
-async function sbDelete(path2) {
+async function sbDelete(path4) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, { method: "DELETE", headers });
+  const res = await fetch(`${url}/rest/v1${path4}`, { method: "DELETE", headers });
   return { ok: res.ok, status: res.status };
 }
-async function sbPatch(path2, body) {
+async function sbPatch(path4, body) {
   const { url, headers } = sbHeaders();
-  const res = await fetch(`${url}/rest/v1${path2}`, {
+  const res = await fetch(`${url}/rest/v1${path4}`, {
     method: "PATCH",
     headers,
     body: JSON.stringify(body)
@@ -1547,9 +3304,13 @@ chatRouter.get("/conversations/:id/messages", async (req, res) => {
   }
 });
 chatRouter.post("/send", async (req, res) => {
-  const { conversationId, message, model = DEFAULT_MODEL, useSearch = false } = req.body;
+  const { conversationId, message, model = DEFAULT_MODEL, useSearch = false, agent: agentId } = req.body;
   if (!conversationId || !message) {
     return res.status(400).json({ error: "conversationId \u548C message \u5FC5\u586B" });
+  }
+  let agentSystemPrompt = "";
+  if (agentId) {
+    agentSystemPrompt = getAgentSystemPrompt(agentId);
   }
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache");
@@ -1578,9 +3339,16 @@ data: ${JSON.stringify(data)}
       content: message,
       metadata: {}
     });
-    const systemPrompt = `\u4F60\u662F\u6BDBAI\uFF08MaoAI\uFF09\uFF0C\u4E00\u4E2A\u4EE5\u4E2D\u56FD\u6218\u7565\u601D\u7EF4\u548C\u5168\u7403\u89C6\u91CE\u4E3A\u6838\u5FC3\u7684AI\u52A9\u624B\u3002\u4F60\u64C5\u957F\u6218\u7565\u5206\u6790\u3001\u5546\u4E1A\u6D1E\u5BDF\u548C\u524D\u6CBF\u4FE1\u606F\u6574\u5408\u3002\u8BF7\u7528\u4E2D\u6587\u56DE\u7B54\uFF0C\u4FDD\u6301\u4E13\u4E1A\u3001\u6DF1\u523B\u3001\u6709\u6D1E\u89C1\u3002${searchContext ? `
+    let systemPrompt;
+    if (agentSystemPrompt) {
+      systemPrompt = agentSystemPrompt + (searchContext ? `
+
+${searchContext}` : "");
+    } else {
+      systemPrompt = `\u4F60\u662F\u6BDBAI\uFF08MaoAI\uFF09\uFF0C\u4E00\u4E2A\u4EE5\u4E2D\u56FD\u6218\u7565\u601D\u7EF4\u548C\u5168\u7403\u89C6\u91CE\u4E3A\u6838\u5FC3\u7684AI\u52A9\u624B\u3002\u4F60\u64C5\u957F\u6218\u7565\u5206\u6790\u3001\u5546\u4E1A\u6D1E\u5BDF\u548C\u524D\u6CBF\u4FE1\u606F\u6574\u5408\u3002\u8BF7\u7528\u4E2D\u6587\u56DE\u7B54\uFF0C\u4FDD\u6301\u4E13\u4E1A\u3001\u6DF1\u523B\u3001\u6709\u6D1E\u89C1\u3002${searchContext ? `
 
 ${searchContext}` : ""}`;
+    }
     const messages = [
       { role: "system", content: systemPrompt },
       ...history.slice(-18),
@@ -1691,6 +3459,27 @@ chatRouter.post("/image-gen", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+chatRouter.get("/agents", (_req, res) => {
+  const result = Object.entries(AGENTS_BY_CATEGORY).map(([category, agents]) => ({
+    category,
+    info: CATEGORY_INFO[category],
+    agents: agents.map((a) => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+      emoji: a.emoji,
+      exampleQuestions: a.exampleQuestions
+    }))
+  }));
+  res.json(result);
+});
+chatRouter.get("/agents/:id", (req, res) => {
+  const agent = getAgent(req.params.id);
+  if (!agent) {
+    return res.status(404).json({ error: "Agent \u4E0D\u5B58\u5728" });
+  }
+  res.json(agent);
+});
 
 // server/notes.ts
 import { Router as Router3 } from "express";
@@ -1701,7 +3490,7 @@ function getSupabaseConfig2() {
   if (!url || !key) throw new Error("SUPABASE_URL \u6216 SUPABASE_SERVICE_KEY \u672A\u914D\u7F6E");
   return { url, key };
 }
-async function sbFetch2(path2, options = {}, prefer) {
+async function sbFetch2(path4, options = {}, prefer) {
   const { url, key } = getSupabaseConfig2();
   const headers = {
     "Content-Type": "application/json",
@@ -1710,7 +3499,7 @@ async function sbFetch2(path2, options = {}, prefer) {
     ...options.headers
   };
   if (prefer) headers["Prefer"] = prefer;
-  const res = await globalThis.fetch(`${url}/rest/v1${path2}`, { ...options, headers });
+  const res = await globalThis.fetch(`${url}/rest/v1${path4}`, { ...options, headers });
   let data;
   const text2 = await res.text();
   try {
@@ -1790,15 +3579,15 @@ notesRouter.post("/init", requireAdmin, async (req, res) => {
 notesRouter.get("/", requireAdmin, async (req, res) => {
   await ensureTable();
   const { q, tag, archived, pinned, limit = "50", offset = "0" } = req.query;
-  let path2 = `/notes?order=is_pinned.desc,updated_at.desc&limit=${limit}&offset=${offset}`;
+  let path4 = `/notes?order=is_pinned.desc,updated_at.desc&limit=${limit}&offset=${offset}`;
   if (archived === "true") {
-    path2 += "&is_archived=eq.true";
+    path4 += "&is_archived=eq.true";
   } else {
-    path2 += "&is_archived=eq.false";
+    path4 += "&is_archived=eq.false";
   }
-  if (pinned === "true") path2 += "&is_pinned=eq.true";
-  if (tag) path2 += `&tags=cs.{${encodeURIComponent(tag)}}`;
-  const result = await sbFetch2(path2, {
+  if (pinned === "true") path4 += "&is_pinned=eq.true";
+  if (tag) path4 += `&tags=cs.{${encodeURIComponent(tag)}}`;
+  const result = await sbFetch2(path4, {
     headers: { "Range-Unit": "items", Range: `${offset}-${parseInt(offset) + parseInt(limit) - 1}` }
   }, "count=exact");
   if (!result.ok) return res.status(result.status).json({ error: result.data });

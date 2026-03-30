@@ -88,15 +88,18 @@ export default function Contact() {
             {/* Business card QR code */}
             <div className="mb-8">
               <div className="inline-flex items-center gap-6 p-5 border border-[#C9A84C]/25 bg-[#C9A84C]/5 hover:border-[#C9A84C]/50 transition-all duration-300">
-                {/* QR code with gold frame */}
                 <div className="relative flex-shrink-0">
-                  <div className="absolute -inset-1 border border-[#C9A84C]/40" />
-                  <div className="absolute -inset-2 border border-[#C9A84C]/15" />
-                  <div className="p-1.5 bg-white">
+                  {/* 二维码容器 - 黑色背景 + 金边 + 完全切除白边 */}
+                  <div className="relative flex-shrink-0 w-20 h-20 overflow-hidden bg-[#0A0A0A] border-2 border-[#C9A84C]">
                     <img
                       src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png"
                       alt="微信二维码"
-                      className="w-20 h-20 object-contain block"
+                      className="w-full h-full object-cover block"
+                      style={{
+                        filter: "invert(1) brightness(1.15) contrast(1.3) saturate(0.95)",
+                        clipPath: "inset(12% 12% 12% 12%)",
+                        transform: "scale(1.15)",
+                      }}
                     />
                   </div>
                 </div>
@@ -104,7 +107,7 @@ export default function Contact() {
                 <div>
                   <div className="text-[#C9A84C]/60 text-[0.6rem] font-['DM_Mono'] tracking-[0.2em] uppercase mb-2">SCAN TO ADD WECHAT</div>
                   <div className="text-white font-['Noto_Serif_SC'] text-base font-bold mb-1">Sean DAI</div>
-                  <div className="text-white/50 text-xs mb-2">首席战略专家 · 猫眼咨询</div>
+                  <div className="text-white/50 text-xs mb-2">首席战略专家 · 猫眼增长引擎 Mc&Mamoo Growth Engine</div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-px bg-[#C9A84C]/50" />
                     <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">MCMAMOO.COM</span>

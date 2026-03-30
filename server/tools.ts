@@ -8,7 +8,8 @@
  * 3. github_push      — 推送文件到 GitHub 仓库
  * 4. github_read      — 读取 GitHub 仓库文件
  * 5. read_url         — 读取网页内容
- * 6. run_shell        — 执行 Shell 命令（仅管理员）
+ * 6. deep_research    — 深度研究（DeerFlow 多智能体框架，需部署 DeerFlow）
+ * 7. run_shell        — 执行 Shell 命令（仅管理员）
  */
 
 import { exec } from "child_process";
@@ -156,6 +157,34 @@ export const TOOL_DEFINITIONS = [
         required: ["url"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "deep_research",
+      description: "使用 DeerFlow 多智能体框架进行深度研究。适合复杂问题调查、市场分析、技术研究、竞品分析、行业调研等需要多步骤推理和综合的任务。DeerFlow 会自动规划研究步骤、搜索信息、生成结构化报告。",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "研究问题或主题，尽量详细描述研究范围和目标"
+          },
+          mode: {
+            type: "string",
+            enum: ["flash", "standard", "pro", "ultra"],
+            description: "研究模式：flash(快速)，standard(标准，含推理)，pro(深度研究，含规划，推荐)，ultra(终极，含子智能体协作)",
+            default: "pro"
+          },
+          max_duration: {
+            type: "number",
+            description: "最大研究时长（秒），默认300（5分钟），ultra模式建议600+",
+            default: 300
+          }
+        },
+        required: ["query"]
+      }
+    }
   }
 ];
 
@@ -214,6 +243,8 @@ export async function executeTool(
         return await toolGithubRead(args.repo, args.file_path, args.branch || "main");
       case "read_url":
         return await toolReadUrl(args.url, args.extract_text_only !== false);
+      case "deep_research":
+        return await toolDeepResearch(args.query, args.mode || "pro", args.max_duration || 300);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -449,6 +480,239 @@ async function toolReadUrl(url: string, extractTextOnly: boolean): Promise<ToolR
     return { success: true, output: text, metadata: { url, originalLength: html.length, extractedLength: text.length } };
   } catch (e: any) {
     return { success: false, output: "", error: `读取失败: ${e.message}` };
+  }
+}
+
+// ─── DeerFlow Deep Research Helper ─────────────────────────────────────────
+
+interface DeerFlowConfig {
+  baseUrl: string;
+  timeout: number;
+}
+
+function getDeerFlowConfig(): DeerFlowConfig {
+  return {
+    baseUrl: process.env.DEERFLOW_URL || process.env.DEERFLOW_BASE_URL || "http://localhost:2026",
+    timeout: 300, // 5 minutes default
+  };
+}
+
+/**
+ * Call DeerFlow's LangGraph API to perform deep research.
+ * Creates a new thread, sends the query, streams the response,
+ * and returns the final AI text result.
+ */
+async function toolDeepResearch(
+  query: string,
+  mode: string = "pro",
+  maxDuration: number = 300
+): Promise<ToolResult> {
+  const config = getDeerFlowConfig();
+  const langgraphUrl = `${config.baseUrl}/api/langgraph`;
+  const gatewayUrl = config.baseUrl;
+
+  const startTime = Date.now();
+
+  try {
+    // 1. Health check
+    const healthResp = await fetch(`${gatewayUrl}/health`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!healthResp.ok) {
+      return {
+        success: false,
+        output: "",
+        error: `DeerFlow 服务不可达 (${gatewayUrl})，HTTP ${healthResp.status}。请确认 DeerFlow 已启动（cd deer-flow && make dev）`
+      };
+    }
+
+    // 2. Create thread
+    const threadResp = await fetch(`${langgraphUrl}/threads`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    if (!threadResp.ok) {
+      const errText = await threadResp.text();
+      return { success: false, output: "", error: `创建 DeerFlow 线程失败: ${errText}` };
+    }
+    const threadData = await threadResp.json() as any;
+    const threadId: string = threadData.thread_id;
+
+    // 3. Build context based on mode
+    const modeConfig: Record<string, { thinking: boolean; plan: boolean; subagent: boolean }> = {
+      flash:    { thinking: false, plan: false, subagent: false },
+      standard: { thinking: true,  plan: false, subagent: false },
+      pro:      { thinking: true,  plan: true,  subagent: false },
+      ultra:    { thinking: true,  plan: true,  subagent: true  },
+    };
+    const mc = modeConfig[mode] || modeConfig.pro;
+
+    // 4. Stream the run
+    const escapedQuery = JSON.stringify(query);
+    const body = JSON.stringify({
+      assistant_id: "lead_agent",
+      input: {
+        messages: [
+          {
+            type: "human",
+            content: [{ type: "text", text: JSON.parse(escapedQuery) }],
+          },
+        ],
+      },
+      stream_mode: ["values", "messages-tuple"],
+      stream_subgraphs: true,
+      config: {
+        recursion_limit: 1000,
+      },
+      context: {
+        thinking_enabled: mc.thinking,
+        is_plan_mode: mc.plan,
+        subagent_enabled: mc.subagent,
+        thread_id: threadId,
+      },
+    });
+
+    const runResp = await fetch(`${langgraphUrl}/threads/${threadId}/runs/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      signal: AbortSignal.timeout((maxDuration + 30) * 1000),
+    });
+
+    if (!runResp.ok) {
+      const errText = await runResp.text();
+      return { success: false, output: "", error: `DeerFlow 运行失败: ${errText}` };
+    }
+
+    // 5. Parse SSE stream - collect the last "values" event for the final response
+    const reader = runResp.body?.getReader();
+    if (!reader) {
+      return { success: false, output: "", error: "无法读取 DeerFlow 响应流" };
+    }
+
+    const decoder = new TextDecoder();
+    let rawSSE = "";
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      // Keep only the last 50KB to avoid memory issues
+      if (buffer.length > 50000) {
+        buffer = buffer.slice(-50000);
+      }
+      rawSSE += decoder.decode(value, { stream: true });
+      if (rawSSE.length > 100000) {
+        rawSSE = rawSSE.slice(-100000);
+      }
+    }
+
+    // 6. Extract the final AI response from the last "values" event
+    // Parse SSE events from the buffer
+    const events: Array<{ type: string; data: string }> = [];
+    let currentEvent: string | null = null;
+    let currentDataLines: string[] = [];
+
+    for (const line of rawSSE.split("\n")) {
+      if (line.startsWith("event:")) {
+        if (currentEvent && currentDataLines.length > 0) {
+          events.push({ type: currentEvent, data: currentDataLines.join("\n") });
+        }
+        currentEvent = line.slice(6).trim();
+        currentDataLines = [];
+      } else if (line.startsWith("data:")) {
+        currentDataLines.push(line.slice(5).trim());
+      } else if (line === "" && currentEvent) {
+        if (currentDataLines.length > 0) {
+          events.push({ type: currentEvent, data: currentDataLines.join("\n") });
+        }
+        currentEvent = null;
+        currentDataLines = [];
+      }
+    }
+    if (currentEvent && currentDataLines.length > 0) {
+      events.push({ type: currentEvent, data: currentDataLines.join("\n") });
+    }
+
+    // Find last "values" event with messages
+    let resultMessages: any[] | null = null;
+    for (let i = events.length - 1; i >= 0; i--) {
+      if (events[i].type === "values") {
+        try {
+          const data = JSON.parse(events[i].data);
+          if (data.messages) {
+            resultMessages = data.messages;
+            break;
+          }
+        } catch { /* skip */ }
+      }
+    }
+
+    if (!resultMessages || resultMessages.length === 0) {
+      // Check for error events
+      for (const evt of events) {
+        if (evt.type === "error") {
+          return { success: false, output: "", error: `DeerFlow 错误: ${evt.data}` };
+        }
+      }
+      return { success: false, output: "", error: "DeerFlow 未返回有效响应" };
+    }
+
+    // Extract the final AI text (last AI message)
+    let responseText = "";
+    for (let i = resultMessages.length - 1; i >= 0; i--) {
+      const msg = resultMessages[i];
+      if (msg.type === "ai") {
+        const content = msg.content;
+        if (typeof content === "string" && content) {
+          responseText = content;
+        } else if (Array.isArray(content)) {
+          const parts = content
+            .filter((b: any) => (typeof b === "string" && b) || (b.type === "text" && b.text))
+            .map((b: any) => typeof b === "string" ? b : b.text)
+            .join("");
+          if (parts) { responseText = parts; }
+        }
+        if (responseText) break;
+      }
+      if (msg.type === "tool" && msg.name === "ask_clarification") {
+        responseText = msg.content || "";
+        if (responseText) break;
+      }
+    }
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    if (!responseText) {
+      return { success: false, output: "", error: "DeerFlow 未返回文本内容" };
+    }
+
+    // Truncate for tool result context (max 8000 chars to fit in conversation)
+    const truncated = responseText.length > 8000;
+    const output = truncated
+      ? responseText.slice(0, 8000) + "\n\n...(内容已截断，完整研究由 DeerFlow 完成)"
+      : responseText;
+
+    return {
+      success: true,
+      output,
+      metadata: {
+        source: "deerflow",
+        mode,
+        threadId,
+        query,
+        elapsedSeconds: elapsed,
+        messageCount: resultMessages.length,
+        truncated,
+      },
+    };
+  } catch (err: any) {
+    if (err.name === "TimeoutError" || err.name === "AbortError") {
+      return { success: false, output: "", error: `DeerFlow 研究超时（${maxDuration}秒）` };
+    }
+    return { success: false, output: "", error: `DeerFlow 调用失败: ${err.message}` };
   }
 }
 

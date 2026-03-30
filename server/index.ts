@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { aiNodesRouter } from "./aiNodes";
 import { chatRouter } from "./chat";
+import { contentPlatformRouter, initScheduler } from "./contentPlatform";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,17 @@ async function startServer() {
   app.use("/api/ai", aiNodesRouter);
   // MaoAI Chat API
   app.use("/api/chat", chatRouter);
+  // 猫眼内容平台协调 API
+  // GET  /api/content/subscription            当前用户订阅信息
+  // GET  /api/content/tasks                   内容任务列表
+  // POST /api/content/tasks                   手动触发内容生产
+  // GET  /api/content/admin/jobs              管理员：定时任务列表
+  // POST /api/content/admin/jobs              管理员：创建定时任务
+  // PATCH/DELETE /api/content/admin/jobs/:id  管理员：更新/删除定时任务
+  // POST /api/content/admin/jobs/:id/run      管理员：立即运行
+  // GET  /api/content/admin/subscriptions     管理员：用户订阅列表
+  // POST /api/content/admin/subscriptions     管理员：开通/变更套餐
+  app.use("/api/content", contentPlatformRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
@@ -44,6 +56,8 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // 启动定时任务调度器（加载 DB 中的激活任务）
+    initScheduler().catch((e) => console.warn("[Scheduler] Init failed:", e));
   });
 }
 
