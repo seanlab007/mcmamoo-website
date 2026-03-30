@@ -18,7 +18,7 @@ export default function Navbar() {
 
   const navLinksRow1 = [
     { name: "MaoAI", href: "/mao-ai" },
-    { name: "猫眼内容平台", href: "/content" },
+    { name: "猫眼内容平台", href: "/media-matrix-system.html" },
     { name: "Whale Pictures", href: "/whale-pictures" },
     { name: "猫眼工业", href: "/mao-industry" },
     { name: "IP Licensing", href: "/ip-licensing" },
