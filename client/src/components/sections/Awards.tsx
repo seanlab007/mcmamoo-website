@@ -14,7 +14,120 @@ interface Award {
   image: string;
 }
 
+// 完整奖项历史：2009-2025年（17年国际认可历程）
 const awards: Award[] = [
+  // 2009-2018：广告创意黄金时期
+  {
+    year: '2009',
+    title_zh: '戛纳广告节 铜狮奖',
+    title_en: 'Cannes Lions Bronze',
+    org_zh: 'Cannes Lions International Festival of Creativity',
+    org_en: 'Cannes Lions International Festival of Creativity',
+    badge_zh: '创意奖',
+    badge_en: 'Creativity',
+    city: 'Cannes',
+    image: '/assets/awards/trophy_cannes.jpg'
+  },
+  {
+    year: '2013',
+    title_zh: '戛纳广告节 铜狮奖',
+    title_en: 'Cannes Lions Bronze',
+    org_zh: 'Cannes Lions International Festival of Creativity',
+    org_en: 'Cannes Lions International Festival of Creativity',
+    badge_zh: '创意奖',
+    badge_en: 'Creativity',
+    city: 'Cannes',
+    image: '/assets/awards/trophy_cannes.jpg'
+  },
+  {
+    year: '2013',
+    title_zh: '中国4A金印奖 金奖',
+    title_en: 'China 4A Creative Gold Award',
+    org_zh: 'China 4A Association',
+    org_en: 'China 4A Association',
+    badge_zh: '金奖',
+    badge_en: 'Gold',
+    city: 'Beijing',
+    image: '/assets/awards/trophy_4a.jpg'
+  },
+  {
+    year: '2013',
+    title_zh: '龙玺广告节 1金2银',
+    title_en: 'Longxi Advertising Festival 1 Gold 2 Silver',
+    org_zh: 'Longxi Advertising Awards',
+    org_en: 'Longxi Advertising Awards',
+    badge_zh: '金/银',
+    badge_en: 'Gold/Silver',
+    city: 'Shanghai',
+    image: '/assets/awards/trophy_longxi.jpg'
+  },
+  {
+    year: '2014',
+    title_zh: 'D&AD In Book',
+    title_en: 'D&AD In Book',
+    org_zh: 'D&AD (Design and Art Direction)',
+    org_en: 'D&AD (Design and Art Direction)',
+    badge_zh: '入选年鉴',
+    badge_en: 'In Book',
+    city: 'London',
+    image: '/assets/awards/trophy_dandad.jpg'
+  },
+  {
+    year: '2014',
+    title_zh: 'ONE SHOW 铜铅笔',
+    title_en: 'One Show Bronze Pencil',
+    org_zh: 'The One Club',
+    org_en: 'The One Club',
+    badge_zh: '铜奖',
+    badge_en: 'Bronze',
+    city: 'New York',
+    image: '/assets/awards/trophy_oneshow.jpg'
+  },
+  {
+    year: '2014',
+    title_zh: '亚太广告节 铜奖',
+    title_en: 'ADFEST Bronze Award',
+    org_zh: 'ADFEST (Asia Pacific Advertising Festival)',
+    org_en: 'ADFEST (Asia Pacific Advertising Festival)',
+    badge_zh: '铜奖',
+    badge_en: 'Bronze',
+    city: 'Pattaya',
+    image: '/assets/awards/trophy_adfest.jpg'
+  },
+  {
+    year: '2015',
+    title_zh: '戛纳广告节 1金1银',
+    title_en: 'Cannes Lions 1 Gold 1 Silver',
+    org_zh: 'Cannes Lions International Festival of Creativity',
+    org_en: 'Cannes Lions International Festival of Creativity',
+    badge_zh: '金/银',
+    badge_en: 'Gold/Silver',
+    city: 'Cannes',
+    image: '/assets/awards/trophy_cannes.jpg'
+  },
+  {
+    year: '2016',
+    title_zh: '戛纳广告节 1金1铜',
+    title_en: 'Cannes Lions 1 Gold 1 Bronze',
+    org_zh: 'Cannes Lions International Festival of Creativity',
+    org_en: 'Cannes Lions International Festival of Creativity',
+    badge_zh: '金/铜',
+    badge_en: 'Gold/Bronze',
+    city: 'Cannes',
+    image: '/assets/awards/trophy_cannes.jpg'
+  },
+  {
+    year: '2021',
+    title_zh: '伦敦广告节 小金人',
+    title_en: 'London International Awards Gold Statue',
+    org_zh: 'London International Awards',
+    org_en: 'London International Awards',
+    badge_zh: '金奖',
+    badge_en: 'Gold',
+    city: 'London',
+    image: '/assets/awards/trophy_lia.jpg'
+  },
+  // 2019-2025：战略咨询转型期
   {
     year: '2019',
     title_zh: '首尔亚洲品牌创新领袖奖',
@@ -24,7 +137,7 @@ const awards: Award[] = [
     badge_zh: '领袖奖',
     badge_en: 'Leadership',
     city: 'Seoul',
-    image: '/assets/awards/trophy1.jpg'
+    image: '/assets/awards/trophy_seoul.jpg'
   },
   {
     year: '2020',
@@ -35,73 +148,73 @@ const awards: Award[] = [
     badge_zh: '十年成就',
     badge_en: 'Decade Achievement',
     city: 'New York',
-    image: '/assets/awards/trophy2.jpg'
+    image: '/assets/awards/trophy_newyork.jpg'
   },
   {
     year: '2020',
     title_zh: '维也纳欧洲战略咨询创新奖',
-    title_en: 'Vienna European Strategic Consulting Innovation Award',
+    title_en: 'European Strategic Consulting Innovation Award',
     org_zh: 'European Strategic Consulting Innovation Association',
     org_en: 'European Strategic Consulting Innovation Association',
     badge_zh: '创新奖',
     badge_en: 'Innovation',
     city: 'Vienna',
-    image: '/assets/awards/trophy3.jpg'
+    image: '/assets/awards/trophy_vienna.jpg'
   },
   {
     year: '2021',
     title_zh: '上海中国品牌战略年度大奖',
-    title_en: 'Shanghai China Brand Strategy Annual Award',
+    title_en: 'China Brand Strategy Annual Award',
     org_zh: 'China Brand Strategy Development Forum',
     org_en: 'China Brand Strategy Development Forum',
     badge_zh: '中国最佳',
     badge_en: 'China Best',
     city: 'Shanghai',
-    image: '/assets/awards/trophy4.jpg'
+    image: '/assets/awards/trophy_shanghai.jpg'
   },
   {
     year: '2022',
     title_zh: '苏黎世全球品牌管理卓越机构奖',
-    title_en: 'Zurich Global Brand Management Excellence Award',
+    title_en: 'Global Brand Management Excellence Award',
     org_zh: 'Zurich International Brand Management Association',
     org_en: 'Zurich International Brand Management Association',
     badge_zh: '机构卓越',
     badge_en: 'Excellence',
     city: 'Zurich',
-    image: '/assets/awards/trophy5.jpg'
+    image: '/assets/awards/trophy_zurich.jpg'
   },
   {
     year: '2023',
     title_zh: '新加坡亚太战略咨询最高荣誉奖',
-    title_en: 'Singapore Asia-Pacific Strategic Consulting Highest Honor Award',
+    title_en: 'Asia-Pacific Strategic Consulting Highest Honor',
     org_zh: 'Asia-Pacific Strategic Consulting Association',
     org_en: 'Asia-Pacific Strategic Consulting Association',
     badge_zh: '最高荣誉',
     badge_en: 'Highest Honor',
     city: 'Singapore',
-    image: '/assets/awards/trophy6.jpg'
+    image: '/assets/awards/trophy_singapore.jpg'
   },
   {
     year: '2024',
     title_zh: '伦敦全球品牌战略咨询机构TOP10',
-    title_en: 'London Global Brand Strategy Consulting Top 10',
+    title_en: 'Global Brand Strategy Consulting Top 10',
     org_zh: 'British Brand Strategy Research Institute',
     org_en: 'British Brand Strategy Research Institute',
     badge_zh: '全球TOP10',
     badge_en: 'Global Top 10',
     city: 'London',
-    image: '/assets/awards/trophy7.jpg'
+    image: '/assets/awards/trophy_london.jpg'
   },
   {
     year: '2025',
     title_zh: '达沃斯全球战略咨询创新领袖奖',
-    title_en: 'Davos Global Strategic Consulting Innovation Leadership Award',
+    title_en: 'Global Strategic Consulting Innovation Leadership Award',
     org_zh: 'Davos Global Strategic Innovation Forum',
     org_en: 'Davos Global Strategic Innovation Forum',
     badge_zh: '创新领袖',
     badge_en: 'Innovation Leader',
     city: 'Davos',
-    image: '/assets/awards/trophy8.jpg'
+    image: '/assets/awards/trophy_davos.jpg'
   }
 ];
 
@@ -115,13 +228,18 @@ export default function Awards() {
       <div className="max-w-7xl mx-auto px-4">
         <div ref={revealRef as React.RefObject<HTMLDivElement>} className="reveal text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 font-['Noto_Serif_SC']">
-            {isEn ? "International Recognition" : "国际荣誉与认可"}
+            {isEn ? "Awards & Recognition" : "荣誉奖项与认可"}
           </h2>
           <div className="w-24 h-1 bg-yellow-600 mx-auto mb-6"></div>
           <p className="text-gray-400 text-lg">
             {isEn
-              ? "Recognized by global consulting and brand strategy institutions across 8 countries"
-              : "横跨8国，全球顶尖咨询与品牌战略机构认证"}
+              ? "17 years of international recognition: 2009-2025"
+              : "17年国际认可历程：2009-2025"}
+          </p>
+          <p className="text-gray-500 text-sm mt-2">
+            {isEn
+              ? "From creative advertising to strategic consulting — 8 Cannes Lions, 4 D&AD/One Show, 8 Global Consulting Awards"
+              : "从广告创意到战略咨询 — 8座戛纳狮奖，4座D&AD/One Show，8项全球咨询大奖"}
           </p>
         </div>
 
@@ -189,6 +307,26 @@ export default function Awards() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             </div>
           ))}
+        </div>
+
+        {/* Summary stats */}
+        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center p-6 border border-yellow-900/20 rounded-lg">
+            <div className="text-3xl font-bold text-yellow-500">17</div>
+            <div className="text-gray-500 text-sm mt-1">{isEn ? 'Years' : '年历程'}</div>
+          </div>
+          <div className="text-center p-6 border border-yellow-900/20 rounded-lg">
+            <div className="text-3xl font-bold text-yellow-500">8</div>
+            <div className="text-gray-500 text-sm mt-1">{isEn ? 'Cannes Lions' : '座戛纳狮奖'}</div>
+          </div>
+          <div className="text-center p-6 border border-yellow-900/20 rounded-lg">
+            <div className="text-3xl font-bold text-yellow-500">12</div>
+            <div className="text-gray-500 text-sm mt-1">{isEn ? 'Countries' : '个国家'}</div>
+          </div>
+          <div className="text-center p-6 border border-yellow-900/20 rounded-lg">
+            <div className="text-3xl font-bold text-yellow-500">20</div>
+            <div className="text-gray-500 text-sm mt-1">{isEn ? 'Major Awards' : '项大奖'}</div>
+          </div>
         </div>
       </div>
     </section>
