@@ -19,6 +19,12 @@
  * 12. openclaw_canvas   — HTML 数据可视化生成
  * 13. openclaw_agent    — 通过 OpenClaw Gateway 调用专业 Agent
  * 14. openclaw_shell    — Shell 执行（仅管理员，通过 OpenClaw Skills）
+ *
+ * Claude Code Python 移植：
+ * 15. claude_code_summary  — 获取 Claude Code 移植工作区摘要
+ * 16. claude_code_analyze  — 分析代码结构和移植进度
+ * 17. claude_code_init     — 初始化 Claude Code 工作区
+ * 18. claude_code_run      — 运行 Claude Code Python 命令
  */
 
 import { exec } from "child_process";
@@ -30,6 +36,9 @@ import {
   OPENCLAW_TOOL_DEFINITIONS,
   executeOpenclawTool,
 } from "./openclaw-skills";
+import {
+  executeClaudeCodeTool,
+} from "./claude-code";
 
 const execAsync = promisify(exec);
 
@@ -244,6 +253,70 @@ export const ADMIN_TOOL_DEFINITIONS = [
       },
     },
   },
+  // ─── Claude Code Python 移植工具 ────────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "claude_code_summary",
+      description: "获取 Claude Code Python 移植工作区的摘要报告，包括文件统计、子系统状态、移植进度等信息。",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "claude_code_analyze",
+      description: "分析 Claude Code 移植工作区的代码结构，提供架构分析和改进建议。",
+      parameters: {
+        type: "object",
+        properties: {
+          file_path: {
+            type: "string",
+            description: "可选：指定要分析的特定文件或目录路径（相对于工作区根目录）",
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "claude_code_init",
+      description: "初始化 Claude Code Python 移植工作区，从 GitHub 克隆代码仓库。",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "claude_code_run",
+      description: "运行 Claude Code Python 移植版本的 CLI 命令（如 summary、manifest、subsystems）。",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "要执行的命令，如 summary、manifest、subsystems",
+          },
+          args: {
+            type: "array",
+            items: { type: "string" },
+            description: "命令参数列表",
+          },
+        },
+        required: ["command"],
+      },
+    },
+  },
 ];
 
 // ─── Tool Executor ────────────────────────────────────────────────────────────
@@ -280,6 +353,12 @@ export async function executeTool(
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
+      // ─── Claude Code Python 移植工具 ────────────────────────────────────
+      case "claude_code_summary":
+      case "claude_code_analyze":
+      case "claude_code_init":
+      case "claude_code_run":
+        return await toolClaudeCode(toolName, args);
       default:
         // ─── 路由到 OpenClaw Skills ───────────────────────────────────────
         if (toolName.startsWith("openclaw_")) {
@@ -765,6 +844,67 @@ async function toolRunShell(command: string, cwd: string): Promise<ToolResult> {
       success: false,
       output: err.stdout || "",
       error: err.stderr || err.message
+    };
+  }
+}
+
+// ─── Claude Code Python 移植工具实现 ───────────────────────────────────────────
+
+async function toolClaudeCode(
+  toolName: string,
+  args: Record<string, any>
+): Promise<ToolResult> {
+  try {
+    const result = await executeClaudeCodeTool(toolName, args);
+    
+    // 处理不同类型的返回结果
+    if (typeof result === "string") {
+      return {
+        success: true,
+        output: result,
+        metadata: { tool: toolName }
+      };
+    }
+    
+    if (result && typeof result === "object") {
+      // 处理运行命令的结果
+      if ("success" in result && "output" in result) {
+        return {
+          success: result.success as boolean,
+          output: (result.output as string) || "",
+          error: (result.error as string) || undefined,
+          metadata: { tool: toolName }
+        };
+      }
+      
+      // 处理分析结果
+      if ("structure" in result && "suggestions" in result) {
+        const analysis = result as { structure: string; suggestions: string[] };
+        return {
+          success: true,
+          output: `## 代码结构分析\n\n${analysis.structure}\n\n## 改进建议\n\n${analysis.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
+          metadata: { tool: toolName }
+        };
+      }
+      
+      // 通用对象处理
+      return {
+        success: true,
+        output: JSON.stringify(result, null, 2),
+        metadata: { tool: toolName }
+      };
+    }
+    
+    return {
+      success: true,
+      output: String(result),
+      metadata: { tool: toolName }
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      output: "",
+      error: `Claude Code 工具执行失败: ${err.message}`
     };
   }
 }
