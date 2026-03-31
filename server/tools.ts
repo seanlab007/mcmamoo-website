@@ -2,7 +2,7 @@
  * MaoAI Tool Calling Engine
  * 工具注册系统和执行引擎
  *
- * 支持的工具：
+ * 原生工具：
  * 1. web_search       — 联网搜索（Tavily API，有免费额度）
  * 2. run_code         — 执行 Python/JS 代码（Railway 服务器沙箱）
  * 3. github_push      — 推送文件到 GitHub 仓库
@@ -10,6 +10,15 @@
  * 5. read_url         — 读取网页内容
  * 6. deep_research    — 深度研究（DeerFlow 多智能体框架，需部署 DeerFlow）
  * 7. run_shell        — 执行 Shell 命令（仅管理员）
+ *
+ * OpenClaw Skills（拆解自 seanlab007/open-claw）：
+ * 8.  openclaw_weather  — 天气查询（wttr.in，无需 API Key）
+ * 9.  openclaw_github   — GitHub PR/Issue/CI 查询
+ * 10. openclaw_summarize — URL/网页内容摘要
+ * 11. openclaw_memory   — 用户持久化记忆读写
+ * 12. openclaw_canvas   — HTML 数据可视化生成
+ * 13. openclaw_agent    — 通过 OpenClaw Gateway 调用专业 Agent
+ * 14. openclaw_shell    — Shell 执行（仅管理员，通过 OpenClaw Skills）
  */
 
 import { exec } from "child_process";
@@ -17,6 +26,10 @@ import { promisify } from "util";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
+import {
+  OPENCLAW_TOOL_DEFINITIONS,
+  executeOpenclawTool,
+} from "./openclaw-skills";
 
 const execAsync = promisify(exec);
 
@@ -188,7 +201,11 @@ export const TOOL_DEFINITIONS = [
   }
 ];
 
-// Admin-only tools (not exposed to regular users)
+// ─── 合并 OpenClaw Skills 到工具列表 ──────────────────────────────────────────
+// OpenClaw Skills 对普通用户和管理员都开放（openclaw_shell 除外，在 executor 中鉴权）
+(TOOL_DEFINITIONS as any[]).push(...(OPENCLAW_TOOL_DEFINITIONS as any[]));
+
+// Admin-only tools (不暴露给普通用户)
 export const ADMIN_TOOL_DEFINITIONS = [
   ...TOOL_DEFINITIONS,
   {
@@ -211,7 +228,22 @@ export const ADMIN_TOOL_DEFINITIONS = [
         required: ["command"]
       }
     }
-  }
+  },
+  {
+    type: "function",
+    function: {
+      name: "openclaw_shell",
+      description: "通过 OpenClaw Skills 执行 Shell 命令（管理员专用）。",
+      parameters: {
+        type: "object",
+        properties: {
+          command: { type: "string", description: "Shell 命令" },
+          cwd: { type: "string", description: "工作目录" },
+        },
+        required: ["command"],
+      },
+    },
+  },
 ];
 
 // ─── Tool Executor ────────────────────────────────────────────────────────────
@@ -249,6 +281,10 @@ export async function executeTool(
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
       default:
+        // ─── 路由到 OpenClaw Skills ───────────────────────────────────────
+        if (toolName.startsWith("openclaw_")) {
+          return await executeOpenclawTool(toolName, args, { isAdmin });
+        }
         return { success: false, output: "", error: `未知工具: ${toolName}` };
     }
   } catch (err: any) {
