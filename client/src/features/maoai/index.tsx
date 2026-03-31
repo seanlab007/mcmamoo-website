@@ -19,7 +19,13 @@ export { default as MaoAISales } from "./pages/Sales";
 export { AgentModeSelector } from "./components/AgentModeSelector";
 
 // Constants
-export { MAOAI_ROUTES, MAOAI_BACKEND_URL, MAOAI_TOOL_DISPLAY, MAOAI_TIER_LABELS } from "./constants";
+export {
+  MAOAI_ROUTES,
+  MAOAI_BACKEND_URL,
+  MAOAI_TOOL_DISPLAY,
+  MAOAI_TIER_LABELS,
+  MAOAI_LOCAL_OLLAMA,
+} from "./constants";
 
 // Types
 export type {
