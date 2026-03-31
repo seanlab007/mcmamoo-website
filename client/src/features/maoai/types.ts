@@ -103,6 +103,11 @@ export type AgentCategory = {
   agents: Agent[];
 };
 
+// ─── Routes / Input Modes (re-exported from constants) ───────────────────────
+// These types live in constants.ts but are also exported from types.ts
+// so that `index.tsx` can re-export them from a single `./types` source.
+export type { MaoAIRoute, MaoAIInputMode } from "./constants";
+
 // ─── Sales CRM ────────────────────────────────────────────────────────────────
 
 export type LeadStatus =
