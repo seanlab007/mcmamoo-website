@@ -12,10 +12,10 @@ import { trpc } from "@/lib/trpc";
 
 // 类型定义
 interface User {
-  id: string;
-  email?: string;
-  name?: string;
-  role?: string;
+  id: string | number;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
 }
 
 // 运营平台后端地址（本地或云端）
@@ -102,7 +102,7 @@ export default function Platform() {
   }
 
   // 管理员入口提示
-  const userIsAdmin = isAdmin(me);
+  const userIsAdmin = isAdmin(me ?? undefined);
   if (userIsAdmin) {
     return (
       <div className="flex flex-col h-screen bg-[#0A0A0A]">

@@ -29,10 +29,11 @@ function StatusBadge({ status }: { status: LeadStatus }) {
     qualified: "bg-purple-500/20 text-purple-400",
     proposal: "bg-orange-500/20 text-orange-400",
     negotiation: "bg-pink-500/20 text-pink-400",
-    closed_won: "bg-green-500/20 text-green-400"
+    closed_won: "bg-green-500/20 text-green-400",
+    closed_lost: "bg-red-500/20 text-red-400",
   };
   const labels: Record<LeadStatus, string> = {
-    new: "新线索", contacted: "已联系", qualified: "已合格", proposal: "提案中", negotiation: "谈判中", closed_won: "成交"
+    new: "新线索", contacted: "已联系", qualified: "已合格", proposal: "提案中", negotiation: "谈判中", closed_won: "成交", closed_lost: "丢单",
   };
   return <span className={`px-2 py-0.5 text-xs rounded ${colors[status]}`}>{labels[status]}</span>;
 }
