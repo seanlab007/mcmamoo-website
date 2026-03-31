@@ -27,6 +27,17 @@ export const MAOAI_BACKEND_URL =
 
 // ─── Models ───────────────────────────────────────────────────────────────────
 
+/** 本地 Ollama 默认配置 */
+export const MAOAI_LOCAL_OLLAMA = {
+  id: "ollama-local",
+  name: "Ollama (Local)",
+  badge: "OFFLINE",
+  description: "本地运行，100% 隐私保护",
+  baseUrl: "http://localhost:11434/v1",
+  defaultModel: "llama3",
+  isLocal: true as const,
+};
+
 /** 云端模型列表（非本地节点） */
 export const MAOAI_CLOUD_MODELS = [
   {
