@@ -201,7 +201,7 @@ export default function AdminInquiries() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="text-white/70 text-xs font-mono">{row.email as string}</div>
-                        {row.phone && <div className="text-white/40 text-xs font-mono mt-0.5">{row.phone as string}</div>}
+                        {Boolean(row.phone) && <div className="text-white/40 text-xs font-mono mt-0.5">{String(row.phone)}</div>}
                       </td>
                       <td className="px-4 py-4">
                         {svcMeta ? (
