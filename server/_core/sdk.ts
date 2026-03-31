@@ -266,7 +266,7 @@ class SDKServer {
       throw ForbiddenError("Invalid session cookie");
     }
 
-    const sessionUserId = session.openId;
+    const sessionUserId = String(session.openId);
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
@@ -293,11 +293,11 @@ class SDKServer {
     }
 
     await db.upsertUser({
-      openId: user.openId,
+      openId: String(user.openId),
       lastSignedIn: signedInAt,
     });
 
-    return user;
+    return user as unknown as User;
   }
 }
 

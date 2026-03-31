@@ -12,81 +12,23 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Streamdown } from "streamdown";
 import { useContentSubscription } from "@/hooks/useContentSubscription";
 import { MAOAI_ROUTES, MAOAI_BACKEND_URL, MAOAI_TOOL_DISPLAY, MAOAI_TIER_LABELS } from "../constants";
+import type {
+  MessageContent,
+  Message,
+  ActiveNodeInfo,
+  CloudModel,
+  LocalNode,
+  ModelOption,
+  Conversation,
+  PendingFile,
+  ToolCallStep,
+} from "../types";
 
 const BACKEND_URL = MAOAI_BACKEND_URL;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type MessageContent =
-  | string
-  | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
-
-type Message = {
-  role: "user" | "assistant";
-  content: MessageContent;
-  nodeInfo?: ActiveNodeInfo;
-  displayText?: string;
-  imageUrls?: string[];
-  generatedImageUrl?: string;
-  isImageGeneration?: boolean;
-  toolCalls?: ToolCallStep[]; // tool calling steps shown in this message
-};
-
-type ActiveNodeInfo = {
-  id: number | null;
-  name: string;
-  model: string;
-  isLocal: boolean;
-  badge?: string;
-};
-
-type CloudModel = {
-  id: string;
-  name: string;
-  badge: string;
-  description: string;
-  supportsVision?: boolean;
-  available?: boolean;
-  isLocal: false;
-};
-
-type LocalNode = {
-  id: string;
-  nodeId: number;
-  name: string;
-  badge: string;
-  description: string;
-  modelId: string;
-  isLocal: true;
-  isOnline: boolean;
-};
-
-type ModelOption = CloudModel | LocalNode;
-
-type Conversation = {
-  id: number;
-  title: string;
-  model: string;
-  updatedAt: string;
-};
-
+// ─── Types (local-only) ───────────────────────────────────────────────────────
+// All shared types are imported from ../types; only Chat-specific types remain here.
 type InputMode = "chat" | "image";
-
-type PendingFile = {
-  name: string;
-  fileType: string; // "pdf" | "docx" | "text" | "csv" | "json" | "markdown"
-  text: string;    // extracted text content
-  size: number;
-  truncated?: boolean;
-  charCount?: number;
-};
-
-type ToolCallStep = {
-  id: string;
-  name: string;
-  args?: Record<string, any>;
-  status: "calling" | "done" | "error";
-  outputPreview?: string;
-};
 
 // Tool name → 中文显示名和图标（从 constants 统一导入）
 const TOOL_DISPLAY = MAOAI_TOOL_DISPLAY;
