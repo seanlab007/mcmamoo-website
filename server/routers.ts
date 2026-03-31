@@ -4,8 +4,17 @@ import { systemRouter } from "./_core/systemRouter";
 import { notifyOwner } from "./_core/notification";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { getDb } from "./db";
-import { maoApplications, briefSubscribers } from "../drizzle/schema";
+import {
+  listUsers,
+  updateUserRole as dbUpdateUserRole,
+  createMaoApplication,
+  listMaoApplications,
+  updateMaoApplicationStatus,
+  updateMaoApplicationNotes,
+  subscribeBrief,
+  listBriefSubscribers,
+  listSubscriberEmails,
+} from "./db";
 import { z } from "zod";
 import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfirmationHtml, generateContactAdminHtml } from "./email";
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
@@ -30,18 +39,7 @@ export const appRouter = router({
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可查看用户列表" });
       }
-      const db = await getDb();
-      if (!db) return [];
-      const { users } = await import("../drizzle/schema");
-      const results = await db.select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        lastSignedIn: users.lastSignedIn,
-        createdAt: users.createdAt,
-      }).from(users).orderBy(users.id.desc());
-      return results;
+      return await listUsers();
     }),
     // Admin: update user role
     updateUserRole: protectedProcedure
@@ -56,14 +54,7 @@ export const appRouter = router({
         if (ctx.user.role !== "admin") {
           throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作用户角色" });
         }
-        const db = await getDb();
-        if (!db) throw new Error("Database unavailable");
-        const { eq } = await import("drizzle-orm");
-        const { users } = await import("../drizzle/schema");
-        await db
-          .update(users)
-          .set({ role: input.role, updatedAt: new Date() })
-          .where(eq(users.id, input.userId));
+        await dbUpdateUserRole(input.userId, input.role);
         return { success: true };
       }),
   }),
@@ -131,12 +122,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) {
-          throw new Error("Database unavailable");
-        }
-
-        await db.insert(maoApplications).values({
+        await createMaoApplication({
           name: input.name,
           organization: input.organization,
           consultType: input.consultType,
@@ -158,10 +144,7 @@ export const appRouter = router({
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可访问" });
       }
-      const db = await getDb();
-      if (!db) return [];
-      const results = await db.select().from(maoApplications).orderBy(maoApplications.createdAt);
-      return results;
+      return await listMaoApplications();
     }),
 
     // Subscribe to strategic brief
@@ -172,12 +155,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database unavailable");
-        // Upsert to avoid duplicate subscriptions
-        await db.insert(briefSubscribers).values({
-          email: input.email,
-        }).onDuplicateKeyUpdate({ set: { email: input.email } });
+        await subscribeBrief(input.email);
         await notifyOwner({
           title: "新战略简报订阅",
           content: `邮箱：${input.email} 已订阅毛智库战略简报`,
@@ -190,10 +168,7 @@ export const appRouter = router({
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可访问" });
       }
-      const db = await getDb();
-      if (!db) return [];
-      const results = await db.select().from(briefSubscribers).orderBy(briefSubscribers.createdAt);
-      return results;
+      return await listBriefSubscribers();
     }),
 
     // Admin: update application status (protected - admin only)
@@ -208,13 +183,7 @@ export const appRouter = router({
         if (ctx.user.role !== "admin") {
           throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作" });
         }
-        const db = await getDb();
-        if (!db) throw new Error("Database unavailable");
-        const { eq } = await import("drizzle-orm");
-        await db
-          .update(maoApplications)
-          .set({ status: input.status })
-          .where(eq(maoApplications.id, input.id));
+        await updateMaoApplicationStatus(input.id, input.status);
         return { success: true };
       }),
 
@@ -230,13 +199,7 @@ export const appRouter = router({
         if (ctx.user.role !== "admin") {
           throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作" });
         }
-        const db = await getDb();
-        if (!db) throw new Error("Database unavailable");
-        const { eq } = await import("drizzle-orm");
-        await db
-          .update(maoApplications)
-          .set({ notes: input.notes })
-          .where(eq(maoApplications.id, input.id));
+        await updateMaoApplicationNotes(input.id, input.notes);
         return { success: true };
       }),
 
@@ -252,13 +215,10 @@ export const appRouter = router({
         if (ctx.user.role !== "admin") {
           throw new TRPCError({ code: "FORBIDDEN", message: "仅管理员可操作" });
         }
-        const db = await getDb();
-        if (!db) throw new Error("Database unavailable");
-        const subscribers = await db.select().from(briefSubscribers);
-        if (subscribers.length === 0) {
+        const emails = await listSubscriberEmails();
+        if (emails.length === 0) {
           return { success: true, sent: 0, failed: 0, message: "暂无订阅者" };
         }
-        const emails = subscribers.map((s) => s.email);
         const html = generateNewsletterHtml(input.subject, input.content);
         const { success, failed } = await sendBulkEmails(emails, input.subject, html, input.content);
         return { success: true, sent: success, failed, message: `已发送 ${success} 封，失败 ${failed} 封` };

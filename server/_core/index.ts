@@ -7,7 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { aiNodesRouter } from "../aiNodes";
+import aiStreamRouter from "../aiStream";
 import { chatRouter } from "../chat";
 import { notesRouter } from "../notes";
 
@@ -38,8 +38,8 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
-  // AI 节点协同 API（OpenClaw × MaoAI 协同架构）
-  app.use("/api/ai", aiNodesRouter);
+  // AI 节点协同 + 聊天流 + OpenAI 兼容 API（MaoAI 核心路由）
+  app.use("/api/ai", aiStreamRouter);
   // 私密云笔记 API（管理员专属）
   app.use("/api/notes", notesRouter);
   // MaoAI Chat API（对话历史 + 联网搜索 + 图片生成）

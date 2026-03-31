@@ -13,7 +13,7 @@
 import { Router, Request, Response } from "express";
 import { dbFetch } from "./aiNodes";
 import { sdk } from "./_core/sdk";
-import cron from "node-cron";
+import cron, { type ScheduledTask } from "node-cron";
 
 const contentPlatformRouter = Router();
 
@@ -477,7 +477,7 @@ contentPlatformRouter.post("/admin/subscriptions", async (req: Request, res: Res
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // 内存中的 cron task 实例（jobId → ScheduledTask）
-const activeCronJobs = new Map<number, cron.ScheduledTask>();
+const activeCronJobs = new Map<number, ScheduledTask>();
 
 async function invokeSkillAsync(
   taskId: number,
