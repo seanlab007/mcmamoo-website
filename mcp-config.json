@@ -1,0 +1,70 @@
+{
+  "mcp_servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/daiyan/WorkBuddy"],
+      "description": "文件系统操作 - 支持文件读写、目录列表等"
+    },
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "/Users/daiyan/WorkBuddy"],
+      "description": "Git 操作 - 支持 status、commit、branch 等"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub API 操作 - 支持 issue、PR、repo 管理"
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost/mydb"],
+      "description": "PostgreSQL 数据库查询"
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/path/to/database.db"],
+      "description": "SQLite 数据库操作"
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "description": "HTTP 请求和网页获取 - 替代 WebFetchTool"
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      },
+      "description": "Brave 搜索引擎 - 替代 WebSearchTool"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "description": "顺序思考工具 - 支持复杂推理链"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "description": "浏览器自动化 - 支持截图、页面操作"
+    }
+  },
+  "tool_mappings": {
+    "Claude Code Tool": "MCP Server Equivalent",
+    "FileReadTool": "filesystem/read",
+    "FileWriteTool": "filesystem/write",
+    "FileEditTool": "filesystem/edit",
+    "GlobTool": "filesystem/glob",
+    "GrepTool": "filesystem/grep",
+    "BashTool": "filesystem/bash (或系统 shell)",
+    "PowerShellTool": "filesystem/powershell",
+    "WebSearchTool": "brave-search/search",
+    "WebFetchTool": "fetch/fetch",
+    "Git operations": "git/*",
+    "GitHub operations": "github/*",
+    "Database queries": "postgres/query 或 sqlite/query"
+  }
+}
