@@ -26,6 +26,19 @@ import type {
 
 const BACKEND_URL = MAOAI_BACKEND_URL;
 
+// ─── Model descriptions (local metadata for backend model list) ───────────────
+const MODEL_DESCRIPTIONS: Record<string, { description: string; supportsVision?: boolean }> = {
+  "deepseek-chat":           { description: "通用对话·写作·分析" },
+  "deepseek-reasoner":       { description: "深度推理·复杂逻辑" },
+  "glm-4-flash":             { description: "智谱极速·免费额度多" },
+  "glm-4-plus":              { description: "智谱旗舰·能力强" },
+  "glm-4v-flash":            { description: "图片理解·截图分析", supportsVision: true },
+  "llama-3.3-70b-versatile": { description: "Groq 超快·英文优秀" },
+  "gemini-2.5-flash":        { description: "速度快，适合日常对话", supportsVision: true },
+  "gemini-2.5-pro":          { description: "更强推理能力，适合复杂任务", supportsVision: true },
+  "claude-opus-4":           { description: "顶级写作与分析能力", supportsVision: true },
+};
+
 // ─── Types (local-only) ───────────────────────────────────────────────────────
 // All shared types are imported from ../types; only Chat-specific types remain here.
 type InputMode = "chat" | "image";

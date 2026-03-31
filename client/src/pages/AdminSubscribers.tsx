@@ -7,6 +7,20 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
 
+interface Subscriber {
+  id: number;
+  email: string;
+  createdAt: Date;
+}
+
+function toSubscriber(raw: Record<string, unknown>): Subscriber {
+  return {
+    id: Number(raw.id ?? 0),
+    email: String(raw.email ?? ""),
+    createdAt: raw.created_at ? new Date(String(raw.created_at)) : new Date(),
+  };
+}
+
 export default function AdminSubscribers() {
   const { user, loading } = useAuth();
   const [search, setSearch] = useState("");
@@ -16,10 +30,11 @@ export default function AdminSubscribers() {
   const [sendResult, setSendResult] = useState<{ sent: number; failed: number; message: string } | null>(null);
   const [sending, setSending] = useState(false);
 
-  const { data: subscribers, isLoading } = trpc.mao.listSubscribers.useQuery(
+  const { data: rawSubscribers, isLoading } = trpc.mao.listSubscribers.useQuery(
     undefined,
     { enabled: !!user && user.role === "admin" }
   );
+  const subscribers: Subscriber[] = (rawSubscribers ?? []).map(toSubscriber);
 
   const sendNewsletter = trpc.mao.sendNewsletter.useMutation({
     onMutate: () => setSending(true),

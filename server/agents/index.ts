@@ -617,7 +617,7 @@ export const TOOLSETS: Record<string, string[]> = {
 // 获取 Agent 对应的工具定义
 export function getToolsForAgent(agentId: string, isAdmin: boolean = false): typeof TOOL_DEFINITIONS {
   const agent = AGENTS.find(a => a.id === agentId);
-  if (!agent) return isAdmin ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS;
+  if (!agent) return (isAdmin ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS) as typeof TOOL_DEFINITIONS;
   
   // 根据 Agent 的工具列表筛选
   const toolNames = agent.tools;
