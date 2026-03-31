@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { MODEL_CONFIGS } from "./routers";
+import { MODEL_CONFIGS } from "./models";
 import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog, getNodeSkills, getAllNodeSkills, upsertNodeSkill, deleteNodeSkill, deleteAllNodeSkills, setNodeSkillEnabled } from "./db";
 import { dbFetch } from "./aiNodes";
 import { sdk } from "./_core/sdk";

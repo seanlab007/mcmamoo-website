@@ -35,6 +35,20 @@ type Application = {
   updatedAt: Date;
 };
 
+function toApplication(raw: Record<string, unknown>): Application {
+  return {
+    id: Number(raw.id ?? 0),
+    name: String(raw.name ?? ""),
+    organization: String(raw.organization ?? ""),
+    consultType: String(raw.consult_type ?? raw.consultType ?? ""),
+    description: raw.description != null ? String(raw.description) : null,
+    status: (raw.status as Application["status"]) ?? "pending",
+    notes: raw.notes != null ? String(raw.notes) : null,
+    createdAt: raw.created_at ? new Date(String(raw.created_at)) : new Date(),
+    updatedAt: raw.updated_at ? new Date(String(raw.updated_at)) : new Date(),
+  };
+}
+
 export default function AdminMaoApplications() {
   const { user, loading } = useAuth();
   const [filter, setFilter] = useState<string>("all");
@@ -43,10 +57,11 @@ export default function AdminMaoApplications() {
   const [notesInput, setNotesInput] = useState<string>("");
   const [savingNotes, setSavingNotes] = useState(false);
 
-  const { data: applications, isLoading, refetch } = trpc.mao.listApplications.useQuery(
+  const { data: rawApplications, isLoading, refetch } = trpc.mao.listApplications.useQuery(
     undefined,
     { enabled: !!user && user.role === "admin" }
   );
+  const applications: Application[] = (rawApplications ?? []).map(toApplication);
 
   const updateStatus = trpc.mao.updateApplicationStatus.useMutation({
     onMutate: ({ id }: { id: number }) => setUpdatingId(id),

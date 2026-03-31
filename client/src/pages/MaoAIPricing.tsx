@@ -85,19 +85,18 @@ export default function MaoAIPricing() {
 
   const handleCreateOrder = async (provider: string) => {
     if (!selectedTier) return;
-    // Map BillingCycle to backend enum (monthly | yearly)
-    const backendCycle = cycle === "annual" ? "yearly" : "monthly";
     try {
       const result = await createOrderMutation.mutateAsync({
-        tier: selectedTier,
-        provider: provider as any,
-        currency,
-        billingCycle: cycle,
+        plan: "content",
+        amount: (PLAN_PRICES?.[selectedTier]?.[currency]?.[cycle] as unknown) as number | undefined,
       });
+      const r = result as any;
+      const orderId = r?.id ?? r?.orderId ?? `ORD-${Date.now()}`;
+      const message = r?.message ?? "";
       alert(
         isCNY
-          ? `订单已创建（ID: ${result.orderId}）\n\n${result.message}\n\n请联系客服微信完成支付，并告知订单号。`
-          : `Order created (ID: ${result.orderId})\n\n${result.message}\n\nPlease contact support to complete payment.`
+          ? `订单已创建（ID: ${orderId}）\n\n${message}\n\n请联系客服微信完成支付，并告知订单号。`
+          : `Order created (ID: ${orderId})\n\n${message}\n\nPlease contact support to complete payment.`
       );
     } catch (err: any) {
       alert(err.message);
