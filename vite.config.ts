@@ -184,4 +184,4 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
-});
+}),\n  proxy: {\n    "/api": {\n      target: process.env.VITE_API_URL || "http://localhost:8080",\n      changeOrigin: true,\n    },\n  },\n}
