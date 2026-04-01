@@ -162,10 +162,12 @@ export function registerSupabaseAuthRoutes(app: Express) {
       const openId = `supabase:${authData.user.id}`;
       const userEmail = authData.user.email ?? email;
       const now = new Date().toISOString();
+      const ownerEmail = process.env.OWNER_EMAIL ?? "benedictashford20@gmail.com";
+      const isAdminEmail = userEmail === ownerEmail || userEmail === "sean_lab@me.com";
 
       // 3. 先查询 openId，再查询 email（处理 PENDING_FIRST_LOGIN 情况）
       let existingUser = await getUserByOpenId(openId);
-      let role: "admin" | "user" = "user";
+      let role: "admin" | "user" = isAdminEmail ? "admin" : "user";
 
       if (!existingUser) {
         // 尝试通过 email 查找（可能是 PENDING_FIRST_LOGIN 状态）
@@ -175,14 +177,10 @@ export function registerSupabaseAuthRoutes(app: Express) {
           // 找到了邮箱对应的用户，更新 openId
           const userId = userByEmail.id as number;
           await updateUserOpenId(userId, openId, now);
-          role = (userByEmail.role as "admin" | "user") ?? "user";
-          existingUser = { ...userByEmail, openId };
+          role = isAdminEmail ? "admin" : ((userByEmail.role as "admin" | "user") ?? "user");
+          existingUser = { ...userByEmail, openId, role };
         } else {
           // 全新用户
-          const ownerEmail = process.env.OWNER_EMAIL ?? "benedictashford20@gmail.com";
-          if (userEmail === ownerEmail) {
-            role = "admin";
-          }
           await upsertUser({
             openId,
             email: userEmail,
@@ -193,8 +191,8 @@ export function registerSupabaseAuthRoutes(app: Express) {
           });
         }
       } else {
-        role = (existingUser.role as "admin" | "user") ?? "user";
-        // 更新 lastSignedIn
+        role = isAdminEmail ? "admin" : ((existingUser.role as "admin" | "user") ?? "user");
+        // 更新 lastSignedIn 与角色
         const key = getApiKey();
         await fetch(
           `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
@@ -205,7 +203,7 @@ export function registerSupabaseAuthRoutes(app: Express) {
               Authorization: `Bearer ${key}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ lastSignedIn: now }),
+            body: JSON.stringify({ lastSignedIn: now, role }),
           }
         );
       }
