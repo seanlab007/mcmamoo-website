@@ -10,6 +10,8 @@
 export const MAOAI_ROUTES = {
   /** 主聊天页（需登录） */
   CHAT: "/maoai",
+  /** DeerFlow 深度研究入口 */
+  RESEARCH: "/maoai/research",
   /** 独立登录页 */
   LOGIN: "/maoai/login",
   /** 定价页 */
