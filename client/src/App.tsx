@@ -69,7 +69,9 @@ function Router() {
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/press"} component={Press} />
       <Route path={"/mao-ai"} component={MaoAIChat} />         {/* legacy alias → /maoai */}
+      <Route path={"/deerflow"} component={MaoAIChat} />       {/* legacy alias → /maoai/research */}
       <Route path={MAOAI_ROUTES.CHAT} component={MaoAIChat} />
+      <Route path={MAOAI_ROUTES.RESEARCH} component={MaoAIChat} />
       <Route path={MAOAI_ROUTES.LOGIN} component={MaoAILogin} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} /> {/* legacy alias → /maoai/pricing */}
       <Route path={MAOAI_ROUTES.PRICING} component={MaoAIPricing} />

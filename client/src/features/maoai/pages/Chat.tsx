@@ -5,11 +5,12 @@ import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
   Wand2, Image as ImageIcon, Crown, Zap, Paperclip, FileText, FileJson, Table2,
-  LayoutGrid, Lock,
+  LayoutGrid, Lock, Search,
 } from "lucide-react";
 import type { PlanTier } from "@shared/plans";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Streamdown } from "streamdown";
+import { useLocation } from "wouter";
 import { useContentSubscription } from "@/hooks/useContentSubscription";
 import { MAOAI_ROUTES, MAOAI_BACKEND_URL, MAOAI_TOOL_DISPLAY, MAOAI_TIER_LABELS } from "../constants";
 import type {
@@ -25,6 +26,13 @@ import type {
 } from "../types";
 
 const BACKEND_URL = MAOAI_BACKEND_URL;
+const DEERFLOW_STARTER_PROMPT = "请使用 DeerFlow 深度研究模式，系统研究这个问题：";
+const DEERFLOW_QUICK_PROMPTS = [
+  "请使用 DeerFlow 深度研究模式，帮我写一份行业竞争格局分析",
+  "请使用 DeerFlow 深度研究模式，调研这个产品赛道的核心玩家与机会",
+  "请使用 DeerFlow 深度研究模式，整理一份技术方案对比报告",
+  "请使用 DeerFlow 深度研究模式，给我做一版市场进入策略研究",
+] as const;
 
 // ─── Model descriptions (local metadata for backend model list) ───────────────
 const MODEL_DESCRIPTIONS: Record<string, { description: string; supportsVision?: boolean }> = {
@@ -131,12 +139,14 @@ function ToolCallSteps({ steps, live = false }: { steps: ToolCallStep[]; live?: 
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function MaoAIChat() {
+  const [location, navigate] = useLocation();
   const { user, loading, logout } = useAuth({
     redirectOnUnauthenticated: true,
     redirectPath: MAOAI_ROUTES.LOGIN,
   });
   const isAdmin = (user as any)?.role === "admin";
   const { data: contentSub, hasContentAccess, isAdmin: isContentAdmin } = useContentSubscription(!!user);
+  const isResearchEntry = location === MAOAI_ROUTES.RESEARCH || location === "/deerflow";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -207,9 +217,22 @@ export default function MaoAIChat() {
     { enabled: !!currentConvId }
   );
 
+  const activateDeerFlowEntry = useCallback(() => {
+    setInputMode("chat");
+    setShowUpgradePrompt(null);
+    setInput((prev) => (prev.trim() ? prev : DEERFLOW_STARTER_PROMPT));
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
+
+  useEffect(() => {
+    if (isResearchEntry) {
+      activateDeerFlowEntry();
+    }
+  }, [isResearchEntry, activateDeerFlowEntry]);
 
   // Load messages when switching conversations
   useEffect(() => {
@@ -927,6 +950,37 @@ export default function MaoAIChat() {
 
         {/* ── Sidebar bottom nav ── */}
         <div className="shrink-0 border-t border-[#C9A84C]/10 px-2 py-2 flex flex-col gap-1">
+          {user && (
+            <a
+              href={MAOAI_ROUTES.SALES}
+              className="flex items-center gap-2 px-3 py-2 text-xs text-sky-400/75 hover:text-sky-400 hover:bg-sky-400/8 border border-transparent hover:border-sky-400/20 transition-all rounded"
+              style={{ fontFamily: "'DM Mono', monospace" }}
+              title="前往 MaoAI Sales 增长工作台"
+            >
+              <Crown size={12} className="shrink-0" />
+              <span className="truncate">Sales 工作台</span>
+              <span className="ml-auto text-[9px] text-sky-400/45">CRM</span>
+            </a>
+          )}
+          {user && (
+            <button
+              onClick={() => {
+                navigate(MAOAI_ROUTES.RESEARCH);
+                activateDeerFlowEntry();
+              }}
+              className={`flex items-center gap-2 px-3 py-2 text-xs border transition-all rounded ${
+                isResearchEntry
+                  ? "text-[#C9A84C] bg-[#C9A84C]/10 border-[#C9A84C]/25"
+                  : "text-purple-400/75 hover:text-purple-400 hover:bg-purple-400/8 border-transparent hover:border-purple-400/20"
+              }`}
+              style={{ fontFamily: "'DM Mono', monospace" }}
+              title="进入 DeerFlow 深度研究入口"
+            >
+              <Search size={12} className="shrink-0" />
+              <span className="truncate">DeerFlow 研究</span>
+              <span className="ml-auto text-[9px] text-purple-400/45">DEEP</span>
+            </button>
+          )}
           {/* 内容平台 — 所有登录用户可见，无权限时显示锁定状态 */}
           {user && (
             hasContentAccess ? (
@@ -1007,8 +1061,10 @@ export default function MaoAIChat() {
                 <Bot size={16} className="text-[#C9A84C]" />
               </div>
               <div>
-                <h1 className="text-[#C9A84C] font-semibold text-sm tracking-wide" style={{ fontFamily: "'DM Mono', monospace" }}>MaoAI</h1>
-                <p className="text-white/30 text-xs">智能 AI 控制中心</p>
+                <h1 className="text-[#C9A84C] font-semibold text-sm tracking-wide" style={{ fontFamily: "'DM Mono', monospace" }}>
+                  {isResearchEntry ? "DeerFlow" : "MaoAI"}
+                </h1>
+                <p className="text-white/30 text-xs">{isResearchEntry ? "深度研究工作台" : "智能 AI 控制中心"}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -1123,7 +1179,7 @@ export default function MaoAIChat() {
                   <Bot size={28} className="text-[#C9A84C]/60" />
                 </div>
                 <div className="text-center">
-                  <h2 className="text-white/70 text-lg font-medium mb-1">你好，我是 MaoAI</h2>
+                  <h2 className="text-white/70 text-lg font-medium mb-1">{isResearchEntry ? "你好，这里是 DeerFlow 深度研究" : "你好，我是 MaoAI"}</h2>
                   <p className="text-white/30 text-sm">
                     当前：
                     <span className={currentOption.isLocal ? "text-emerald-400/70" : "text-sky-400/70"}>
@@ -1132,11 +1188,15 @@ export default function MaoAIChat() {
                     {" · "}
                     <span className="text-white/50">{currentOption.badge} {currentOption.name}</span>
                   </p>
-                  <p className="text-white/20 text-xs mt-2">支持对话、图片理解、文件分析（PDF/Word/TXT）和 AI 图像生成</p>
+                  <p className="text-white/20 text-xs mt-2">
+                    {isResearchEntry
+                      ? "适合行业研究、竞品分析、市场进入策略、技术方案对比等复杂问题"
+                      : "支持对话、图片理解、文件分析（PDF/Word/TXT）和 AI 图像生成"}
+                  </p>
                 </div>
                 {/* Chat quick prompts */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-                  {["帮我写一份市场分析报告", "解释一下量子计算的原理", "用 Python 写一个爬虫", "给我推荐几本商业书籍"].map(prompt => (
+                  {(isResearchEntry ? DEERFLOW_QUICK_PROMPTS : ["帮我写一份市场分析报告", "解释一下量子计算的原理", "用 Python 写一个爬虫", "给我推荐几本商业书籍"]).map(prompt => (
                     <button key={prompt} onClick={() => { setInputMode("chat"); sendMessage(prompt); }}
                       className="text-left px-4 py-3 border border-white/10 text-white/50 text-sm hover:border-[#C9A84C]/40 hover:text-white/70 transition-all">
                       {prompt}
@@ -1457,6 +1517,8 @@ export default function MaoAIChat() {
                     ? `已上传 ${pendingFiles.length} 个文件，输入问题或直接发送让 AI 分析...`
                     : pendingImages.length > 0
                     ? "描述图片内容，或直接发送让 AI 分析..."
+                    : isResearchEntry
+                    ? "输入研究问题，MaoAI 会优先通过 DeerFlow 深度研究能力展开多步骤分析"
                     : "输入消息，Enter 发送，Shift+Enter 换行，Ctrl+V 粘贴截图"
                 }
                 disabled={isUploadingFile}
