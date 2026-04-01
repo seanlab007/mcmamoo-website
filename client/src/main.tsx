@@ -37,11 +37,17 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: `${API_BASE_URL}/api/trpc`,
       transformer: superjson,
+      headers() {
+        const sessionToken = localStorage.getItem("maoai_session_token");
+        return sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

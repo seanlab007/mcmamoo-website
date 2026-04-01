@@ -25,8 +25,62 @@ async function getAdminUser(req: Request): Promise<{ id: number; role: string; e
 
 // ─── Smart Router ─────────────────────────────────────────────────────────────
 // onlyLocal: true = only local nodes; false = only cloud nodes; undefined = all
+const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
+const OLLAMA_OPENAI_BASE_URL = `${OLLAMA_BASE_URL}/v1`;
+const OLLAMA_NODE_NAME_PREFIX = "Ollama / ";
+
+async function syncAutoDiscoveredOllamaNodes() {
+  try {
+    const resp = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
+    if (!resp.ok) return;
+
+    const data = await resp.json().catch(() => ({}));
+    const modelIds = (Array.isArray(data?.models) ? data.models : [])
+      .map((item: any) => String(item?.model || item?.name || "").trim())
+      .filter(Boolean);
+
+    if (modelIds.length === 0) return;
+
+    const existing = await getAiNodes();
+
+    for (let idx = 0; idx < modelIds.length; idx++) {
+      const modelId = modelIds[idx];
+      const name = `${OLLAMA_NODE_NAME_PREFIX}${modelId}`;
+      const found = existing.find((node) => String(node.name || "") === name);
+      const payload = {
+        name,
+        type: "openai_compat",
+        baseUrl: OLLAMA_OPENAI_BASE_URL,
+        modelId,
+        isPaid: false,
+        isLocal: true,
+        isActive: true,
+        isOnline: true,
+        priority: Number(found?.priority) || 50 + idx,
+        description: `Auto-discovered from Ollama (${OLLAMA_BASE_URL})`,
+      };
+
+      if (found?.id) {
+        await updateAiNode(Number(found.id), payload);
+        await updateNodePingStatus(Number(found.id), true, 0);
+      } else {
+        const created = await createAiNode(payload);
+        if (created?.id) {
+          await updateNodePingStatus(Number(created.id), true, 0);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[Ollama Sync] Skip auto-discovery:", err);
+  }
+}
+
 async function selectNode(preferPaid?: boolean, onlyLocal?: boolean, onlyCloud?: boolean) {
   try {
+    if (onlyLocal) {
+      await syncAutoDiscoveredOllamaNodes();
+    }
+
     const nodes = await getAiNodes(true);
     if (!nodes || nodes.length === 0) return null;
     const rules = await getRoutingRules();
@@ -741,6 +795,7 @@ aiStreamRouter.get("/v1/models", async (req: Request, res: Response) => {
   let localModels: any[] = [];
   if (admin) {
     try {
+      await syncAutoDiscoveredOllamaNodes();
       const nodes = await getAiNodes();
       localModels = nodes
         .filter(n => n.isLocal && n.isOnline)
@@ -752,6 +807,7 @@ aiStreamRouter.get("/v1/models", async (req: Request, res: Response) => {
           display_name: n.name,
           badge: "🖥️",
           is_local: true,
+          is_online: n.isOnline !== false,
           node_id: n.id,
           base_url: n.baseUrl,
           model_id: n.modelId,

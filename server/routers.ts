@@ -473,23 +473,39 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         const limit = input?.limit ?? 50;
         const r = await dbFetch(
-          `/conversations?open_id=eq.${encodeURIComponent(ctx.user.openId)}&order=updated_at.desc&limit=${limit}`
+          `/conversations?userId=eq.${ctx.user.id}&order=updatedAt.desc&limit=${limit}`
         );
+        if (!r.ok) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "获取对话列表失败",
+          });
+        }
         return (r.data as Record<string, unknown>[]) ?? [];
       }),
     create: protectedProcedure
       .input(z.object({ title: z.string().optional(), model: z.string().optional() }))
       .mutation(async ({ input, ctx }) => {
+        const now = new Date().toISOString();
         const r = await dbFetch("/conversations", {
           method: "POST",
           body: {
-            open_id: ctx.user.openId,
+            userId: ctx.user.id,
+            user_id: ctx.user.openId,
             title: input.title ?? "新对话",
             model: input.model ?? null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            createdAt: now,
+            updatedAt: now,
+            created_at: now,
+            updated_at: now,
           },
         }, "return=representation");
+        if (!r.ok) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "创建对话失败",
+          });
+        }
         const rows = r.data as Record<string, unknown>[] | null;
         return rows?.[0] ?? null;
       }),
@@ -497,23 +513,36 @@ export const appRouter = router({
       .input(z.object({ id: z.union([z.string(), z.number()]), title: z.string().optional(), model: z.string().optional() }))
       .mutation(async ({ input, ctx }) => {
         const id = String(input.id);
-        const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        const now = new Date().toISOString();
+        const patch: Record<string, unknown> = { updatedAt: now, updated_at: now };
         if (input.title !== undefined) patch.title = input.title;
         if (input.model !== undefined) patch.model = input.model;
-        await dbFetch(
-          `/conversations?id=eq.${id}&open_id=eq.${encodeURIComponent(ctx.user.openId)}`,
+        const r = await dbFetch(
+          `/conversations?id=eq.${id}&userId=eq.${ctx.user.id}`,
           { method: "PATCH", body: patch }
         );
+        if (!r.ok) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "更新对话失败",
+          });
+        }
         return { success: true };
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.union([z.string(), z.number()]) }))
       .mutation(async ({ input, ctx }) => {
         const id = String(input.id);
-        await dbFetch(
-          `/conversations?id=eq.${id}&open_id=eq.${encodeURIComponent(ctx.user.openId)}`,
+        const r = await dbFetch(
+          `/conversations?id=eq.${id}&userId=eq.${ctx.user.id}`,
           { method: "DELETE" }
         );
+        if (!r.ok) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "删除对话失败",
+          });
+        }
         return { success: true };
       }),
   }),
@@ -526,8 +555,14 @@ export const appRouter = router({
         const convId = String(input.conversationId);
         const limit = input.limit ?? 100;
         const r = await dbFetch(
-          `/messages?conversation_id=eq.${encodeURIComponent(convId)}&order=created_at.asc&limit=${limit}`
+          `/messages?conversationId=eq.${encodeURIComponent(convId)}&order=createdAt.asc&limit=${limit}`
         );
+        if (!r.ok) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "获取消息失败",
+          });
+        }
         return (r.data as Record<string, unknown>[]) ?? [];
       }),
     save: protectedProcedure
@@ -539,17 +574,26 @@ export const appRouter = router({
         model: z.string().optional(), // alias for modelId
       }))
       .mutation(async ({ input }) => {
-        const convId = String(input.conversationId);
+        const now = new Date().toISOString();
+        const convId = Number(input.conversationId);
         const r = await dbFetch("/messages", {
           method: "POST",
           body: {
+            conversationId: convId,
             conversation_id: convId,
             role: input.role,
             content: input.content,
-            model_id: input.modelId ?? input.model ?? null,
-            created_at: new Date().toISOString(),
+            model: input.modelId ?? input.model ?? null,
+            createdAt: now,
+            created_at: now,
           },
         }, "return=representation");
+        if (!r.ok) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "保存消息失败",
+          });
+        }
         const rows = r.data as Record<string, unknown>[] | null;
         return rows?.[0] ?? null;
       }),

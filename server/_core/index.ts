@@ -4,6 +4,7 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
+import { registerSupabaseAuthRoutes } from "./supabaseAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -38,6 +39,8 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Supabase 邮箱+密码登录（管理员）
+  registerSupabaseAuthRoutes(app);
   // AI 节点协同 + 聊天流 + OpenAI 兼容 API（MaoAI 核心路由）
   app.use("/api/ai", aiStreamRouter);
   // 私密云笔记 API（管理员专属）
