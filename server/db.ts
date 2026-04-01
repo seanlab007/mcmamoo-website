@@ -33,9 +33,15 @@ export interface InsertUser {
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
 
-  // 自动赋予 owner 或特定邮箱管理员权限
+  const existing = await getUserByOpenId(user.openId);
+  const existingRole = existing?.role === "admin" || existing?.role === "user"
+    ? (existing.role as "user" | "admin")
+    : undefined;
+
+  // 自动赋予 owner 或特定邮箱管理员权限；已有用户优先保留原角色，避免误降级
   const role: "user" | "admin" =
     user.role ??
+    existingRole ??
     (user.openId === ENV.ownerOpenId || user.email === "sean_lab@me.com"
       ? "admin"
       : "user");
@@ -46,16 +52,16 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     lastSignedIn: (user.lastSignedIn ?? new Date()).toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  if (user.name !== undefined)        payload.name = user.name ?? null;
-  if (user.email !== undefined)       payload.email = user.email ?? null;
+  if (user.name !== undefined) payload.name = user.name ?? null;
+  if (user.email !== undefined) payload.email = user.email ?? null;
   if (user.loginMethod !== undefined) payload.loginMethod = user.loginMethod ?? null;
 
-  // Supabase UPSERT：POST + Prefer: resolution=merge-duplicates
-  const r = await dbFetch(
-    "/users",
-    { method: "POST", body: JSON.stringify(payload) },
-    "resolution=merge-duplicates"
-  );
+  const r = existing
+    ? await dbFetch(
+        `/users?openId=eq.${encodeURIComponent(user.openId)}`,
+        { method: "PATCH", body: JSON.stringify(payload) }
+      )
+    : await dbFetch("/users", { method: "POST", body: JSON.stringify(payload) });
 
   if (!r.ok) {
     console.error("[DB] upsertUser failed:", r.status, r.data);

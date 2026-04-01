@@ -39,10 +39,14 @@ export function getSessionCookieOptions(
   //       ? hostname
   //       : undefined;
 
+  const secure = isSecureRequest(req);
+
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
-    secure: isSecureRequest(req),
+    // 浏览器会拒收 SameSite=None 且非 Secure 的 cookie。
+    // 本地 http 开发环境改为 lax，线上 https 继续使用 none。
+    sameSite: secure ? "none" : "lax",
+    secure,
   };
 }

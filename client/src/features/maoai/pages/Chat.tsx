@@ -185,6 +185,9 @@ export default function MaoAIChat() {
     undefined,
     { enabled: !!user }
   );
+  const conversationList: Conversation[] = Array.isArray(conversations)
+    ? (conversations as Conversation[])
+    : [];
   const createConvMutation = trpc.conversations.create.useMutation({
     onSuccess: () => utils.conversations.list.invalidate(),
   });
@@ -210,7 +213,7 @@ export default function MaoAIChat() {
 
   // Load messages when switching conversations
   useEffect(() => {
-    if (!historyMessages || !currentConvId) return;
+    if (!Array.isArray(historyMessages) || !currentConvId) return;
     const loaded: Message[] = historyMessages.map((m: any) => {
       let content: MessageContent;
       let generatedImageUrl: string | undefined;
@@ -276,15 +279,27 @@ export default function MaoAIChat() {
     if (isAdmin) fetchLocalNodes();
   }, [isAdmin, fetchLocalNodes]);
 
-  // Auto-select first available model when backend models load
+  // Auto-select first usable model when backend/local models load
   useEffect(() => {
-    if (backendModels.length === 0) return;
-    const current = backendModels.find(m => m.id === selectedId);
-    if (!current || current.available === false) {
-      const firstAvailable = backendModels.find(m => m.available);
-      if (firstAvailable) setSelectedId(firstAvailable.id);
+    const currentCloud = backendModels.find((m) => m.id === selectedId);
+    const currentLocal = localNodes.find((n) => n.id === selectedId);
+
+    if (currentLocal && currentLocal.isOnline !== false) return;
+    if (currentCloud && currentCloud.available !== false) return;
+
+    const firstAvailableCloud = backendModels.find((m) => m.available);
+    if (firstAvailableCloud) {
+      if (firstAvailableCloud.id !== selectedId) setSelectedId(firstAvailableCloud.id);
+      return;
     }
-  }, [backendModels]);
+
+    if (isAdmin) {
+      const firstAvailableLocal = localNodes.find((n) => n.isOnline !== false);
+      if (firstAvailableLocal && firstAvailableLocal.id !== selectedId) {
+        setSelectedId(firstAvailableLocal.id);
+      }
+    }
+  }, [backendModels, isAdmin, localNodes, selectedId]);
 
   const addImageFromFile = async (file: File | Blob) => {
     if (!file.type.startsWith("image/")) return;
@@ -877,13 +892,13 @@ export default function MaoAIChat() {
               <Loader2 size={16} className="animate-spin" />
             </div>
           )}
-          {!loadingConvs && (conversations as Conversation[]).length === 0 && (
+          {!loadingConvs && conversationList.length === 0 && (
             <div className="px-4 py-8 text-center">
               <p className="text-white/20 text-xs">暂无历史对话</p>
               <p className="text-white/10 text-[11px] mt-1">发送消息后自动保存</p>
             </div>
           )}
-          {(conversations as Conversation[]).map((conv) => (
+          {conversationList.map((conv) => (
             <div
               key={conv.id}
               onClick={() => switchConversation(conv)}
@@ -1048,7 +1063,7 @@ export default function MaoAIChat() {
                             </button>
                           </div>
                           {loadingNodes && <div className="px-4 py-3 text-white/30 text-xs flex items-center gap-2"><Loader2 size={12} className="animate-spin" /><span>正在获取...</span></div>}
-                          {!loadingNodes && localNodes.length === 0 && <div className="px-4 py-3 text-white/25 text-xs">暂无在线本地节点<div className="text-white/15 text-[11px] mt-0.5">需要先通过内网穿透注册</div></div>}
+                          {!loadingNodes && localNodes.length === 0 && <div className="px-4 py-3 text-white/25 text-xs">暂无在线本地节点<div className="text-white/15 text-[11px] mt-0.5">若本机已启动 Ollama，刷新后会自动发现</div></div>}
                           {localNodes.map(n => (
                             <button key={n.id} onClick={() => { setSelectedId(n.id); setShowPicker(false); }}
                               className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${n.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}>
