@@ -234,7 +234,7 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   if (hasImage && !useLocal && !String(model).startsWith("local:")) {
     const currentCfg = MODEL_CONFIGS[model];
     if (!currentCfg?.supportsVision) {
-      model = "glm-4v-flash"; // auto-switch to vision model
+      model = "glm-5v-turbo"; // auto-switch to GLM-5V-Turbo (newest vision model)
     }
   }
 
@@ -451,7 +451,8 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   const toolDefs = enableTools ? (adminUser ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS) : [];
   // Vision models don't support function calling
   const supportsTools = enableTools && !hasImage && toolDefs.length > 0 &&
-    (model === "deepseek-chat" || model === "glm-4-plus" || model === "glm-4-flash");
+    (model === "deepseek-chat" || model === "glm-4-plus" || model === "glm-4-flash" ||
+     model === "zai-glm-5" || model === "zai-glm-4-7" || model === "glm-5v-turbo");
 
   try {
     // Debug: log vision request structure
