@@ -7,12 +7,12 @@ import {
   Wand2, Image as ImageIcon, Crown, Zap, Paperclip, FileText, FileJson, Table2,
   LayoutGrid, Lock, Search, BookOpen,
 } from "lucide-react";
-import type { PlanTier } from "@shared/plans";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Streamdown } from "streamdown";
 import { useLocation } from "wouter";
 import { useContentSubscription } from "@/hooks/useContentSubscription";
-import { MAOAI_ROUTES, MAOAI_BACKEND_URL, MAOAI_TOOL_DISPLAY, MAOAI_TIER_LABELS } from "../constants";
+import { MAOAI_ROUTES, MAOAI_BACKEND_URL, MAOAI_TOOL_DISPLAY } from "../constants";
 import type {
   MessageContent,
   Message,
@@ -26,34 +26,20 @@ import type {
 } from "../types";
 
 const BACKEND_URL = MAOAI_BACKEND_URL;
-const DEERFLOW_STARTER_PROMPT = "请使用 DeerFlow 深度研究模式，系统研究这个问题：";
-const DEERFLOW_QUICK_PROMPTS = [
-  "请使用 DeerFlow 深度研究模式，帮我写一份行业竞争格局分析",
-  "请使用 DeerFlow 深度研究模式，调研这个产品赛道的核心玩家与机会",
-  "请使用 DeerFlow 深度研究模式，整理一份技术方案对比报告",
-  "请使用 DeerFlow 深度研究模式，给我做一版市场进入策略研究",
-] as const;
 
-// 研究简报快捷提示词（HBR + 学术期刊）
-const DIGEST_QUICK_PROMPTS = [
-  "帮我提炼今天 HBR 管理学简报的核心理念，并说明对品牌战略咨询公司的启示",
-  "告诉我本周学术界在 AI 和消费行为领域有什么重大突破",
-  "搜索与新消费品牌增长、KOL营销相关的最新学术研究",
-  "整理一份本周值得猫眼增长引擎关注的科学发现简报",
-] as const;
+const stripTrailingColon = (value: string) => value.replace(/[：:]\s*$/, "");
 
-// ─── Model descriptions (local metadata for backend model list) ───────────────
-const MODEL_DESCRIPTIONS: Record<string, { description: string; supportsVision?: boolean }> = {
-  "deepseek-chat":           { description: "通用对话·写作·分析" },
-  "deepseek-reasoner":       { description: "深度推理·复杂逻辑" },
-  "glm-4-flash":             { description: "智谱极速·免费额度多" },
-  "glm-4-plus":              { description: "智谱旗舰·能力强" },
-  "glm-4v-flash":            { description: "图片理解·截图分析", supportsVision: true },
-  "llama-3.3-70b-versatile": { description: "Groq 超快·英文优秀" },
-  "gemini-2.5-flash":        { description: "速度快，适合日常对话", supportsVision: true },
-  "gemini-2.5-pro":          { description: "更强推理能力，适合复杂任务", supportsVision: true },
-  "claude-opus-4":           { description: "顶级写作与分析能力", supportsVision: true },
-};
+const getModelDescriptions = (chat: any): Record<string, { description: string; supportsVision?: boolean }> => ({
+  "deepseek-chat": { description: chat.modelDescriptions.deepseekChat },
+  "deepseek-reasoner": { description: chat.modelDescriptions.deepseekReasoner },
+  "glm-4-flash": { description: chat.modelDescriptions.glm4Flash },
+  "glm-4-plus": { description: chat.modelDescriptions.glm4Plus },
+  "glm-4v-flash": { description: chat.modelDescriptions.glm4vFlash, supportsVision: true },
+  "llama-3.3-70b-versatile": { description: chat.modelDescriptions.llama },
+  "gemini-2.5-flash": { description: chat.modelDescriptions.geminiFlash, supportsVision: true },
+  "gemini-2.5-pro": { description: chat.modelDescriptions.geminiPro, supportsVision: true },
+  "claude-opus-4": { description: chat.modelDescriptions.claudeOpus, supportsVision: true },
+});
 
 // ─── Types (local-only) ───────────────────────────────────────────────────────
 // All shared types are imported from ../types; only Chat-specific types remain here.
@@ -61,16 +47,6 @@ type InputMode = "chat" | "image";
 
 // Tool name → 中文显示名和图标（从 constants 统一导入）
 const TOOL_DISPLAY = MAOAI_TOOL_DISPLAY;
-
-// ─── Cloud models ─────────────────────────────────────────────────────────────
-const CLOUD_MODELS: CloudModel[] = [
-  { id: "deepseek-chat",           name: "DeepSeek V3",   badge: "🔵", description: "通用对话·写作·分析",   isLocal: false },
-  { id: "deepseek-reasoner",       name: "DeepSeek R1",   badge: "🧠", description: "深度推理·复杂逻辑",   isLocal: false },
-  { id: "glm-4-flash",             name: "GLM-4 Flash",   badge: "⚡", description: "智谱极速·免费额度多", isLocal: false },
-  { id: "glm-4-plus",              name: "GLM-4 Plus",    badge: "🟣", description: "智谱旗舰·能力强",     isLocal: false },
-  { id: "glm-4v-flash",            name: "GLM-4V 视觉",   badge: "👁️", description: "图片理解·截图分析",   supportsVision: true, isLocal: false },
-  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", badge: "🦙", description: "Groq 超快·英文优秀",  isLocal: false },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -99,19 +75,12 @@ function getImageUrls(content: MessageContent): string[] {
   return content.filter(c => c.type === "image_url").map(c => (c as any).image_url.url);
 }
 
-function formatTime(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
-  if (diffDays === 1) return "昨天";
-  if (diffDays < 7) return `${diffDays}天前`;
-  return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
-}
-
 // ─── ToolCallSteps Component ─────────────────────────────────────────────────
 function ToolCallSteps({ steps, live = false }: { steps: ToolCallStep[]; live?: boolean }) {
+  const { t } = useTranslation();
+  const chat = t("maoai.chat", { returnObjects: true }) as any;
+  void live;
+
   if (steps.length === 0) return null;
   return (
     <div className="flex flex-col gap-1 mb-2">
@@ -124,8 +93,8 @@ function ToolCallSteps({ steps, live = false }: { steps: ToolCallStep[]; live?: 
               <div className="flex items-center gap-2">
                 <span className={`font-mono font-semibold ${display.color}`}>{display.label}</span>
                 {tc.status === "calling" && <Loader2 size={10} className="animate-spin text-white/40" />}
-                {tc.status === "done" && <span className="text-emerald-400/70 text-[10px]">✓ 完成</span>}
-                {tc.status === "error" && <span className="text-red-400/70 text-[10px]">✗ 失败</span>}
+                {tc.status === "done" && <span className="text-emerald-400/70 text-[10px]">✓ {chat.toolDone}</span>}
+                {tc.status === "error" && <span className="text-red-400/70 text-[10px]">✗ {chat.toolError}</span>}
               </div>
               {tc.args && Object.keys(tc.args).length > 0 && (
                 <div className="text-white/30 mt-0.5 font-mono truncate text-[10px]">
@@ -148,6 +117,19 @@ function ToolCallSteps({ steps, live = false }: { steps: ToolCallStep[]; live?: 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function MaoAIChat() {
   const [location, navigate] = useLocation();
+  const { t, i18n } = useTranslation();
+  const chat = t("maoai.chat", { returnObjects: true }) as any;
+  const locale = i18n.resolvedLanguage || i18n.language || "zh";
+  const isChinese = locale.startsWith("zh");
+  const timeLocale = isChinese ? "zh-CN" : "en-US";
+  const listSeparator = isChinese ? "、" : ", ";
+  const modelDescriptions = getModelDescriptions(chat);
+  const deerflowStarterPrompt = chat.deerflowStarterPrompt as string;
+  const deerflowQuickPrompts = (chat.deerflowQuickPrompts ?? []) as string[];
+  const defaultQuickPrompts = (chat.defaultQuickPrompts ?? []) as string[];
+  const imageQuickPrompts = (chat.imageQuickPrompts ?? []) as string[];
+  const imageGeneratedPrefix = chat.imageGeneratedPrefix as string;
+  const imageGeneratedLabel = stripTrailingColon(imageGeneratedPrefix);
   const { user, loading, logout } = useAuth({
     redirectOnUnauthenticated: true,
     redirectPath: MAOAI_ROUTES.LOGIN,
@@ -193,8 +175,8 @@ export default function MaoAIChat() {
     id: m.id,
     name: m.name,
     badge: m.badge,
-    description: MODEL_DESCRIPTIONS[m.id]?.description ?? "",
-    supportsVision: MODEL_DESCRIPTIONS[m.id]?.supportsVision,
+    description: modelDescriptions[m.id]?.description ?? "",
+    supportsVision: modelDescriptions[m.id]?.supportsVision,
     available: m.available,
     isLocal: false as const,
   }));
@@ -228,9 +210,27 @@ export default function MaoAIChat() {
   const activateDeerFlowEntry = useCallback(() => {
     setInputMode("chat");
     setShowUpgradePrompt(null);
-    setInput((prev) => (prev.trim() ? prev : DEERFLOW_STARTER_PROMPT));
+    setInput((prev) => (prev.trim() ? prev : deerflowStarterPrompt));
     requestAnimationFrame(() => textareaRef.current?.focus());
-  }, []);
+  }, [deerflowStarterPrompt]);
+
+  const formatConversationTime = useCallback((dateStr: string): string => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return d.toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" });
+    }
+    if (diffDays === 1) {
+      return chat.yesterday;
+    }
+    if (diffDays < 7) {
+      return t("maoai.chat.daysAgo", { count: diffDays });
+    }
+    return d.toLocaleDateString(timeLocale, { month: "short", day: "numeric" });
+  }, [chat.yesterday, t, timeLocale]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -256,7 +256,7 @@ export default function MaoAIChat() {
         if (meta && typeof meta === "object" && meta.generatedImageUrl) {
           generatedImageUrl = meta.generatedImageUrl as string;
           isImageGeneration = true;
-          content = meta.prompt ? `🎨 生成图像：${meta.prompt}` : "🎨 生成图像";
+          content = meta.prompt ? `${imageGeneratedPrefix}${meta.prompt}` : imageGeneratedLabel;
         } else if (Array.isArray(meta)) {
           content = meta;
         } else {
@@ -276,7 +276,7 @@ export default function MaoAIChat() {
       };
     });
     setMessages(loaded);
-  }, [historyMessages, currentConvId]);
+  }, [historyMessages, currentConvId, imageGeneratedLabel, imageGeneratedPrefix]);
 
   const fetchLocalNodes = useCallback(async () => {
     if (!isAdmin) return;
@@ -295,7 +295,7 @@ export default function MaoAIChat() {
             nodeId: m.node_id,
             name: m.display_name,
             badge: "🖥️",
-            description: `${m.model_id || "本地模型"} · ${m.is_online !== false ? "在线" : "离线"}`,
+            description: `${m.model_id || chat.localModel} · ${m.is_online !== false ? chat.online : chat.offline}`,
             modelId: m.model_id || "",
             isLocal: true,
             isOnline: m.is_online !== false,
@@ -304,7 +304,7 @@ export default function MaoAIChat() {
       }
     } catch { /* ignore */ }
     setLoadingNodes(false);
-  }, [isAdmin]);
+  }, [chat.localModel, chat.online, chat.offline, isAdmin]);
 
   useEffect(() => {
     if (isAdmin) fetchLocalNodes();
@@ -396,7 +396,7 @@ export default function MaoAIChat() {
         });
         if (!resp.ok) {
           const errData = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
-          throw new Error(errData.error || `上传失败 (${resp.status})`);
+          throw new Error(errData.error || `HTTP ${resp.status}`);
         }
         const data = await resp.json();
         if (data.type === "image") {
@@ -415,7 +415,7 @@ export default function MaoAIChat() {
         }
       }
     } catch (err: any) {
-      alert(`文件上传失败: ${err.message}`);
+      alert(t("maoai.chat.uploadFailed", { message: err.message }));
     } finally {
       setIsUploadingFile(false);
     }
@@ -473,7 +473,7 @@ export default function MaoAIChat() {
         });
         if (!resp.ok) {
           const errData = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
-          throw new Error(errData.error || `上传失败 (${resp.status})`);
+          throw new Error(errData.error || `HTTP ${resp.status}`);
         }
         const data = await resp.json();
         if (data.type === "image") {
@@ -490,11 +490,11 @@ export default function MaoAIChat() {
         }
       }
     } catch (err: any) {
-      alert(`文件上传失败: ${err.message}`);
+      alert(t("maoai.chat.uploadFailed", { message: err.message }));
     } finally {
       setIsUploadingFile(false);
     }
-  }, []);
+  }, [t]);
 
   const startNewChat = () => {
     setCurrentConvId(null);
@@ -535,7 +535,7 @@ export default function MaoAIChat() {
 
   const generateTitle = (text: string): string => {
     const cleaned = text.trim().replace(/\s+/g, " ");
-    return cleaned.length > 30 ? cleaned.slice(0, 30) + "…" : cleaned || "新对话";
+    return cleaned.length > 30 ? cleaned.slice(0, 30) + "…" : cleaned || chat.newConversation;
   };
 
   const ensureConversation = async (titleText: string): Promise<number | null> => {
@@ -553,7 +553,13 @@ export default function MaoAIChat() {
   };
 
   const allOptions: ModelOption[] = [...CLOUD_MODELS, ...(isAdmin ? localNodes : [])];
-  const FALLBACK_MODEL: CloudModel = { id: "deepseek-chat", name: "DeepSeek V3", badge: "🔵", description: "通用对话·写作·分析", isLocal: false };
+  const FALLBACK_MODEL: CloudModel = {
+    id: "deepseek-chat",
+    name: "DeepSeek V3",
+    badge: "🔵",
+    description: modelDescriptions["deepseek-chat"]?.description ?? "",
+    isLocal: false,
+  };
   const currentOption = allOptions.find(m => m.id === selectedId) || CLOUD_MODELS[0] || FALLBACK_MODEL;
 
   // ── Limit check helpers ───────────────────────────────────────────────────────────
@@ -600,17 +606,17 @@ export default function MaoAIChat() {
 
     const userMsg: Message = {
       role: "user",
-      content: `🎨 生成图像：${prompt.trim()}`,
-      displayText: `🎨 生成图像：${prompt.trim()}`,
+      content: `${imageGeneratedPrefix}${prompt.trim()}`,
+      displayText: `${imageGeneratedPrefix}${prompt.trim()}`,
       isImageGeneration: true,
     };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsGeneratingImage(true);
 
-    const convId = await ensureConversation(`图像：${prompt.trim()}`);
+    const convId = await ensureConversation(`${chat.imageTitlePrefix}${prompt.trim()}`);
     if (convId) {
-      await saveMessageToDB(convId, "user", `🎨 生成图像：${prompt.trim()}`);
+      await saveMessageToDB(convId, "user", `${imageGeneratedPrefix}${prompt.trim()}`);
     }
 
     try {
@@ -634,7 +640,7 @@ export default function MaoAIChat() {
         content: JSON.stringify({ generatedImageUrl: imageUrl, prompt: prompt.trim() }),
         generatedImageUrl: imageUrl,
         isImageGeneration: true,
-        displayText: `已生成图像：${prompt.trim()}`,
+        displayText: `${chat.generatedImageSaved}${prompt.trim()}`,
       };
       setMessages(prev => [...prev, assistantMsg]);
 
@@ -648,7 +654,7 @@ export default function MaoAIChat() {
         updateConvMutation.mutate({ id: convId, model: "nano-banana" });
       }
     } catch (err: any) {
-      const errMsg = `⚠️ 图像生成失败: ${err.message}`;
+      const errMsg = t("maoai.chat.imageFailed", { message: err.message });
       setMessages(prev => [...prev, { role: "assistant", content: errMsg, displayText: errMsg }]);
       if (convId) {
         await saveMessageToDB(convId, "assistant", errMsg);
@@ -668,21 +674,32 @@ export default function MaoAIChat() {
     let docSystemPrompt = "";
     if (pendingFiles.length > 0) {
       const sections = pendingFiles.map(f => {
-        const typeLabel = f.fileType === "pdf" ? "PDF" : f.fileType === "docx" ? "Word 文档" : f.fileType === "csv" ? "CSV 数据" : f.fileType === "json" ? "JSON 数据" : f.fileType === "markdown" ? "Markdown 文档" : "文本文件";
-        return `【${typeLabel}：${f.name}】\n${f.text}${f.truncated ? "\n\n[文档过长，已截断至前 60000 字符]" : ""}`;
+        const typeLabels = chat.docTypeLabels ?? {};
+        const typeLabel = f.fileType === "pdf"
+          ? typeLabels.pdf
+          : f.fileType === "docx"
+          ? typeLabels.docx
+          : f.fileType === "csv"
+          ? typeLabels.csv
+          : f.fileType === "json"
+          ? typeLabels.json
+          : f.fileType === "markdown"
+          ? typeLabels.markdown
+          : typeLabels.text;
+        return `【${typeLabel}：${f.name}】\n${f.text}${f.truncated ? `\n\n${chat.docTruncatedNotice}` : ""}`;
       }).join("\n\n---\n\n");
-      docSystemPrompt = `以下是用户上传的文件内容，请根据这些内容回答用户的问题：\n\n${sections}`;
+      docSystemPrompt = `${chat.docContextIntro}\n\n${sections}`;
     }
 
     let userContent: MessageContent;
     if (pendingImages.length > 0) {
       const parts: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [];
       for (const imgUrl of pendingImages) parts.push({ type: "image_url", image_url: { url: imgUrl } });
-      const textPart = textContent.trim() || (pendingFiles.length > 0 ? "请结合文件内容分析这张图片" : "请分析这张图片");
+      const textPart = textContent.trim() || (pendingFiles.length > 0 ? chat.analyzeImageWithFiles : chat.analyzeImageOnly);
       parts.push({ type: "text", text: textPart });
       userContent = parts;
     } else if (!textContent.trim() && pendingFiles.length > 0) {
-      userContent = `请分析我上传的文件：${pendingFiles.map(f => f.name).join("、")}`;
+      userContent = `${chat.analyzeUploadedFiles}${pendingFiles.map(f => f.name).join(listSeparator)}`;
     } else {
       userContent = textContent.trim();
     }
@@ -785,15 +802,15 @@ export default function MaoAIChat() {
                 fullContent += chunk.content;
                 setStreamingContent(fullContent);
               } else if (chunk.error) {
-                fullContent += `\n\n⚠️ 错误: ${chunk.error}`;
+                fullContent += `\n\n${chat.streamErrorPrefix} ${chunk.error}`;
                 setStreamingContent(fullContent);
               } else if (chunk.skillMatch) {
                 // Skill was matched — show it as a tool-call-style step
                 const step: ToolCallStep = {
                   id: `skill-${chunk.skillMatch.skillId}`,
                   name: chunk.skillMatch.mode === "invoke"
-                    ? `⚡ 调用技能: ${chunk.skillMatch.name}`
-                    : `🧩 技能模式: ${chunk.skillMatch.name}`,
+                    ? `${chat.skillInvokeLabel}: ${chunk.skillMatch.name}`
+                    : `${chat.skillModeLabel}: ${chunk.skillMatch.name}`,
                   args: { skillId: chunk.skillMatch.skillId, mode: chunk.skillMatch.mode },
                   status: chunk.skillMatch.mode === "invoke" ? "calling" : "done",
                 };
@@ -828,18 +845,18 @@ export default function MaoAIChat() {
 
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: fullContent || "（无响应）",
+        content: fullContent || chat.noResponse,
         nodeInfo: capturedNodeInfo || undefined,
         toolCalls: liveToolCalls.length > 0 ? [...liveToolCalls] : undefined,
       }]);
       setCurrentToolCalls([]);
       if (convId) {
-        await saveMessageToDB(convId, "assistant", fullContent || "（无响应）", selectedId);
+        await saveMessageToDB(convId, "assistant", fullContent || chat.noResponse, selectedId);
         updateConvMutation.mutate({ id: convId, model: selectedId });
       }
     } catch (err: any) {
       if (err.name !== "AbortError") {
-        const errMsg = `⚠️ 请求失败: ${err.message}`;
+        const errMsg = t("maoai.chat.requestFailed", { message: err.message });
         setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
         if (convId) await saveMessageToDB(convId, "assistant", errMsg);
       } else if (fullContent) {
@@ -906,15 +923,15 @@ export default function MaoAIChat() {
         <div className="flex items-center justify-between px-3 py-3 border-b border-[#C9A84C]/10 shrink-0">
           <div className="flex items-center gap-2 text-[#C9A84C]/70">
             <History size={14} />
-            <span className="text-xs font-semibold tracking-wide" style={{ fontFamily: "'DM Mono', monospace" }}>历史对话</span>
+            <span className="text-xs font-semibold tracking-wide" style={{ fontFamily: "'DM Mono', monospace" }}>{chat.history}</span>
           </div>
           <button
             onClick={startNewChat}
             className="flex items-center gap-1 px-2 py-1 text-[10px] text-[#C9A84C]/60 border border-[#C9A84C]/20 hover:border-[#C9A84C]/50 hover:text-[#C9A84C] transition-all"
-            title="新建对话"
+            title={chat.newConversation}
           >
             <MessageSquarePlus size={11} />
-            <span>新建</span>
+            <span>{chat.newChat}</span>
           </button>
         </div>
         <div className="flex-1 overflow-y-auto py-1">
@@ -925,8 +942,8 @@ export default function MaoAIChat() {
           )}
           {!loadingConvs && conversationList.length === 0 && (
             <div className="px-4 py-8 text-center">
-              <p className="text-white/20 text-xs">暂无历史对话</p>
-              <p className="text-white/10 text-[11px] mt-1">发送消息后自动保存</p>
+              <p className="text-white/20 text-xs">{chat.noHistory}</p>
+              <p className="text-white/10 text-[11px] mt-1">{chat.autoSaved}</p>
             </div>
           )}
           {conversationList.map((conv) => (
@@ -943,12 +960,12 @@ export default function MaoAIChat() {
                 <p className={`text-xs truncate leading-snug ${conv.id === currentConvId ? "text-white/85" : "text-white/55"}`}>
                   {conv.title}
                 </p>
-                <p className="text-[10px] text-white/20 mt-0.5">{formatTime(conv.updatedAt)}</p>
+                <p className="text-[10px] text-white/20 mt-0.5">{formatConversationTime(conv.updatedAt)}</p>
               </div>
               <button
                 onClick={(e) => deleteConversation(conv.id, e)}
                 className="absolute right-2 top-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-white/25 hover:text-red-400/70 p-0.5"
-                title="删除对话"
+                title={chat.deleteConversation}
               >
                 {deletingId === conv.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
               </button>
@@ -963,10 +980,10 @@ export default function MaoAIChat() {
               href={MAOAI_ROUTES.SALES}
               className="flex items-center gap-2 px-3 py-2 text-xs text-sky-400/75 hover:text-sky-400 hover:bg-sky-400/8 border border-transparent hover:border-sky-400/20 transition-all rounded"
               style={{ fontFamily: "'DM Mono', monospace" }}
-              title="前往 MaoAI Sales 增长工作台"
+              title={chat.salesTitle}
             >
               <Crown size={12} className="shrink-0" />
-              <span className="truncate">Sales 工作台</span>
+              <span className="truncate">{t("nav.salesWorkbench")}</span>
               <span className="ml-auto text-[9px] text-sky-400/45">CRM</span>
             </a>
           )}
@@ -982,10 +999,10 @@ export default function MaoAIChat() {
                   : "text-purple-400/75 hover:text-purple-400 hover:bg-purple-400/8 border-transparent hover:border-purple-400/20"
               }`}
               style={{ fontFamily: "'DM Mono', monospace" }}
-              title="进入 DeerFlow 深度研究入口"
+              title={chat.deerflowTitle}
             >
               <Search size={12} className="shrink-0" />
-              <span className="truncate">DeerFlow 研究</span>
+              <span className="truncate">{t("nav.deerflow")}</span>
               <span className="ml-auto text-[9px] text-purple-400/45">DEEP</span>
             </button>
           )}
@@ -998,10 +1015,10 @@ export default function MaoAIChat() {
                   : "text-amber-400/65 hover:text-amber-400 hover:bg-amber-400/8 border-transparent hover:border-amber-400/20"
               }`}
               style={{ fontFamily: "'DM Mono', monospace" }}
-              title="研究简报 · HBR 管理学 + 学术期刊"
+              title={chat.digestTitle}
             >
               <BookOpen size={12} className="shrink-0" />
-              <span className="truncate">研究简报</span>
+              <span className="truncate">{t("nav.researchDigest")}</span>
               <span className="ml-auto text-[9px] text-amber-400/40">HBR</span>
             </a>
           )}
@@ -1012,10 +1029,10 @@ export default function MaoAIChat() {
                 href="/content"
                 className="flex items-center gap-2 px-3 py-2 text-xs text-[#40d090]/80 hover:text-[#40d090] hover:bg-[#40d090]/8 border border-transparent hover:border-[#40d090]/20 transition-all rounded"
                 style={{ fontFamily: "'DM Mono', monospace" }}
-                title="前往猫眼增长引擎 Mc&Mamoo Growth Engine自动内容平台"
+                title={chat.contentPlatformTitle}
               >
                 <LayoutGrid size={13} className="shrink-0" />
-                <span className="truncate">内容平台</span>
+                <span className="truncate">{t("nav.contentPlatform")}</span>
                 {contentSub.plan !== "free" && (
                   <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-[#40d090]/15 border border-[#40d090]/25 text-[#40d090]/70 rounded-sm capitalize shrink-0">
                     {contentSub.plan}
@@ -1027,11 +1044,11 @@ export default function MaoAIChat() {
                 onClick={() => window.location.href = MAOAI_ROUTES.PRICING}
                 className="flex items-center gap-2 px-3 py-2 text-xs text-white/20 hover:text-white/40 hover:bg-white/3 border border-transparent hover:border-white/8 transition-all rounded cursor-pointer"
                 style={{ fontFamily: "'DM Mono', monospace" }}
-                title="升级套餐解锁内容平台"
+                title={chat.contentPlatformTitle}
               >
                 <Lock size={12} className="shrink-0" />
-                <span className="truncate">内容平台</span>
-                <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/50 rounded-sm shrink-0">升级</span>
+                <span className="truncate">{t("nav.contentPlatform")}</span>
+                <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/50 rounded-sm shrink-0">{chat.upgradeContent}</span>
               </button>
             )
           )}
@@ -1041,10 +1058,10 @@ export default function MaoAIChat() {
               href="/admin/content-jobs"
               className="flex items-center gap-2 px-3 py-2 text-xs text-orange-400/60 hover:text-orange-400 hover:bg-orange-400/5 border border-transparent hover:border-orange-400/20 transition-all rounded"
               style={{ fontFamily: "'DM Mono', monospace" }}
-              title="内容调度控制台"
+              title={chat.contentSchedulerTitle}
             >
               <Zap size={12} className="shrink-0" />
-              <span className="truncate">内容调度</span>
+              <span className="truncate">{chat.contentScheduler}</span>
               <span className="ml-auto text-[9px] text-orange-400/40">ADMIN</span>
             </a>
           )}
@@ -1065,8 +1082,8 @@ export default function MaoAIChat() {
             <div className="w-16 h-16 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center">
               <Paperclip size={28} className="text-[#C9A84C]/70" />
             </div>
-            <p className="text-[#C9A84C]/80 text-lg font-medium">松开以上传文件</p>
-            <p className="text-white/30 text-sm">支持图片、PDF、Word、TXT、CSV、JSON</p>
+            <p className="text-[#C9A84C]/80 text-lg font-medium">{chat.dragTitle}</p>
+            <p className="text-white/30 text-sm">{chat.dragDescription}</p>
           </div>
         )}
 
@@ -1077,7 +1094,7 @@ export default function MaoAIChat() {
               <button
                 onClick={() => setSidebarOpen(v => !v)}
                 className="text-white/30 hover:text-[#C9A84C]/70 transition-colors p-1"
-                title={sidebarOpen ? "收起侧边栏" : "展开侧边栏"}
+                title={sidebarOpen ? chat.collapseSidebar : chat.expandSidebar}
               >
                 {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
               </button>
@@ -1086,13 +1103,13 @@ export default function MaoAIChat() {
               </div>
               <div>
                 <h1 className="text-[#C9A84C] font-semibold text-sm tracking-wide" style={{ fontFamily: "'DM Mono', monospace" }}>
-                  {isResearchEntry ? "DeerFlow" : "MaoAI"}
+                  {isResearchEntry ? t("nav.deerflow") : "MaoAI"}
                 </h1>
-                <p className="text-white/30 text-xs">{isResearchEntry ? "深度研究工作台" : "智能 AI 控制中心"}</p>
+                <p className="text-white/30 text-xs">{isResearchEntry ? chat.researchWorkbench : chat.aiControlCenter}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={startNewChat} className="text-white/30 hover:text-[#C9A84C]/70 transition-colors p-1" title="新建对话">
+              <button onClick={startNewChat} className="text-white/30 hover:text-[#C9A84C]/70 transition-colors p-1" title={chat.newConversation}>
                 <MessageSquarePlus size={16} />
               </button>
               {/* Model picker — only in chat mode */}
@@ -1112,7 +1129,7 @@ export default function MaoAIChat() {
                     <div className="absolute right-0 top-full mt-1 w-72 bg-[#111] border border-[#C9A84C]/20 shadow-2xl z-20">
                       <div className="px-3 py-2 border-b border-white/5">
                         <div className="flex items-center gap-1.5 text-sky-400/70 text-[10px] font-semibold tracking-widest uppercase">
-                          <Cloud size={10} /><span>云端模型</span>
+                          <Cloud size={10} /><span>{chat.cloudModels}</span>
                         </div>
                       </div>
                       {CLOUD_MODELS.map(m => (
@@ -1123,8 +1140,8 @@ export default function MaoAIChat() {
                           <div className="min-w-0">
                             <div className="text-white/90 text-xs font-medium flex items-center gap-1.5" style={{ fontFamily: "'DM Mono', monospace" }}>
                               {m.name}
-                              {m.supportsVision && <span className="text-[9px] px-1 py-0.5 bg-purple-500/20 text-purple-400/80 border border-purple-500/20">视觉</span>}
-                              {m.available === false && <span className="text-[9px] px-1 py-0.5 bg-red-500/20 text-red-400/80 border border-red-500/20">未配置</span>}
+                              {m.supportsVision && <span className="text-[9px] px-1 py-0.5 bg-purple-500/20 text-purple-400/80 border border-purple-500/20">{chat.vision}</span>}
+                              {m.available === false && <span className="text-[9px] px-1 py-0.5 bg-red-500/20 text-red-400/80 border border-red-500/20">{chat.notConfigured}</span>}
                             </div>
                             <div className="text-white/35 text-[11px] mt-0.5 truncate">{m.description || "—"}</div>
                           </div>
@@ -1135,15 +1152,15 @@ export default function MaoAIChat() {
                         <>
                           <div className="px-3 py-2 border-t border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-emerald-400/70 text-[10px] font-semibold tracking-widest uppercase">
-                              <Monitor size={10} /><span>本地节点</span>
-                              <span className="text-white/20 normal-case font-normal">· 仅管理员</span>
+                              <Monitor size={10} /><span>{chat.localNodes}</span>
+                              <span className="text-white/20 normal-case font-normal">· {chat.adminOnly}</span>
                             </div>
-                            <button onClick={(e) => { e.stopPropagation(); fetchLocalNodes(); }} className="text-white/30 hover:text-white/60 transition-colors p-0.5" title="刷新本地节点">
+                            <button onClick={(e) => { e.stopPropagation(); fetchLocalNodes(); }} className="text-white/30 hover:text-white/60 transition-colors p-0.5" title={chat.refreshLocalNodes}>
                               <RefreshCw size={10} className={loadingNodes ? "animate-spin" : ""} />
                             </button>
                           </div>
-                          {loadingNodes && <div className="px-4 py-3 text-white/30 text-xs flex items-center gap-2"><Loader2 size={12} className="animate-spin" /><span>正在获取...</span></div>}
-                          {!loadingNodes && localNodes.length === 0 && <div className="px-4 py-3 text-white/25 text-xs">暂无在线本地节点<div className="text-white/15 text-[11px] mt-0.5">若本机已启动 Ollama，刷新后会自动发现</div></div>}
+                          {loadingNodes && <div className="px-4 py-3 text-white/30 text-xs flex items-center gap-2"><Loader2 size={12} className="animate-spin" /><span>{chat.loadingNodes}</span></div>}
+                          {!loadingNodes && localNodes.length === 0 && <div className="px-4 py-3 text-white/25 text-xs">{chat.noLocalNodes}<div className="text-white/15 text-[11px] mt-0.5">{chat.ollamaHint}</div></div>}
                           {localNodes.map(n => (
                             <button key={n.id} onClick={() => { setSelectedId(n.id); setShowPicker(false); }}
                               className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${n.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}>
@@ -1178,14 +1195,14 @@ export default function MaoAIChat() {
                 </div>
               )}
               {isAdmin && (
-                <a href="/admin/nodes" className="text-[#C9A84C]/60 text-xs hover:text-[#C9A84C] transition-colors font-mono border border-[#C9A84C]/20 px-2 py-1 hover:border-[#C9A84C]/40" title="进入管理控制台">
+                <a href="/admin/nodes" className="text-[#C9A84C]/60 text-xs hover:text-[#C9A84C] transition-colors font-mono border border-[#C9A84C]/20 px-2 py-1 hover:border-[#C9A84C]/40" title={chat.adminConsole}>
                   ADMIN →
                 </a>
               )}
               {user && (
                 <div className="flex items-center gap-2">
                   <span className="text-white/30 text-xs hidden sm:block truncate max-w-[120px]">{(user as any).name || (user as any).email}</span>
-                  <button onClick={logout} className="text-white/30 hover:text-white/60 transition-colors p-1" title="退出登录">
+                  <button onClick={logout} className="text-white/30 hover:text-white/60 transition-colors p-1" title={chat.logout}>
                     <LogOut size={14} />
                   </button>
                 </div>
@@ -1203,24 +1220,22 @@ export default function MaoAIChat() {
                   <Bot size={28} className="text-[#C9A84C]/60" />
                 </div>
                 <div className="text-center">
-                  <h2 className="text-white/70 text-lg font-medium mb-1">{isResearchEntry ? "你好，这里是 DeerFlow 深度研究" : "你好，我是 MaoAI"}</h2>
+                  <h2 className="text-white/70 text-lg font-medium mb-1">{isResearchEntry ? chat.welcomeResearch : chat.welcomeChat}</h2>
                   <p className="text-white/30 text-sm">
-                    当前：
+                    {chat.currentMode}
                     <span className={currentOption.isLocal ? "text-emerald-400/70" : "text-sky-400/70"}>
-                      {currentOption.isLocal ? "本地节点" : "云端"}
+                      {currentOption.isLocal ? chat.localNode : chat.cloud}
                     </span>
                     {" · "}
                     <span className="text-white/50">{currentOption.badge} {currentOption.name}</span>
                   </p>
                   <p className="text-white/20 text-xs mt-2">
-                    {isResearchEntry
-                      ? "适合行业研究、竞品分析、市场进入策略、技术方案对比等复杂问题"
-                      : "支持对话、图片理解、文件分析（PDF/Word/TXT）和 AI 图像生成"}
+                    {isResearchEntry ? chat.researchDescription : chat.chatDescription}
                   </p>
                 </div>
                 {/* Chat quick prompts */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
-                  {(isResearchEntry ? DEERFLOW_QUICK_PROMPTS : ["帮我写一份市场分析报告", "解释一下量子计算的原理", "用 Python 写一个爬虫", "给我推荐几本商业书籍"]).map(prompt => (
+                  {(isResearchEntry ? deerflowQuickPrompts : defaultQuickPrompts).map(prompt => (
                     <button key={prompt} onClick={() => { setInputMode("chat"); sendMessage(prompt); }}
                       className="text-left px-4 py-3 border border-white/10 text-white/50 text-sm hover:border-[#C9A84C]/40 hover:text-white/70 transition-all">
                       {prompt}
@@ -1231,10 +1246,10 @@ export default function MaoAIChat() {
                 <div className="w-full max-w-lg">
                   <p className="text-white/20 text-[11px] mb-2 flex items-center gap-1.5">
                     <Wand2 size={10} className="text-purple-400/50" />
-                    <span>或者用 nano banana 生成图像</span>
+                    <span>{chat.imageQuickTitle}</span>
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {["赛博朋克风格的城市夜景", "水墨画风格的山水", "未来科技感的机器人", "金色光芒中的猫咪"].map(prompt => (
+                    {imageQuickPrompts.map(prompt => (
                       <button key={prompt} onClick={() => { setInputMode("image"); setInput(prompt); textareaRef.current?.focus(); }}
                         className="text-left px-4 py-3 border border-purple-500/15 text-white/35 text-sm hover:border-purple-500/40 hover:text-white/60 transition-all flex items-center gap-2">
                         <ImageIcon size={12} className="text-purple-400/40 shrink-0" />
@@ -1262,7 +1277,7 @@ export default function MaoAIChat() {
                     {msg.role === "assistant" && msg.nodeInfo && !msg.isImageGeneration && (
                       <div className={`flex items-center gap-1.5 text-[10px] ${msg.nodeInfo.isLocal ? "text-emerald-400/50" : "text-sky-400/50"}`}>
                         {msg.nodeInfo.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
-                        <span>{msg.nodeInfo.isLocal ? "本地节点" : "云端"}</span>
+                        <span>{msg.nodeInfo.isLocal ? chat.localNode : chat.cloud}</span>
                         <span className="text-white/20">·</span>
                         <span>{msg.nodeInfo.name}</span>
                         <span className="text-white/20">·</span>
@@ -1278,11 +1293,11 @@ export default function MaoAIChat() {
                       <div className="bg-white/5 border border-purple-500/20 rounded px-4 py-3">
                         <div className="flex items-center gap-1.5 text-[10px] text-purple-400/60 mb-2">
                           <Wand2 size={9} />
-                          <span>nano banana · 图像生成</span>
+                          <span>nano banana · {chat.modeImage}</span>
                         </div>
                         <img
                           src={msg.generatedImageUrl}
-                          alt="AI 生成图像"
+                          alt={chat.imageAlt}
                           className="max-w-full rounded border border-white/10 object-contain"
                           style={{ maxHeight: "512px" }}
                         />
@@ -1293,7 +1308,7 @@ export default function MaoAIChat() {
                           className="mt-2 flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors"
                         >
                           <ImageIcon size={9} />
-                          <span>查看原图</span>
+                          <span>{chat.viewOriginal}</span>
                         </a>
                       </div>
                     ) : (
@@ -1301,7 +1316,7 @@ export default function MaoAIChat() {
                         {msg.role === "user" && imageUrls.length > 0 && (
                           <div className="flex flex-wrap gap-2 mb-2">
                             {imageUrls.map((url, idx) => (
-                              <img key={idx} src={url} alt="附图" className="max-h-48 max-w-xs object-contain rounded border border-white/10" />
+                              <img key={idx} src={url} alt={chat.attachedImageAlt} className="max-h-48 max-w-xs object-contain rounded border border-white/10" />
                             ))}
                           </div>
                         )}
@@ -1335,7 +1350,7 @@ export default function MaoAIChat() {
                     <div className={`flex items-center gap-1.5 text-[10px] ${activeNodeInfo.isLocal ? "text-emerald-400/60" : "text-sky-400/60"}`}>
                       {activeNodeInfo.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
                       <span className="animate-pulse">●</span>
-                      <span>{activeNodeInfo.isLocal ? "本地节点" : "云端"}</span>
+                      <span>{activeNodeInfo.isLocal ? chat.localNode : chat.cloud}</span>
                       <span className="text-white/20">·</span>
                       <span>{activeNodeInfo.name}</span>
                       <span className="text-white/20">·</span>
@@ -1353,12 +1368,12 @@ export default function MaoAIChat() {
                     ) : currentToolCalls.length > 0 ? (
                       <div className="flex items-center gap-2 text-white/40">
                         <Loader2 size={14} className="animate-spin" />
-                        <span>执行工具中...</span>
+                        <span>{chat.executingTools}</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 text-white/40">
                         <Loader2 size={14} className="animate-spin" />
-                        <span>思考中...</span>
+                        <span>{chat.thinking}</span>
                       </div>
                     )}
                   </div>
@@ -1375,13 +1390,13 @@ export default function MaoAIChat() {
                 <div className="max-w-[80%]">
                   <div className="flex items-center gap-1.5 text-[10px] text-purple-400/60 mb-1">
                     <span className="animate-pulse">●</span>
-                    <span>nano banana · 正在生成图像...</span>
+                    <span>{chat.generatingImage}</span>
                   </div>
                   <div className="bg-white/5 border border-purple-500/20 rounded px-4 py-4 flex items-center gap-3">
                     <Loader2 size={16} className="animate-spin text-purple-400/60 shrink-0" />
                     <div>
-                      <p className="text-white/50 text-sm">正在生成图像，通常需要 10-30 秒</p>
-                      <p className="text-white/20 text-xs mt-0.5">nano banana 图像生成服务</p>
+                      <p className="text-white/50 text-sm">{chat.generatingImageDesc}</p>
+                      <p className="text-white/20 text-xs mt-0.5">{chat.imageService}</p>
                     </div>
                   </div>
                 </div>
@@ -1407,7 +1422,7 @@ export default function MaoAIChat() {
                   }`}
                 >
                   <Bot size={10} />
-                  <span>对话</span>
+                  <span>{chat.modeChat}</span>
                 </button>
                 <button
                   onClick={() => setInputMode("image")}
@@ -1418,25 +1433,25 @@ export default function MaoAIChat() {
                   }`}
                 >
                   <Wand2 size={10} />
-                  <span>生成图像</span>
+                  <span>{chat.modeImage}</span>
                 </button>
               </div>
               <div className={`flex items-center gap-1.5 text-[10px] ${inputMode === "image" ? "text-purple-400/40" : currentOption.isLocal ? "text-emerald-400/40" : "text-sky-400/40"}`}>
                 {inputMode === "image" ? (
                   <>
                     <Wand2 size={9} />
-                    <span>nano banana · 图像生成</span>
+                    <span>nano banana · {chat.modeImage}</span>
                   </>
                 ) : (
                   <>
                     {currentOption.isLocal ? <Monitor size={9} /> : <Cloud size={9} />}
-                    <span>{currentOption.isLocal ? "本地节点" : "云端"}</span>
+                    <span>{currentOption.isLocal ? chat.localNode : chat.cloud}</span>
                     <span className="text-white/15">·</span>
                     <span>{currentOption.badge} {currentOption.name}</span>
-                    {currentOption.isLocal && !(currentOption as LocalNode).isOnline && <span className="text-red-400/60 ml-1">· 离线</span>}
+                    {currentOption.isLocal && !(currentOption as LocalNode).isOnline && <span className="text-red-400/60 ml-1">· {chat.offline}</span>}
                   </>
                 )}
-                {currentConvId && <><span className="text-white/15 ml-1">·</span><span className="text-[#C9A84C]/30 ml-1">已保存</span></>}
+                {currentConvId && <><span className="text-white/15 ml-1">·</span><span className="text-[#C9A84C]/30 ml-1">{chat.saved}</span></>}
               </div>
             </div>
 
@@ -1445,7 +1460,7 @@ export default function MaoAIChat() {
               <div className="flex flex-wrap gap-2 mb-3">
                 {pendingImages.map((url, idx) => (
                   <div key={idx} className="relative group">
-                    <img src={url} alt="待发送图片" className="h-20 w-auto max-w-[160px] object-contain border border-[#C9A84C]/30 rounded" />
+                    <img src={url} alt={chat.pendingImageAlt} className="h-20 w-auto max-w-[160px] object-contain border border-[#C9A84C]/30 rounded" />
                     <button onClick={() => removePendingImage(idx)}
                       className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500/80 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <X size={10} className="text-white" />
@@ -1469,7 +1484,7 @@ export default function MaoAIChat() {
                       {icon}
                       <div className="flex-1 min-w-0">
                         <p className="text-[11px] text-white/60 truncate">{f.name}</p>
-                        <p className="text-[10px] text-white/25">{sizeKb}KB · {f.charCount?.toLocaleString()} 字符{f.truncated ? " · 已截断" : ""}</p>
+                        <p className="text-[10px] text-white/25">{sizeKb}KB · {f.charCount?.toLocaleString(timeLocale)} {chat.characters}{f.truncated ? ` · ${chat.truncatedTag}` : ""}</p>
                       </div>
                       <button onClick={() => removePendingFile(idx)}
                         className="shrink-0 w-4 h-4 flex items-center justify-center text-white/20 hover:text-red-400/70 transition-colors opacity-0 group-hover:opacity-100">
@@ -1485,7 +1500,7 @@ export default function MaoAIChat() {
             {isUploadingFile && (
               <div className="flex items-center gap-2 mb-3 text-[11px] text-sky-400/60">
                 <Loader2 size={12} className="animate-spin" />
-                <span>正在解析文件...</span>
+                <span>{chat.parsingFiles}</span>
               </div>
             )}
 
@@ -1497,7 +1512,7 @@ export default function MaoAIChat() {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isBusy}
                     className={`px-3 py-3 border text-xs transition-all shrink-0 ${pendingImages.length > 0 ? "border-[#C9A84C]/50 text-[#C9A84C] bg-[#C9A84C]/10" : "border-white/10 text-white/30 hover:border-[#C9A84C]/30 hover:text-[#C9A84C]/60"} disabled:opacity-30 disabled:cursor-not-allowed`}
-                    title="上传图片（或直接 Ctrl+V 粘贴截图）"
+                    title={chat.uploadImageTitle}
                   >
                     <ImagePlus size={16} />
                   </button>
@@ -1507,7 +1522,7 @@ export default function MaoAIChat() {
                     onClick={() => docFileInputRef.current?.click()}
                     disabled={isBusy}
                     className={`px-3 py-3 border text-xs transition-all shrink-0 ${pendingFiles.length > 0 ? "border-sky-400/50 text-sky-400 bg-sky-400/10" : "border-white/10 text-white/30 hover:border-sky-400/30 hover:text-sky-400/60"} disabled:opacity-30 disabled:cursor-not-allowed`}
-                    title="上传文件（PDF、Word、TXT、CSV、JSON）"
+                    title={chat.uploadFileTitle}
                   >
                     {isUploadingFile ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
                   </button>
@@ -1534,16 +1549,16 @@ export default function MaoAIChat() {
                 onKeyDown={handleKeyDown}
                 placeholder={
                   isBusy
-                    ? inputMode === "image" ? "正在生成图像..." : isUploadingFile ? "正在解析文件..." : "AI 正在回复中..."
+                    ? inputMode === "image" ? chat.busyGeneratingImage : isUploadingFile ? chat.busyParsingFiles : chat.busyReplying
                     : inputMode === "image"
-                    ? "描述你想生成的图像，例如：赛博朋克风格的城市夜景，高清，4K..."
+                    ? chat.imagePromptPlaceholder
                     : pendingFiles.length > 0
-                    ? `已上传 ${pendingFiles.length} 个文件，输入问题或直接发送让 AI 分析...`
+                    ? t("maoai.chat.filesUploadedPlaceholder", { count: pendingFiles.length })
                     : pendingImages.length > 0
-                    ? "描述图片内容，或直接发送让 AI 分析..."
+                    ? chat.imageAnalyzePlaceholder
                     : isResearchEntry
-                    ? "输入研究问题，MaoAI 会优先通过 DeerFlow 深度研究能力展开多步骤分析"
-                    : "输入消息，Enter 发送，Shift+Enter 换行，Ctrl+V 粘贴截图"
+                    ? chat.researchPlaceholder
+                    : chat.chatPlaceholder
                 }
                 disabled={isUploadingFile}
                 rows={1}
@@ -1562,7 +1577,7 @@ export default function MaoAIChat() {
                 }}
               />
               {isStreaming ? (
-                <button onClick={stopStreaming} className="px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs hover:bg-red-500/20 transition-all shrink-0">停止</button>
+                <button onClick={stopStreaming} className="px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs hover:bg-red-500/20 transition-all shrink-0">{chat.stop}</button>
               ) : (
                 <button
                   onClick={handleSend}
@@ -1581,19 +1596,20 @@ export default function MaoAIChat() {
             {/* Hints */}
             {inputMode === "chat" && pendingImages.length > 0 && (
               <p className="text-[10px] text-purple-400/50 mt-2 flex items-center gap-1">
-                <span>👁️</span><span>将自动使用 GLM-4V 视觉模型分析图片</span>
+                <ImageIcon size={9} />
+                <span>{chat.visionHint}</span>
               </p>
             )}
             {inputMode === "chat" && pendingFiles.length > 0 && pendingImages.length === 0 && (
               <p className="text-[10px] text-sky-400/50 mt-2 flex items-center gap-1">
                 <Paperclip size={9} />
-                <span>文件内容将作为上下文提供给 AI · 支持 PDF、Word、TXT、CSV、JSON · 单文件最大 20MB</span>
+                <span>{chat.fileHint}</span>
               </p>
             )}
             {inputMode === "image" && (
               <p className="text-[10px] text-purple-400/30 mt-2 flex items-center gap-1">
                 <Wand2 size={9} />
-                <span>nano banana 图像生成 · 通常需要 10-30 秒 · 生成结果自动保存到对话历史</span>
+                <span>{chat.imageHint}</span>
               </p>
             )}
           </div>
@@ -1610,20 +1626,29 @@ export default function MaoAIChat() {
               <div className="flex items-center gap-2">
                 <Crown size={15} className="text-[#C9A84C]" />
                 <h3 className="text-white font-medium text-sm">
-                  {showUpgradePrompt === "image_locked" ? "图像生成需要升级" :
-                   showUpgradePrompt === "image" ? "今日图像生成已达上限" :
-                   showUpgradePrompt === "premium_model" ? "高级模型需要升级" :
-                   "今日对话已达上限"}
+                  {showUpgradePrompt === "image_locked"
+                    ? chat.upgradeTitles.imageLocked
+                    : showUpgradePrompt === "image"
+                    ? chat.upgradeTitles.image
+                    : showUpgradePrompt === "premium_model"
+                    ? chat.upgradeTitles.premiumModel
+                    : chat.upgradeTitles.chat}
                 </h3>
               </div>
               <button onClick={() => setShowUpgradePrompt(null)} className="text-white/30 hover:text-white/60 transition-colors text-lg leading-none">×</button>
             </div>
             <div className="px-5 py-4">
               <p className="text-white/50 text-sm mb-4 leading-relaxed">
-                {showUpgradePrompt === "image_locked" && "图像生成（nano banana）仅对专业版及以上用户开放。升级后每日可生成 20 张图像，无限版不限次数。"}
-                {showUpgradePrompt === "image" && `今日图像生成次数已达上限（${mySubscription?.usage.imageGenerations}/${mySubscription?.limits.dailyImageGenerations}）。升级到无限版可不限次数生成。`}
-                {showUpgradePrompt === "premium_model" && "此模型（DeepSeek R1、GLM-4 Plus）仅对专业版及以上用户开放。升级后可使用全部高级模型。"}
-                {showUpgradePrompt === "chat" && `今日对话次数已达上限（${mySubscription?.usage.chatMessages}/${mySubscription?.limits.dailyChatMessages}）。升级专业版每日可发送 200 条消息，无限版不限次数。`}
+                {showUpgradePrompt === "image_locked" && chat.upgradeDescriptions.imageLocked}
+                {showUpgradePrompt === "image" && t("maoai.chat.upgradeDescriptions.image", {
+                  used: mySubscription?.usage.imageGenerations,
+                  limit: mySubscription?.limits.dailyImageGenerations,
+                })}
+                {showUpgradePrompt === "premium_model" && chat.upgradeDescriptions.premiumModel}
+                {showUpgradePrompt === "chat" && t("maoai.chat.upgradeDescriptions.chat", {
+                  used: mySubscription?.usage.chatMessages,
+                  limit: mySubscription?.limits.dailyChatMessages,
+                })}
               </p>
               <div className="flex flex-col gap-2">
                 <a
@@ -1631,13 +1656,13 @@ export default function MaoAIChat() {
                   className="w-full py-2.5 text-center text-sm bg-[#C9A84C]/15 border border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C]/25 transition-all flex items-center justify-center gap-2"
                 >
                   <Zap size={13} />
-                  <span>查看升级方案</span>
+                  <span>{chat.viewPlans}</span>
                 </a>
                 <button
                   onClick={() => setShowUpgradePrompt(null)}
                   className="w-full py-2 text-center text-xs text-white/25 hover:text-white/40 transition-colors"
                 >
-                  明天再说
+                  {chat.later}
                 </button>
               </div>
             </div>
@@ -1657,17 +1682,23 @@ export default function MaoAIChat() {
                 mySubscription.tier === "flagship" ? "text-purple-400/70" :
                 "text-white/30"
               }`}>
-                {(mySubscription.tier as string) === "free" ? "免费版" : mySubscription.tier === "starter" ? "入门版" : mySubscription.tier === "pro" ? "专业版" : "旗舰版"}
+                {mySubscription.tier === "free"
+                  ? chat.tiers.free
+                  : mySubscription.tier === "starter"
+                  ? chat.tiers.starter
+                  : mySubscription.tier === "pro"
+                  ? chat.tiers.pro
+                  : chat.tiers.flagship}
               </span>
             </div>
             <a href={MAOAI_ROUTES.PRICING} className="text-[9px] text-white/20 hover:text-[#C9A84C]/60 transition-colors">
-              {(mySubscription.tier as string) === "free" ? "升级 →" : "管理"}
+              {mySubscription.tier === "free" ? `${chat.upgradeContent} →` : chat.manage}
             </a>
           </div>
           {mySubscription.limits.dailyChatMessages !== -1 && (
             <div className="mb-1.5">
               <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
-                <span>对话</span>
+                <span>{chat.chatUsage}</span>
                 <span>{mySubscription.usage.chatMessages}/{mySubscription.limits.dailyChatMessages}</span>
               </div>
               <div className="h-0.5 bg-white/8 w-full">
@@ -1681,7 +1712,7 @@ export default function MaoAIChat() {
           {mySubscription.limits.imageGeneration && mySubscription.limits.dailyImageGenerations !== -1 && (
             <div>
               <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
-                <span>图像生成</span>
+                <span>{chat.imageUsage}</span>
                 <span>{mySubscription.usage.imageGenerations}/{mySubscription.limits.dailyImageGenerations}</span>
               </div>
               <div className="h-0.5 bg-white/8 w-full">
@@ -1693,7 +1724,7 @@ export default function MaoAIChat() {
             </div>
           )}
           {mySubscription.tier === "flagship" && (
-            <p className="text-[9px] text-purple-400/40 mt-1">无限制使用中</p>
+            <p className="text-[9px] text-purple-400/40 mt-1">{chat.unlimited}</p>
           )}
         </div>
       )}

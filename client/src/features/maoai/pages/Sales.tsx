@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { MAOAI_ROUTES } from "../constants";
@@ -23,6 +24,8 @@ interface Lead {
 }
 
 function StatusBadge({ status }: { status: LeadStatus }) {
+  const { t } = useTranslation();
+  const labels = t("maoai.sales.statuses", { returnObjects: true }) as Record<LeadStatus, string>;
   const colors: Record<LeadStatus, string> = {
     new: "bg-blue-500/20 text-blue-400",
     contacted: "bg-yellow-500/20 text-yellow-400",
@@ -32,13 +35,12 @@ function StatusBadge({ status }: { status: LeadStatus }) {
     closed_won: "bg-green-500/20 text-green-400",
     closed_lost: "bg-red-500/20 text-red-400",
   };
-  const labels: Record<LeadStatus, string> = {
-    new: "新线索", contacted: "已联系", qualified: "已合格", proposal: "提案中", negotiation: "谈判中", closed_won: "成交", closed_lost: "丢单",
-  };
   return <span className={`px-2 py-0.5 text-xs rounded ${colors[status]}`}>{labels[status]}</span>;
 }
 
 export default function MaoAISales() {
+  const { t } = useTranslation();
+  const sales = t("maoai.sales", { returnObjects: true }) as any;
   const { user, loading } = useAuth({ redirectOnUnauthenticated: true, redirectPath: MAOAI_ROUTES.LOGIN });
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "outreach" | "ai">("dashboard");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -50,7 +52,7 @@ export default function MaoAISales() {
   const { data: insights = [] } = trpc.sales.getInsights.useQuery();
 
   if (loading) {
-    return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center"><div className="text-[#C9A84C]">加载中...</div></div>;
+    return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center"><div className="text-[#C9A84C]">{sales.loading}</div></div>;
   }
 
   return (
@@ -63,8 +65,8 @@ export default function MaoAISales() {
               <Target size={20} className="text-[#C9A84C]" />
             </div>
             <div>
-              <h1 className="text-[#C9A84C] font-semibold text-lg">MaoAI Sales</h1>
-              <p className="text-white/40 text-xs">AI驱动的销售自动化</p>
+              <h1 className="text-[#C9A84C] font-semibold text-lg">{sales.title}</h1>
+              <p className="text-white/40 text-xs">{sales.subtitle}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -74,10 +76,7 @@ export default function MaoAISales() {
                 onClick={() => setActiveTab(tab as any)}
                 className={`px-4 py-2 text-sm transition-all ${activeTab === tab ? "bg-[#C9A84C]/20 text-[#C9A84C] border border-[#C9A84C]/40" : "text-white/50 hover:text-white/80"}`}
               >
-                {tab === "dashboard" && "仪表盘"}
-                {tab === "leads" && "线索"}
-                {tab === "outreach" && "外联"}
-                {tab === "ai" && "AI助手"}
+                {sales.tabs[tab]}
               </button>
             ))}
           </div>
@@ -96,11 +95,13 @@ export default function MaoAISales() {
 }
 
 function DashboardView({ stats, insights }: { stats?: any; insights: any[] }) {
+  const { t } = useTranslation();
+  const sales = t("maoai.sales", { returnObjects: true }) as any;
   const statCards = [
-    { label: "总线索", value: stats?.total?.toString() || "0", change: "+12%", icon: Users, color: "text-blue-400" },
-    { label: "已合格", value: stats?.qualified?.toString() || "0", change: "+25%", icon: CheckCircle2, color: "text-purple-400" },
-    { label: "提案中", value: stats?.proposal?.toString() || "0", change: "+20%", icon: Target, color: "text-orange-400" },
-    { label: "本月成交", value: stats?.closedWon?.toString() || "0", change: "+50%", icon: TrendingUp, color: "text-green-400" },
+    { label: sales.statCards.total, value: stats?.total?.toString() || "0", change: "+12%", icon: Users, color: "text-blue-400" },
+    { label: sales.statCards.qualified, value: stats?.qualified?.toString() || "0", change: "+25%", icon: CheckCircle2, color: "text-purple-400" },
+    { label: sales.statCards.proposal, value: stats?.proposal?.toString() || "0", change: "+20%", icon: Target, color: "text-orange-400" },
+    { label: sales.statCards.closedWon, value: stats?.closedWon?.toString() || "0", change: "+50%", icon: TrendingUp, color: "text-green-400" },
   ];
 
   return (
@@ -123,7 +124,7 @@ function DashboardView({ stats, insights }: { stats?: any; insights: any[] }) {
       <div className="bg-gradient-to-r from-[#C9A84C]/10 to-purple-500/10 border border-[#C9A84C]/20 p-6 rounded">
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={18} className="text-[#C9A84C]" />
-          <h3 className="text-[#C9A84C] font-semibold">AI 智能洞察</h3>
+          <h3 className="text-[#C9A84C] font-semibold">{sales.insightTitle}</h3>
         </div>
         <div className="grid grid-cols-3 gap-4">
           {insights.slice(0, 3).map((insight) => (
@@ -136,7 +137,7 @@ function DashboardView({ stats, insights }: { stats?: any; insights: any[] }) {
                   insight.type === "opportunity" ? "text-green-400" :
                   insight.type === "risk" ? "text-red-400" : "text-blue-400"
                 }`}>
-                  {insight.type === "opportunity" ? "机会" : insight.type === "risk" ? "风险" : "建议"}
+                  {insight.type === "opportunity" ? sales.insightTypes.opportunity : insight.type === "risk" ? sales.insightTypes.risk : sales.insightTypes.action}
                 </span>
                 <span className="text-xs text-white/30">({insight.confidence}%)</span>
               </div>
@@ -149,9 +150,9 @@ function DashboardView({ stats, insights }: { stats?: any; insights: any[] }) {
 
       {/* Pipeline */}
       <div className="bg-white/5 border border-white/10 p-6 rounded">
-        <h3 className="text-white font-semibold mb-4">销售管道</h3>
+        <h3 className="text-white font-semibold mb-4">{sales.pipelineTitle}</h3>
         <div className="flex items-center gap-2">
-          {["新线索", "已联系", "已合格", "提案中", "谈判中", "成交"].map((stage, i) => (
+          {sales.pipelineStages.map((stage: string, i: number) => (
             <div key={stage} className="flex-1">
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full bg-[#C9A84C]" style={{ width: `${[100, 80, 60, 40, 20, 10][i]}%` }} />
@@ -167,6 +168,9 @@ function DashboardView({ stats, insights }: { stats?: any; insights: any[] }) {
 }
 
 function LeadsView({ leads, onSelect, isLoading }: { leads: Lead[]; onSelect: (l: Lead) => void; isLoading?: boolean }) {
+  const { t } = useTranslation();
+  const sales = t("maoai.sales", { returnObjects: true }) as any;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -183,16 +187,16 @@ function LeadsView({ leads, onSelect, isLoading }: { leads: Lead[]; onSelect: (l
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
             <input
               type="text"
-              placeholder="搜索线索..."
+              placeholder={sales.searchPlaceholder}
               className="bg-white/5 border border-white/10 pl-10 pr-4 py-2 text-sm text-white placeholder-white/30 focus:border-[#C9A84C]/40 focus:outline-none w-64"
             />
           </div>
           <button className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 text-sm text-white/70 hover:bg-white/10">
-            <Filter size={14} /> 筛选
+            <Filter size={14} /> {sales.filter}
           </button>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-[#C9A84C]/20 border border-[#C9A84C]/40 text-[#C9A84C] text-sm hover:bg-[#C9A84C]/30">
-          <Plus size={16} /> 添加线索
+          <Plus size={16} /> {sales.addLead}
         </button>
       </div>
 
@@ -200,12 +204,12 @@ function LeadsView({ leads, onSelect, isLoading }: { leads: Lead[]; onSelect: (l
         <table className="w-full">
           <thead className="bg-white/5">
             <tr>
-              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">线索</th>
-              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">公司</th>
-              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">状态</th>
-              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">评分</th>
-              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">AI洞察</th>
-              <th className="text-right text-xs text-white/40 font-medium px-4 py-3">操作</th>
+              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">{sales.table.lead}</th>
+              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">{sales.table.company}</th>
+              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">{sales.table.status}</th>
+              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">{sales.table.score}</th>
+              <th className="text-left text-xs text-white/40 font-medium px-4 py-3">{sales.table.insight}</th>
+              <th className="text-right text-xs text-white/40 font-medium px-4 py-3">{sales.table.actions}</th>
             </tr>
           </thead>
           <tbody>
@@ -246,15 +250,17 @@ function LeadsView({ leads, onSelect, isLoading }: { leads: Lead[]; onSelect: (l
 }
 
 function OutreachView({ leads }: { leads: Lead[] }) {
+  const { t } = useTranslation();
+  const sales = t("maoai.sales", { returnObjects: true }) as any;
   const [selectedTemplate, setSelectedTemplate] = useState<"cold" | "followup" | "proposal" | "linkedin">("cold");
   const [selectedLeadId, setSelectedLeadId] = useState<string>("");
   const [generatedEmail, setGeneratedEmail] = useState("");
 
   const templates = [
-    { id: "cold" as const, name: "冷接触邮件", icon: Mail },
-    { id: "followup" as const, name: "跟进邮件", icon: Clock },
-    { id: "proposal" as const, name: "提案邮件", icon: Target },
-    { id: "linkedin" as const, name: "LinkedIn消息", icon: Linkedin },
+    { id: "cold" as const, name: sales.templates.cold, icon: Mail },
+    { id: "followup" as const, name: sales.templates.followup, icon: Clock },
+    { id: "proposal" as const, name: sales.templates.proposal, icon: Target },
+    { id: "linkedin" as const, name: sales.templates.linkedin, icon: Linkedin },
   ];
 
   const generateMutation = trpc.sales.generateEmail.useMutation({
@@ -267,7 +273,7 @@ function OutreachView({ leads }: { leads: Lead[] }) {
 
   const generateEmail = () => {
     if (!selectedLeadId) {
-      alert("请先选择一个收件人");
+      alert(sales.chooseRecipientFirst);
       return;
     }
     generateMutation.mutate({
@@ -281,7 +287,7 @@ function OutreachView({ leads }: { leads: Lead[] }) {
     <div className="grid grid-cols-3 gap-6">
       {/* Templates */}
       <div className="space-y-4">
-        <h3 className="text-white font-semibold">邮件模板</h3>
+        <h3 className="text-white font-semibold">{sales.templatesTitle}</h3>
         {templates.map((t) => (
           <button
             key={t.id}
@@ -294,7 +300,7 @@ function OutreachView({ leads }: { leads: Lead[] }) {
         ))}
 
         <div className="pt-4 border-t border-white/10">
-          <h4 className="text-sm text-white/60 mb-2">选择收件人</h4>
+          <h4 className="text-sm text-white/60 mb-2">{sales.selectRecipient}</h4>
           {leads.slice(0, 3).map((lead) => (
             <div key={lead.id} 
               onClick={() => setSelectedLeadId(lead.id)}
@@ -317,44 +323,44 @@ function OutreachView({ leads }: { leads: Lead[] }) {
       {/* Editor */}
       <div className="col-span-2 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-semibold">邮件编辑器</h3>
+          <h3 className="text-white font-semibold">{sales.editorTitle}</h3>
           <button
             onClick={generateEmail}
             disabled={generateMutation.isPending}
             className="flex items-center gap-2 px-4 py-2 bg-[#C9A84C]/20 border border-[#C9A84C]/40 text-[#C9A84C] text-sm hover:bg-[#C9A84C]/30 disabled:opacity-50"
           >
-            {generateMutation.isPending ? <><Loader2 size={16} className="animate-spin" /> 生成中...</> : <><Wand2 size={16} /> AI生成邮件</>}
+            {generateMutation.isPending ? <><Loader2 size={16} className="animate-spin" /> {sales.generating}</> : <><Wand2 size={16} /> {sales.generateEmail}</>}
           </button>
         </div>
 
         <div className="bg-white/5 border border-white/10 p-4 space-y-4">
           <div>
-            <label className="text-xs text-white/40">主题</label>
+            <label className="text-xs text-white/40">{sales.subject}</label>
             <input
               type="text"
-              value={generatedEmail ? generatedEmail.split("\n")[0].replace("主题：", "") : ""}
-              placeholder="输入邮件主题..."
+              value={generatedEmail ? generatedEmail.split("\n")[0].replace(/^(主题：|Subject:\s*)/, "") : ""}
+              placeholder={sales.subjectPlaceholder}
               className="w-full bg-black/30 border border-white/10 px-3 py-2 text-sm text-white mt-1 focus:border-[#C9A84C]/40 focus:outline-none"
             />
           </div>
           <div>
-            <label className="text-xs text-white/40">正文</label>
+            <label className="text-xs text-white/40">{sales.body}</label>
             <textarea
               value={generatedEmail ? generatedEmail.split("\n").slice(2).join("\n") : ""}
-              placeholder="输入邮件内容..."
+              placeholder={sales.bodyPlaceholder}
               rows={12}
               className="w-full bg-black/30 border border-white/10 px-3 py-2 text-sm text-white mt-1 focus:border-[#C9A84C]/40 focus:outline-none resize-none"
             />
           </div>
           <div className="flex items-center justify-between pt-4 border-t border-white/10">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-white/40">AI优化建议:</span>
-              <span className="text-xs text-green-400">✓ 个性化程度高</span>
-              <span className="text-xs text-green-400">✓ 价值主张清晰</span>
-              <span className="text-xs text-yellow-400">⚠ 建议添加CTA</span>
+              <span className="text-xs text-white/40">{sales.aiSuggestions}</span>
+              <span className="text-xs text-green-400">{sales.suggestionPersonalized}</span>
+              <span className="text-xs text-green-400">{sales.suggestionValue}</span>
+              <span className="text-xs text-yellow-400">{sales.suggestionCta}</span>
             </div>
             <button className="flex items-center gap-2 px-4 py-2 bg-[#C9A84C] text-black text-sm font-medium hover:bg-[#C9A84C]/90">
-              <Send size={16} /> 发送邮件
+              <Send size={16} /> {sales.sendEmail}
             </button>
           </div>
         </div>
@@ -364,8 +370,10 @@ function OutreachView({ leads }: { leads: Lead[] }) {
 }
 
 function AIAssistantView() {
+  const { t } = useTranslation();
+  const sales = t("maoai.sales", { returnObjects: true }) as any;
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "你好！我是MaoAI销售助手。我可以帮你：\n1. 分析销售线索\n2. 生成外联邮件\n3. 提供销售建议\n4. 预测成交概率\n\n有什么可以帮你的吗？" }
+    { role: "assistant", content: sales.assistantGreeting }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -376,7 +384,7 @@ function AIAssistantView() {
       setIsTyping(false);
     },
     onError: () => {
-      setMessages(prev => [...prev, { role: "assistant", content: "抱歉，处理请求时出错，请稍后再试。" }]);
+      setMessages(prev => [...prev, { role: "assistant", content: sales.assistantError }]);
       setIsTyping(false);
     }
   });
@@ -395,7 +403,7 @@ function AIAssistantView() {
       <div className="col-span-2 bg-white/5 border border-white/10 rounded flex flex-col h-[600px]">
         <div className="flex items-center gap-2 p-4 border-b border-white/10">
           <Bot size={18} className="text-[#C9A84C]" />
-          <span className="text-[#C9A84C] font-semibold">MaoAI 销售助手</span>
+          <span className="text-[#C9A84C] font-semibold">{sales.assistantTitle}</span>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((m, i) => (
@@ -430,7 +438,7 @@ function AIAssistantView() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="输入你的问题..."
+              placeholder={sales.inputPlaceholder}
               className="flex-1 bg-black/30 border border-white/10 px-4 py-2 text-sm text-white placeholder-white/30 focus:border-[#C9A84C]/40 focus:outline-none"
             />
             <button
@@ -445,15 +453,15 @@ function AIAssistantView() {
 
       {/* Quick Actions */}
       <div className="space-y-4">
-        <h3 className="text-white font-semibold">快速操作</h3>
+        <h3 className="text-white font-semibold">{sales.quickActionsTitle}</h3>
         <div className="space-y-2">
           {[
-            { icon: Target, label: "分析高价值线索", desc: "识别最有潜力的客户" },
-            { icon: Mail, label: "批量生成邮件", desc: "为多个线索创建个性化邮件" },
-            { icon: TrendingUp, label: "预测成交概率", desc: "基于历史数据预测" },
-            { icon: Clock, label: "最佳联系时间", desc: "AI推荐最佳跟进时机" },
-            { icon: MessageSquare, label: "生成话术", desc: "针对不同场景的销售话术" },
-            { icon: BarChart3, label: "销售报告", desc: "生成本周销售分析报告" },
+            { icon: Target, ...sales.quickActions[0] },
+            { icon: Mail, ...sales.quickActions[1] },
+            { icon: TrendingUp, ...sales.quickActions[2] },
+            { icon: Clock, ...sales.quickActions[3] },
+            { icon: MessageSquare, ...sales.quickActions[4] },
+            { icon: BarChart3, ...sales.quickActions[5] },
           ].map((action) => (
             <button key={action.label} className="w-full flex items-start gap-3 p-3 bg-white/5 border border-white/10 hover:bg-white/10 text-left transition-all">
               <action.icon size={18} className="text-[#C9A84C] shrink-0 mt-0.5" />
@@ -466,19 +474,19 @@ function AIAssistantView() {
         </div>
 
         <div className="pt-4 border-t border-white/10">
-          <h4 className="text-sm text-white/60 mb-3">今日统计</h4>
+          <h4 className="text-sm text-white/60 mb-3">{sales.todayStats}</h4>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-white/40">AI生成邮件</span>
-              <span className="text-white">12封</span>
+              <span className="text-white/40">{sales.statsLabels.emails}</span>
+              <span className="text-white">{sales.statsValues.emails}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-white/40">线索分析</span>
-              <span className="text-white">8个</span>
+              <span className="text-white/40">{sales.statsLabels.analysis}</span>
+              <span className="text-white">{sales.statsValues.analysis}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-white/40">成交预测</span>
-              <span className="text-green-400">¥45万</span>
+              <span className="text-white/40">{sales.statsLabels.forecast}</span>
+              <span className="text-green-400">{sales.statsValues.forecast}</span>
             </div>
           </div>
         </div>

@@ -20,6 +20,19 @@ import tr from "../locales/tr.json";
 import vi from "../locales/vi.json";
 import th from "../locales/th.json";
 import id from "../locales/id.json";
+import { MAOAI_TRANSLATIONS, type MaoaiLocaleCode } from "../locales/maoai";
+
+function withMaoAI<T extends Record<string, any>>(base: T, locale: MaoaiLocaleCode): T {
+  const maoai = MAOAI_TRANSLATIONS[locale] ?? MAOAI_TRANSLATIONS.en;
+  return {
+    ...base,
+    nav: {
+      ...(base.nav ?? {}),
+      ...(maoai.nav ?? {}),
+    },
+    maoai,
+  };
+}
 
 export const LANGUAGES = [
   { code: "zh", name: "中文", flag: "🇨🇳" },
@@ -47,24 +60,24 @@ i18n
   .use(initReactI18next)
   .init({
     resources: {
-      zh: { translation: zh },
-      en: { translation: en },
-      ja: { translation: ja },
-      ko: { translation: ko },
-      fr: { translation: fr },
-      de: { translation: de },
-      es: { translation: es },
-      pt: { translation: pt },
-      ru: { translation: ru },
-      ar: { translation: ar },
-      hi: { translation: hi },
-      it: { translation: it },
-      nl: { translation: nl },
-      pl: { translation: pl },
-      tr: { translation: tr },
-      vi: { translation: vi },
-      th: { translation: th },
-      id: { translation: id },
+      zh: { translation: withMaoAI(zh, "zh") },
+      en: { translation: withMaoAI(en, "en") },
+      ja: { translation: withMaoAI(ja, "ja") },
+      ko: { translation: withMaoAI(ko, "ko") },
+      fr: { translation: withMaoAI(fr, "fr") },
+      de: { translation: withMaoAI(de, "de") },
+      es: { translation: withMaoAI(es, "es") },
+      pt: { translation: withMaoAI(pt, "pt") },
+      ru: { translation: withMaoAI(ru, "ru") },
+      ar: { translation: withMaoAI(ar, "ar") },
+      hi: { translation: withMaoAI(hi, "hi") },
+      it: { translation: withMaoAI(it, "it") },
+      nl: { translation: withMaoAI(nl, "nl") },
+      pl: { translation: withMaoAI(pl, "pl") },
+      tr: { translation: withMaoAI(tr, "tr") },
+      vi: { translation: withMaoAI(vi, "vi") },
+      th: { translation: withMaoAI(th, "th") },
+      id: { translation: withMaoAI(id, "id") },
     },
     fallbackLng: "zh",
     detection: {
