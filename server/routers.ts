@@ -35,11 +35,67 @@ import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfi
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
 import { autoclipRouter } from "./autoclip";
 import { salesRouter } from "./sales";
+import {
+  generateVideo,
+  getVideoTaskStatus,
+  VIDEO_MODELS,
+  type VideoGenerateOptions,
+} from "./video";
 
 export const appRouter = router({
   system: systemRouter,
   autoclip: autoclipRouter,
   sales: salesRouter,
+  video: router({
+    // 获取可用视频模型列表
+    listModels: publicProcedure.query(() => {
+      return VIDEO_MODELS;
+    }),
+
+    // 文生视频 / 图生视频
+    generate: protectedProcedure
+      .input(
+        z.object({
+          prompt: z.string().min(1).max(5000),
+          model: z.string().optional(),
+          duration: z.number().int().min(1).max(15).optional(),
+          aspectRatio: z.enum(["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"]).optional(),
+          imageUrl: z.string().url().optional(),
+          negativePrompt: z.string().max(1000).optional(),
+          seed: z.number().int().optional(),
+        })
+      )
+      .mutation(async ({ input }): Promise<{ taskId: string; status: string; error?: string }> => {
+        const options: VideoGenerateOptions = {
+          prompt: input.prompt,
+          model: input.model || "runway-gen4.5",
+          duration: input.duration,
+          aspectRatio: input.aspectRatio,
+          imageUrl: input.imageUrl,
+          negativePrompt: input.negativePrompt,
+          seed: input.seed,
+        };
+
+        const result = await generateVideo(options);
+        return {
+          taskId: result.taskId,
+          status: result.status,
+          error: result.error,
+        };
+      }),
+
+    // 查询任务状态
+    getStatus: protectedProcedure
+      .input(
+        z.object({
+          taskId: z.string(),
+          provider: z.enum(["runway", "kling", "jimeng"]),
+        })
+      )
+      .query(async ({ input }) => {
+        return await getVideoTaskStatus(input.taskId, input.provider);
+      }),
+  }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
