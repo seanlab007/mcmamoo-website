@@ -14,17 +14,52 @@
 import * as https from "https";
 import * as http from "http";
 
-// ─── 猫眼业务关键词（用于相关性过滤）───────────────────────────────────────
+// ─── 猫眼增长引擎业务关键词（用于相关性过滤）──────────────────────────────
+// 公司核心：品牌显贵化、爆品孵化、KOL矩阵、错位竞争、跨境出海、新消费品牌战略
 const MAOYAN_KEYWORDS = [
-  "movie", "film", "cinema", "theater", "ticket", "audience", "entertainment",
-  "streaming", "media", "content", "recommendation", "prediction",
-  "box office", "consumer behavior", "sentiment", "rating",
-  "computer vision", "image recognition", "natural language",
-  "data mining", "machine learning", "neural network",
-  "social network", "viral", "marketing", "pricing",
-  "demand forecast", "time series", "user behavior",
-  // 中文关键词（部分摘要含中文翻译）
-  "电影", "影院", "票房", "观众", "流媒体", "内容推荐",
+  // 品牌战略
+  "brand strategy", "brand positioning", "brand premium", "brand equity",
+  "luxury brand", "premium brand", "brand differentiation", "brand building",
+  "brand management", "brand identity", "brand value", "brand growth",
+
+  // 增长与营销
+  "growth hacking", "growth strategy", "growth engine", "user acquisition",
+  "influencer marketing", "KOL", "key opinion leader", "social commerce",
+  "content marketing", "viral marketing", "word of mouth", "community marketing",
+  "performance marketing", "omni-channel", "omnichannel",
+
+  // 消费品与新消费
+  "consumer brand", "new consumer", "DTC", "direct to consumer",
+  "product innovation", "hit product", "blockbuster product",
+  "consumer behavior", "consumer psychology", "consumer insight",
+  "e-commerce", "cross-border e-commerce", "global expansion",
+  "China market", "Chinese consumer", "Gen Z consumer",
+
+  // 竞争与定位
+  "competitive positioning", "market positioning", "blue ocean",
+  "niche market", "market differentiation", "competitive advantage",
+  "category innovation", "category creation", "first mover",
+
+  // IP与联名
+  "IP licensing", "brand collaboration", "co-branding", "intellectual property",
+  "celebrity marketing", "brand ambassador",
+
+  // 运营与电商
+  "Tmall", "Douyin", "TikTok commerce", "Xiaohongshu", "RED commerce",
+  "live streaming commerce", "short video marketing",
+
+  // 定价与溢价
+  "pricing strategy", "premium pricing", "value-based pricing",
+  "willingness to pay", "price elasticity",
+
+  // 战略管理（HBR核心方向）
+  "disruptive innovation", "business model innovation", "platform strategy",
+  "digital transformation", "go-to-market", "market entry",
+  "founder brand", "entrepreneur", "startup growth",
+
+  // 中文关键词
+  "品牌", "增长", "消费", "营销", "定位", "创新", "出海", "私域",
+  "爆品", "KOL", "直播", "电商", "新消费", "错位竞争", "品类创新",
 ];
 
 // ─── HBR RSS Feeds ─────────────────────────────────────────────────────────
@@ -58,24 +93,27 @@ const HBR_RSS_FEEDS = [
 ];
 
 // ─── arXiv 学科分类 ──────────────────────────────────────────────────────────
+// 根据猫眼增长引擎业务（品牌战略、消费行为、营销科学、AI增长）调整分类
 
 const ARXIV_CATEGORIES = [
-  // 数学
-  { cat: "math.ST", name: "数学·统计学", maxResults: 5 },
-  { cat: "math.OC", name: "数学·最优化控制", maxResults: 5 },
-  // 物理
-  { cat: "physics.data-an", name: "物理·数据分析", maxResults: 5 },
-  // 计算机（AI/ML，与猫眼最相关）
-  { cat: "cs.AI", name: "计算机·人工智能", maxResults: 10 },
-  { cat: "cs.LG", name: "计算机·机器学习", maxResults: 10 },
-  { cat: "cs.IR", name: "计算机·信息检索/推荐系统", maxResults: 8 },
-  { cat: "cs.CV", name: "计算机·计算机视觉", maxResults: 5 },
-  // 生物
-  { cat: "q-bio.NC", name: "生物·神经科学", maxResults: 5 },
-  { cat: "q-bio.GN", name: "生物·基因组学", maxResults: 3 },
-  // 经济/定量金融（与票务定价相关）
-  { cat: "econ.EM", name: "经济·计量经济学", maxResults: 5 },
-  { cat: "q-fin.GN", name: "量化金融·综合", maxResults: 3 },
+  // AI / 机器学习（赋能品牌增长与营销）
+  { cat: "cs.AI", name: "人工智能", maxResults: 10 },
+  { cat: "cs.LG", name: "机器学习", maxResults: 10 },
+  // 计算社会科学与网络传播（KOL/病毒传播/社交媒体营销）
+  { cat: "cs.SI", name: "社交网络与信息传播", maxResults: 8 },
+  { cat: "cs.IR", name: "信息检索与推荐系统", maxResults: 6 },
+  // 经济学（消费行为、定价策略、市场设计）
+  { cat: "econ.GN", name: "经济学·综合", maxResults: 6 },
+  { cat: "econ.EM", name: "计量经济学·消费行为", maxResults: 5 },
+  // 数学（统计与优化，支撑增长决策）
+  { cat: "math.ST", name: "统计学·决策科学", maxResults: 5 },
+  { cat: "math.OC", name: "最优化·运营策略", maxResults: 4 },
+  // 生物/神经科学（消费者心理/决策神经科学）
+  { cat: "q-bio.NC", name: "神经科学·决策与消费心理", maxResults: 5 },
+  // 物理（复杂系统/传播动力学，适用于品牌传播建模）
+  { cat: "physics.soc-ph", name: "社会物理学·品牌传播动力学", maxResults: 4 },
+  // 量化金融（定价模型、风险决策）
+  { cat: "q-fin.GN", name: "量化金融·品牌估值", maxResults: 3 },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -253,7 +291,13 @@ export async function fetchArxivItems(maxTotal = 50): Promise<DigestItem[]> {
 // ─── PubMed Fetcher ──────────────────────────────────────────────────────────
 
 export async function fetchPubmedItems(
-  keywords = ["machine learning cinema", "AI recommendation system", "consumer behavior prediction"],
+  keywords = [
+    "consumer behavior brand loyalty",
+    "influencer marketing social commerce",
+    "brand premium pricing psychology",
+    "cross-border e-commerce consumer",
+    "digital marketing growth strategy",
+  ],
   maxResults = 5
 ): Promise<DigestItem[]> {
   const results: DigestItem[] = [];
@@ -329,7 +373,13 @@ export async function fetchAllDigests(options?: {
     opts.includeScience ? fetchArxivItems(opts.maxScience) : Promise.resolve([]),
     opts.includeScience
       ? fetchPubmedItems(
-          ["machine learning movie recommendation", "AI entertainment", "box office prediction"],
+          [
+            "consumer behavior brand loyalty",
+            "influencer marketing social media commerce",
+            "brand premium pricing willingness to pay",
+            "cross-border e-commerce Chinese consumer",
+            "digital marketing growth hacking",
+          ],
           5
         )
       : Promise.resolve([]),
@@ -385,9 +435,10 @@ export function formatDigestForAI(digest: DigestResult, mode: "hbr" | "science" 
   }
 
   if ((mode === "maoyan" || mode === "all") && digest.maoyanRelevantItems.length > 0) {
-    sections.push("## 🐱 与猫眼业务相关的研究\n");
+    sections.push("## 🐱 与猫眼增长引擎相关的研究\n");
+    sections.push("（猫眼增长引擎核心业务：品牌显贵化 · 爆品孵化 · KOL矩阵 · 错位竞争 · 跨境出海）\n");
     for (const item of digest.maoyanRelevantItems.slice(0, 10)) {
-      sections.push(`### ${item.title}\n来源：${item.source.toUpperCase()} | 相关度：${item.relevanceScore}/100\n关键词：${item.keywords.join(", ")}\n摘要：${item.summary.substring(0, 300)}...\n链接：${item.url}\n`);
+      sections.push(`### ${item.title}\n来源：${item.source.toUpperCase()} | 相关度：${item.relevanceScore}/100\n命中关键词：${item.keywords.join(", ")}\n摘要：${item.summary.substring(0, 300)}...\n链接：${item.url}\n`);
     }
   }
 
