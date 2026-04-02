@@ -1,5 +1,6 @@
 {
   "mcp_servers": {
+    // ========== 核心工具 (与 mcmamoo 共享) ==========
     "filesystem": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/daiyan/WorkBuddy"],
@@ -18,20 +19,10 @@
       },
       "description": "GitHub API 操作 - 支持 issue、PR、repo 管理"
     },
-    "postgres": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost/mydb"],
-      "description": "PostgreSQL 数据库查询"
-    },
-    "sqlite": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/path/to/database.db"],
-      "description": "SQLite 数据库操作"
-    },
     "fetch": {
       "command": "uvx",
       "args": ["mcp-server-fetch"],
-      "description": "HTTP 请求和网页获取 - 替代 WebFetchTool"
+      "description": "HTTP 请求和网页获取"
     },
     "brave-search": {
       "command": "npx",
@@ -39,7 +30,7 @@
       "env": {
         "BRAVE_API_KEY": "${BRAVE_API_KEY}"
       },
-      "description": "Brave 搜索引擎 - 替代 WebSearchTool"
+      "description": "Brave 搜索引擎"
     },
     "sequential-thinking": {
       "command": "npx",
@@ -50,8 +41,45 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
       "description": "浏览器自动化 - 支持截图、页面操作"
+    },
+
+    // ========== Accomplish 特有工具 (新增) ==========
+    "accomplish-browser": {
+      "command": "node",
+      "args": ["${ACCOMPLISH_PATH}/packages/agent-core/mcp-tools/dev-browser-mcp/dist/index.js"],
+      "env": {
+        "ACCOMPLISH_TASK_ID": "${ACCOMPLISH_TASK_ID}",
+        "ACCOMPLISH_API_KEY": "${ACCOMPLISH_API_KEY}"
+      },
+      "description": "Accomplish 开发浏览器控制 - 智能页面交互、元素定位"
+    },
+    "accomplish-ask-user": {
+      "command": "node",
+      "args": ["${ACCOMPLISH_PATH}/packages/agent-core/mcp-tools/ask-user-question/dist/index.js"],
+      "description": "Accomplish 用户问答 - 任务中向用户提问确认"
+    },
+    "accomplish-report-thought": {
+      "command": "node",
+      "args": ["${ACCOMPLISH_PATH}/packages/agent-core/mcp-tools/report-thought/dist/index.js"],
+      "description": "Accomplish 思考报告 - 记录推理过程"
+    },
+    "accomplish-report-checkpoint": {
+      "command": "node",
+      "args": ["${ACCOMPLISH_PATH}/packages/agent-core/mcp-tools/report-checkpoint/dist/index.js"],
+      "description": "Accomplish 检查点报告 - 任务进度记录"
     }
   },
+
+  // ========== 环境变量模板 ==========
+  "env_template": {
+    "GITHUB_TOKEN": "ghp_xxxxx",
+    "BRAVE_API_KEY": "xxxxx",
+    "ACCOMPLISH_PATH": "/Users/daiyan/Projects/accomplish",
+    "ACCOMPLISH_TASK_ID": "",
+    "ACCOMPLISH_API_KEY": ""
+  },
+
+  // ========== 工具映射表 ==========
   "tool_mappings": {
     "Claude Code Tool": "MCP Server Equivalent",
     "FileReadTool": "filesystem/read",
@@ -59,12 +87,28 @@
     "FileEditTool": "filesystem/edit",
     "GlobTool": "filesystem/glob",
     "GrepTool": "filesystem/grep",
-    "BashTool": "filesystem/bash (或系统 shell)",
-    "PowerShellTool": "filesystem/powershell",
+    "BashTool": "filesystem/bash",
     "WebSearchTool": "brave-search/search",
     "WebFetchTool": "fetch/fetch",
     "Git operations": "git/*",
     "GitHub operations": "github/*",
-    "Database queries": "postgres/query 或 sqlite/query"
+    // Accomplish 特有
+    "BrowserControlTool": "accomplish-browser/*",
+    "AskUserTool": "accomplish-ask-user/*",
+    "ReportThoughtTool": "accomplish-report-thought/*",
+    "CheckpointTool": "accomplish-report-checkpoint/*"
+  },
+
+  // ========== 共享说明 ==========
+  "sharing": {
+    "purpose": "MaoAI 与 Accomplish 共享 MCP 工具能力",
+    "mcmamoo_maoai": {
+      "usage": "在 MaoAI 配置中引用此文件",
+      "local_path": "mcp-config.json"
+    },
+    "accomplish": {
+      "usage": "在 Accomplish Web > Settings > Connectors 中添加",
+      "note": "Accomplish 支持通过 URL 连接远程 MCP 服务器"
+    }
   }
 }
