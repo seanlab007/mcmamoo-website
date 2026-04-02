@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { Streamdown } from "streamdown";
 import { useLocation } from "wouter";
 import { useContentSubscription } from "@/hooks/useContentSubscription";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { MAOAI_ROUTES, MAOAI_BACKEND_URL, MAOAI_TOOL_DISPLAY } from "../constants";
 import type {
   MessageContent,
@@ -934,6 +935,42 @@ export default function MaoAIChat() {
             <span>{chat.newChat}</span>
           </button>
         </div>
+        {user && (
+          <div className="px-2 pt-2 pb-1 shrink-0">
+            {hasContentAccess ? (
+              <a
+                href="/content"
+                className="flex items-center gap-2 px-3 py-2.5 text-xs text-[#40d090]/85 hover:text-[#40d090] hover:bg-[#40d090]/8 border border-[#40d090]/15 hover:border-[#40d090]/25 transition-all rounded"
+                style={{ fontFamily: "'DM Mono', monospace" }}
+              >
+                <LayoutGrid size={13} className="shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate">{t("nav.contentPlatform")}</div>
+                  <div className="text-[9px] uppercase tracking-[0.18em] text-[#40d090]/35">CONTENT</div>
+                </div>
+                {contentSub.plan !== "free" && (
+                  <span className="text-[9px] px-1.5 py-0.5 bg-[#40d090]/15 border border-[#40d090]/25 text-[#40d090]/70 rounded-sm capitalize shrink-0">
+                    {contentSub.plan}
+                  </span>
+                )}
+              </a>
+            ) : (
+              <button
+                onClick={() => window.location.href = MAOAI_ROUTES.PRICING}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-white/35 hover:text-white/50 hover:bg-white/3 border border-white/6 hover:border-white/10 transition-all rounded cursor-pointer"
+                style={{ fontFamily: "'DM Mono', monospace" }}
+              >
+                <Lock size={12} className="shrink-0" />
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="truncate">{t("nav.contentPlatform")}</div>
+                  <div className="text-[9px] uppercase tracking-[0.18em] text-white/20">CONTENT</div>
+                </div>
+                <span className="text-[9px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/50 rounded-sm shrink-0">{chat.upgradeContent}</span>
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto py-1">
           {loadingConvs && (
             <div className="flex items-center justify-center py-8 text-white/20">
@@ -980,7 +1017,6 @@ export default function MaoAIChat() {
               href={MAOAI_ROUTES.SALES}
               className="flex items-center gap-2 px-3 py-2 text-xs text-sky-400/75 hover:text-sky-400 hover:bg-sky-400/8 border border-transparent hover:border-sky-400/20 transition-all rounded"
               style={{ fontFamily: "'DM Mono', monospace" }}
-              title={chat.salesTitle}
             >
               <Crown size={12} className="shrink-0" />
               <span className="truncate">{t("nav.salesWorkbench")}</span>
@@ -999,7 +1035,6 @@ export default function MaoAIChat() {
                   : "text-purple-400/75 hover:text-purple-400 hover:bg-purple-400/8 border-transparent hover:border-purple-400/20"
               }`}
               style={{ fontFamily: "'DM Mono', monospace" }}
-              title={chat.deerflowTitle}
             >
               <Search size={12} className="shrink-0" />
               <span className="truncate">{t("nav.deerflow")}</span>
@@ -1015,42 +1050,11 @@ export default function MaoAIChat() {
                   : "text-amber-400/65 hover:text-amber-400 hover:bg-amber-400/8 border-transparent hover:border-amber-400/20"
               }`}
               style={{ fontFamily: "'DM Mono', monospace" }}
-              title={chat.digestTitle}
             >
               <BookOpen size={12} className="shrink-0" />
               <span className="truncate">{t("nav.researchDigest")}</span>
               <span className="ml-auto text-[9px] text-amber-400/40">HBR</span>
             </a>
-          )}
-          {/* 内容平台 — 所有登录用户可见，无权限时显示锁定状态 */}
-          {user && (
-            hasContentAccess ? (
-              <a
-                href="/content"
-                className="flex items-center gap-2 px-3 py-2 text-xs text-[#40d090]/80 hover:text-[#40d090] hover:bg-[#40d090]/8 border border-transparent hover:border-[#40d090]/20 transition-all rounded"
-                style={{ fontFamily: "'DM Mono', monospace" }}
-                title={chat.contentPlatformTitle}
-              >
-                <LayoutGrid size={13} className="shrink-0" />
-                <span className="truncate">{t("nav.contentPlatform")}</span>
-                {contentSub.plan !== "free" && (
-                  <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-[#40d090]/15 border border-[#40d090]/25 text-[#40d090]/70 rounded-sm capitalize shrink-0">
-                    {contentSub.plan}
-                  </span>
-                )}
-              </a>
-            ) : (
-              <button
-                onClick={() => window.location.href = MAOAI_ROUTES.PRICING}
-                className="flex items-center gap-2 px-3 py-2 text-xs text-white/20 hover:text-white/40 hover:bg-white/3 border border-transparent hover:border-white/8 transition-all rounded cursor-pointer"
-                style={{ fontFamily: "'DM Mono', monospace" }}
-                title={chat.contentPlatformTitle}
-              >
-                <Lock size={12} className="shrink-0" />
-                <span className="truncate">{t("nav.contentPlatform")}</span>
-                <span className="ml-auto text-[9px] px-1.5 py-0.5 bg-[#C9A84C]/10 border border-[#C9A84C]/20 text-[#C9A84C]/50 rounded-sm shrink-0">{chat.upgradeContent}</span>
-              </button>
-            )
           )}
           {/* 管理员：内容调度 */}
           {(isAdmin || isContentAdmin) && (
@@ -1066,6 +1070,64 @@ export default function MaoAIChat() {
             </a>
           )}
         </div>
+
+        {mySubscription && (
+          <div className="shrink-0 border-t border-white/5 bg-[#0D0D0D] px-4 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Crown size={10} className={mySubscription.tier === "starter" ? "text-sky-400" : mySubscription.tier === "pro" ? "text-[#C9A84C]" : mySubscription.tier === "flagship" ? "text-purple-400" : "text-white/25"} />
+                <span className={`text-[10px] font-medium ${
+                  mySubscription.tier === "starter" ? "text-sky-400/70" :
+                  mySubscription.tier === "pro" ? "text-[#C9A84C]/70" :
+                  mySubscription.tier === "flagship" ? "text-purple-400/70" :
+                  "text-white/30"
+                }`}>
+                  {mySubscription.tier === "free"
+                    ? chat.tiers.free
+                    : mySubscription.tier === "starter"
+                    ? chat.tiers.starter
+                    : mySubscription.tier === "pro"
+                    ? chat.tiers.pro
+                    : chat.tiers.flagship}
+                </span>
+              </div>
+              <a href={MAOAI_ROUTES.PRICING} className="text-[9px] text-white/20 hover:text-[#C9A84C]/60 transition-colors">
+                {mySubscription.tier === "free" ? `${chat.upgradeContent} →` : chat.manage}
+              </a>
+            </div>
+            {mySubscription.limits.dailyChatMessages !== -1 && (
+              <div className="mb-1.5">
+                <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
+                  <span>{chat.chatUsage}</span>
+                  <span>{mySubscription.usage.chatMessages}/{mySubscription.limits.dailyChatMessages}</span>
+                </div>
+                <div className="h-0.5 bg-white/8 w-full">
+                  <div
+                    className="h-0.5 bg-[#C9A84C]/50 transition-all"
+                    style={{ width: `${Math.min(100, (mySubscription.usage.chatMessages / mySubscription.limits.dailyChatMessages) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {mySubscription.limits.imageGeneration && mySubscription.limits.dailyImageGenerations !== -1 && (
+              <div>
+                <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
+                  <span>{chat.imageUsage}</span>
+                  <span>{mySubscription.usage.imageGenerations}/{mySubscription.limits.dailyImageGenerations}</span>
+                </div>
+                <div className="h-0.5 bg-white/8 w-full">
+                  <div
+                    className="h-0.5 bg-purple-400/50 transition-all"
+                    style={{ width: `${Math.min(100, (mySubscription.usage.imageGenerations / mySubscription.limits.dailyImageGenerations) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {mySubscription.tier === "flagship" && (
+              <p className="text-[9px] text-purple-400/40 mt-1">{chat.unlimited}</p>
+            )}
+          </div>
+        )}
       </aside>
 
       {/* ── Main area ── */}
@@ -1194,6 +1256,7 @@ export default function MaoAIChat() {
                   <span>nano banana</span>
                 </div>
               )}
+              <LanguageSwitcher compact className="shrink-0" />
               {isAdmin && (
                 <a href="/admin/nodes" className="text-[#C9A84C]/60 text-xs hover:text-[#C9A84C] transition-colors font-mono border border-[#C9A84C]/20 px-2 py-1 hover:border-[#C9A84C]/40" title={chat.adminConsole}>
                   ADMIN →
@@ -1670,64 +1733,6 @@ export default function MaoAIChat() {
         </div>
       )}
 
-      {/* ── Usage bar (bottom of sidebar) ── */}
-      {sidebarOpen && mySubscription && (
-        <div className="fixed bottom-0 left-0 w-[264px] border-t border-white/5 bg-[#0D0D0D] px-4 py-3 z-30">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <Crown size={10} className={mySubscription.tier === "starter" ? "text-sky-400" : mySubscription.tier === "pro" ? "text-[#C9A84C]" : mySubscription.tier === "flagship" ? "text-purple-400" : "text-white/25"} />
-              <span className={`text-[10px] font-medium ${
-                mySubscription.tier === "starter" ? "text-sky-400/70" :
-                mySubscription.tier === "pro" ? "text-[#C9A84C]/70" :
-                mySubscription.tier === "flagship" ? "text-purple-400/70" :
-                "text-white/30"
-              }`}>
-                {mySubscription.tier === "free"
-                  ? chat.tiers.free
-                  : mySubscription.tier === "starter"
-                  ? chat.tiers.starter
-                  : mySubscription.tier === "pro"
-                  ? chat.tiers.pro
-                  : chat.tiers.flagship}
-              </span>
-            </div>
-            <a href={MAOAI_ROUTES.PRICING} className="text-[9px] text-white/20 hover:text-[#C9A84C]/60 transition-colors">
-              {mySubscription.tier === "free" ? `${chat.upgradeContent} →` : chat.manage}
-            </a>
-          </div>
-          {mySubscription.limits.dailyChatMessages !== -1 && (
-            <div className="mb-1.5">
-              <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
-                <span>{chat.chatUsage}</span>
-                <span>{mySubscription.usage.chatMessages}/{mySubscription.limits.dailyChatMessages}</span>
-              </div>
-              <div className="h-0.5 bg-white/8 w-full">
-                <div
-                  className="h-0.5 bg-[#C9A84C]/50 transition-all"
-                  style={{ width: `${Math.min(100, (mySubscription.usage.chatMessages / mySubscription.limits.dailyChatMessages) * 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
-          {mySubscription.limits.imageGeneration && mySubscription.limits.dailyImageGenerations !== -1 && (
-            <div>
-              <div className="flex justify-between text-[9px] text-white/20 mb-0.5">
-                <span>{chat.imageUsage}</span>
-                <span>{mySubscription.usage.imageGenerations}/{mySubscription.limits.dailyImageGenerations}</span>
-              </div>
-              <div className="h-0.5 bg-white/8 w-full">
-                <div
-                  className="h-0.5 bg-purple-400/50 transition-all"
-                  style={{ width: `${Math.min(100, (mySubscription.usage.imageGenerations / mySubscription.limits.dailyImageGenerations) * 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
-          {mySubscription.tier === "flagship" && (
-            <p className="text-[9px] text-purple-400/40 mt-1">{chat.unlimited}</p>
-          )}
-        </div>
-      )}
     </div>
   );
 }
