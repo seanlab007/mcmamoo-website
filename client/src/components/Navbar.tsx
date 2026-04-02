@@ -3,10 +3,12 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { MAOAI_ROUTES } from "@/features/maoai";
 
 export default function Navbar() {
+  const { t } = useTranslation();
   const [location] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,24 +20,24 @@ export default function Navbar() {
   }, []);
 
   const navLinksRow1 = [
-    { name: "MaoAI", href: MAOAI_ROUTES.CHAT },
-    { name: "猫眼内容平台", href: "/content" },
-    { name: "Whale Pictures", href: "/whale-pictures" },
-    { name: "猫眼工业", href: "/mao-industry" },
-    { name: "IP Licensing", href: "/ip-licensing" },
+    { name: t("nav.maoaiChat"), href: MAOAI_ROUTES.CHAT },
+    { name: t("nav.mediaMatrix"), href: "/content" },
+    { name: t("nav.whalePictures"), href: "/whale-pictures" },
+    { name: t("nav.maoIndustry"), href: "/mao-industry" },
+    { name: t("nav.ipLicensing"), href: "/ip-licensing" },
   ];
 
   const navLinksRow2 = [
-    { name: "DeerFlow", href: MAOAI_ROUTES.RESEARCH },
-    { name: "研究简报", href: MAOAI_ROUTES.RESEARCH_DIGEST },
-    { name: "猫眼内容平台", href: "/content" },
-    { name: "小龙虾 AI", href: "/openclaw" },
-    { name: "毛智库", href: "/mao-think-tank" },
+    { name: t("nav.deerflow"), href: MAOAI_ROUTES.RESEARCH },
+    { name: t("nav.researchDigest"), href: MAOAI_ROUTES.RESEARCH_DIGEST },
+    { name: t("nav.contentPlatform"), href: "/content" },
+    { name: t("nav.openclaw"), href: "/openclaw" },
+    { name: t("nav.thinkTank"), href: "/mao-think-tank" },
   ];
 
   const rightLinks = [
-    { name: "Consulting", href: "/pricing" },
-    { name: "Press", href: "/press" },
+    { name: t("nav.consulting"), href: "/pricing" },
+    { name: t("nav.press"), href: "/press" },
   ];
 
   return (
@@ -93,20 +95,20 @@ export default function Navbar() {
                 asChild
                 className="bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866] rounded-none px-6 py-5 text-[0.7rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 flex-shrink-0"
               >
-                <Link href="/pricing">预约咨询</Link>
+                <Link href="/pricing">{t("nav.bookConsultation")}</Link>
               </Button>
             </div>
           </div>
 
           {/* Row 2: Secondary Links + Right Actions */}
-          <div className="flex items-center justify-between border-t border-white/5 pt-4">
-            <div className="flex items-center gap-14">
+          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-t border-white/5 pt-4">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-10 gap-y-3">
               {navLinksRow2.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
+                    "text-[0.68rem] font-medium tracking-[0.1em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
                     location === link.href ? "text-[#C9A84C]" : "text-white/40"
                   )}
                 >
@@ -115,13 +117,13 @@ export default function Navbar() {
               ))}
             </div>
 
-            <div className="flex items-center gap-10">
+            <div className="flex flex-wrap items-center justify-end gap-x-8 gap-y-3">
               {rightLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
+                    "text-[0.68rem] font-medium tracking-[0.1em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
                     location === link.href ? "text-[#C9A84C]" : "text-white/40"
                   )}
                 >
@@ -130,10 +132,10 @@ export default function Navbar() {
               ))}
               <Link
                 href="/platform"
-                className="flex items-center gap-2 px-3 py-1 border border-[#C9A84C]/30 bg-[#C9A84C]/5 text-[#C9A84C] text-[0.65rem] font-bold tracking-[0.2em] uppercase hover:bg-[#C9A84C]/10 transition-all whitespace-nowrap flex-shrink-0"
+                className="flex items-center gap-2 px-3 py-1 border border-[#C9A84C]/30 bg-[#C9A84C]/5 text-[#C9A84C] text-[0.62rem] font-bold tracking-[0.16em] uppercase hover:bg-[#C9A84C]/10 transition-all whitespace-nowrap flex-shrink-0"
               >
                 <Zap size={10} className="animate-pulse" />
-                Platform
+                {t("nav.platform")}
               </Link>
             </div>
           </div>
@@ -173,7 +175,7 @@ export default function Navbar() {
             className="bg-[#C9A84C] text-[#0A0A0A] w-full py-6 rounded-none mt-4"
           >
             <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)}>
-              预约咨询
+              {t("nav.bookConsultation")}
             </Link>
           </Button>
         </div>
