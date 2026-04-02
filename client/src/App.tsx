@@ -28,6 +28,7 @@ import {
   MaoAILogin,
   MaoAIPricing,
   MaoAISales,
+  MaoAIResearchDigest,
   MAOAI_ROUTES,
 } from "./features/maoai";
 import OpenClaw from "./pages/OpenClaw";
@@ -72,6 +73,7 @@ function Router() {
       <Route path={"/deerflow"} component={MaoAIChat} />       {/* legacy alias → /maoai/research */}
       <Route path={MAOAI_ROUTES.CHAT} component={MaoAIChat} />
       <Route path={MAOAI_ROUTES.RESEARCH} component={MaoAIChat} />
+      <Route path={MAOAI_ROUTES.RESEARCH_DIGEST} component={MaoAIResearchDigest} />
       <Route path={MAOAI_ROUTES.LOGIN} component={MaoAILogin} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} /> {/* legacy alias → /maoai/pricing */}
       <Route path={MAOAI_ROUTES.PRICING} component={MaoAIPricing} />

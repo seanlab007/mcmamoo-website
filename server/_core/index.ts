@@ -11,6 +11,7 @@ import { serveStatic, setupVite } from "./vite";
 import aiStreamRouter from "../aiStream";
 import { chatRouter } from "../chat";
 import { notesRouter } from "../notes";
+import { fetchAllDigests } from "../research-digest";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -71,6 +72,37 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+
+    // ─── 研究摘要定时任务 ────────────────────────────────────────────────────
+    // 每天早上 8:00 自动预热缓存（背景抓取，不阻塞启动）
+    function scheduleNextDigestFetch() {
+      const now = new Date();
+      const target = new Date(now);
+      target.setHours(8, 0, 0, 0);
+      if (target <= now) target.setDate(target.getDate() + 1); // 若已过今天8点，推到明天
+      const delay = target.getTime() - now.getTime();
+      setTimeout(() => {
+        console.log("[ResearchDigest] 定时任务：开始抓取 HBR + 学术期刊...");
+        fetchAllDigests().then((result) => {
+          console.log(
+            `[ResearchDigest] 抓取完成：HBR=${result.hbrItems.length} 条，科学论文=${result.scienceItems.length} 条，猫眼相关=${result.maoyanRelevantItems.length} 条`
+          );
+        }).catch((e) => {
+          console.warn("[ResearchDigest] 定时抓取失败：", e);
+        });
+        // 设置下一次（24小时后）
+        setInterval(() => {
+          fetchAllDigests().then((result) => {
+            console.log(
+              `[ResearchDigest] 每日更新：HBR=${result.hbrItems.length}，论文=${result.scienceItems.length}，猫眼=${result.maoyanRelevantItems.length}`
+            );
+          }).catch((e) => console.warn("[ResearchDigest] 每日更新失败：", e));
+        }, 24 * 60 * 60 * 1000);
+      }, delay);
+      console.log(`[ResearchDigest] 下次自动更新：${target.toLocaleString("zh-CN")}`);
+    }
+
+    scheduleNextDigestFetch();
   });
 }
 

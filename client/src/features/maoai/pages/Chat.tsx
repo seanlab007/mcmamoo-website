@@ -34,6 +34,14 @@ const DEERFLOW_QUICK_PROMPTS = [
   "请使用 DeerFlow 深度研究模式，给我做一版市场进入策略研究",
 ] as const;
 
+// 研究简报快捷提示词（HBR + 学术期刊）
+const DIGEST_QUICK_PROMPTS = [
+  "帮我提炼今天 HBR 管理学简报的核心理念，并说明对互联网公司的启示",
+  "告诉我本周学术界在 AI 领域有什么重大突破",
+  "搜索与猫眼票务推荐系统相关的最新学术研究",
+  "整理一份本周值得关注的科学发现简报",
+] as const;
+
 // ─── Model descriptions (local metadata for backend model list) ───────────────
 const MODEL_DESCRIPTIONS: Record<string, { description: string; supportsVision?: boolean }> = {
   "deepseek-chat":           { description: "通用对话·写作·分析" },

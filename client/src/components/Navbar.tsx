@@ -27,6 +27,7 @@ export default function Navbar() {
 
   const navLinksRow2 = [
     { name: "DeerFlow", href: MAOAI_ROUTES.RESEARCH },
+    { name: "研究简报", href: MAOAI_ROUTES.RESEARCH_DIGEST },
     { name: "猫眼内容平台", href: "/content" },
     { name: "小龙虾 AI", href: "/openclaw" },
     { name: "毛智库", href: "/mao-think-tank" },
