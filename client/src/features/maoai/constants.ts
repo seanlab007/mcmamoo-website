@@ -12,6 +12,8 @@ export const MAOAI_ROUTES = {
   CHAT: "/maoai",
   /** DeerFlow 深度研究入口 */
   RESEARCH: "/maoai/research",
+  /** 研究简报（HBR + 学术期刊） */
+  RESEARCH_DIGEST: "/maoai/digest",
   /** 独立登录页 */
   LOGIN: "/maoai/login",
   /** 定价页 */
