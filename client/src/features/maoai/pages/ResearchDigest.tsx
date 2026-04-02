@@ -2,7 +2,8 @@
  * ResearchDigest 页面
  * ─────────────────────────────────────────────────────────────────────────────
  * 展示 HBR 管理学简报 + 学术期刊最新论文
- * 支持 AI 自动提炼核心理念、按相关度筛选与猫眼相关研究
+ * 支持 AI 自动提炼核心理念、按相关度筛选与猫眼增长引擎业务相关研究
+ * 猫眼增长引擎核心业务：品牌显贵化 · 爆品孵化 · KOL矩阵 · 错位竞争 · 跨境出海
  */
 
 import { useState } from "react";
@@ -148,12 +149,12 @@ function AISummarizeButton({
       };
 
       const prompt = mode === "hbr"
-        ? `以下是哈佛商业评论(HBR)最新文章列表。请用中文提炼出：\n1. 最重要的3-5个管理学核心理念\n2. 对互联网/娱乐/内容科技公司的启示\n3. 每个理念配一句可操作的行动建议\n\n---\n${digestText}`
+        ? `以下是哈佛商业评论(HBR)最新文章列表。请用中文提炼出：\n1. 最重要的3-5个管理学核心理念\n2. 对【猫眼增长引擎】（中国新消费品牌战略咨询公司，核心业务：品牌显贵化、爆品孵化、KOL矩阵、错位竞争、跨境出海）的具体启示\n3. 每个理念配一句可操作的行动建议，结合猫眼的客户场景（消费品牌、新消费、出海品牌）\n\n---\n${digestText}`
         : mode === "science"
-        ? `以下是最新学术论文列表（数学/物理/化学/生物/计算机/AI领域）。请用中文提炼：\n1. 最值得关注的3-5项重大突破\n2. 每项突破的核心技术创新点\n3. 对商业应用的潜在价值\n\n---\n${digestText}`
+        ? `以下是最新学术论文列表（数学/物理/AI/经济/神经科学/社会学领域）。请用中文提炼：\n1. 最值得关注的3-5项重大突破或新发现\n2. 每项突破的核心创新点\n3. 对【品牌增长、消费者行为、营销科学、KOL传播、定价策略】等方向的商业价值和应用建议\n\n---\n${digestText}`
         : mode === "maoyan"
-        ? `以下是与猫眼业务相关的最新学术研究和管理学文章。请用中文分析：\n1. 哪些研究对猫眼的票务/推荐/数据业务最有价值\n2. 每项研究的技术核心与可借鉴之处\n3. 建议猫眼团队优先关注的研究方向\n\n---\n${digestText}`
-        : `以下是最新的管理学和学术研究内容。请用中文做综合提炼：\n1. 本周最重要的3个管理学洞察\n2. 最值得关注的3项科技/学术突破\n3. 与猫眼业务最相关的发现\n\n---\n${digestText}`;
+        ? `以下是与【猫眼增长引擎】业务相关的最新学术研究和管理学文章。猫眼是一家专注新消费品牌战略的咨询公司，核心服务包括：品牌显贵化·爆品孵化·KOL矩阵·错位竞争·跨境出海。请用中文分析：\n1. 哪些研究对猫眼的客户（消费品牌、出海品牌）最有参考价值\n2. 每项研究的核心发现与可落地之处\n3. 建议猫眼团队优先关注并转化为方法论的研究方向\n\n---\n${digestText}`
+        : `以下是最新的管理学和学术研究内容。请用中文做综合提炼：\n1. 本周最重要的3个管理学洞察\n2. 最值得关注的3项科技/学术突破\n3. 与【猫眼增长引擎】（品牌战略咨询、新消费、KOL营销、跨境出海）最相关的发现及行动建议\n\n---\n${digestText}`;
 
       const response = await fetch(`${MAOAI_BACKEND_URL}/api/chat`, {
         method: "POST",
@@ -245,7 +246,7 @@ export default function ResearchDigestPage() {
   const tabs = [
     { id: "hbr" as const, label: "HBR 管理学", icon: BookOpen, count: data?.hbrItems.length },
     { id: "science" as const, label: "科学期刊", icon: FlaskConical, count: data?.scienceItems.length },
-    { id: "maoyan" as const, label: "猫眼相关", icon: Cat, count: data?.maoyanRelevantItems.length },
+    { id: "maoyan" as const, label: "增长引擎相关", icon: Cat, count: data?.maoyanRelevantItems.length },
   ];
 
   return (
@@ -317,7 +318,7 @@ export default function ResearchDigestPage() {
                     ? "AI 提炼管理学核心理念"
                     : activeTab === "science"
                     ? "AI 分析重大科技突破"
-                    : "AI 分析猫眼相关研究"
+                    : "AI 分析增长引擎相关研究"
                 }
               />
             </div>
@@ -340,7 +341,7 @@ export default function ResearchDigestPage() {
             {activeTab === "maoyan" &&
               (data?.maoyanRelevantItems.length === 0 ? (
                 <div className="text-center text-white/40 py-12">
-                  暂无与猫眼相关的内容（相关度 &gt; 15%）
+                  暂无与增长引擎业务相关的内容（相关度 &gt; 15%）
                 </div>
               ) : (
                 data?.maoyanRelevantItems.map((item) => (
