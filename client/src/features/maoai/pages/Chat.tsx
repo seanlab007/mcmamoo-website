@@ -5,7 +5,7 @@ import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
   Wand2, Image as ImageIcon, Crown, Zap, Paperclip, FileText, FileJson, Table2,
-  LayoutGrid, Lock, Search,
+  LayoutGrid, Lock, Search, BookOpen,
 } from "lucide-react";
 import type { PlanTier } from "@shared/plans";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -988,6 +988,22 @@ export default function MaoAIChat() {
               <span className="truncate">DeerFlow 研究</span>
               <span className="ml-auto text-[9px] text-purple-400/45">DEEP</span>
             </button>
+          )}
+          {user && (
+            <a
+              href={MAOAI_ROUTES.RESEARCH_DIGEST}
+              className={`flex items-center gap-2 px-3 py-2 text-xs border transition-all rounded ${
+                location === MAOAI_ROUTES.RESEARCH_DIGEST
+                  ? "text-[#C9A84C] bg-[#C9A84C]/10 border-[#C9A84C]/25"
+                  : "text-amber-400/65 hover:text-amber-400 hover:bg-amber-400/8 border-transparent hover:border-amber-400/20"
+              }`}
+              style={{ fontFamily: "'DM Mono', monospace" }}
+              title="研究简报 · HBR 管理学 + 学术期刊"
+            >
+              <BookOpen size={12} className="shrink-0" />
+              <span className="truncate">研究简报</span>
+              <span className="ml-auto text-[9px] text-amber-400/40">HBR</span>
+            </a>
           )}
           {/* 内容平台 — 所有登录用户可见，无权限时显示锁定状态 */}
           {user && (
