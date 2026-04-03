@@ -2,8 +2,8 @@
   "$schema": "https://skills.github.com/skills/webaccess/schema.json",
   "authors": ["seanlab007"],
   "name": "WebAuccess",
-  "description": "Enables AI to access and interact with web resources for MaoAI project. Supports real-time data fetching, API integrations, and web scraping.",
-  "version": "1.0.0",
+  "description": "Enables AI to access and interact with web resources for MaoAI multi-model platform and AutoClip video processing system. Supports real-time data fetching, AIAPI integrations, video processing, and social media content distribution.",
+  "version": "1.1.0",
   "enabled": true,
   "settings": {
     "allowed_domains": [
@@ -16,9 +16,27 @@
       "runwayml.com",
       "veo.googleapis.com",
       "api.klingai.com",
-      "app.dreamin.ai"
+      "app.dreamin.ai",
+      "youtube.com",
+      "www.youtube.com",
+      "api.tiktok.com",
+      "www.tiktok.com",
+      "api.bilibili.com",
+      "www.bilibili.com",
+      "supabase.co",
+      "*.upstream.supabase.co",
+      "aws.amazon.com",
+      "s3.amazonaws.com",
+      "cloudfront.amazonaws.com",
+      "login.xiaohongshu.com",
+      "open.xiaohongshu.com",
+      "webo.com",
+      "api.webo.com",
+      "dcouin.com",
+      "zhihu.com",
+      "www.zhihu.com"
     ],
-    "rate_limit": 100,
-    "timeout": 30
+    "rate_limit": 200,
+    "timeout": 60
   }
 }
