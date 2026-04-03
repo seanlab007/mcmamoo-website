@@ -10,21 +10,26 @@
  * 5. read_url         — 读取网页内容
  * 6. deep_research    — 深度研究（DeerFlow 多智能体框架，需部署 DeerFlow）
  * 7. run_shell        — 执行 Shell 命令（仅管理员）
+ * 8. midjourney_imagine — Midjourney 文字生成图片
+ * 9. midjourney_status  — 查询 Midjourney 任务状态
+ * 10. runway_text_to_video — Runway 文字生成视频
+ * 11. runway_image_to_video — Runway 图片生成视频
+ * 12. runway_status      — 查询 Runway 任务状态
  *
  * OpenClaw Skills（拆解自 seanlab007/open-claw）：
- * 8.  openclaw_weather  — 天气查询（wttr.in，无需 API Key）
- * 9.  openclaw_github   — GitHub PR/Issue/CI 查询
- * 10. openclaw_summarize — URL/网页内容摘要
- * 11. openclaw_memory   — 用户持久化记忆读写
- * 12. openclaw_canvas   — HTML 数据可视化生成
- * 13. openclaw_agent    — 通过 OpenClaw Gateway 调用专业 Agent
- * 14. openclaw_shell    — Shell 执行（仅管理员，通过 OpenClaw Skills）
+ * 13. openclaw_weather  — 天气查询（wttr.in，无需 API Key）
+ * 14. openclaw_github   — GitHub PR/Issue/CI 查询
+ * 15. openclaw_summarize — URL/网页内容摘要
+ * 16. openclaw_memory   — 用户持久化记忆读写
+ * 17. openclaw_canvas   — HTML 数据可视化生成
+ * 18. openclaw_agent    — 通过 OpenClaw Gateway 调用专业 Agent
+ * 19. openclaw_shell    — Shell 执行（仅管理员，通过 OpenClaw Skills）
  *
  * Claude Code Python 移植：
- * 15. claude_code_summary  — 获取 Claude Code 移植工作区摘要
- * 16. claude_code_analyze  — 分析代码结构和移植进度
- * 17. claude_code_init     — 初始化 Claude Code 工作区
- * 18. claude_code_run      — 运行 Claude Code Python 命令
+ * 20. claude_code_summary  — 获取 Claude Code 移植工作区摘要
+ * 21. claude_code_analyze  — 分析代码结构和移植进度
+ * 22. claude_code_init     — 初始化 Claude Code 工作区
+ * 23. claude_code_run      — 运行 Claude Code Python 命令
  */
 
 import { exec } from "child_process";
@@ -207,6 +212,143 @@ export const TOOL_DEFINITIONS = [
         required: ["query"]
       }
     }
+  },
+  // ─── Midjourney 工具 ─────────────────────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "midjourney_imagine",
+      description: "使用 Midjourney AI 生成高质量图片。适用于概念设计、品牌视觉、产品效果图、艺术创作、社交媒体素材等。生成后可通过 midjourney_status 查询进度，完成后返回图片 URL。",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "图像描述，英文效果最佳。例如: 'A futuristic city skyline at sunset, neon lights, cyberpunk style'"
+          },
+          aspectRatio: {
+            type: "string",
+            enum: ["1:1", "2:3", "3:2", "4:5", "5:4", "9:16", "16:9"],
+            description: "图片比例，默认 1:1",
+            default: "1:1"
+          },
+          quality: {
+            type: "string",
+            enum: ["0.25", "0.5", "1"],
+            description: "生成质量，默认 1（最高）",
+            default: "1"
+          },
+          style: {
+            type: "string",
+            enum: ["raw", "vivid"],
+            description: "风格：raw(原始)，vivid(鲜明)，默认 vivid",
+            default: "vivid"
+          },
+          version: {
+            type: "string",
+            enum: ["v6.1", "v6", "v5.2", "niji6"],
+            description: "模型版本，默认 v6.1。niji6 为动漫风格",
+            default: "v6.1"
+          }
+        },
+        required: ["prompt"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "midjourney_status",
+      description: "查询 Midjourney 任务的生成状态和结果。生成图片通常需要 30-60 秒。",
+      parameters: {
+        type: "object",
+        properties: {
+          taskId: {
+            type: "string",
+            description: "midjourney_imagine 返回的任务 ID"
+          }
+        },
+        required: ["taskId"]
+      }
+    }
+  },
+  // ─── Runway 工具 ────────────────────────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "runway_text_to_video",
+      description: "使用 Runway Gen-3 AI 从文字描述生成视频。适用于品牌宣传片、产品演示、社交媒体视频、创意短片等。生成后可通过 runway_status 查询进度。",
+      parameters: {
+        type: "object",
+        properties: {
+          promptText: {
+            type: "string",
+            description: "视频描述，英文效果最佳。例如: 'A serene ocean sunset with gentle waves, cinematic drone shot'"
+          },
+          negativePromptText: {
+            type: "string",
+            description: "不想出现的内容，例如: 'blurry, low quality, watermark'"
+          },
+          duration: {
+            type: "number",
+            enum: [5, 10],
+            description: "视频时长（秒），默认 5 秒",
+            default: 5
+          },
+          model: {
+            type: "string",
+            enum: ["gen3a_turbo", "gen3a"],
+            description: "模型版本，gen3a_turbo(快速)，gen3a(高质量)。默认 gen3a_turbo",
+            default: "gen3a_turbo"
+          }
+        },
+        required: ["promptText"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "runway_image_to_video",
+      description: "使用 Runway AI 将图片转换为动态视频。输入一张图片 URL，生成一段动态视频。",
+      parameters: {
+        type: "object",
+        properties: {
+          promptImage: {
+            type: "string",
+            description: "输入图片的公开可访问 URL"
+          },
+          promptText: {
+            type: "string",
+            description: "运动描述，例如: 'Slowly zoom in, gentle camera pan'"
+          },
+          duration: {
+            type: "number",
+            enum: [5, 10],
+            description: "视频时长（秒），默认 5 秒",
+            default: 5
+          }
+        },
+        required: ["promptImage"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "runway_status",
+      description: "查询 Runway 视频生成任务的状态和结果。视频生成通常需要 1-5 分钟。",
+      parameters: {
+        type: "object",
+        properties: {
+          taskId: {
+            type: "string",
+            description: "runway_text_to_video 或 runway_image_to_video 返回的任务 ID"
+          }
+        },
+        required: ["taskId"]
+      }
+    }
   }
 ];
 
@@ -350,6 +492,16 @@ export async function executeTool(
         return await toolReadUrl(args.url, args.extract_text_only !== false);
       case "deep_research":
         return await toolDeepResearch(args.query, args.mode || "pro", args.max_duration || 300);
+      case "midjourney_imagine":
+        return await toolMidjourneyImagine(args.prompt, args.aspectRatio, args.quality, args.style, args.version);
+      case "midjourney_status":
+        return await toolMidjourneyStatus(args.taskId);
+      case "runway_text_to_video":
+        return await toolRunwayTextToVideo(args.promptText, args.negativePromptText, args.duration, args.model);
+      case "runway_image_to_video":
+        return await toolRunwayImageToVideo(args.promptImage, args.promptText, args.duration);
+      case "runway_status":
+        return await toolRunwayStatus(args.taskId);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -906,5 +1058,142 @@ async function toolClaudeCode(
       output: "",
       error: `Claude Code 工具执行失败: ${err.message}`
     };
+  }
+}
+
+// ─── Midjourney 工具实现 ─────────────────────────────────────────────────────
+
+async function toolMidjourneyImagine(
+  prompt: string,
+  aspectRatio?: string,
+  quality?: string,
+  style?: string,
+  version?: string
+): Promise<ToolResult> {
+  try {
+    const { midjourneyImagine } = await import("./_core/midjourney");
+    const result = await midjourneyImagine({
+      prompt,
+      aspectRatio: aspectRatio as any,
+      quality: quality as any,
+      style: style as any,
+      version: version as any,
+    });
+    return {
+      success: true,
+      output: `Midjourney 图片生成任务已提交！\n\n任务 ID: ${result.taskId}\n提示词: ${prompt}\n\n图片通常需要 30-60 秒生成。请使用 midjourney_status 工具查询进度。`,
+      metadata: { taskId: result.taskId, provider: "midjourney" },
+    };
+  } catch (err: any) {
+    return { success: false, output: "", error: `Midjourney Imagine 失败: ${err.message}` };
+  }
+}
+
+async function toolMidjourneyStatus(taskId: string): Promise<ToolResult> {
+  try {
+    const { midjourneyTaskStatus } = await import("./_core/midjourney");
+    const result = await midjourneyTaskStatus(taskId);
+
+    const statusLabels: Record<string, string> = {
+      pending: "等待中",
+      in_progress: `生成中 (${result.progress || 0}%)`,
+      completed: "已完成",
+      failed: "失败",
+    };
+
+    let output = `Midjourney 任务状态: ${statusLabels[result.status] || result.status}\n任务 ID: ${taskId}`;
+    if (result.imageUrl) {
+      output += `\n\n图片 URL: ${result.imageUrl}`;
+    }
+    if (result.failReason) {
+      output += `\n失败原因: ${result.failReason}`;
+    }
+
+    return {
+      success: result.status === "completed",
+      output,
+      metadata: result,
+    };
+  } catch (err: any) {
+    return { success: false, output: "", error: `Midjourney 状态查询失败: ${err.message}` };
+  }
+}
+
+// ─── Runway 工具实现 ─────────────────────────────────────────────────────────
+
+async function toolRunwayTextToVideo(
+  promptText: string,
+  negativePromptText?: string,
+  duration?: number,
+  model?: string
+): Promise<ToolResult> {
+  try {
+    const { runwayTextToVideo } = await import("./_core/runway");
+    const result = await runwayTextToVideo({
+      promptText,
+      negativePromptText,
+      duration: duration as any,
+      model,
+    });
+    return {
+      success: true,
+      output: `Runway 视频生成任务已提交！\n\n任务 ID: ${result.taskId}\n描述: ${promptText}\n时长: ${duration || 5} 秒\n\n视频通常需要 1-5 分钟生成。请使用 runway_status 工具查询进度。`,
+      metadata: { taskId: result.taskId, provider: "runway" },
+    };
+  } catch (err: any) {
+    return { success: false, output: "", error: `Runway Text-to-Video 失败: ${err.message}` };
+  }
+}
+
+async function toolRunwayImageToVideo(
+  promptImage: string,
+  promptText?: string,
+  duration?: number
+): Promise<ToolResult> {
+  try {
+    const { runwayImageToVideo } = await import("./_core/runway");
+    const result = await runwayImageToVideo({
+      promptImage,
+      promptText,
+      duration: duration as any,
+    });
+    return {
+      success: true,
+      output: `Runway 图片生成视频任务已提交！\n\n任务 ID: ${result.taskId}\n输入图片: ${promptImage}\n时长: ${duration || 5} 秒\n\n视频通常需要 1-5 分钟生成。请使用 runway_status 工具查询进度。`,
+      metadata: { taskId: result.taskId, provider: "runway" },
+    };
+  } catch (err: any) {
+    return { success: false, output: "", error: `Runway Image-to-Video 失败: ${err.message}` };
+  }
+}
+
+async function toolRunwayStatus(taskId: string): Promise<ToolResult> {
+  try {
+    const { runwayTaskStatus } = await import("./_core/runway");
+    const result = await runwayTaskStatus(taskId);
+
+    const statusLabels: Record<string, string> = {
+      PENDING: "等待中",
+      IN_PROGRESS: "生成中",
+      SUCCEEDED: "已完成",
+      FAILED: "失败",
+      CANCELLED: "已取消",
+    };
+
+    let output = `Runway 任务状态: ${statusLabels[result.status] || result.status}\n任务 ID: ${taskId}`;
+    if (result.output && result.output.length > 0) {
+      output += `\n\n视频 URL: ${result.output[0].url}`;
+    }
+    if (result.failure) {
+      output += `\n失败原因: ${result.failure}`;
+    }
+
+    return {
+      success: result.status === "SUCCEEDED",
+      output,
+      metadata: result,
+    };
+  } catch (err: any) {
+    return { success: false, output: "", error: `Runway 状态查询失败: ${err.message}` };
   }
 }

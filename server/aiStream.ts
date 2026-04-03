@@ -1037,6 +1037,135 @@ aiStreamRouter.post("/image/generate", async (req: Request, res: Response) => {
   }
 });
 
+// ─── Midjourney Imagine ──────────────────────────────────────────────────────
+// POST /api/ai/midjourney/imagine
+aiStreamRouter.post("/midjourney/imagine", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { prompt, aspectRatio, quality, style, version } = req.body;
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      res.status(400).json({ error: "请提供图像描述 (prompt)" });
+      return;
+    }
+    const { midjourneyImagine } = await import("./_core/midjourney");
+    const result = await midjourneyImagine({
+      prompt: prompt.trim(),
+      aspectRatio,
+      quality,
+      style,
+      version,
+    });
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Midjourney Imagine] Error:", err);
+    res.status(500).json({ error: err.message || "Midjourney 生成失败" });
+  }
+});
+
+// POST /api/ai/midjourney/status
+aiStreamRouter.post("/midjourney/status", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { taskId } = req.body;
+    if (!taskId) { res.status(400).json({ error: "缺少 taskId" }); return; }
+    const { midjourneyTaskStatus } = await import("./_core/midjourney");
+    const result = await midjourneyTaskStatus(taskId);
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Midjourney Status] Error:", err);
+    res.status(500).json({ error: err.message || "Midjourney 状态查询失败" });
+  }
+});
+
+// POST /api/ai/midjourney/upscale
+aiStreamRouter.post("/midjourney/upscale", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { taskId, index } = req.body;
+    if (!taskId || index === undefined) {
+      res.status(400).json({ error: "缺少 taskId 或 index" });
+      return;
+    }
+    const { midjourneyUpscale } = await import("./_core/midjourney");
+    const result = await midjourneyUpscale(taskId, index);
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Midjourney Upscale] Error:", err);
+    res.status(500).json({ error: err.message || "Midjourney Upscale 失败" });
+  }
+});
+
+// ─── Runway Text-to-Video ────────────────────────────────────────────────────
+// POST /api/ai/runway/text-to-video
+aiStreamRouter.post("/runway/text-to-video", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { promptText, negativePromptText, duration, seed, model } = req.body;
+    if (!promptText || typeof promptText !== "string" || !promptText.trim()) {
+      res.status(400).json({ error: "请提供视频描述 (promptText)" });
+      return;
+    }
+    const { runwayTextToVideo } = await import("./_core/runway");
+    const result = await runwayTextToVideo({
+      promptText: promptText.trim(),
+      negativePromptText,
+      duration,
+      seed,
+      model,
+    });
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Runway T2V] Error:", err);
+    res.status(500).json({ error: err.message || "Runway 视频生成失败" });
+  }
+});
+
+// POST /api/ai/runway/image-to-video
+aiStreamRouter.post("/runway/image-to-video", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { promptImage, promptText, negativePromptText, duration, seed, model } = req.body;
+    if (!promptImage) {
+      res.status(400).json({ error: "请提供输入图片 URL (promptImage)" });
+      return;
+    }
+    const { runwayImageToVideo } = await import("./_core/runway");
+    const result = await runwayImageToVideo({
+      promptImage,
+      promptText,
+      negativePromptText,
+      duration,
+      seed,
+      model,
+    });
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Runway I2V] Error:", err);
+    res.status(500).json({ error: err.message || "Runway 图片生成视频失败" });
+  }
+});
+
+// POST /api/ai/runway/status
+aiStreamRouter.post("/runway/status", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { taskId } = req.body;
+    if (!taskId) { res.status(400).json({ error: "缺少 taskId" }); return; }
+    const { runwayTaskStatus } = await import("./_core/runway");
+    const result = await runwayTaskStatus(taskId);
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Runway Status] Error:", err);
+    res.status(500).json({ error: err.message || "Runway 状态查询失败" });
+  }
+});
+
 // ─── File Upload & Parse ─────────────────────────────────────────────────────
 // POST /api/ai/upload
 // Accepts: multipart/form-data with field "file"
