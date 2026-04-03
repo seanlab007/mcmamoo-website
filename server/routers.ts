@@ -35,12 +35,14 @@ import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfi
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
 import { autoclipRouter } from "./autoclip";
 import { salesRouter } from "./sales";
+import { salesIntelligenceRouter } from "./sales-intelligence";
 import { researchDigestRouter } from "./research-digest-router";
 
 export const appRouter = router({
   system: systemRouter,
   autoclip: autoclipRouter,
   sales: salesRouter,
+  salesIntel: salesIntelligenceRouter,
   researchDigest: researchDigestRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
