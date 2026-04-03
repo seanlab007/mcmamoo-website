@@ -4,9 +4,9 @@ import { Project, Clip, Collection } from '../store/useProjectStore'
 // 格式化时间函数（暂时未使用，保留备用）
 
 const api = axios.create({
-  // 通过 vite proxy 转发到 autoclip Python FastAPI 后端（端口 8000）
-  // 开发时：vite.config.ts 中配置了代理 /api → http://localhost:8000
-  baseURL: '/api/v1',
+  // 直连 autoclip Python FastAPI 后端（端口 8000）
+  // 注意：需要先启动 autoclip 后端
+  baseURL: 'http://localhost:8000/api/v1',
   timeout: 300000, // 增加到5分钟超时
   headers: {
     'Content-Type': 'application/json',
