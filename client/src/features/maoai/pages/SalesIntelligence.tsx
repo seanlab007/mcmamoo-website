@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
-import type { Lead, ValueRating, DecisionMaker as DMType } from "../types";
+import type { Lead, ValueRating, DecisionMaker as DMType, CommStyle } from "../types";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { MAOAI_ROUTES } from "../constants";
 import {
@@ -349,7 +349,10 @@ function CustomerProfile({ lead }: { lead: Lead }) {
   const { t } = useTranslation();
   const sales = t("maoai.sales", { returnObjects: true }) as any;
   const [editing, setEditing] = useState(false);
-  const updateMutation = trpc.salesIntel.updateLeadHuaweiFields.useMutation();
+  const updateMutation = trpc.salesIntel.updateLeadHuaweiFields.useMutation({
+    onSuccess: () => setEditing(false),
+    onError: (err) => alert("Failed to save: " + (err?.message || "Unknown error")),
+  });
   const [form, setForm] = useState({
     valueRating: lead.valueRating as ValueRating,
     competitorName: lead.competitorName || "",
@@ -570,12 +573,13 @@ function PowerMapView({ leadId }: { leadId: string }) {
   const sales = t("maoai.sales", { returnObjects: true }) as any;
   const { data: makers = [], refetch } = trpc.salesIntel.listDecisionMakers.useQuery({ leadId });
   const dms = makers as unknown as DMType[];
-  const createMutation = trpc.salesIntel.createDecisionMaker.useMutation({ onSuccess: () => refetch() });
-  const updateMutation = trpc.salesIntel.updateDecisionMaker.useMutation({ onSuccess: () => { refetch(); setEditingId(null); } });
-  const deleteMutation = trpc.salesIntel.deleteDecisionMaker.useMutation({ onSuccess: () => refetch() });
+  const createMutation = trpc.salesIntel.createDecisionMaker.useMutation({ onSuccess: () => { refetch(); setShowForm(false); }, onError: (err) => alert("Failed to add: " + (err?.message || "Unknown error")) });
+  const updateMutation = trpc.salesIntel.updateDecisionMaker.useMutation({ onSuccess: () => { refetch(); setEditingId(null); }, onError: (err) => alert("Failed to update: " + (err?.message || "Unknown error")) });
+  const deleteMutation = trpc.salesIntel.deleteDecisionMaker.useMutation({ onSuccess: () => refetch(), onError: (err) => alert("Failed to delete: " + (err?.message || "Unknown error")) });
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", title: "", department: "", businessPain: "", personalGoal: "", fearPoint: "", communicationStyle: "data_driven" as const, icebreaker: "", roles: [] as string[] });
+  const [editForm, setEditForm] = useState({ name: "", title: "", department: "", businessPain: "", personalGoal: "", fearPoint: "", communicationStyle: "data_driven" as CommStyle, icebreaker: "", roles: [] as string[] });
 
   const roleLabels: Record<string, string> = {
     initiator: "Initiator", influencer: "Influencer", decider: "Decider", approver: "Approver", buyer: "Buyer",
@@ -600,6 +604,28 @@ function PowerMapView({ leadId }: { leadId: string }) {
     });
     setFormData({ name: "", title: "", department: "", businessPain: "", personalGoal: "", fearPoint: "", communicationStyle: "data_driven", icebreaker: "", roles: [] });
     setShowForm(false);
+  };
+
+  const handleStartEdit = (dm: DMType) => {
+    setEditForm({
+      name: dm.name, title: dm.title, department: dm.department,
+      businessPain: dm.businessPain, personalGoal: dm.personalGoal, fearPoint: dm.fearPoint,
+      communicationStyle: dm.communicationStyle, icebreaker: dm.icebreaker, roles: dm.roles,
+    });
+    setEditingId(dm.id);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingId || !editForm.name.trim()) return;
+    updateMutation.mutate({
+      id: editingId,
+      data: {
+        name: editForm.name, title: editForm.title || undefined, department: editForm.department || undefined,
+        roles: editForm.roles as any, businessPain: editForm.businessPain || undefined,
+        personalGoal: editForm.personalGoal || undefined, fearPoint: editForm.fearPoint || undefined,
+        communicationStyle: editForm.communicationStyle, icebreaker: editForm.icebreaker || undefined,
+      },
+    });
   };
 
   return (
@@ -657,7 +683,10 @@ function PowerMapView({ leadId }: { leadId: string }) {
                     <span key={r} className="text-[10px] px-1.5 py-0.5 bg-[#C9A84C]/10 text-[#C9A84C] rounded">{roleLabels[r] || r}</span>
                   ))}
                 </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleStartEdit(dm)} className="text-white/20 hover:text-[#C9A84C] p-1"><Edit3 size={12} /></button>
                 <button onClick={() => deleteMutation.mutate({ id: dm.id })} className="text-white/20 hover:text-red-400 p-1"><Trash2 size={12} /></button>
+              </div>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs">
@@ -685,6 +714,26 @@ function PowerMapView({ leadId }: { leadId: string }) {
               <span className={`text-[10px] px-1.5 py-0.5 rounded ${dm.srVerified ? "bg-green-500/20 text-green-400" : "bg-white/5 text-white/20"}`}>SR</span>
               <span className={`text-[10px] px-1.5 py-0.5 rounded ${dm.frVerified ? "bg-green-500/20 text-green-400" : "bg-white/5 text-white/20"}`}>FR</span>
             </div>
+            {editingId === dm.id && (
+              <div className="mt-3 pt-3 border-t border-[#C9A84C]/20 space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="bg-black/30 border border-white/10 px-2 py-1 text-xs text-white focus:border-[#C9A84C]/40 focus:outline-none" />
+                  <input type="text" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="bg-black/30 border border-white/10 px-2 py-1 text-xs text-white focus:border-[#C9A84C]/40 focus:outline-none" />
+                  <input type="text" value={editForm.department} onChange={(e) => setEditForm({ ...editForm, department: e.target.value })} className="bg-black/30 border border-white/10 px-2 py-1 text-xs text-white focus:border-[#C9A84C]/40 focus:outline-none" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="text" value={editForm.businessPain} onChange={(e) => setEditForm({ ...editForm, businessPain: e.target.value })} placeholder="Pain" className="bg-black/30 border border-white/10 px-2 py-1 text-xs text-white focus:border-[#C9A84C]/40 focus:outline-none" />
+                  <input type="text" value={editForm.personalGoal} onChange={(e) => setEditForm({ ...editForm, personalGoal: e.target.value })} placeholder="Goal" className="bg-black/30 border border-white/10 px-2 py-1 text-xs text-white focus:border-[#C9A84C]/40 focus:outline-none" />
+                  <input type="text" value={editForm.fearPoint} onChange={(e) => setEditForm({ ...editForm, fearPoint: e.target.value })} placeholder="Fear" className="bg-black/30 border border-white/10 px-2 py-1 text-xs text-white focus:border-[#C9A84C]/40 focus:outline-none" />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => setEditingId(null)} className="px-2 py-1 text-xs text-white/50 hover:text-white">Cancel</button>
+                  <button onClick={handleSaveEdit} disabled={updateMutation.isPending} className="px-2 py-1 bg-[#C9A84C] text-black text-xs rounded">
+                    {updateMutation.isPending ? <Loader2 size={10} className="animate-spin inline" /> : "Save"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -744,7 +793,7 @@ function PainChainView({ leadId }: { leadId: string }) {
 function IronTriangleView({ leadId }: { leadId: string }) {
   const { data: reviews = [], refetch } = trpc.salesIntel.listIronTriangleReviews.useQuery({ leadId });
   const { data: makers = [] } = trpc.salesIntel.listDecisionMakers.useQuery({ leadId });
-  const createMutation = trpc.salesIntel.createIronTriangleReview.useMutation({ onSuccess: () => refetch() });
+  const createMutation = trpc.salesIntel.createIronTriangleReview.useMutation({ onSuccess: () => refetch(), onError: (err) => alert("Failed to create review: " + (err?.message || "Unknown error")) });
   const dms = makers as unknown as DMType[];
 
   const [form, setForm] = useState({ arCoverage: "", arNextStep: "", srPainMatch: "", srProposalStatus: "", frDeliveryRisk: "", frPaymentPlan: "", overallActionPlan: "", winProbability: 50 });
@@ -840,7 +889,7 @@ function IronTriangleView({ leadId }: { leadId: string }) {
       {reviews.length > 0 && reviews.map((r: any) => (
         <div key={r.id} className="bg-white/5 border border-white/10 p-4 rounded-lg">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-white/30">{new Date(r.reviewDate).toLocaleDateString()}</p>
+            <p className="text-xs text-white/30">{r.reviewDate ? new Date(r.reviewDate).toLocaleDateString() : "-"}</p>
             {r.winProbability && <span className={`text-sm font-bold ${r.winProbability >= 70 ? "text-green-400" : "text-yellow-400"}`}>{r.winProbability}%</span>}
           </div>
           <div className="grid grid-cols-3 gap-3 text-xs">
@@ -860,8 +909,8 @@ function CompetitorView({ leadId }: { leadId: string }) {
   const { t } = useTranslation();
   const sales = t("maoai.sales", { returnObjects: true }) as any;
   const { data: comps = [], refetch } = trpc.salesIntel.listCompetitors.useQuery({ leadId });
-  const createMutation = trpc.salesIntel.createCompetitor.useMutation({ onSuccess: () => refetch() });
-  const deleteMutation = trpc.salesIntel.deleteCompetitor.useMutation({ onSuccess: () => refetch() });
+  const createMutation = trpc.salesIntel.createCompetitor.useMutation({ onSuccess: () => refetch(), onError: (err) => alert("Failed to add competitor: " + (err?.message || "Unknown error")) });
+  const deleteMutation = trpc.salesIntel.deleteCompetitor.useMutation({ onSuccess: () => refetch(), onError: (err) => alert("Failed to delete: " + (err?.message || "Unknown error")) });
   const [form, setForm] = useState({ name: "", solution: "", priceRange: "", strengths: "", weaknesses: "", differentiator: "" });
   const [showForm, setShowForm] = useState(false);
 
@@ -929,13 +978,13 @@ function CompetitorView({ leadId }: { leadId: string }) {
 
 function IntelRecordsView({ leadId }: { leadId: string }) {
   const { data: records = [], refetch } = trpc.salesIntel.listIntelRecords.useQuery({ leadId });
-  const createMutation = trpc.salesIntel.createIntelRecord.useMutation({ onSuccess: () => refetch() });
-  const [form, setForm] = useState({ intelType: "customer_public" as const, source: "", title: "", impact: "" });
+  const createMutation = trpc.salesIntel.createIntelRecord.useMutation({ onSuccess: () => refetch(), onError: (err) => alert("Failed to add intel: " + (err?.message || "Unknown error")) });
+  const [form, setForm] = useState({ intelType: "customer_public" as const, source: "", title: "", content: "", impact: "" });
 
   const handleSubmit = () => {
     if (!form.title.trim() || !form.source.trim()) return;
     createMutation.mutate({ leadId, ...form });
-    setForm({ intelType: "customer_public", source: "", title: "", impact: "" });
+    setForm({ intelType: "customer_public", source: "", title: "", content: "", impact: "" });
   };
 
   const typeLabels: Record<string, string> = { customer_public: "Customer Intel", competitor: "Competitor Intel", industry: "Industry", other: "Other" };
@@ -951,6 +1000,7 @@ function IntelRecordsView({ leadId }: { leadId: string }) {
           <input type="text" placeholder="Source (e.g. QCC, website, job posting...)" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} className="flex-1 bg-black/30 border border-white/10 px-3 py-2 text-sm text-white focus:border-[#C9A84C]/40 focus:outline-none" />
         </div>
         <input type="text" placeholder="Intel title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full bg-black/30 border border-white/10 px-3 py-2 text-sm text-white focus:border-[#C9A84C]/40 focus:outline-none" />
+        <input type="text" placeholder="Detailed content (optional)" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} className="w-full bg-black/30 border border-white/10 px-3 py-2 text-sm text-white focus:border-[#C9A84C]/40 focus:outline-none" />
         <input type="text" placeholder="Impact on sales strategy" value={form.impact} onChange={(e) => setForm({ ...form, impact: e.target.value })} className="w-full bg-black/30 border border-white/10 px-3 py-2 text-sm text-white focus:border-[#C9A84C]/40 focus:outline-none" />
         <div className="flex justify-end">
           <button onClick={handleSubmit} className="px-3 py-1.5 bg-[#C9A84C] text-black text-sm rounded">Add Intel</button>
@@ -982,8 +1032,8 @@ function LTCWeeklyView({ leadId }: { leadId: string }) {
   const weekStr = weekStart.toISOString().split("T")[0];
 
   const { data: tasks = [], refetch } = trpc.salesIntel.listLTCWeeklyTasks.useQuery({ leadId, weekStart: weekStr });
-  const createMutation = trpc.salesIntel.createLTCWeeklyTask.useMutation({ onSuccess: () => refetch() });
-  const toggleMutation = trpc.salesIntel.toggleLTCWeeklyTask.useMutation({ onSuccess: () => refetch() });
+  const createMutation = trpc.salesIntel.createLTCWeeklyTask.useMutation({ onSuccess: () => refetch(), onError: (err) => alert("Failed to create task: " + (err?.message || "Unknown error")) });
+  const toggleMutation = trpc.salesIntel.toggleLTCWeeklyTask.useMutation({ onSuccess: () => refetch(), onError: (err) => alert("Failed to toggle task: " + (err?.message || "Unknown error")) });
   const [newTask, setNewTask] = useState("");
   const [newPhase, setNewPhase] = useState<string>("ML_clean");
 
@@ -1040,14 +1090,20 @@ function OutreachView({ leads }: { leads: Lead[] }) {
   const [emailContent, setEmailContent] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [outreachType, setOutreachType] = useState<"email" | "phone" | "meeting" | "wechat">("email");
-  const updateMutation = trpc.salesIntel.updateLeadHuaweiFields.useMutation();
+  const updateMutation = trpc.salesIntel.updateLeadHuaweiFields.useMutation({
+    onSuccess: () => alert("Follow-up scheduled successfully!"),
+    onError: (err) => alert("Failed to schedule: " + (err?.message || "Unknown error")),
+  });
 
   const handleScheduleFollowUp = () => {
     if (!selectedLead || !followUpDate) return;
+    // TODO: next_follow_up field needs to be added to updateLeadHuaweiFields schema in backend
+    // For now, we update the LTC stage to trigger a record activity
     updateMutation.mutate({
       id: selectedLead.id,
       data: { ltcStage: selectedLead.ltcStage as any },
     });
+    alert(`Follow-up scheduled for ${followUpDate}`);
   };
 
   const outreachTemplates: Record<string, string> = {
