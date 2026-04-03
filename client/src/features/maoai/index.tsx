@@ -13,7 +13,7 @@
 export { default as MaoAIChat } from "./pages/Chat";
 export { default as MaoAILogin } from "./pages/Login";
 export { default as MaoAIPricing } from "./pages/Pricing";
-export { default as MaoAISales } from "./pages/Sales";
+export { default as MaoAISales } from "./pages/MaoAISales";
 export { default as MaoAIResearchDigest } from "./pages/ResearchDigest";
 
 // Components
