@@ -183,5 +183,13 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    proxy: {
+      // AutoClip Python FastAPI 后端代理（端口 8000）
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        // 注意：autoclip 后端响应可能包含 CORS headers，如有需要可加 rewrite
+      },
+    },
   },
 });
