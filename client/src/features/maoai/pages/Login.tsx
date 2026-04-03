@@ -56,7 +56,7 @@ export default function MaoAILogin() {
         if (data.sessionToken) {
           localStorage.setItem('maoai_session_token', data.sessionToken);
         }
-        window.location.href = data.redirectTo ?? "/admin/nodes";
+        window.location.href = data.redirectTo ?? MAOAI_ROUTES.CHAT;
       } else {
         setLoginError(data.error ?? login.invalidCredentials);
       }
