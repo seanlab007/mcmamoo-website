@@ -96,5 +96,87 @@
     "loading": "加载中...",
     "success": "提交成功",
     "error": "提交失败，请重试"
+  },
+  "maoai": {
+    "sales": {
+      "intelTitle": "销售情报中心",
+      "intelSubtitle": "华为式客户关系管理系统",
+      "loading": "加载销售数据...",
+      "focusLeads": "重点客户 (A/B级)",
+      "ltcPipelineTitle": "LTC 管线总览",
+      "searchPlaceholder": "按姓名、公司搜索线索...",
+      "filter": "筛选",
+      "back": "返回列表",
+      "tabs": {
+        "dashboard": "仪表盘",
+        "leads": "线索",
+        "outreach": "触达",
+        "ai": "AI 助手"
+      },
+      "intelStats": {
+        "focusLeads": "重点客户",
+        "strategic": "战略级 (A)",
+        "key": "关键级 (B)",
+        "totalPipeline": "管线总值",
+        "highRisk": "高风险",
+        "total": "全部线索"
+      },
+      "table": {
+        "lead": "联系人",
+        "company": "公司",
+        "status": "状态",
+        "actions": "操作"
+      },
+      "statuses": {
+        "new": "新线索",
+        "contacted": "已联系",
+        "qualified": "已合格",
+        "proposal": "方案中",
+        "negotiation": "谈判中",
+        "closed_won": "已赢单",
+        "closed_lost": "已输单"
+      },
+      "detailTabs": {
+        "profile": "客户档案",
+        "powerMap": "决策链",
+        "painChain": "痛苦链",
+        "ironTriangle": "铁三角",
+        "competitors": "竞品对比",
+        "intel": "情报记录",
+        "ltc": "LTC 周循环"
+      },
+      "profile": {
+        "basic": "基本信息",
+        "company": "公司",
+        "industry": "行业",
+        "title": "职位",
+        "email": "邮箱",
+        "valueRating": "客户评级",
+        "estimatedValue": "预估金额",
+        "competitive": "竞争情报",
+        "competitor": "主要竞品",
+        "competitorAdv": "竞品优势",
+        "ourAdv": "我方优势",
+        "risk": "风险预警",
+        "paymentRisk": "回款风险",
+        "decisionCycle": "决策周期",
+        "needPrepayment": "需预付款"
+      },
+      "profileDecisionCycleLabels": {
+        "1_week": "1周内",
+        "2_weeks": "2周内",
+        "1_month": "1个月内",
+        "1_quarter": "1个季度",
+        "long": "长周期",
+        "unknown": "未知"
+      },
+      "powerMap": {
+        "desc": "梳理所有决策人、痛点及其影响力动态关系",
+        "addDecisionMaker": "添加决策人"
+      },
+      "competitorView": {
+        "desc": "跟踪竞争格局及我方差异化策略"
+      }
+    }
   }
 }
