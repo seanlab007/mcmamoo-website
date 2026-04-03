@@ -152,11 +152,15 @@ export const customerServiceRouter = router({
   // ─── 客服统计 ──────────────────────────────────────────────────────────
   getStats: protectedProcedure.query(async () => {
     try {
-      const [callsResp, leadsResp] = await Promise.all([
-        dbFetch("/customer_service_calls?select=status,duration,call_type,created_at&order=created_at.desc&limit=500"),
-        dbFetch("/customer_service_calls?select=customer_email,created_at&order=created_at.desc&limit=500"),
-      ]);
-      const calls = (callsResp.data as Record<string, unknown>[]) ?? [];
+      const callsResp = await dbFetch(
+        "/customer_service_calls?select=status,duration,call_type,created_at&order=created_at.desc&limit=500"
+      );
+
+      // dbFetch 可能返回各种格式：Supabase 错误对象、null、或数组
+      const rawCalls = callsResp.data;
+      const calls = Array.isArray(rawCalls)
+        ? (rawCalls as Record<string, unknown>[])
+        : [];
 
       const today = new Date().toISOString().split("T")[0];
       const todayCalls = calls.filter(c => (c.created_at as string)?.startsWith(today));
@@ -169,8 +173,9 @@ export const customerServiceRouter = router({
         if (typeof call.duration === "number") totalDuration += call.duration;
       }
 
-      const avgDuration = calls.filter(c => typeof c.duration === "number" && c.duration > 0).length
-        ? Math.round(totalDuration / calls.filter(c => typeof c.duration === "number" && c.duration > 0).length)
+      const withDurationCalls = calls.filter(c => typeof c.duration === "number" && c.duration > 0);
+      const avgDuration = withDurationCalls.length
+        ? Math.round(totalDuration / withDurationCalls.length)
         : 0;
 
       return {
