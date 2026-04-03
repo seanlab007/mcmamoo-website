@@ -1,0 +1,24 @@
+{
+  "$schema": "https://skills.github.com/skills/webaccess/schema.json",
+  "authors": ["seanlab007"],
+  "name": "WebAuccess",
+  "description": "Enables AI to access and interact with web resources for MaoAI project. Supports real-time data fetching, API integrations, and web scraping.",
+  "version": "1.0.0",
+  "enabled": true,
+  "settings": {
+    "allowed_domains": [
+      "mcmamoo.com",
+      "api.glt.ai",
+      "open.bigmodel.cn",
+      "api.groq.com",
+      "api.deepseek.com",
+      "generativelanguage.googleapis.com",
+      "runwayml.com",
+      "veo.googleapis.com",
+      "api.klingai.com",
+      "app.dreamin.ai"
+    ],
+    "rate_limit": 100,
+    "timeout": 30
+  }
+}
