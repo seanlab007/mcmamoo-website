@@ -17,7 +17,15 @@ const buildEndpointUrl = (baseUrl: string): string => {
   const normalizedBase = baseUrl.replace(/\/$/, "");
   return `${normalizedBase}/webdevtoken.v1.WebDevService/SendNotification`;
 };
+
+function validatePayload(input: NotificationPayload) {
+  if (!isNonEmptyString(input.title)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Notification title is required.",
+    });
   }
+
   if (!isNonEmptyString(input.content)) {
     throw new TRPCError({
       code: "BAD_REQUEST",
