@@ -50,7 +50,7 @@ export default function MaoAICustomerService() {
 
   const { data: stats } = trpc.customerService.getStats.useQuery();
   const { data: voices = [] } = trpc.customerService.listVoices.useQuery(undefined, { staleTime: 60000 });
-  const { data: calls = [] } = trpc.customerService.listCallRecords.useQuery(undefined, { staleTime: 30000 });
+  const { data: calls = [] } = trpc.customerService.listCallRecords.useQuery(undefined, { staleTime: 30000 }) as { data: CallRecord[] };
   const { data: configStatus } = trpc.customerService.getConfigStatus.useQuery();
 
   const ttsMutation = trpc.customerService.textToSpeech.useMutation();
@@ -215,7 +215,7 @@ export default function MaoAICustomerService() {
                   </button>
                 </div>
                 <div className="divide-y divide-white/5">
-                  {calls.slice(0, 5).map((call: CallRecord) => (
+                  {calls.slice(0, 5).map((call) => (
                     <div key={call.id} className="px-4 py-3 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
@@ -326,7 +326,7 @@ export default function MaoAICustomerService() {
             ) : (
               <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
                 <div className="divide-y divide-white/5">
-                  {calls.map((call: CallRecord) => (
+                  {calls.map((call) => (
                     <div key={call.id} className="px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
