@@ -1188,8 +1188,8 @@ export default function MaoAIChat() {
                     <ChevronDown size={12} />
                   </button>
                   {showPicker && (
-                    <div className="absolute right-0 top-full mt-1 w-72 bg-[#111] border border-[#C9A84C]/20 shadow-2xl z-20">
-                      <div className="px-3 py-2 border-b border-white/5">
+                    <div className="absolute right-0 top-full mt-1 w-72 max-h-[70vh] overflow-y-auto bg-[#111] border border-[#C9A84C]/20 shadow-2xl z-20 rounded-lg">
+                      <div className="px-3 py-2 border-b border-white/5 sticky top-0 bg-[#111]">
                         <div className="flex items-center gap-1.5 text-sky-400/70 text-[10px] font-semibold tracking-widest uppercase">
                           <Cloud size={10} /><span>{chat.cloudModels}</span>
                         </div>
