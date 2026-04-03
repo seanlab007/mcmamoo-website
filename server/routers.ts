@@ -37,6 +37,7 @@ import { autoclipRouter } from "./autoclip";
 import { salesRouter } from "./sales";
 import { salesIntelligenceRouter } from "./sales-intelligence";
 import { researchDigestRouter } from "./research-digest-router";
+import { customerServiceRouter } from "./customer-service";
 
 export const appRouter = router({
   system: systemRouter,
@@ -44,6 +45,7 @@ export const appRouter = router({
   sales: salesRouter,
   salesIntel: salesIntelligenceRouter,
   researchDigest: researchDigestRouter,
+  customerService: customerServiceRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
