@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronUp, ChevronLeft, Plus, Trash2, Edit3, Check, X,
   Building2, Briefcase, AlertTriangle, TrendingUp, Heart,
   Zap, Lock, Clock, ArrowRight, Users, FileText,
-  MessageSquare, Search, Filter, Loader2
+  MessageSquare, Search, Filter, Loader2, Send
 } from "lucide-react";
 
 // ─── Value Rating Badge ───────────────────────────────────────────────────────
@@ -348,78 +348,215 @@ function LeadDetail({ lead, view, onViewChange, onBack }: { lead: Lead; view: st
 function CustomerProfile({ lead }: { lead: Lead }) {
   const { t } = useTranslation();
   const sales = t("maoai.sales", { returnObjects: true }) as any;
+  const [editing, setEditing] = useState(false);
   const updateMutation = trpc.salesIntel.updateLeadHuaweiFields.useMutation();
+  const [form, setForm] = useState({
+    valueRating: lead.valueRating as ValueRating,
+    competitorName: lead.competitorName || "",
+    competitorAdvantage: lead.competitorAdvantage || "",
+    ourAdvantage: lead.ourAdvantage || "",
+    paymentRisk: lead.paymentRisk as "low" | "medium" | "high",
+    decisionCycle: lead.decisionCycle as string,
+    needPrepayment: lead.needPrepayment || false,
+    estimatedValue: lead.estimatedValue?.toString() || "",
+    industry: lead.industry || "",
+    ltcStage: lead.ltcStage as string,
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      id: lead.id,
+      data: {
+        valueRating: form.valueRating,
+        competitorName: form.competitorName || undefined,
+        competitorAdvantage: form.competitorAdvantage || undefined,
+        ourAdvantage: form.ourAdvantage || undefined,
+        paymentRisk: form.paymentRisk,
+        decisionCycle: form.decisionCycle as any,
+        needPrepayment: form.needPrepayment,
+        estimatedValue: form.estimatedValue ? parseFloat(form.estimatedValue) : null,
+        industry: form.industry || undefined,
+        ltcStage: form.ltcStage as any,
+      },
+    });
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setForm({
+      valueRating: lead.valueRating,
+      competitorName: lead.competitorName || "",
+      competitorAdvantage: lead.competitorAdvantage || "",
+      ourAdvantage: lead.ourAdvantage || "",
+      paymentRisk: lead.paymentRisk,
+      decisionCycle: lead.decisionCycle,
+      needPrepayment: lead.needPrepayment || false,
+      estimatedValue: lead.estimatedValue?.toString() || "",
+      industry: lead.industry || "",
+      ltcStage: lead.ltcStage,
+    });
+    setEditing(false);
+  };
 
   return (
-    <div className="grid grid-cols-2 gap-6">
-      {/* Basic Info */}
-      <div className="bg-white/5 border border-white/10 p-5 rounded-lg space-y-4">
-        <h4 className="text-white font-semibold flex items-center gap-2"><Building2 size={16} className="text-[#C9A84C]" /> {sales.profile.basic}</h4>
-        {[
-          { label: sales.profile.company, value: lead.company },
-          { label: sales.profile.industry, value: lead.industry },
-          { label: sales.profile.title, value: lead.title },
-          { label: sales.profile.email, value: lead.email },
-        ].map((f) => (
-          <div key={f.label} className="flex justify-between border-b border-white/5 pb-2">
-            <span className="text-white/40 text-sm">{f.label}</span>
-            <span className="text-white text-sm">{f.value || "-"}</span>
-          </div>
-        ))}
-        <div className="flex justify-between">
-          <span className="text-white/40 text-sm">{sales.profile.valueRating}</span>
-          <ValueRatingBadge rating={lead.valueRating} />
-        </div>
-        <div className="flex justify-between">
-          <span className="text-white/40 text-sm">{sales.profile.estimatedValue}</span>
-          <span className="text-green-400 text-sm font-medium">{lead.estimatedValue ? `¥${lead.estimatedValue.toLocaleString()}` : "-"}</span>
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-end gap-2">
+        {editing ? (
+          <>
+            <button onClick={handleCancel} className="flex items-center gap-1 px-3 py-1.5 text-sm text-white/50 hover:text-white"><X size={14} /> Cancel</button>
+            <button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-1 px-3 py-1.5 bg-[#C9A84C] text-black text-sm font-medium rounded hover:bg-[#C9A84C]/90">
+              {updateMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <><Check size={14} /> Save</>}
+            </button>
+          </>
+        ) : (
+          <button onClick={() => setEditing(true)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-[#C9A84C] border border-[#C9A84C]/40 rounded hover:bg-[#C9A84C]/10"><Edit3 size={14} /> Edit Profile</button>
+        )}
       </div>
 
-      {/* Competitive Intel */}
-      <div className="bg-white/5 border border-white/10 p-5 rounded-lg space-y-4">
-        <h4 className="text-white font-semibold flex items-center gap-2"><Swords size={16} className="text-red-400" /> {sales.profile.competitive}</h4>
-        {[
-          { label: sales.profile.competitor, value: lead.competitorName },
-          { label: sales.profile.competitorAdv, value: lead.competitorAdvantage },
-          { label: sales.profile.ourAdv, value: lead.ourAdvantage },
-        ].map((f) => (
-          <div key={f.label}>
-            <p className="text-white/40 text-xs mb-1">{f.label}</p>
-            <p className="text-white/80 text-sm">{f.value || "-"}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Risk Warning */}
-      <div className="bg-white/5 border border-white/10 p-5 rounded-lg space-y-4">
-        <h4 className="text-white font-semibold flex items-center gap-2"><AlertTriangle size={16} className="text-yellow-400" /> {sales.profile.risk}</h4>
-        <div className="flex justify-between border-b border-white/5 pb-2">
-          <span className="text-white/40 text-sm">{sales.profile.paymentRisk}</span>
-          <PaymentRiskBadge risk={lead.paymentRisk} />
-        </div>
-        <div className="flex justify-between border-b border-white/5 pb-2">
-          <span className="text-white/40 text-sm">{sales.profile.decisionCycle}</span>
-          <span className="text-white text-sm">{sales.profileDecisionCycleLabels[lead.decisionCycle] || lead.decisionCycle}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-white/40 text-sm">{sales.profile.needPrepayment}</span>
-          <span className={lead.needPrepayment ? "text-red-400 text-sm" : "text-green-400 text-sm"}>{lead.needPrepayment ? "Yes" : "No"}</span>
-        </div>
-      </div>
-
-      {/* LTC Stage */}
-      <div className="bg-gradient-to-br from-[#C9A84C]/10 to-orange-500/10 border border-[#C9A84C]/20 p-5 rounded-lg">
-        <h4 className="text-[#C9A84C] font-semibold flex items-center gap-2 mb-4"><Brain size={16} /> LTC Stage</h4>
-        <div className="flex items-center gap-1 mb-3">
-          {["ML", "MO", "ATC", "delivery", "collection"].map((s, i) => (
-            <div key={s} className="flex-1 text-center">
-              <div className={`h-2 rounded-full ${lead.ltcStage === s ? "bg-[#C9A84C]" : ["ML", "MO", "ATC", "delivery", "collection"].indexOf(lead.ltcStage) > i ? "bg-[#C9A84C]/40" : "bg-white/10"}`} />
+      <div className="grid grid-cols-2 gap-6">
+        {/* Basic Info */}
+        <div className="bg-white/5 border border-white/10 p-5 rounded-lg space-y-4">
+          <h4 className="text-white font-semibold flex items-center gap-2"><Building2 size={16} className="text-[#C9A84C]" /> {sales.profile.basic}</h4>
+          {[
+            { label: sales.profile.company, value: lead.company },
+            { label: sales.profile.title, value: lead.title },
+            { label: sales.profile.email, value: lead.email },
+          ].map((f) => (
+            <div key={f.label} className="flex justify-between border-b border-white/5 pb-2">
+              <span className="text-white/40 text-sm">{f.label}</span>
+              <span className="text-white text-sm">{f.value || "-"}</span>
             </div>
           ))}
+          {/* Editable Industry */}
+          <div className="flex justify-between border-b border-white/5 pb-2 items-center">
+            <span className="text-white/40 text-sm">{sales.profile.industry}</span>
+            {editing ? (
+              <input type="text" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} className="bg-black/30 border border-white/10 px-2 py-1 text-sm text-white focus:border-[#C9A84C]/40 focus:outline-none w-48" />
+            ) : (
+              <span className="text-white text-sm">{lead.industry || "-"}</span>
+            )}
+          </div>
+          {/* Editable Value Rating */}
+          <div className="flex justify-between border-b border-white/5 pb-2 items-center">
+            <span className="text-white/40 text-sm">{sales.profile.valueRating}</span>
+            {editing ? (
+              <select value={form.valueRating} onChange={(e) => setForm({ ...form, valueRating: e.target.value as ValueRating })} className="bg-black/30 border border-white/10 px-2 py-1 text-sm text-white focus:outline-none">
+                {(["A", "B", "C", "D"] as const).map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            ) : (
+              <ValueRatingBadge rating={lead.valueRating} />
+            )}
+          </div>
+          {/* Editable Estimated Value */}
+          <div className="flex justify-between items-center">
+            <span className="text-white/40 text-sm">{sales.profile.estimatedValue}</span>
+            {editing ? (
+              <input type="number" value={form.estimatedValue} onChange={(e) => setForm({ ...form, estimatedValue: e.target.value })} className="bg-black/30 border border-white/10 px-2 py-1 text-sm text-green-400 focus:border-[#C9A84C]/40 focus:outline-none w-32" placeholder="0" />
+            ) : (
+              <span className="text-green-400 text-sm font-medium">{lead.estimatedValue ? `¥${lead.estimatedValue.toLocaleString()}` : "-"}</span>
+            )}
+          </div>
         </div>
-        <div className="flex justify-between text-xs text-white/40">
-          <span>ML</span><span>MO</span><span>ATC</span><span>Delivery</span><span>Collection</span>
+
+        {/* Competitive Intel */}
+        <div className="bg-white/5 border border-white/10 p-5 rounded-lg space-y-4">
+          <h4 className="text-white font-semibold flex items-center gap-2"><Swords size={16} className="text-red-400" /> {sales.profile.competitive}</h4>
+          {/* Editable Competitor Name */}
+          <div>
+            <p className="text-white/40 text-xs mb-1">{sales.profile.competitor}</p>
+            {editing ? (
+              <input type="text" value={form.competitorName} onChange={(e) => setForm({ ...form, competitorName: e.target.value })} className="w-full bg-black/30 border border-white/10 px-2 py-1 text-sm text-white focus:border-red-400/40 focus:outline-none" />
+            ) : (
+              <p className="text-white/80 text-sm">{lead.competitorName || "-"}</p>
+            )}
+          </div>
+          {/* Editable Competitor Advantage */}
+          <div>
+            <p className="text-white/40 text-xs mb-1">{sales.profile.competitorAdv}</p>
+            {editing ? (
+              <textarea value={form.competitorAdvantage} onChange={(e) => setForm({ ...form, competitorAdvantage: e.target.value })} rows={2} className="w-full bg-black/30 border border-white/10 px-2 py-1 text-sm text-white focus:border-red-400/40 focus:outline-none resize-none" />
+            ) : (
+              <p className="text-white/80 text-sm">{lead.competitorAdvantage || "-"}</p>
+            )}
+          </div>
+          {/* Editable Our Advantage */}
+          <div>
+            <p className="text-white/40 text-xs mb-1">{sales.profile.ourAdv}</p>
+            {editing ? (
+              <textarea value={form.ourAdvantage} onChange={(e) => setForm({ ...form, ourAdvantage: e.target.value })} rows={2} className="w-full bg-black/30 border border-green-500/10 px-2 py-1 text-sm text-green-400 focus:border-green-400/40 focus:outline-none resize-none" />
+            ) : (
+              <p className="text-green-300 text-sm">{lead.ourAdvantage || "-"}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Risk Warning */}
+        <div className="bg-white/5 border border-white/10 p-5 rounded-lg space-y-4">
+          <h4 className="text-white font-semibold flex items-center gap-2"><AlertTriangle size={16} className="text-yellow-400" /> {sales.profile.risk}</h4>
+          {/* Editable Payment Risk */}
+          <div className="flex justify-between border-b border-white/5 pb-2 items-center">
+            <span className="text-white/40 text-sm">{sales.profile.paymentRisk}</span>
+            {editing ? (
+              <select value={form.paymentRisk} onChange={(e) => setForm({ ...form, paymentRisk: e.target.value as any })} className="bg-black/30 border border-white/10 px-2 py-1 text-sm text-white focus:outline-none">
+                {(["low", "medium", "high"] as const).map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+              </select>
+            ) : (
+              <PaymentRiskBadge risk={lead.paymentRisk} />
+            )}
+          </div>
+          {/* Editable Decision Cycle */}
+          <div className="flex justify-between border-b border-white/5 pb-2 items-center">
+            <span className="text-white/40 text-sm">{sales.profile.decisionCycle}</span>
+            {editing ? (
+              <select value={form.decisionCycle} onChange={(e) => setForm({ ...form, decisionCycle: e.target.value })} className="bg-black/30 border border-white/10 px-2 py-1 text-sm text-white focus:outline-none">
+                {["1_week", "2_weeks", "1_month", "1_quarter", "long", "unknown"].map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            ) : (
+              <span className="text-white text-sm">{sales.profileDecisionCycleLabels?.[lead.decisionCycle] || lead.decisionCycle}</span>
+            )}
+          </div>
+          {/* Editable Prepayment */}
+          <div className="flex justify-between items-center">
+            <span className="text-white/40 text-sm">{sales.profile.needPrepayment}</span>
+            {editing ? (
+              <button onClick={() => setForm({ ...form, needPrepayment: !form.needPrepayment })} className={`px-3 py-1 text-sm rounded ${form.needPrepayment ? "bg-red-500/20 text-red-400" : "bg-green-500/20 text-green-400"}`}>
+                {form.needPrepayment ? "Yes" : "No"}
+              </button>
+            ) : (
+              <span className={lead.needPrepayment ? "text-red-400 text-sm" : "text-green-400 text-sm"}>{lead.needPrepayment ? "Yes" : "No"}</span>
+            )}
+          </div>
+        </div>
+
+        {/* LTC Stage */}
+        <div className="bg-gradient-to-br from-[#C9A84C]/10 to-orange-500/10 border border-[#C9A84C]/20 p-5 rounded-lg">
+          <h4 className="text-[#C9A84C] font-semibold flex items-center gap-2 mb-4"><Brain size={16} /> LTC Stage</h4>
+          {editing ? (
+            <div className="flex gap-2 flex-wrap">
+              {["ML", "MO", "ATC", "delivery", "collection"].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setForm({ ...form, ltcStage: s })}
+                  className={`px-3 py-1.5 text-xs rounded border ${form.ltcStage === s ? "bg-[#C9A84C]/20 border-[#C9A84C]/40 text-[#C9A84C]" : "border-white/10 text-white/40"}`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-1 mb-3">
+                {["ML", "MO", "ATC", "delivery", "collection"].map((s, i) => (
+                  <div key={s} className="flex-1 text-center">
+                    <div className={`h-2 rounded-full ${lead.ltcStage === s ? "bg-[#C9A84C]" : ["ML", "MO", "ATC", "delivery", "collection"].indexOf(lead.ltcStage) > i ? "bg-[#C9A84C]/40" : "bg-white/10"}`} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between text-xs text-white/40">
+                <span>ML</span><span>MO</span><span>ATC</span><span>Delivery</span><span>Collection</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -434,7 +571,10 @@ function PowerMapView({ leadId }: { leadId: string }) {
   const { data: makers = [], refetch } = trpc.salesIntel.listDecisionMakers.useQuery({ leadId });
   const dms = makers as unknown as DMType[];
   const createMutation = trpc.salesIntel.createDecisionMaker.useMutation({ onSuccess: () => refetch() });
+  const updateMutation = trpc.salesIntel.updateDecisionMaker.useMutation({ onSuccess: () => { refetch(); setEditingId(null); } });
+  const deleteMutation = trpc.salesIntel.deleteDecisionMaker.useMutation({ onSuccess: () => refetch() });
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", title: "", department: "", businessPain: "", personalGoal: "", fearPoint: "", communicationStyle: "data_driven" as const, icebreaker: "", roles: [] as string[] });
 
   const roleLabels: Record<string, string> = {
@@ -505,16 +645,19 @@ function PowerMapView({ leadId }: { leadId: string }) {
 
       <div className="grid grid-cols-2 gap-4">
         {dms.map((dm) => (
-          <div key={dm.id} className="bg-white/5 border border-white/10 p-4 rounded-lg space-y-3">
+          <div key={dm.id} className={`bg-white/5 border p-4 rounded-lg space-y-3 ${editingId === dm.id ? "border-[#C9A84C]/40" : "border-white/10"}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white font-medium">{dm.name}</p>
                 <p className="text-xs text-white/40">{dm.title} {dm.department ? `- ${dm.department}` : ""}</p>
               </div>
-              <div className="flex gap-1">
-                {dm.roles.map((r) => (
-                  <span key={r} className="text-[10px] px-1.5 py-0.5 bg-[#C9A84C]/10 text-[#C9A84C] rounded">{roleLabels[r] || r}</span>
-                ))}
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {dm.roles.map((r) => (
+                    <span key={r} className="text-[10px] px-1.5 py-0.5 bg-[#C9A84C]/10 text-[#C9A84C] rounded">{roleLabels[r] || r}</span>
+                  ))}
+                </div>
+                <button onClick={() => deleteMutation.mutate({ id: dm.id })} className="text-white/20 hover:text-red-400 p-1"><Trash2 size={12} /></button>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs">
@@ -718,6 +861,7 @@ function CompetitorView({ leadId }: { leadId: string }) {
   const sales = t("maoai.sales", { returnObjects: true }) as any;
   const { data: comps = [], refetch } = trpc.salesIntel.listCompetitors.useQuery({ leadId });
   const createMutation = trpc.salesIntel.createCompetitor.useMutation({ onSuccess: () => refetch() });
+  const deleteMutation = trpc.salesIntel.deleteCompetitor.useMutation({ onSuccess: () => refetch() });
   const [form, setForm] = useState({ name: "", solution: "", priceRange: "", strengths: "", weaknesses: "", differentiator: "" });
   const [showForm, setShowForm] = useState(false);
 
@@ -755,7 +899,7 @@ function CompetitorView({ leadId }: { leadId: string }) {
       )}
 
       {comps.map((c: any) => (
-        <div key={c.id} className="bg-white/5 border border-white/10 p-4 rounded-lg grid grid-cols-4 gap-4">
+        <div key={c.id} className="bg-white/5 border border-white/10 p-4 rounded-lg grid grid-cols-4 gap-4 items-start">
           <div>
             <p className="text-red-400 font-medium text-sm">{c.competitorName}</p>
             <p className="text-xs text-white/30">{c.competitorPriceRange}</p>
@@ -768,9 +912,12 @@ function CompetitorView({ leadId }: { leadId: string }) {
             <p className="text-xs text-white/40 mb-1">Weaknesses</p>
             <p className="text-xs text-white/70">{c.competitorWeaknesses || "-"}</p>
           </div>
-          <div>
-            <p className="text-xs text-green-400 mb-1">Our Differentiator</p>
-            <p className="text-xs text-green-300">{c.ourDifferentiator || "-"}</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs text-green-400 mb-1">Our Differentiator</p>
+              <p className="text-xs text-green-300">{c.ourDifferentiator || "-"}</p>
+            </div>
+            <button onClick={() => deleteMutation.mutate({ id: c.id })} className="text-white/20 hover:text-red-400 p-1 mt-4"><Trash2 size={12} /></button>
           </div>
         </div>
       ))}
@@ -886,15 +1033,227 @@ function LTCWeeklyView({ leadId }: { leadId: string }) {
   );
 }
 
-// ─── Re-export Outreach and AI views (keep existing functionality) ────────────
+// ─── Outreach View ──────────────────────────────────────────────────────────
 
 function OutreachView({ leads }: { leads: Lead[] }) {
-  // Simplified - reuse original logic
-  return <div className="text-center py-20 text-white/40">Outreach module - use existing MaoAI Sales outreach functionality</div>;
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [emailContent, setEmailContent] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [outreachType, setOutreachType] = useState<"email" | "phone" | "meeting" | "wechat">("email");
+  const updateMutation = trpc.salesIntel.updateLeadHuaweiFields.useMutation();
+
+  const handleScheduleFollowUp = () => {
+    if (!selectedLead || !followUpDate) return;
+    updateMutation.mutate({
+      id: selectedLead.id,
+      data: { ltcStage: selectedLead.ltcStage as any },
+    });
+  };
+
+  const outreachTemplates: Record<string, string> = {
+    email: `Dear {name},\n\nI hope this message finds you well. I wanted to reach out regarding {company}'s recent developments in {industry}.\n\nBased on my research, I understand that one of your key priorities is improving operational efficiency while reducing costs.\n\nI would love to schedule a brief 15-minute call to share how we've helped similar organizations achieve significant results.\n\nBest regards`,
+    phone: `Key talking points:\n- Confirm their current pain points\n- Ask about budget cycle and decision timeline\n- Mention 2-3 relevant case studies\n- Propose next meeting with technical team`,
+    meeting: `Meeting agenda:\n1. Introduction (5 min)\n2. Current challenges discussion (15 min)\n3. Our solution overview (15 min)\n4. Q&A and next steps (10 min)\n\nPreparation:\n- Review Power Map before meeting\n- Prepare customer-specific value proposition\n- Bring relevant case studies`,
+    wechat: `Casual touchpoint message:\n\nHi {name}, saw the recent news about {company}. Congrats on the progress! Would love to catch up over coffee sometime.`,
+  };
+
+  const typeColors: Record<string, string> = {
+    email: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+    phone: "bg-green-500/20 text-green-400 border-green-500/40",
+    meeting: "bg-purple-500/20 text-purple-400 border-purple-500/40",
+    wechat: "bg-orange-500/20 text-orange-400 border-orange-500/40",
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Lead Selection */}
+      <div className="bg-white/5 border border-white/10 p-5 rounded-lg">
+        <h3 className="text-white font-semibold mb-4 flex items-center gap-2"><MessageSquare size={16} className="text-[#C9A84C]" /> Select Lead for Outreach</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {leads.slice(0, 12).map((lead) => (
+            <button
+              key={lead.id}
+              onClick={() => setSelectedLead(lead)}
+              className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${selectedLead?.id === lead.id ? "bg-[#C9A84C]/10 border-[#C9A84C]/40" : "bg-black/20 border-white/10 hover:border-white/20"}`}
+            >
+              <ValueRatingBadge rating={lead.valueRating} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white font-medium truncate">{lead.company}</p>
+                <p className="text-xs text-white/40 truncate">{lead.name} - {lead.title}</p>
+              </div>
+              <LTCStageBadge stage={lead.ltcStage} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Outreach Composer */}
+      {selectedLead && (
+        <div className="bg-white/5 border border-white/10 p-5 rounded-lg space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-white font-semibold">Compose Outreach - {selectedLead.company}</h3>
+            <div className="flex gap-2">
+              {(["email", "phone", "meeting", "wechat"] as const).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => { setOutreachType(type); setEmailContent(outreachTemplates[type].replace("{name}", selectedLead.name).replace("{company}", selectedLead.company).replace("{industry}", selectedLead.industry || "your industry")); }}
+                  className={`px-3 py-1.5 text-xs rounded border ${outreachType === type ? typeColors[type] : "border-white/10 text-white/40 hover:text-white/60"}`}
+                >
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Lead Context Summary */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="bg-black/20 p-3 rounded">
+              <p className="text-xs text-white/40 mb-1">Decision Cycle</p>
+              <p className="text-sm text-white">{selectedLead.decisionCycle || "Unknown"}</p>
+            </div>
+            <div className="bg-black/20 p-3 rounded">
+              <p className="text-xs text-white/40 mb-1">Payment Risk</p>
+              <PaymentRiskBadge risk={selectedLead.paymentRisk} />
+            </div>
+            <div className="bg-black/20 p-3 rounded">
+              <p className="text-xs text-white/40 mb-1">Est. Value</p>
+              <p className="text-sm text-green-400">{selectedLead.estimatedValue ? `¥${selectedLead.estimatedValue.toLocaleString()}` : "-"}</p>
+            </div>
+            <div className="bg-black/20 p-3 rounded">
+              <p className="text-xs text-white/40 mb-1">LTC Stage</p>
+              <LTCStageBadge stage={selectedLead.ltcStage} />
+            </div>
+          </div>
+
+          {/* Content Editor */}
+          <textarea
+            value={emailContent}
+            onChange={(e) => setEmailContent(e.target.value)}
+            rows={12}
+            className="w-full bg-black/30 border border-white/10 px-4 py-3 text-sm text-white/80 focus:border-[#C9A84C]/40 focus:outline-none resize-none font-mono"
+            placeholder="Write your outreach message here..."
+          />
+
+          {/* Follow-up Scheduling */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Clock size={14} className="text-white/40" />
+              <label className="text-xs text-white/40">Schedule Follow-up:</label>
+              <input
+                type="date"
+                value={followUpDate}
+                onChange={(e) => setFollowUpDate(e.target.value)}
+                className="bg-black/30 border border-white/10 px-3 py-1.5 text-sm text-white focus:outline-none"
+              />
+            </div>
+            <div className="flex-1" />
+            <button
+              onClick={handleScheduleFollowUp}
+              className="px-4 py-2 bg-[#C9A84C] text-black text-sm font-medium rounded hover:bg-[#C9A84C]/90 flex items-center gap-2"
+            >
+              <Send size={14} /> Schedule
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
+// ─── AI Assistant View ──────────────────────────────────────────────────────
+
 function AIAssistantView() {
-  return <div className="text-center py-20 text-white/40">AI Assistant - use existing MaoAI Sales AI assistant</div>;
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([
+    { role: "assistant", content: "Hello! I'm your Huawei-style sales AI assistant. I can help you with:\n\n- Lead qualification & scoring\n- Power Map analysis\n- Pain Chain identification\n- Iron Triangle assessment\n- Competitive positioning\n- LTC stage recommendations\n\nAsk me anything about your sales pipeline!" },
+  ]);
+  const [input, setInput] = useState("");
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    const userMsg = input.trim();
+    setInput("");
+    setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
+
+    // Simulate AI analysis response
+    setTimeout(() => {
+      const responses: Record<string, string> = {
+        qualify: "Based on the BANT framework:\n\n**Budget**: Check procurement cycle - Q4 budgets typically close by Nov\n**Authority**: Map all 5 roles in the buying center (Initiator, Influencer, Decider, Approver, Buyer)\n**Need**: Quantify the pain - use the customer's own KPI metrics\n**Timeline**: For A/B leads, target 2-4 week decision cycles\n\nRecommendation: Focus on the economic buyer's personal goals (career advancement) as the emotional driver.",
+        powermap: "Power Map Best Practices:\n\n1. **Identify all 5 buying roles** - don't miss the hidden influencer\n2. **Map relationships** - who trusts whom? Who blocks whom?\n3. **Score each contact** on AR/SR/FR coverage (Huawei铁三角)\n4. **Find the champion** - someone with both authority and motivation\n5. **Watch for blockers** - address their fears proactively\n\nThe key insight: In Chinese business culture, the 'guanxi' layer often sits above the org chart.",
+        painchain: "Pain Chain Analysis Framework:\n\n**Level 1 - Surface Pain**: What they tell you (budget constraints, efficiency needs)\n**Level 2 - Business Pain**: KPI pressure, competitive threats, regulatory compliance\n**Level 3 - Personal Pain**: Career risk, bonus impact, reputation concerns\n\nThe deeper you go, the more leverage you have. Always ask 'Why?' three times.\n\nExample: 'We need to reduce costs' -> Why? -> 'Profit margins are shrinking' -> Why? -> 'New competitor entered the market' -> NOW you understand the real driver.",
+        iron: "Iron Triangle Assessment (华为铁三角):\n\n**AR (客户经理)**: Relationship coverage - Have you met ALL decision makers?\n**SR (解决方案专家)**: Pain match - Does your proposal address their REAL pain?\n**FR (交付专家)**: Delivery confidence - Can you deliver on time? Payment secured?\n\nGreen flags:\n- AR: 80%+ of decision makers met\n- SR: Proposal directly addresses KPI pain\n- FR: Clear delivery plan with risk mitigation\n\nRed flags:\n- AR: Only talking to one contact\n- SR: Generic pitch, no customer-specific tailoring\n- FR: No prepayment, unclear delivery timeline",
+        ltc: "LTC Stage Advancement Tips:\n\n**ML (线索管理)**: Focus on A/B leads. Use value email to generate interest.\n**MO (商机管理)**: Deep-dive into pain chain. Build Power Map. Align solution.\n**ATC (签单)**: Contract review. Prepayment terms. Delivery timeline.\n**Delivery (交付)**: Execute perfectly. Document success for case study.\n**Collection (回款)**: Proactive payment tracking. Build long-term relationship.\n\nKey metric: Conversion rate from MO to ATC should be >30% for A-rated leads.",
+      };
+
+      let response = "I can help you with lead qualification, Power Map analysis, Pain Chain identification, Iron Triangle assessment, or LTC stage recommendations. Please be more specific about what you need!";
+
+      const lowerMsg = userMsg.toLowerCase();
+      if (lowerMsg.includes("qualify") || lowerMsg.includes("bant") || lowerMsg.includes("评分") || lowerMsg.includes("qualified")) {
+        response = responses.qualify;
+      } else if (lowerMsg.includes("power") || lowerMsg.includes("决策") || lowerMsg.includes("map")) {
+        response = responses.powermap;
+      } else if (lowerMsg.includes("pain") || lowerMsg.includes("痛点") || lowerMsg.includes("chain")) {
+        response = responses.painchain;
+      } else if (lowerMsg.includes("iron") || lowerMsg.includes("铁三角") || lowerMsg.includes("triangle")) {
+        response = responses.iron;
+      } else if (lowerMsg.includes("ltc") || lowerMsg.includes("阶段") || lowerMsg.includes("stage") || lowerMsg.includes("pipeline")) {
+        response = responses.ltc;
+      }
+
+      setMessages((prev) => [...prev, { role: "assistant", content: response }]);
+    }, 800);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Quick Actions */}
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { label: "Qualify Lead", prompt: "How do I qualify a lead using BANT?" },
+          { label: "Power Map Tips", prompt: "Give me tips on building a Power Map" },
+          { label: "Pain Chain", prompt: "How to do Pain Chain analysis?" },
+          { label: "Iron Triangle", prompt: "Iron Triangle assessment guide" },
+          { label: "LTC Strategy", prompt: "LTC stage advancement strategy" },
+        ].map((action) => (
+          <button
+            key={action.label}
+            onClick={() => { setInput(action.prompt); }}
+            className="px-3 py-1.5 bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-[#C9A84C]/40 rounded transition-all"
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Chat Messages */}
+      <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+        <div className="h-[500px] overflow-y-auto p-4 space-y-4">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[80%] p-4 rounded-lg text-sm whitespace-pre-wrap ${msg.role === "user" ? "bg-[#C9A84C]/20 text-white border border-[#C9A84C]/30" : "bg-black/30 text-white/80 border border-white/10"}`}>
+                {msg.content}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-white/10 p-3 flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Ask about lead qualification, Power Map, Pain Chain, Iron Triangle..."
+            className="flex-1 bg-black/30 border border-white/10 px-4 py-2.5 text-sm text-white placeholder-white/30 focus:border-[#C9A84C]/40 focus:outline-none"
+          />
+          <button
+            onClick={handleSend}
+            className="px-4 py-2.5 bg-[#C9A84C] text-black text-sm font-medium rounded hover:bg-[#C9A84C]/90 flex items-center gap-2"
+          >
+            <Send size={14} /> Send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 
