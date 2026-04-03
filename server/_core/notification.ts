@@ -17,7 +17,8 @@ const buildEndpointUrl = (baseUrl: string): string => {
   const normalizedBase = baseUrl.replace(/\/$/, "");
   return `${normalizedBase}/webdevtoken.v1.WebDevService/SendNotification`;
 };
-  }
+
+const validatePayload = (input: NotificationPayload): NotificationPayload => {
   if (!isNonEmptyString(input.content)) {
     throw new TRPCError({
       code: "BAD_REQUEST",
