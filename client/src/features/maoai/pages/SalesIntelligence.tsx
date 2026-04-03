@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import type { Lead, ValueRating, DecisionMaker as DMType } from "../types";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { MAOAI_ROUTES } from "../constants";
 import {
   Target, Shield, Eye, Brain, Crosshair, Swords,
-  ChevronDown, ChevronUp, Plus, Trash2, Edit3, Check, X,
+  ChevronDown, ChevronUp, ChevronLeft, Plus, Trash2, Edit3, Check, X,
   Building2, Briefcase, AlertTriangle, TrendingUp, Heart,
   Zap, Lock, Clock, ArrowRight, Users, FileText,
   MessageSquare, Search, Filter, Loader2
@@ -54,7 +56,7 @@ function PaymentRiskBadge({ risk }: { risk: string }) {
 export default function EnhancedSalesPage() {
   const { t } = useTranslation();
   const sales = t("maoai.sales", { returnObjects: true }) as any;
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth({ redirectOnUnauthenticated: true, redirectPath: MAOAI_ROUTES.LOGIN });
   const [activeTab, setActiveTab] = useState<"dashboard" | "leads" | "outreach" | "ai">("dashboard");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [detailView, setDetailView] = useState<"profile" | "powermap" | "painchain" | "irontriangle" | "competitors" | "intel" | "ltc">("profile");
@@ -891,8 +893,4 @@ function AIAssistantView() {
   return <div className="text-center py-20 text-white/40">AI Assistant - use existing MaoAI Sales AI assistant</div>;
 }
 
-// Import useAuth (needed for the component)
-import { useAuth } from "@/_core/hooks/useAuth";
 
-// ChevronLeft icon import (needed for back button)
-import { ChevronLeft } from "lucide-react";
