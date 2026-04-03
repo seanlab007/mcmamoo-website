@@ -2,9 +2,14 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap, LayoutDashboard } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { MAOAI_ROUTES } from "@/features/maoai";
+
+// 猫眼内容平台跳转地址（本地:3001，云端: mcmamoo.com/content）
+const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
+  ? "/content"
+  : "http://localhost:3001/content";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -19,14 +24,13 @@ export default function Navbar() {
 
   const navLinksRow1 = [
     { name: "MaoAI", href: MAOAI_ROUTES.CHAT },
-    { name: "猫眼内容平台", href: "/media-matrix-system.html" },
+    { name: "猫眼内容平台", href: CONTENT_PLATFORM_URL, external: true },
     { name: "Whale Pictures", href: "/whale-pictures" },
     { name: "猫眼工业", href: "/mao-industry" },
     { name: "IP Licensing", href: "/ip-licensing" },
   ];
 
   const navLinksRow2 = [
-    { name: "猫眼内容平台", href: "/content" },
     { name: "小龙虾 AI", href: "/openclaw" },
     { name: "毛智库", href: "/mao-think-tank" },
   ];
@@ -71,16 +75,31 @@ export default function Navbar() {
 
               <div className="flex items-center gap-12 flex-1">
                 {navLinksRow1.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      "text-[0.75rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
-                      location === link.href ? "text-[#C9A84C]" : "text-white/60"
-                    )}
-                  >
-                    {link.name}
-                  </Link>
+                  link.external ? (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "flex items-center gap-1 text-[0.75rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
+                        "text-white/60"
+                      )}
+                    >
+                      {link.name}
+                    </a>
+                  ) : (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "text-[0.75rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
+                        location === link.href ? "text-[#C9A84C]" : "text-white/60"
+                      )}
+                    >
+                      {link.name}
+                    </Link>
+                  )
                 ))}
               </div>
             </div>
@@ -126,13 +145,15 @@ export default function Navbar() {
                   {link.name}
                 </Link>
               ))}
-              <Link
-                href="/platform"
+              <a
+                href={CONTENT_PLATFORM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 px-3 py-1 border border-[#C9A84C]/30 bg-[#C9A84C]/5 text-[#C9A84C] text-[0.65rem] font-bold tracking-[0.2em] uppercase hover:bg-[#C9A84C]/10 transition-all whitespace-nowrap flex-shrink-0"
               >
-                <Zap size={10} className="animate-pulse" />
-                Platform
-              </Link>
+                <LayoutDashboard size={10} />
+                内容平台
+              </a>
             </div>
           </div>
         </div>
@@ -157,14 +178,27 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 top-[72px] bg-[#0A0A0A] z-40 flex flex-col p-8 gap-6 overflow-y-auto">
           {[...navLinksRow1, ...navLinksRow2, ...rightLinks].map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-white/70 text-lg font-medium tracking-widest hover:text-[#C9A84C]"
-            >
-              {link.name}
-            </Link>
+            link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white/70 text-lg font-medium tracking-widest hover:text-[#C9A84C]"
+              >
+                {link.name}
+              </a>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white/70 text-lg font-medium tracking-widest hover:text-[#C9A84C]"
+              >
+                {link.name}
+              </Link>
+            )
           ))}
           <Button
             asChild

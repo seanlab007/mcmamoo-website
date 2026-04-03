@@ -22,7 +22,7 @@ import WechatFloat from "./components/WechatFloat";
 import IPLicensing from "./pages/IPLicensing";
 import Pricing from "./pages/Pricing";
 import Press from "./pages/Press";
-// MaoAI Feature — all pages and routes from the unified feature folder
+// MaoAI Feature
 import {
   MaoAIChat,
   MaoAILogin,
@@ -38,53 +38,70 @@ import AdminLogs from "./pages/AdminLogs";
 import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
-import ContentDashboard from "./pages/ContentDashboard";
-import AdminContentJobs from "./pages/AdminContentJobs";
-import AutoClip from "./pages/AutoClip";
-// AutoClip 完整功能（本地最新版本，整合 autoclip 所有页面）
-import AutoClipEntry from "./features/autoclip/AutoClipEntry";
 import MaoIndustry from "./components/sections/MaoIndustry";
+
+// 猫眼内容平台跳转地址（本地:3001，云端: mcmamoo.com/content）
+const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
+  ? "/content"
+  : "http://localhost:3001/content";
 
 function Router() {
   return (
     <Switch>
+      {/* 官网首页 */}
       <Route path={"/"} component={Home} />
+      
+      {/* 案例页面 */}
       <Route path={"/cases/xietaitai"} component={CaseXieTaitai} />
       <Route path={"/cases/xiaoxiandun"} component={CaseXiaoxiandun} />
       <Route path={"/cases/jiangzhong"} component={CaseJiangzhong} />
       <Route path={"/cases/xiaoguan"} component={CaseXiaoguan} />
       <Route path={"/cases/pangge"} component={CasePangge} />
       
-      {/* 旗下子公司路由 */}
+      {/* 旗下子公司 */}
       <Route path={"/mao-think-tank"} component={MaoThinkTank} />
-      <Route path={"/maothink"} component={MaoThinkTank} /> {/* 兼容旧路由 */}
+      <Route path={"/maothink"} component={MaoThinkTank} />
       <Route path={"/whale-pictures"} component={WhalePictures} />
       <Route path={"/mao-industry"} component={MaoIndustry} />
-
+      
+      {/* 管理后台（部分） */}
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />
-      <Route path={"/admin/ai-nodes" } component={AdminAiNodes} />
+      <Route path={"/admin/ai-nodes"} component={AdminAiNodes} />
       <Route path={"/platform"} component={Platform} />
       <Route path={"/chat"} component={Chat} />
       <Route path={"/notes"} component={Notes} />
       <Route path={"/ip-licensing"} component={IPLicensing} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/press"} component={Press} />
-      <Route path={"/mao-ai"} component={MaoAIChat} />         {/* legacy alias → /maoai */}
+      <Route path={"/openclaw"} component={OpenClaw} />
+      <Route path={"/millennium-clock"} component={MillenniumClock} />
+      
+      {/* MaoAI */}
+      <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={MAOAI_ROUTES.CHAT} component={MaoAIChat} />
       <Route path={MAOAI_ROUTES.LOGIN} component={MaoAILogin} />
-      <Route path={"/mao-ai-pricing"} component={MaoAIPricing} /> {/* legacy alias → /maoai/pricing */}
+      <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       <Route path={MAOAI_ROUTES.PRICING} component={MaoAIPricing} />
       <Route path={MAOAI_ROUTES.SALES} component={MaoAISales} />
       
-      {/* 猫眼增长引擎 Mc&Mamoo Growth Engine内容平台 */}
-      <Route path={"/content"} component={ContentDashboard} />
-      <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
-      
-      {/* 其他功能页面 */}
-      <Route path={"/openclaw"} component={OpenClaw} />
-      <Route path={"/millennium-clock"} component={MillenniumClock} />
-      <Route path={"/autoclip"} component={AutoClipEntry} />
+      {/* 猫眼内容平台跳转（已拆分到独立项目） */}
+      <Route path={"/content"}>
+        {() => {
+          if (typeof window !== "undefined") {
+            window.location.href = CONTENT_PLATFORM_URL;
+          }
+          return null;
+        }}
+      </Route>
+      <Route path={"/autoclip"}>
+        {() => {
+          if (typeof window !== "undefined") {
+            window.location.href = CONTENT_PLATFORM_URL.replace("/content", "/autoclip");
+          }
+          return null;
+        }}
+      </Route>
       
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
