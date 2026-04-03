@@ -20,7 +20,7 @@ const API_BASE = "/api/v1/video";
 
 type Platform = "youtube" | "bilibili" | "douyin" | "local";
 type JobStatus = "pending" | "running" | "completed" | "error";
-type Tool = "moviepy" | "caption" | "translate" | "tts" | "short" | "full";
+type Tool = "moviepy" | "caption" | "translate" | "tts" | "short" | "full" | "download";
 
 interface VideoJob {
   id: string;

@@ -62,12 +62,13 @@ export default function EnhancedSalesPage() {
   const [detailView, setDetailView] = useState<"profile" | "powermap" | "painchain" | "irontriangle" | "competitors" | "intel" | "ltc">("profile");
   const [filterRating, setFilterRating] = useState<ValueRating | "">("");
 
-  const { data: leads = [], isLoading: leadsLoading } = trpc.salesIntel.listEnhancedLeads.useQuery(
+  const { data: rawLeads = [], isLoading: leadsLoading } = trpc.salesIntel.listEnhancedLeads.useQuery(
     filterRating ? { valueRating: filterRating } : undefined
   );
+  const leads = rawLeads as unknown as Lead[];
   const { data: stats } = trpc.salesIntel.getHuaweiStats.useQuery();
 
-  const selectedLead = leads.find((l: Lead) => l.id === selectedLeadId);
+  const selectedLead = leads.find((l) => l.id === selectedLeadId);
 
   if (loading) {
     return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center"><div className="text-[#C9A84C]">{sales.loading}</div></div>;
@@ -431,6 +432,7 @@ function PowerMapView({ leadId }: { leadId: string }) {
   const { t } = useTranslation();
   const sales = t("maoai.sales", { returnObjects: true }) as any;
   const { data: makers = [], refetch } = trpc.salesIntel.listDecisionMakers.useQuery({ leadId });
+  const dms = makers as unknown as DMType[];
   const createMutation = trpc.salesIntel.createDecisionMaker.useMutation({ onSuccess: () => refetch() });
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: "", title: "", department: "", businessPain: "", personalGoal: "", fearPoint: "", communicationStyle: "data_driven" as const, icebreaker: "", roles: [] as string[] });
@@ -502,7 +504,7 @@ function PowerMapView({ leadId }: { leadId: string }) {
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        {makers.map((dm: DMType) => (
+        {dms.map((dm) => (
           <div key={dm.id} className="bg-white/5 border border-white/10 p-4 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -551,13 +553,14 @@ function PowerMapView({ leadId }: { leadId: string }) {
 
 function PainChainView({ leadId }: { leadId: string }) {
   const { data: makers = [] } = trpc.salesIntel.listDecisionMakers.useQuery({ leadId });
+  const dms = makers as unknown as DMType[];
 
   return (
     <div className="space-y-4">
       <p className="text-white/40 text-sm">Huawei Pain Chain analysis - whose pain drives the decision</p>
       {makers.length === 0 && <p className="text-white/20 text-center py-8">Add decision makers in the Power Map tab first</p>}
       <div className="space-y-3">
-        {makers.map((dm: DMType) => (
+        {dms.map((dm) => (
           <div key={dm.id} className="bg-white/5 border border-white/10 p-4 rounded-lg">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 text-sm font-bold">{dm.name[0]}</div>
@@ -599,6 +602,7 @@ function IronTriangleView({ leadId }: { leadId: string }) {
   const { data: reviews = [], refetch } = trpc.salesIntel.listIronTriangleReviews.useQuery({ leadId });
   const { data: makers = [] } = trpc.salesIntel.listDecisionMakers.useQuery({ leadId });
   const createMutation = trpc.salesIntel.createIronTriangleReview.useMutation({ onSuccess: () => refetch() });
+  const dms = makers as unknown as DMType[];
 
   const [form, setForm] = useState({ arCoverage: "", arNextStep: "", srPainMatch: "", srProposalStatus: "", frDeliveryRisk: "", frPaymentPlan: "", overallActionPlan: "", winProbability: 50 });
 
@@ -616,10 +620,10 @@ function IronTriangleView({ leadId }: { leadId: string }) {
     });
   };
 
-  const arCoverage = makers.filter((m: DMType) => m.arVerified).length;
-  const srCoverage = makers.filter((m: DMType) => m.srVerified).length;
-  const frCoverage = makers.filter((m: DMType) => m.frVerified).length;
-  const totalDm = makers.length || 1;
+  const arCoverage = dms.filter((m) => m.arVerified).length;
+  const srCoverage = dms.filter((m) => m.srVerified).length;
+  const frCoverage = dms.filter((m) => m.frVerified).length;
+  const totalDm = dms.length || 1;
 
   return (
     <div className="space-y-6">

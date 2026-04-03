@@ -354,7 +354,7 @@ export const TOOL_DEFINITIONS = [
 
 // ─── 合并 OpenClaw Skills 到工具列表 ──────────────────────────────────────────
 // OpenClaw Skills 对普通用户和管理员都开放（openclaw_shell 除外，在 executor 中鉴权）
-(TOOL_DEFINITIONS as any[]).push(...(OPENCLAW_TOOL_DEFINITIONS as any[]));
+(TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLAW_TOOL_DEFINITIONS as unknown as any[]));
 
 // Admin-only tools (不暴露给普通用户)
 export const ADMIN_TOOL_DEFINITIONS = [
@@ -1019,12 +1019,13 @@ async function toolClaudeCode(
     }
     
     if (result && typeof result === "object") {
+      const res = result as Record<string, unknown>;
       // 处理运行命令的结果
       if ("success" in result && "output" in result) {
         return {
-          success: result.success as boolean,
-          output: (result.output as string) || "",
-          error: (result.error as string) || undefined,
+          success: res.success as boolean,
+          output: (res.output as string) || "",
+          error: ("error" in res ? (res.error as string) : undefined) || undefined,
           metadata: { tool: toolName }
         };
       }
