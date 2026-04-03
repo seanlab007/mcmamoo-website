@@ -53,6 +53,8 @@ export const ZH_MAOAI_TRANSLATION = {
       ai: "AI 助手"
     },
     loading: "加载中...",
+    intelTitle: "MaoAI 作战情报系统",
+    intelSubtitle: "华为 LTC/MCR 降维 · 个人版作战体系",
     statuses: {
       new: "新线索",
       contacted: "已联系",
@@ -87,6 +89,58 @@ export const ZH_MAOAI_TRANSLATION = {
       insight: "AI 洞察",
       actions: "操作"
     },
+    focusLeads: "聚焦客户 (A/B)",
+    intelStats: {
+      focusLeads: "聚焦客户",
+      strategic: "战略客户",
+      key: "重要客户",
+      totalPipeline: "管道总值",
+      highRisk: "高风险",
+      total: "全部"
+    },
+    ltcPipelineTitle: "LTC 管道 (线索到回款)",
+    back: "返回列表",
+    detailTabs: {
+      profile: "客户档案",
+      powerMap: "决策链",
+      painChain: "痛苦链",
+      ironTriangle: "铁三角",
+      competitors: "竞品对比",
+      intel: "情报收集",
+      ltc: "LTC周循环"
+    },
+    profile: {
+      basic: "基础画像",
+      company: "公司",
+      industry: "行业",
+      title: "职位",
+      email: "邮箱",
+      valueRating: "价值评级",
+      estimatedValue: "预估金额",
+      competitive: "竞争情报",
+      competitor: "主要对手",
+      competitorAdv: "竞品优势",
+      ourAdv: "我方优势",
+      risk: "风险预警",
+      paymentRisk: "回款风险",
+      decisionCycle: "决策周期",
+      needPrepayment: "需预付款",
+      decisionCycleLabels: {
+        "1_week": "1周内",
+        "2_weeks": "2周内",
+        "1_month": "1个月内",
+        "1_quarter": "1季度内",
+        "long": "长期",
+        "unknown": "未知"
+      }
+    },
+    powerMap: {
+      desc: "华为五角色决策链分析 - 谁拍板？谁的痛点驱动决策？",
+      addDecisionMaker: "添加决策人"
+    },
+    competitorView: {
+      desc: "竞品对比表 - 用于差异化提案"
+    },
     templatesTitle: "邮件模板",
     templates: {
       cold: "冷接触邮件",
@@ -105,9 +159,9 @@ export const ZH_MAOAI_TRANSLATION = {
     body: "正文",
     bodyPlaceholder: "输入邮件内容...",
     aiSuggestions: "AI 优化建议:",
-    suggestionPersonalized: "✓ 个性化程度高",
-    suggestionValue: "✓ 价值主张清晰",
-    suggestionCta: "⚠ 建议添加 CTA",
+    suggestionPersonalized: "个性化程度高",
+    suggestionValue: "价值主张清晰",
+    suggestionCta: "建议添加 CTA",
     sendEmail: "发送邮件",
     assistantTitle: "MaoAI 销售助手",
     assistantGreeting: "你好！我是 MaoAI 销售助手。我可以帮你：\n1. 分析销售线索\n2. 生成外联邮件\n3. 提供销售建议\n4. 预测成交概率\n\n有什么可以帮你的吗？",
@@ -367,6 +421,8 @@ export const EN_MAOAI_TRANSLATION = {
       ai: "AI Assistant"
     },
     loading: "Loading...",
+    intelTitle: "MaoAI Battle Intelligence",
+    intelSubtitle: "Huawei LTC/MCR Adapted · Personal Combat System",
     statuses: {
       new: "New",
       contacted: "Contacted",
@@ -401,6 +457,58 @@ export const EN_MAOAI_TRANSLATION = {
       insight: "AI insights",
       actions: "Actions"
     },
+    focusLeads: "Focus Leads (A/B)",
+    intelStats: {
+      focusLeads: "Focus Leads",
+      strategic: "Strategic",
+      key: "Key Account",
+      totalPipeline: "Pipeline Value",
+      highRisk: "High Risk",
+      total: "Total"
+    },
+    ltcPipelineTitle: "LTC Pipeline (Lead to Cash)",
+    back: "Back to list",
+    detailTabs: {
+      profile: "Customer Profile",
+      powerMap: "Power Map",
+      painChain: "Pain Chain",
+      ironTriangle: "Iron Triangle",
+      competitors: "Competitors",
+      intel: "Intel",
+      ltc: "LTC Weekly"
+    },
+    profile: {
+      basic: "Basic Profile",
+      company: "Company",
+      industry: "Industry",
+      title: "Title",
+      email: "Email",
+      valueRating: "Value Rating",
+      estimatedValue: "Estimated Value",
+      competitive: "Competitive Intel",
+      competitor: "Main Competitor",
+      competitorAdv: "Competitor Strength",
+      ourAdv: "Our Advantage",
+      risk: "Risk Warning",
+      paymentRisk: "Payment Risk",
+      decisionCycle: "Decision Cycle",
+      needPrepayment: "Prepayment Required",
+      decisionCycleLabels: {
+        "1_week": "1 week",
+        "2_weeks": "2 weeks",
+        "1_month": "1 month",
+        "1_quarter": "1 quarter",
+        "long": "Long-term",
+        "unknown": "Unknown"
+      }
+    },
+    powerMap: {
+      desc: "Huawei 5-role decision chain - Who decides? Whose pain drives the decision?",
+      addDecisionMaker: "Add Decision Maker"
+    },
+    competitorView: {
+      desc: "Competitor comparison matrix for differentiated proposals"
+    },
     templatesTitle: "Email templates",
     templates: {
       cold: "Cold email",
@@ -419,9 +527,9 @@ export const EN_MAOAI_TRANSLATION = {
     body: "Body",
     bodyPlaceholder: "Type your email...",
     aiSuggestions: "AI suggestions:",
-    suggestionPersonalized: "✓ Strong personalization",
-    suggestionValue: "✓ Clear value proposition",
-    suggestionCta: "⚠ Consider adding a CTA",
+    suggestionPersonalized: "Strong personalization",
+    suggestionValue: "Clear value proposition",
+    suggestionCta: "Consider adding a CTA",
     sendEmail: "Send email",
     assistantTitle: "MaoAI Sales Assistant",
     assistantGreeting: "Hi! I'm your MaoAI Sales Assistant. I can help you:\n1. Analyze sales leads\n2. Draft outreach emails\n3. Suggest next actions\n4. Estimate close probability\n\nWhat would you like to do?",
