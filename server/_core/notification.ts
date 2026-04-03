@@ -14,21 +14,9 @@ const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
 const buildEndpointUrl = (baseUrl: string): string => {
-  const normalizedBase = baseUrl.endsWith("/")
-    ? baseUrl
-    : `${baseUrl}/`;
-  return new URL(
-    "webdevtoken.v1.WebDevService/SendNotification",
-    normalizedBase
-  ).toString();
+  const normalizedBase = baseUrl.replace(/\/$/, "");
+  return `${normalizedBase}/webdevtoken.v1.WebDevService/SendNotification`;
 };
-
-const validatePayload = (input: NotificationPayload): NotificationPayload => {
-  if (!isNonEmptyString(input.title)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Notification title is required.",
-    });
   }
   if (!isNonEmptyString(input.content)) {
     throw new TRPCError({
@@ -88,10 +76,8 @@ export async function notifyOwner(
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        accept: "application/json",
-        authorization: `Bearer ${ENV.forgeApiKey}`,
         "content-type": "application/json",
-        "connect-protocol-version": "1",
+        authorization: `Bearer ${ENV.forgeApiKey}`,
       },
       body: JSON.stringify({ title, content }),
     });
