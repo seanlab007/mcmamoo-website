@@ -20,6 +20,8 @@ export const MAOAI_ROUTES = {
   PRICING: "/maoai/pricing",
   /** 销售 CRM 功能页 */
   SALES: "/maoai/sales",
+  /** 客服功能页 */
+  CUSTOMER_SERVICE: "/maoai/customer-service",
 } as const;
 
 export type MaoAIRoute = (typeof MAOAI_ROUTES)[keyof typeof MAOAI_ROUTES];
@@ -87,6 +89,11 @@ export const MAOAI_TOOL_DISPLAY: Record<
   read_url: { label: "读取网页", emoji: "🌐", color: "text-cyan-400" },
   run_shell: { label: "执行命令", emoji: "💻", color: "text-orange-400" },
   deep_research: { label: "深度研究", emoji: "🔬", color: "text-purple-400" },
+  midjourney_imagine: { label: "Midjourney 绘图", emoji: "🎨", color: "text-fuchsia-400" },
+  midjourney_status: { label: "Midjourney 状态", emoji: "🖼️", color: "text-fuchsia-300" },
+  runway_text_to_video: { label: "Runway 视频生成", emoji: "🎬", color: "text-violet-400" },
+  runway_image_to_video: { label: "Runway 图片转视频", emoji: "🎥", color: "text-violet-300" },
+  runway_status: { label: "Runway 状态", emoji: "📹", color: "text-violet-200" },
 };
 
 // ─── Subscription Tier Labels ─────────────────────────────────────────────────

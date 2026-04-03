@@ -29,6 +29,7 @@ import {
   MaoAIPricing,
   MaoAISales,
   MaoAIResearchDigest,
+  MaoAICustomerService,
   MAOAI_ROUTES,
 } from "./features/maoai";
 import OpenClaw from "./pages/OpenClaw";
@@ -78,6 +79,7 @@ function Router() {
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} /> {/* legacy alias → /maoai/pricing */}
       <Route path={MAOAI_ROUTES.PRICING} component={MaoAIPricing} />
       <Route path={MAOAI_ROUTES.SALES} component={MaoAISales} />
+      <Route path={MAOAI_ROUTES.CUSTOMER_SERVICE} component={MaoAICustomerService} />
       
       {/* 猫眼增长引擎 Mc&Mamoo Growth Engine内容平台 */}
       <Route path={"/content"} component={ContentDashboard} />

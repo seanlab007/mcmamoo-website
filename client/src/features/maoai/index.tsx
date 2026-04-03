@@ -5,7 +5,7 @@
  * 内部实现调整时只需修改 features/maoai/ 目录。
  *
  * Usage:
- *   import { MaoAIChat, MaoAILogin, MaoAIPricing, MaoAISales, MAOAI_ROUTES }
+ *   import { MaoAIChat, MaoAILogin, MaoAIPricing, MaoAISales, MaoAICustomerService, MAOAI_ROUTES }
  *     from "@/features/maoai";
  */
 
@@ -15,6 +15,7 @@ export { default as MaoAILogin } from "./pages/Login";
 export { default as MaoAIPricing } from "./pages/Pricing";
 export { default as MaoAISales } from "./pages/MaoAISales";
 export { default as MaoAIResearchDigest } from "./pages/ResearchDigest";
+export { default as MaoAICustomerService } from "./pages/CustomerService";
 
 // Components
 export { AgentModeSelector } from "./components/AgentModeSelector";
