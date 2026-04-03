@@ -41,6 +41,8 @@ import AdminRouting from "./pages/AdminRouting";
 import ContentDashboard from "./pages/ContentDashboard";
 import AdminContentJobs from "./pages/AdminContentJobs";
 import AutoClip from "./pages/AutoClip";
+// AutoClip 完整功能（本地最新版本，整合 autoclip 所有页面）
+import AutoClipEntry from "./features/autoclip/AutoClipEntry";
 import MaoIndustry from "./components/sections/MaoIndustry";
 
 function Router() {
@@ -82,7 +84,7 @@ function Router() {
       {/* 其他功能页面 */}
       <Route path={"/openclaw"} component={OpenClaw} />
       <Route path={"/millennium-clock"} component={MillenniumClock} />
-      <Route path={"/autoclip"} component={AutoClip} />
+      <Route path={"/autoclip"} component={AutoClipEntry} />
       
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
