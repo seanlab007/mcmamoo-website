@@ -122,7 +122,7 @@ function needsSearch(text: string): boolean {
  * apiModel: 实际传给 API 的模型名
  */
 interface ModelConfig {
-  provider: "zhipu" | "deepseek" | "groq";
+  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "google-ai-studio";
   apiModel: string;
   label: string;
   maxTokens: number;
@@ -141,6 +141,14 @@ const MODEL_MAP: Record<string, ModelConfig> = {
   "glm-4-plus":        { provider: "zhipu", apiModel: "glm-4-plus",   label: "GLM-4 Plus",   maxTokens: 4096 },
   "glm-4-air":         { provider: "zhipu", apiModel: "glm-4-air",    label: "GLM-4 Air",    maxTokens: 4096 },
   "glm-z1-flash":      { provider: "zhipu", apiModel: "glm-z1-flash", label: "GLM-Z1 Flash", maxTokens: 4096 },
+  // ── Gemini ───────────────────────────────────────────────────────────────
+  "gemini-2.5-flash":  { provider: "gemini", apiModel: "gemini-2.5-flash-preview-04-17", label: "Gemini 2.5 Flash", maxTokens: 8192 },
+  "gemini-2.5-pro":    { provider: "gemini", apiModel: "gemini-2.5-pro-preview-03-25",   label: "Gemini 2.5 Pro",   maxTokens: 8192 },
+  // ── Google AI Studio (Gemma 4) ───────────────────────────────────────────
+  "gemma-4-e2b-it":    { provider: "google-ai-studio", apiModel: "gemma-4-e2b-it",   label: "Gemma 4 E2B", maxTokens: 128000 },
+  "gemma-4-e4b-it":    { provider: "google-ai-studio", apiModel: "gemma-4-e4b-it",   label: "Gemma 4 E4B", maxTokens: 128000 },
+  "gemma-4-26b-it":    { provider: "google-ai-studio", apiModel: "gemma-4-26b-it",   label: "Gemma 4 26B", maxTokens: 256000 },
+  "gemma-4-31b-it":    { provider: "google-ai-studio", apiModel: "gemma-4-31b-it",   label: "Gemma 4 31B", maxTokens: 256000 },
 };
 
 const DEFAULT_MODEL = "deepseek-chat";
@@ -150,6 +158,8 @@ const DEFAULT_MODEL = "deepseek-chat";
 const ZHIPU_BASE    = "https://open.bigmodel.cn/api/paas/v4";
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 const GROQ_BASE     = "https://api.groq.com/openai/v1";
+const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1beta/openai";
+const GOOGLE_AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
 function getProviderConfig(provider: ModelConfig["provider"]): { base: string; key: string } {
   switch (provider) {
@@ -157,6 +167,10 @@ function getProviderConfig(provider: ModelConfig["provider"]): { base: string; k
       return { base: DEEPSEEK_BASE, key: process.env.DEEPSEEK_API_KEY || "" };
     case "groq":
       return { base: GROQ_BASE,     key: process.env.GROQ_API_KEY || "" };
+    case "gemini":
+      return { base: GEMINI_BASE,   key: process.env.GEMINI_API_KEY || "" };
+    case "google-ai-studio":
+      return { base: GOOGLE_AI_STUDIO_BASE, key: process.env.GOOGLE_AI_STUDIO_API_KEY || "" };
     case "zhipu":
     default:
       return { base: ZHIPU_BASE,    key: process.env.ZHIPU_API_KEY || "" };
