@@ -1,24 +1,15 @@
-/**
- * MCP Server 统一配置文件
- * 用于 MaoAI (mcmamoo-website) 和 Accomplish 共享
- *
- * 使用方式：
- * 1. MaoAI: 参考 mcp-config.json 格式
- * 2. Accomplish Web: 在 Connectors 设置中添加 MCP 服务器 URL
- */
-
 {
   "$schema": "https://modelcontextprotocol.io/schema.json",
+  "_comment": "MCP Server 统一配置 - 用于 MaoAI (mcmamoo-website) 和外部 MCP 客户端共享",
   "mcp_servers": {
-    // ========== 核心工具 ==========
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/daiyan/WorkBuddy"],
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/mac/Desktop/mcmamoo-website"],
       "description": "文件系统操作 - 读写、列表、搜索文件"
     },
     "git": {
       "command": "uvx",
-      "args": ["mcp-server-git", "--repository", "/Users/daiyan/WorkBuddy"],
+      "args": ["mcp-server-git", "--repository", "/Users/mac/Desktop/mcmamoo-website"],
       "description": "Git 操作 - status, commit, branch, diff"
     },
     "fetch": {
@@ -31,27 +22,16 @@
       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
       "description": "顺序思考 - 复杂推理链"
     },
-
-    // ========== 开发工具 ==========
     "puppeteer": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
       "description": "浏览器自动化 - 截图、表单、点击"
     },
-    "desktop-commander": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-desktop-commander"],
-      "description": "桌面命令执行"
-    },
-
-    // ========== 数据库 ==========
     "sqlite": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/tmp/mcp.db"],
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/tmp/maoai-mcp.db"],
       "description": "SQLite 数据库操作"
     },
-
-    // ========== 搜索 ==========
     "brave-search": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-brave-search"],
@@ -60,75 +40,51 @@
       },
       "description": "Brave 搜索引擎"
     },
-
-    // ========== Accomplish 特有工具 (桌面版) ==========
-    "accomplish-browser": {
-      "command": "npx",
-      "args": ["tsx", "/Users/daiyan/Desktop/accomplish/packages/agent-core/mcp-tools/dev-browser-mcp/src/index.ts"],
-      "description": "Accomplish 开发浏览器控制 - Playwright自动化"
-    },
-    "accomplish-ask-user": {
-      "command": "npx",
-      "args": ["tsx", "/Users/daiyan/Desktop/accomplish/packages/agent-core/mcp-tools/ask-user-question/src/index.ts"],
-      "description": "Accomplish 用户问答 - 任务中向用户提问"
-    },
-    "accomplish-report-thought": {
-      "command": "npx",
-      "args": ["tsx", "/Users/daiyan/Desktop/accomplish/packages/agent-core/mcp-tools/report-thought/src/index.ts"],
-      "description": "Accomplish 思考报告 - 记录AI推理过程"
-    },
-    "accomplish-report-checkpoint": {
-      "command": "npx",
-      "args": ["tsx", "/Users/daiyan/Desktop/accomplish/packages/agent-core/mcp-tools/report-checkpoint/src/index.ts"],
-      "description": "Accomplish 检查点报告 - 任务进度记录"
+    "opencli": {
+      "command": "node",
+      "args": ["/Users/mac/Desktop/opencli/dist/main.js", "mcp"],
+      "description": "OpenCLI MCP 服务 - 将任意网站/Electron App 变成 CLI 工具",
+      "env": {
+        "OPENCLI_MCP_PORT": "19825"
+      }
     }
   },
-
-  // ========== 工具映射表 ==========
   "tool_mappings": {
-    // 文件操作
-    "FileReadTool": "filesystem/read",
-    "FileWriteTool": "filesystem/write",
-    "FileEditTool": "filesystem/edit",
-    "GlobTool": "filesystem/glob",
-    "GrepTool": "filesystem/grep",
+    "FileReadTool": "filesystem/read_file",
+    "FileWriteTool": "filesystem/write_file",
+    "FileEditTool": "filesystem/edit_file",
+    "GlobTool": "filesystem/list_directory",
+    "GrepTool": "filesystem/search_files",
     "BashTool": "filesystem/bash",
-
-    // 搜索
-    "WebSearchTool": "brave-search/search",
+    "WebSearchTool": "brave-search/brave_web_search",
     "WebFetchTool": "fetch/fetch",
-
-    // Git
-    "GitStatusTool": "git/status",
-    "GitCommitTool": "git/commit",
-    "GitBranchTool": "git/branch",
-
-    // 数据库
-    "SQLiteQueryTool": "sqlite/query",
-
-    // Accomplish 特有
-    "BrowserControlTool": "accomplish-browser/*",
-    "AskUserTool": "accomplish-ask-user/*",
-    "ReportThoughtTool": "accomplish-report-thought/*"
+    "GitStatusTool": "git/git_status",
+    "GitCommitTool": "git/git_commit",
+    "GitBranchTool": "git/git_branch",
+    "SQLiteQueryTool": "sqlite/read_query",
+    "OpencliRunTool": "opencli/opencli_run",
+    "OpencliCatalogTool": "opencli/opencli_catalog"
   },
-
-  // ========== 使用说明 ==========
   "usage_guide": {
-    "for_mcmamoo_website": {
-      "description": "在 mcmamoo-website 中使用此配置",
-      "method": "将配置添加到 mcp-config.json",
-      "note": "本地路径需要根据实际安装位置调整"
+    "maoai_as_mcp_server": {
+      "description": "MaoAI 作为 MCP 服务器，暴露 AI 工具给外部 AI Agent 调用",
+      "endpoint": "http://localhost:3000/api/mcp",
+      "protocol": "HTTP SSE (MCP 2025-03-26)",
+      "tools_exposed": [
+        "web_search", "run_code", "github_push", "github_read", "read_url",
+        "opencli_run", "opencli_catalog", "openclaw_weather", "openclaw_github",
+        "openclaw_summarize", "openclaw_memory", "openclaw_canvas"
+      ]
     },
-    "for_accomplish": {
-      "description": "在 Accomplish Web 应用中添加 MCP 服务器",
-      "method": "Settings > Connectors > Add MCP Server URL",
-      "servers": [
-        "http://localhost:3001  (filesystem)",
-        "http://localhost:3002  (git)",
-        "http://localhost:3003  (fetch)",
-        "http://localhost:3004  (puppeteer)"
-      ],
-      "note": "需要先启动对应的 MCP 服务器，或使用 npx 直接运行"
+    "maoai_as_mcp_client": {
+      "description": "MaoAI 作为 MCP 客户端，连接外部 MCP 服务器获取工具",
+      "method": "在环境变量中配置 OPENCLI_MCP_URL 等，server/opencli-tools.ts 自动连接",
+      "env_vars": {
+        "OPENCLI_MCP_ENABLED": "1 (默认开启)",
+        "OPENCLI_MCP_URL": "http://127.0.0.1:19825/mcp (OpenCLI daemon)",
+        "OPENCLI_ROOT": "/Users/mac/Desktop/opencli",
+        "OPENCLI_GATEWAY_URL": "http://localhost:18789 (OpenClaw gateway)"
+      }
     }
   }
 }

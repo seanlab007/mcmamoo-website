@@ -975,6 +975,18 @@ aiStreamRouter.get("/node/skills", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/ai/skill/list — 返回所有可用 AI 技能（内容平台前端使用）
+aiStreamRouter.get("/skill/list", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const skills = await getAllNodeSkills();
+    res.json({ skills });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // PATCH /api/ai/node/skills/toggle  (admin only, enable/disable a skill)
 aiStreamRouter.patch("/node/skills/toggle", async (req: Request, res: Response) => {
   const admin = await getAdminUser(req);

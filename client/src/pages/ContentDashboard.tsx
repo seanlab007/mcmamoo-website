@@ -9,7 +9,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
-import { MAOAI_ROUTES } from "@/features/maoai";
 import {
   Zap, Crown, Cat, Loader2, RefreshCw, Play,
   CheckCircle2, XCircle, Clock, AlertCircle,
@@ -161,9 +160,9 @@ export default function ContentDashboard() {
         <div className="text-center">
           <Cat className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
           <p className="text-white/60 mb-4">请先登录</p>
-          <Link href={MAOAI_ROUTES.CHAT}>
+          <Link href="/content/login">
             <button className="px-6 py-2 bg-[#C9A84C] text-black font-semibold rounded-lg text-sm hover:bg-[#D4B55A] transition-colors">
-              前往 MaoAI
+              登录进入内容平台
             </button>
           </Link>
         </div>
