@@ -27,7 +27,12 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
+  // SPA catch-all — but let Express API routes handle /api/* first
   app.use("*", async (req, res, next) => {
+    // Don't handle API routes — let Express handle them
+    if (req.originalUrl.startsWith("/api")) {
+      return next();
+    }
     const url = req.originalUrl;
 
     try {

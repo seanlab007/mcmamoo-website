@@ -12,6 +12,7 @@ import aiStreamRouter from "../aiStream";
 import { chatRouter } from "../chat";
 import { notesRouter } from "../notes";
 import { fetchAllDigests } from "../research-digest";
+import { mcpServerRouter } from "../mcp-server";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -48,6 +49,8 @@ async function startServer() {
   app.use("/api/notes", notesRouter);
   // MaoAI Chat API（对话历史 + 联网搜索 + 图片生成）
   app.use("/api/chat", chatRouter);
+  // MaoAI MCP Server — HTTP SSE，让外部 AI Agent 通过 MCP 协议调用 MaoAI 工具
+  app.use("/api/mcp", mcpServerRouter);
   // tRPC API
   app.use(
     "/api/trpc",

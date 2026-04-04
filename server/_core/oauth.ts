@@ -44,7 +44,21 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      res.redirect(302, "/");
+      // 从 state 参数解析目标跳转页面（由前端 getLoginUrl() 编码）
+      let dest = "/";
+      try {
+        const stateData = JSON.parse(atob(state));
+        dest = stateData.dest || "/";
+      } catch {
+        // state 解析失败，使用默认 /
+      }
+
+      // 重定向到目标页面
+      res.setHeader("Content-Type", "text/html");
+      res.end(`<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<script>window.location.href = ${JSON.stringify(dest)};</script>
+<noscript><p>登录成功，正在跳转……</p><a href="${dest}">点击继续</a></noscript>
+</body></html>`);
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });

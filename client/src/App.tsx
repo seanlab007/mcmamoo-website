@@ -41,6 +41,7 @@ import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
 import ContentDashboard from "./pages/ContentDashboard";
+import ContentLogin from "./pages/ContentLogin";
 import AdminContentJobs from "./pages/AdminContentJobs";
 import AutoClip from "./pages/AutoClip";
 import MaoIndustry from "./components/sections/MaoIndustry";
@@ -81,7 +82,8 @@ function Router() {
       <Route path={MAOAI_ROUTES.SALES} component={MaoAISales} />
       <Route path={MAOAI_ROUTES.CUSTOMER_SERVICE} component={MaoAICustomerService} />
       
-      {/* 猫眼增长引擎 Mc&Mamoo Growth Engine内容平台 */}
+      {/* 猫眼增长引擎 Mc&Mamoo Growth Engine 内容平台 */}
+      <Route path={"/content/login"} component={ContentLogin} />
       <Route path={"/content"} component={ContentDashboard} />
       <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
       
