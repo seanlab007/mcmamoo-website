@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Shield, Sparkles, User, ArrowRight, Bot, Cpu, Network, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,12 @@ const BACKEND_URL = MAOAI_BACKEND_URL;
  * MaoAI 独立登录页
  * - 普通用户：Manus OAuth 登录
  * - 管理员：Supabase 邮箱+密码直接登录
+ * - 支持 ?redirect= 参数指定登录后跳转页面
  */
 export default function MaoAILogin() {
   const { t } = useTranslation();
   const login = t("maoai.login", { returnObjects: true }) as any;
+  const [location] = useLocation();
   const [hoveredCard, setHoveredCard] = useState<"user" | "admin" | null>(null);
 
   // Admin email login state
@@ -25,9 +28,12 @@ export default function MaoAILogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
 
+  // 解析 redirect 参数（支持外部来源如内容平台）
+  const params = new URLSearchParams(location.split("?")[1] ?? "");
+  const loginDest = params.get("redirect") ?? MAOAI_ROUTES.CHAT;
+
   const handleUserLogin = () => {
-    sessionStorage.setItem("maoai_login_dest", MAOAI_ROUTES.CHAT);
-    window.location.href = getLoginUrl();
+    window.location.href = getLoginUrl(loginDest);
   };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -56,7 +62,8 @@ export default function MaoAILogin() {
         if (data.sessionToken) {
           localStorage.setItem('maoai_session_token', data.sessionToken);
         }
-        window.location.href = data.redirectTo ?? MAOAI_ROUTES.CHAT;
+        // 优先使用登录页传入的 redirect 参数，否则用 API 返回的
+        window.location.href = loginDest !== MAOAI_ROUTES.CHAT ? loginDest : (data.redirectTo ?? MAOAI_ROUTES.CHAT);
       } else {
         setLoginError(data.error ?? login.invalidCredentials);
       }

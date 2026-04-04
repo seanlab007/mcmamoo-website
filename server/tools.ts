@@ -42,6 +42,10 @@ import {
   executeOpenclawTool,
 } from "./openclaw-skills";
 import {
+  OPENCLI_TOOL_DEFINITIONS,
+  executeOpencliTool,
+} from "./opencli-tools";
+import {
   executeClaudeCodeTool,
 } from "./claude-code";
 
@@ -352,9 +356,10 @@ export const TOOL_DEFINITIONS = [
   }
 ];
 
-// ─── 合并 OpenClaw Skills 到工具列表 ──────────────────────────────────────────
+// ─── 合并 OpenClaw / OpenCLI Tools 到工具列表 ─────────────────────────────────
 // OpenClaw Skills 对普通用户和管理员都开放（openclaw_shell 除外，在 executor 中鉴权）
 (TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLAW_TOOL_DEFINITIONS as unknown as any[]));
+(TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLI_TOOL_DEFINITIONS as unknown as any[]));
 
 // Admin-only tools (不暴露给普通用户)
 export const ADMIN_TOOL_DEFINITIONS = [
@@ -512,7 +517,10 @@ export async function executeTool(
       case "claude_code_run":
         return await toolClaudeCode(toolName, args);
       default:
-        // ─── 路由到 OpenClaw Skills ───────────────────────────────────────
+        // ─── 路由到 OpenCLI / OpenClaw Tools ──────────────────────────────
+        if (toolName.startsWith("opencli_")) {
+          return await executeOpencliTool(toolName, args);
+        }
         if (toolName.startsWith("openclaw_")) {
           return await executeOpenclawTool(toolName, args, { isAdmin });
         }

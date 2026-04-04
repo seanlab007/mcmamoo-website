@@ -217,11 +217,15 @@ export function registerSupabaseAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
+      // 5. 决定跳转目标：优先用请求传入的 redirectTo
+      const finalRedirectTo = (req.body as { redirectTo?: string }).redirectTo
+        ?? (role === "admin" ? "/admin/nodes" : "/maoai");
+
       // 5. 返回登录结果（同时返回 sessionToken 供跨域场景使用）
       res.json({
         success: true,
         role,
-        redirectTo: role === "admin" ? "/admin/nodes" : "/maoai",
+        redirectTo: finalRedirectTo,
         sessionToken,  // 供前端存入 localStorage，用于跨域 Authorization header
       });
     } catch (error) {
