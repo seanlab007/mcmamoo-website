@@ -8,6 +8,7 @@ import { contentPlatformRouter, initScheduler } from "./contentPlatform";
 import { registerOAuthRoutes } from "./_core/oauth";
 import { registerSupabaseAuthRoutes } from "./_core/supabaseAuth";
 import { mcpServerRouter } from "./mcp-server";
+import { notesRouter } from "./notes";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +30,8 @@ async function startServer() {
   app.use("/api/content", contentPlatformRouter);
   // MaoAI MCP Server — 允许外部 AI Agent 通过 MCP 协议调用 MaoAI 工具
   app.use("/api/mcp", mcpServerRouter);
+  // 私密云笔记 API（管理员专属）
+  app.use("/api/notes", notesRouter);
 
   // Serve static files from dist/public in production
   const staticPath =

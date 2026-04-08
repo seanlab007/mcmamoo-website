@@ -7,7 +7,7 @@
  * 普通用户：显示用户运营平台
  */
 import { useState } from "react";
-import { ExternalLink, Loader2, AlertCircle, RefreshCw, Lock, Video, MessageSquare, Zap, Shield, User } from "lucide-react";
+import { ExternalLink, Loader2, AlertCircle, RefreshCw, Lock, Video, MessageSquare, Zap, Shield, User, BookLocked } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 // 类型定义
@@ -135,7 +135,7 @@ export default function Platform() {
             <p className="text-white/40">选择您要进入的管理模块</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-5xl">
             <a
               href="/admin/nodes"
               className="flex flex-col items-center gap-3 p-6 rounded-xl bg-[#111118] border border-white/10 hover:border-[#C9A84C]/50 transition-all group"
@@ -156,6 +156,13 @@ export default function Platform() {
             >
               <MessageSquare size={24} className="text-blue-400 group-hover:scale-110 transition-transform" />
               <span className="text-white/80 text-sm">MaoAI</span>
+            </a>
+            <a
+              href="/notes"
+              className="flex flex-col items-center gap-3 p-6 rounded-xl bg-[#111118] border border-white/10 hover:border-amber-500/50 transition-all group"
+            >
+              <BookLocked size={24} className="text-amber-400 group-hover:scale-110 transition-transform" />
+              <span className="text-white/80 text-sm">私密笔记</span>
             </a>
             <a
               href="/admin/routing"
