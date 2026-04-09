@@ -8,14 +8,12 @@
 export interface ModelConfig {
   name: string;
   badge: string;
-  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "google-ai-studio";
+  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "zai" | "autoclaw";
   model: string;
   baseUrl: string;
   apiKey: string;
   maxTokens: number;
   supportsVision?: boolean;
-  supportsAudio?: boolean;
-  supportsVideo?: boolean;
 }
 
 // ─── Provider Base URLs ───────────────────────────────────────────────────────
@@ -24,7 +22,7 @@ const ZHIPU_BASE    = "https://open.bigmodel.cn/api/paas/v4";
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 const GROQ_BASE     = "https://api.groq.com/openai/v1";
 const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1beta/openai";
-const GOOGLE_AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta";
+const ZAI_BASE      = "https://api.z.ai/api/paas/v4";
 
 // ─── Model Config Map ─────────────────────────────────────────────────────────
 
@@ -148,53 +146,50 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
   },
 
-  // ── Google AI Studio (Gemma 4) ─────────────────────────────────────────────
-  "gemma-4-e2b-it": {
-    name: "Gemma 4 E2B",
-    badge: "MOBILE",
-    provider: "google-ai-studio",
-    model: "gemma-4-e2b-it",
-    baseUrl: GOOGLE_AI_STUDIO_BASE,
-    apiKey: process.env.GOOGLE_AI_STUDIO_API_KEY || "",
-    maxTokens: 128000,
+  // ── 智谱 GLM-5V-TurboAutoClaw（BigModel 多模态）─────────────────────────────────
+  // 基于智谱 BigModel 开放平台 GLM-5V-TurboAutoClaw 模型
+  // 200K 上下文，支持图片/视频/文本多模态输入，面向视觉编程和 Agent 工作流优化
+  // API Doc: https://docs.bigmodel.cn/cn/guide/models/vlm/glm-5v-turbo
+  "glm-5v-turbo": {
+    name: "GLM-5V-Turbo",
+    badge: "VL-TURBO",
+    provider: "zhipu",
+    model: "glm-5v-turbo",
+    baseUrl: ZHIPU_BASE,
+    apiKey: process.env.ZHIPU_API_KEY || "",
+    maxTokens: 8192,
     supportsVision: true,
-    supportsAudio: true,
-    supportsVideo: true,
   },
-  "gemma-4-e4b-it": {
-    name: "Gemma 4 E4B",
-    badge: "EDGE",
-    provider: "google-ai-studio",
-    model: "gemma-4-e4b-it",
-    baseUrl: GOOGLE_AI_STUDIO_BASE,
-    apiKey: process.env.GOOGLE_AI_STUDIO_API_KEY || "",
-    maxTokens: 128000,
-    supportsVision: true,
-    supportsAudio: true,
-    supportsVideo: true,
+
+  // ── Z.ai 平台（GLM-5 / GLM-4.7）────────────────────────────────────────────
+  // Z.ai 是智谱推出的全球 AI 模型体验平台，提供 GLM-5、GLM-4.7 等模型
+  // API Doc: https://docs.z.ai/api-reference/llm/chat-completion
+  "zai-glm-5": {
+    name: "Z.ai GLM-5",
+    badge: "GLM5",
+    provider: "zai",
+    model: "glm-5",
+    baseUrl: ZAI_BASE,
+    apiKey: process.env.ZAI_API_KEY || "",
+    maxTokens: 8192,
   },
-  "gemma-4-26b-it": {
-    name: "Gemma 4 26B",
-    badge: "PRO",
-    provider: "google-ai-studio",
-    model: "gemma-4-26b-it",
-    baseUrl: GOOGLE_AI_STUDIO_BASE,
-    apiKey: process.env.GOOGLE_AI_STUDIO_API_KEY || "",
-    maxTokens: 256000,
-    supportsVision: true,
-    supportsAudio: true,
-    supportsVideo: true,
+  "zai-glm-4-7": {
+    name: "Z.ai GLM-4.7",
+    badge: "GLM47",
+    provider: "zai",
+    model: "glm-4.7",
+    baseUrl: ZAI_BASE,
+    apiKey: process.env.ZAI_API_KEY || "",
+    maxTokens: 8192,
   },
-  "gemma-4-31b-it": {
-    name: "Gemma 4 31B",
-    badge: "MAX",
-    provider: "google-ai-studio",
-    model: "gemma-4-31b-it",
-    baseUrl: GOOGLE_AI_STUDIO_BASE,
-    apiKey: process.env.GOOGLE_AI_STUDIO_API_KEY || "",
-    maxTokens: 256000,
-    supportsVision: true,
-    supportsAudio: true,
-    supportsVideo: true,
-  },
+
+  // ── AutoClaw（澳龙）本地节点配置说明 ─────────────────────────────────────────
+  // AutoClaw 是智谱推出的本地版 OpenClaw（澳龙），需在本地安装运行
+  // 它没有独立的云端 API，而是作为本地节点接入 MaoAI
+  // 配置步骤：
+  //   1. 下载安装：https://autoglm.zhipuai.cn/autoclaw/
+  //   2. 在 AutoClaw 设置中，将 Base URL 指向 MaoAI 节点注册地址
+  //   3. 通过 /api/ai/node/register 接口注册本地节点
+  //   4. 注册成功后，AutoClaw 将作为 local:<nodeId> 模型出现在模型列表中
+  // 注意：AutoClaw 本身不支持 function calling，其 Agent 能力通过 Skills 系统实现
 };

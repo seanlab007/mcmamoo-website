@@ -59,6 +59,10 @@ async function startServer() {
       createContext,
     })
   );
+  // Health check endpoint (before Vite middleware)
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

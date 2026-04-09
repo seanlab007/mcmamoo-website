@@ -188,6 +188,12 @@ export default function ContentDashboard() {
             <span className="font-['Noto_Serif_SC'] text-white font-semibold text-lg">猫眼增长引擎 Mc&Mamoo Growth Engine内容平台</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/autoclip">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] text-xs rounded-lg hover:bg-[#C9A84C]/20 transition-colors">
+                <Zap className="w-3.5 h-3.5" />
+                AutoClip
+              </button>
+            </Link>
             {sub?.isAdmin && (
               <Link href="/admin/content-jobs">
                 <button className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs rounded-lg hover:bg-purple-500/20 transition-colors">
