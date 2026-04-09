@@ -1,0 +1,73 @@
+/**
+ * AutoClip 全局样式入口
+ * 
+ * 改动目的：autoclip 使用 antd 组件库，需加载 antd 全局样式
+ * 改动内容：
+ *   - 导入 antd CSS 样式
+ *   - 导入 autoclip 原有 index.css
+ */
+@import "antd/dist/reset.css";
+
+/* autoclip 原有样式 */
+:root {
+  --autoclip-bg: #0f0f0f;
+  --autoclip-accent: #4facfe;
+  --autoclip-surface: rgba(26, 26, 46, 0.8);
+  --autoclip-border: rgba(79, 172, 254, 0.2);
+  --autoclip-text: #ffffff;
+  --autoclip-text-secondary: #cccccc;
+  --autoclip-radius: 16px;
+  --autoclip-glass-bg: rgba(26, 26, 26, 0.9);
+}
+
+body {
+  background-color: var(--autoclip-bg);
+  color: var(--autoclip-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* antd 暗色主题覆盖 */
+.ant-layout {
+  background: var(--autoclip-bg) !important;
+}
+
+.ant-layout-content {
+  background: var(--autoclip-bg) !important;
+}
+
+/* antd Card 暗色覆盖 */
+.ant-card {
+  background: var(--autoclip-surface) !important;
+  border-color: var(--autoclip-border) !important;
+}
+
+/* antd Button 暗色覆盖 */
+.ant-btn-primary {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+  border: none !important;
+}
+
+/* antd Select 暗色覆盖 */
+.ant-select-selector {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(79, 172, 254, 0.2) !important;
+}
+
+/* antd Empty 暗色文字 */
+.ant-empty-description {
+  color: #8c8c8c !important;
+}
+
+/* antd Spin */
+.ant-spin-dot-item {
+  background-color: var(--autoclip-accent) !important;
+}
+
+/* antd Message */
+.ant-message-notice-content {
+  background: var(--autoclip-surface) !important;
+  border: 1px solid var(--autoclip-border) !important;
+  color: var(--autoclip-text) !important;
+}
