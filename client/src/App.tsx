@@ -78,12 +78,13 @@ function Router() {
       <Route path={"/millennium-clock"} component={MillenniumClock} />
       
       {/* MaoAI */}
-      <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={MAOAI_ROUTES.CHAT} component={MaoAIChat} />
       <Route path={MAOAI_ROUTES.LOGIN} component={MaoAILogin} />
-      <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       <Route path={MAOAI_ROUTES.PRICING} component={MaoAIPricing} />
       <Route path={MAOAI_ROUTES.SALES} component={MaoAISales} />
+      {/* 兼容旧路由 */}
+      <Route path={"/mao-ai"} component={MaoAIChat} />
+      <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       
       {/* 猫眼内容平台跳转（已拆分到独立项目） */}
       <Route path={"/content"}>
