@@ -143,8 +143,9 @@ export function registerOAuthRoutes(app: Express) {
         sessionToken,
       });
     } catch (error) {
-      console.error("[Auth] Email login failed", error);
-      res.status(500).json({ error: "登录失败，请稍后重试" });
+      console.error("[Auth] Email login failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "登录失败，请稍后重试: " + message });
     }
   });
 }

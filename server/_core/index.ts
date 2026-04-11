@@ -41,9 +41,70 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+<<<<<<< HEAD
   // Supabase 邮箱+密码登录（管理员）
   registerSupabaseAuthRoutes(app);
   // AI 节点协同 + 聊天流 + OpenAI 兼容 API（MaoAI 核心路由）
+=======
+
+  // ── 邮箱+密码登录（Supabase Auth，备选路由）────────────────────────────
+  app.post("/api/auth/email-login", async (req, res) => {
+    const { email, password } = req.body as { email?: string; password?: string };
+    if (!email || !password) {
+      res.status(400).json({ error: "email and password are required" });
+      return;
+    }
+    try {
+      const authResp = await fetch(
+        `${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: process.env.SUPABASE_ANON_KEY ?? "",
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+      const authText = await authResp.text();
+      console.log("[email-login] Auth response status:", authResp.status);
+      console.log("[email-login] Auth response body:", authText.substring(0, 500));
+      const authData = JSON.parse(authText) as {
+        access_token?: string;
+        user?: { id: string; email: string };
+        error_description?: string;
+        error?: string;
+      };
+      if (!authData.access_token || !authData.user) {
+        res.status(401).json({ error: authData.error_description || "邮箱或密码错误" });
+        return;
+      }
+      const openId = `supabase:${authData.user.id}`;
+      const userEmail = authData.user.email ?? email;
+      const role: "admin" | "user" =
+        userEmail === "sean_lab@me.com" || userEmail === process.env.OWNER_EMAIL
+          ? "admin"
+          : "user";
+      const sessionToken = await sdk.createSessionToken(openId, {
+        name: userEmail.split("@")[0],
+        expiresInMs: ONE_YEAR_MS,
+      });
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      res.json({
+        success: true,
+        role,
+        redirectTo: role === "admin" ? "/admin/nodes" : "/maoai",
+        sessionToken,
+      });
+    } catch (e: unknown) {
+      console.error("[email-login] Error:", e);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+>>>>>>> b5daec5 (feat: 更新 MaoAI 至最新版本 - 包含智能 AI 控制中心功能)
   app.use("/api/ai", aiStreamRouter);
   // 私密云笔记 API（管理员专属）
   app.use("/api/notes", notesRouter);
