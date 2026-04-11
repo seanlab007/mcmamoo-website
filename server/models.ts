@@ -5,6 +5,8 @@
  * aiStream.ts 通过此文件获取模型路由配置。
  */
 
+import "./_core/loadEnv"; // 加载环境变量
+
 export interface ModelConfig {
   name: string;
   badge: string;
