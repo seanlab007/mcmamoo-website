@@ -312,7 +312,7 @@ chatRouter.post("/send", async (req: Request, res: Response) => {
     const historyR = await sbGet(
       `/messages?conversation_id=eq.${conversationId}&order=created_at.asc&limit=20&select=role,content`
     );
-    const history: { role: string; content: string }[] = historyR.data || [];
+    const history: { role: string; content: string }[] = Array.isArray(historyR.data) ? historyR.data : [];
 
     // 2. 联网搜索（按需）
     let searchContext = "";
