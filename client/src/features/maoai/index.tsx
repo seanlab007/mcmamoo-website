@@ -19,6 +19,7 @@ export { default as MaoAICustomerService } from "./pages/CustomerService";
 
 // Components
 export { AgentModeSelector } from "./components/AgentModeSelector";
+export { AtomicModeToggle, CodeRAGIndicator, TokenStats, Phase5Status } from "./components/Phase5Status";
 
 // Constants
 export {

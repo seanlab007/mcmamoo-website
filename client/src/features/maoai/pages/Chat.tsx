@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { AgentModeSelector } from "../components/AgentModeSelector";
+import { AtomicModeToggle } from "../components/Phase5Status";
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
@@ -282,6 +283,10 @@ export default function MaoAIChat() {
   const dragCounterRef = useRef(0);
   const [currentToolCalls, setCurrentToolCalls] = useState<ToolCallStep[]>([]);
   const [currentAgent, setCurrentAgent] = useState<string | null>(null);
+
+  // ─── Phase 5: 原子化模式状态 ─────────────────────────────────────────────
+  const [atomicMode, setAtomicMode] = useState(true); // 默认启用原子化模式
+  const [tokenSaved, setTokenSaved] = useState(0); // 累计节省的 Token
   // ReAct 推理轮次状态
   const [reactRound, setReactRound] = useState<{ round: number; maxRounds: number } | null>(null);
   // Agent 推理日志（Manus Max 流式可视化）
@@ -358,6 +363,14 @@ export default function MaoAIChat() {
     }
     return d.toLocaleDateString(timeLocale, { month: "short", day: "numeric" });
   }, [chat.yesterday, t, timeLocale]);
+
+  // ─── Phase 5: 从 localStorage 加载原子化模式设置 ────────────────────────────
+  useEffect(() => {
+    const savedMode = localStorage.getItem("maoai_atomic_mode");
+    if (savedMode !== null) {
+      setAtomicMode(savedMode === "true");
+    }
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -879,6 +892,9 @@ export default function MaoAIChat() {
       bodyPayload.model = selectedId;
     }
 
+    // ─── Phase 5: 原子化模式参数 ───────────────────────────────────────────
+    bodyPayload.atomic_mode = atomicMode;
+
     let fullContent = "";
     let capturedNodeInfo: ActiveNodeInfo | null = null;
     const liveToolCalls: ToolCallStep[] = [];
@@ -1389,6 +1405,16 @@ export default function MaoAIChat() {
                 currentAgent={currentAgent}
                 onAgentChange={(agentId) => setCurrentAgent(agentId)}
                 disabled={isBusy}
+              />
+              {/* ─── Phase 5: 原子化模式切换 ─────────────────────────────── */}
+              <AtomicModeToggle
+                enabled={atomicMode}
+                onChange={(enabled) => {
+                  setAtomicMode(enabled);
+                  // 可以在此保存到 localStorage
+                  localStorage.setItem("maoai_atomic_mode", String(enabled));
+                }}
+                compact
               />
               {/* Image mode badge */}
               {inputMode === "image" && (

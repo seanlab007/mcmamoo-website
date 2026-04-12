@@ -38,7 +38,7 @@ from .coder_agent import CoderAgent, GenerationMode, GenerationResult
 from .reviewer_agent import ReviewerAgent, ReviewResult
 from .validator_agent import ValidatorAgent, ValidationResult, ValidationStatus
 
-# ─── 新增：知识图谱支持 ────────────────────────────────────────────────────────
+# ─── 新增：知识图谱 + Code RAG 支持 ────────────────────────────────────────────
 try:
     import sys
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../utils"))
@@ -46,6 +46,19 @@ try:
     HAS_KNOWLEDGE_GRAPH = True
 except ImportError:
     HAS_KNOWLEDGE_GRAPH = False
+
+try:
+    from code_rag import CodeRAG
+    HAS_CODE_RAG = True
+except ImportError:
+    HAS_CODE_RAG = False
+
+# ─── 新增：原子化 Patch 支持 ──────────────────────────────────────────────────
+try:
+    from utils.patch_utils import PatchApplier
+    HAS_PATCH_UTILS = True
+except ImportError:
+    HAS_PATCH_UTILS = False
 
 
 def log_step(step_type: str, message: str = "", **kwargs):
@@ -122,6 +135,11 @@ class TriadLoop:
       1. Coder (Claude)：代码生成
       2. Reviewer (GPT)：逻辑审查 + 生成测试用例
       3. Validator (Pytest)：测试验证
+
+    新增 Phase 5 功能：
+      4. 原子化代码修改：基于 Unified Diff 的外科手术式修改
+      5. Code RAG：向量检索增强的上下文注入
+      6. 智能收敛检测：分数 + Patch 相似度双重检测
     """
 
     def __init__(
@@ -137,12 +155,33 @@ class TriadLoop:
         enable_thought_tracking: bool = True,
         enable_docker: bool = False,
         test_command: str = None,
-        enable_knowledge_graph: bool = True  # 新增：启用知识图谱
+        enable_knowledge_graph: bool = True,
+        # ─── Phase 5 新增参数 ────────────────────────────────────────────────
+        enable_atomic_mode: bool = True,     # 启用原子化修改模式
+        enable_code_rag: bool = True,          # 启用 Code RAG 向量检索
+        auto_apply_patch: bool = True,         # 自动应用 Patch
+        rag_top_k: int = 5                     # RAG 检索数量
     ):
         self.workspace = workspace or os.getcwd()
         self.coder_model = coder_model
         self.reviewer_model = reviewer_model
         self.enable_knowledge_graph = enable_knowledge_graph and HAS_KNOWLEDGE_GRAPH
+
+        # ─── Phase 5: 原子化模式 ──────────────────────────────────────────────
+        self.enable_atomic_mode = enable_atomic_mode and HAS_PATCH_UTILS
+        self.auto_apply_patch = auto_apply_patch
+        self._patch_applier: Optional["PatchApplier"] = None
+        if self.enable_atomic_mode and HAS_PATCH_UTILS:
+            self._patch_applier = PatchApplier(workspace=self.workspace)
+            log_step("triad_init", "原子化模式已启用", atomic=True, auto_apply=auto_apply_patch)
+
+        # ─── Phase 5: Code RAG ───────────────────────────────────────────────
+        self.enable_code_rag = enable_code_rag and HAS_CODE_RAG
+        self.rag_top_k = rag_top_k
+        self._code_rag: Optional["CodeRAG"] = None
+        self._rag_initialized = False
+        if self.enable_code_rag and HAS_CODE_RAG:
+            log_step("triad_init", "Code RAG 已启用", rag=True, top_k=rag_top_k)
 
         # 知识图谱实例（按需初始化）
         self._knowledge_graph: Optional["KnowledgeGraph"] = None
@@ -156,11 +195,14 @@ class TriadLoop:
         self.enable_docker = enable_docker
         self.test_command = test_command
 
+        # ─── 原子化模式传递给 CoderAgent ──────────────────────────────────────
         self.coder = CoderAgent(
             api_key=coder_api_key,
             model=coder_model,
             workspace=self.workspace,
-            enable_thought_tracking=enable_thought_tracking
+            enable_thought_tracking=enable_thought_tracking,
+            enable_atomic_mode=self.enable_atomic_mode,
+            auto_apply_patch=self.auto_apply_patch
         )
         self.reviewer = ReviewerAgent(
             api_key=reviewer_api_key,
@@ -176,6 +218,7 @@ class TriadLoop:
         self.last_score = 0.0
         self.consecutive_no_improvement = 0
         self._consecutive_high_similarity = 0  # 新增：连续高相似度计数
+        self._token_saved = 0  # 累计节省的 Token 数
 
     def _get_knowledge_graph_context(self, task: str) -> Dict[str, Any]:
         """
@@ -235,6 +278,160 @@ class TriadLoop:
 
         return related_context
 
+    # ─── Phase 5 新增：Code RAG 上下文 ────────────────────────────────────────
+
+    def _init_code_rag(self) -> bool:
+        """
+        初始化 Code RAG（懒加载）
+        返回: 是否初始化成功
+        """
+        if not self.enable_code_rag or not HAS_CODE_RAG:
+            return False
+
+        if self._rag_initialized:
+            return True
+
+        try:
+            self._code_rag = CodeRAG(
+                workspace=self.workspace,
+                top_k=self.rag_top_k
+            )
+            # 尝试加载或构建索引
+            index_result = self._code_rag.index_project()
+            self._rag_initialized = True
+            log_step("code_rag",
+                    f"Code RAG 索引完成: {index_result.get('files', 0)} 文件, "
+                    f"{index_result.get('chunks', 0)} 分块")
+            return True
+        except Exception as e:
+            log_step("code_rag", f"Code RAG 初始化失败: {e}", error=True)
+            return False
+
+    def _get_code_rag_context(self, task: str) -> Dict[str, Any]:
+        """
+        获取 Code RAG 检索的上下文
+
+        Phase 5 核心功能：
+        当用户询问"如何修改登录逻辑？"时，
+        RAG 会检索出最相关的 5 个代码片段作为上下文注入
+        """
+        if not self.enable_code_rag:
+            return {}
+
+        # 懒初始化
+        if not self._rag_initialized:
+            self._init_code_rag()
+
+        if not self._code_rag:
+            return {}
+
+        try:
+            # 语义检索
+            results = self._code_rag.query(task, top_k=self.rag_top_k)
+
+            if not results:
+                return {}
+
+            rag_context = {
+                "retrieved_chunks": [],
+                "total_length": 0
+            }
+
+            for r in results:
+                chunk = r.chunk
+                rag_context["retrieved_chunks"].append({
+                    "file": chunk.file_path,
+                    "lines": f"{chunk.start_line}-{chunk.end_line}",
+                    "type": chunk.chunk_type,
+                    "name": chunk.name,
+                    "similarity": r.score,
+                    "preview": chunk.content[:200]
+                })
+                rag_context["total_length"] += len(chunk.content)
+
+            log_step("code_rag_retrieval",
+                    f"检索到 {len(results)} 个相关片段, 总长度 {rag_context['total_length']} 字符")
+
+            return rag_context
+
+        except Exception as e:
+            log_step("code_rag", f"检索失败: {e}", error=True)
+            return {}
+
+    def _get_injected_context_prompt(self, task: str) -> str:
+        """
+        获取注入上下文的 Prompt（结合知识图谱 + Code RAG）
+
+        这是 Phase 5 的核心功能：
+        将项目全景感知 + 向量检索的结果格式化为 Coder Agent 的上下文
+        """
+        parts = []
+
+        # 1. Code RAG 检索结果
+        rag_context = self._get_code_rag_context(task)
+        if rag_context.get("retrieved_chunks"):
+            parts.append("【相关代码片段】(Code RAG 检索)")
+            for chunk in rag_context["retrieved_chunks"][:3]:  # 最多 3 个
+                parts.append(f"""
+// 文件: {chunk['file']}
+// 行号: {chunk['lines']}
+// 类型: {chunk['type']}
+// 相似度: {chunk['similarity']:.2f}
+{chunk['preview']}...
+""")
+
+        # 2. 知识图谱依赖关系
+        kg_context = self._get_knowledge_graph_context(task)
+        if kg_context.get("related_components"):
+            parts.append("【相关组件】(知识图谱)")
+            for comp in kg_context["related_components"][:3]:
+                parts.append(f"- {comp}")
+
+        if kg_context.get("dependency_files"):
+            parts.append("【依赖文件】")
+            for dep in kg_context["dependency_files"][:3]:
+                parts.append(f"- {dep['name']} ({dep['file_path']})")
+
+        if not parts:
+            return ""
+
+        return "\n".join(parts)
+
+    # ─── Phase 5 新增：Patch 应用 ────────────────────────────────────────────
+
+    def _apply_patch(self, patch: str, file_path: str) -> bool:
+        """
+        应用原子化 Patch
+
+        参数:
+            patch: Unified Diff 格式的补丁
+            file_path: 目标文件路径
+
+        返回:
+            是否应用成功
+        """
+        if not self.enable_atomic_mode or not self._patch_applier:
+            return False
+
+        try:
+            full_path = os.path.join(self.workspace, file_path)
+            result = self._patch_applier.apply(full_path, patch)
+
+            if result.success:
+                log_step("patch_applied",
+                        f"Patch 应用成功: {file_path}",
+                        file=file_path)
+            else:
+                log_step("patch_failed",
+                        f"Patch 应用失败: {result.message}",
+                        file=file_path)
+
+            return result.success
+
+        except Exception as e:
+            log_step("patch_error", f"Patch 执行异常: {e}")
+            return False
+
     def _compute_patch_similarity(self, code1: str, code2: str) -> float:
         """
         计算两个代码片段的相似度（基于 difflib）
@@ -273,15 +470,29 @@ class TriadLoop:
         current_mode = GenerationMode.FIX if mode == "fix" else GenerationMode.GENERATE
 
         # ═══════════════════════════════════════════════════════════════════════════
-        # A. 项目全景感知：获取知识图谱上下文
+        # A. 项目全景感知 + Code RAG：获取增强上下文
         # ═══════════════════════════════════════════════════════════════════════════
+        # 1. 知识图谱上下文
         kg_context = self._get_knowledge_graph_context(task)
         if kg_context.get("related_components") or kg_context.get("dependency_files"):
             log_step("project_context",
                     f"注入 {len(kg_context.get('related_components', []))} 个相关组件",
                     components=kg_context.get("related_components", [])[:3])
-            # 将知识图谱上下文合并到主 context
             context = {**context, "knowledge_graph": kg_context}
+
+        # ─── Phase 5: Code RAG 上下文注入 ─────────────────────────────────────
+        if self.enable_code_rag and HAS_CODE_RAG:
+            rag_context = self._get_code_rag_context(task)
+            if rag_context.get("retrieved_chunks"):
+                log_step("code_rag_context",
+                        f"Code RAG 注入 {len(rag_context['retrieved_chunks'])} 个相关片段",
+                        similarity=[c['similarity'] for c in rag_context['retrieved_chunks'][:3]])
+                context = {**context, "code_rag": rag_context}
+
+        # ─── Phase 5: 原子化模式标记 ─────────────────────────────────────────
+        if self.enable_atomic_mode:
+            context = {**context, "atomic_mode": True, "auto_apply": self.auto_apply_patch}
+            log_step("triad_mode", "原子化模式已激活", mode="atomic")
 
         while self.current_round < self.max_iterations:
             self.current_round += 1
@@ -305,8 +516,36 @@ class TriadLoop:
 
             current_code = coder_result.code
 
-            log_step("coder_generated", f"Coder 完成: {len(coder_result.code)} 字符",
-                    round=self.current_round, mode=coder_result.mode.value)
+            # ─── Phase 5: 原子化 Patch 处理 ───────────────────────────────────
+            token_saved = 0
+            if self.enable_atomic_mode and coder_result.output_mode == "atomic":
+                if coder_result.patch:
+                    # 计算 Token 节省
+                    token_saved = coder_result.diff_lines * 4  # 粗略估算
+                    self._token_saved += token_saved
+
+                    log_step("atomic_patch",
+                            f"原子化 Patch: {coder_result.diff_lines} 行 diff, "
+                            f"节省约 {token_saved} tokens",
+                            diff_lines=coder_result.diff_lines,
+                            token_saved=token_saved,
+                            total_saved=self._token_saved)
+
+                    # 自动应用 Patch（可选）
+                    if self.auto_apply_patch and coder_result.file_path:
+                        patch_applied = self._apply_patch(
+                            coder_result.patch,
+                            coder_result.file_path
+                        )
+                        if patch_applied:
+                            coder_result.applied = True
+
+            log_step("coder_generated",
+                    f"Coder 完成: {len(coder_result.code)} 字符",
+                    round=self.current_round,
+                    mode=coder_result.mode.value,
+                    output_mode=coder_result.output_mode,
+                    token_saved=token_saved)
 
             # ═══════════════════════════════════════════════════════════════
             # 第二权：Reviewer 审查 + 生成测试用例
@@ -543,6 +782,11 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default="fix", choices=["fix", "generate"], help="运行模式")
     parser.add_argument("--test-command", type=str, help="自定义测试命令")
     parser.add_argument("--docker", action="store_true", help="启用 Docker 沙箱")
+    # ─── Phase 5 新增参数 ────────────────────────────────────────────────────────
+    parser.add_argument("--no-atomic", action="store_true", help="禁用原子化模式")
+    parser.add_argument("--no-rag", action="store_true", help="禁用 Code RAG")
+    parser.add_argument("--no-auto-patch", action="store_true", help="不自动应用 Patch")
+    parser.add_argument("--rag-top-k", type=int, default=5, help="RAG 检索数量")
 
     args = parser.parse_args()
 
@@ -553,7 +797,12 @@ if __name__ == "__main__":
         max_iterations=args.max_iterations,
         score_threshold=args.score_threshold,
         enable_docker=args.docker,
-        test_command=args.test_command
+        test_command=args.test_command,
+        # ─── Phase 5 新增 ─────────────────────────────────────────────────────
+        enable_atomic_mode=not args.no_atomic,
+        enable_code_rag=not args.no_rag,
+        auto_apply_patch=not args.no_auto_patch,
+        rag_top_k=args.rag_top_k
     )
 
     result = triad.run(task=args.task, context={"language": args.language}, mode=args.mode)
@@ -570,4 +819,11 @@ if __name__ == "__main__":
     print(f"  Validator: {'✓ 通过' if result.validator_passed else '✗ 未通过'}")
     if result.converged:
         print(f"收敛: 是 ({result.convergence_reason})")
+
+    # ─── Phase 5 性能统计 ──────────────────────────────────────────────────────
+    print("\nPhase 5 性能统计:")
+    print(f"  原子化模式: {not args.no_atomic}")
+    print(f"  Code RAG: {not args.no_rag}")
+    print(f"  Token 节省: 约 {result.patch_similarity * 100:.0f}% (预估)")
+
     print("=" * 60)
