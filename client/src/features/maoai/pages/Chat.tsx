@@ -117,6 +117,125 @@ function ToolCallSteps({ steps, live = false }: { steps: ToolCallStep[]; live?: 
   );
 }
 
+// ─── AgentThinkingView — Manus Max 推理日志可视化 ────────────────────────────
+function AgentThinkingView({
+  logs,
+  isOpen,
+  onToggle,
+}: {
+  logs: any[];
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  if (logs.length === 0) return null;
+
+  const roundColors: Record<string, string> = {
+    thought: "text-blue-400",
+    action: "text-emerald-400",
+    observation: "text-amber-400",
+    score: "text-purple-400",
+    error: "text-red-400",
+    done: "text-[#C9A84C]",
+    start: "text-cyan-400",
+  };
+
+  const roundIcons: Record<string, string> = {
+    start: "▶",
+    thought: "💭",
+    action: "⚡",
+    observation: "👁",
+    score: "📊",
+    error: "⚠",
+    done: "✓",
+    patch: "🔧",
+    iteration: "🔄",
+    raw: "📋",
+  };
+
+  return (
+    <div className="mb-3">
+      {/* 标题栏 */}
+      <button
+        onClick={onToggle}
+        className="flex items-center justify-between w-full px-3 py-1.5 bg-gradient-to-r from-[#1a1a2e] to-[#0f0f1a] border border-[#C9A84C]/30 rounded-t text-[11px] text-[#C9A84C]/80 hover:border-[#C9A84C]/60 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-[#C9A84C] font-bold tracking-widest text-[10px]">HYPERAGENTS</span>
+          <span className="text-white/20">|</span>
+          <span className="text-white/40">Manus Max · ReAct 推理日志</span>
+          <span className="bg-[#C9A84C]/20 text-[#C9A84C] px-1.5 py-0.5 rounded text-[10px] font-mono">{logs.length} 步</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {Array.from({ length: Math.min(logs.length, 12) }, (_, i) => (
+              <div
+                key={i}
+                className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                  i === logs.length - 1 ? "bg-[#C9A84C]" : "bg-[#C9A84C]/30"
+                }`}
+                style={{ animationDelay: `${i * 0.1}s` }}
+              />
+            ))}
+          </div>
+          <span className="text-white/30">{isOpen ? "▲" : "▼"}</span>
+        </div>
+      </button>
+
+      {/* 日志内容 */}
+      {isOpen && (
+        <div className="border-x border-b border-[#C9A84C]/30 rounded-b bg-black/60 font-mono text-[11px] overflow-hidden">
+          <div className="max-h-64 overflow-y-auto p-3 space-y-0.5">
+            {logs.map((log, i) => (
+              <div key={i} className="flex items-start gap-2 py-0.5 border-b border-white/5 last:border-0">
+                <span className="shrink-0 text-[10px] text-white/20 w-6 mt-0.5">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="shrink-0 text-[12px] mt-0.5">
+                  {roundIcons[log.type] || "•"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <span className={`shrink-0 font-semibold uppercase text-[9px] ${roundColors[log.type] || "text-white/40"}`}>
+                      {log.type}
+                    </span>
+                    {log.round && (
+                      <span className="text-white/20 text-[9px]">· 第{log.round}轮</span>
+                    )}
+                    {log.tool && (
+                      <span className="text-white/30 text-[9px] truncate">[{log.tool}]</span>
+                    )}
+                  </div>
+                  <div className="text-white/70 mt-0.5 leading-relaxed">
+                    {typeof log.message === "string"
+                      ? log.message.slice(0, 200)
+                      : JSON.stringify(log.message)?.slice(0, 100)}
+                  </div>
+                  {log.success !== undefined && (
+                    <div className={`text-[9px] mt-0.5 ${log.success ? "text-emerald-400/60" : "text-red-400/60"}`}>
+                      {log.success ? "✓ 成功" : "✗ 失败"}
+                    </div>
+                  )}
+                  {log.score !== undefined && (
+                    <div className="mt-0.5 flex items-center gap-1">
+                      <div className="h-1 w-16 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-purple-400 rounded-full transition-all"
+                          style={{ width: `${Math.round(log.score * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-purple-400/60 text-[9px]">{Math.round(log.score * 100)}%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function MaoAIChat() {
   const [location, navigate] = useLocation();
@@ -165,6 +284,9 @@ export default function MaoAIChat() {
   const [currentAgent, setCurrentAgent] = useState<string | null>(null);
   // ReAct 推理轮次状态
   const [reactRound, setReactRound] = useState<{ round: number; maxRounds: number } | null>(null);
+  // Agent 推理日志（Manus Max 流式可视化）
+  const [agentLogs, setAgentLogs] = useState<any[]>([]);
+  const [agentThinkingOpen, setAgentThinkingOpen] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -762,6 +884,7 @@ export default function MaoAIChat() {
     const liveToolCalls: ToolCallStep[] = [];
     setCurrentToolCalls([]);
     setReactRound(null);
+    setAgentLogs([]);
 
     try {
       const resp = await fetch(`${BACKEND_URL}/api/ai/chat/stream`, {
@@ -849,6 +972,9 @@ export default function MaoAIChat() {
               } else if (chunk.reactEnd) {
                 // ReAct 推理结束，清除轮次状态
                 setReactRound(null);
+              } else if (chunk.agentLog) {
+                // Agent 推理日志（Manus Max 流式可视化）
+                setAgentLogs(prev => [...prev, chunk.agentLog]);
               }
             } catch { /* skip */ }
           }
@@ -881,10 +1007,12 @@ export default function MaoAIChat() {
       }
       setCurrentToolCalls([]);
       setReactRound(null);
+      setAgentLogs([]);
     } finally {
       setIsStreaming(false);
       setStreamingContent("");
       setReactRound(null);
+      setAgentLogs([]);
       abortRef.current = null;
     }
   };
@@ -1459,6 +1587,8 @@ export default function MaoAIChat() {
                       <span className="text-white/30">· ReAct Thinking</span>
                     </div>
                   )}
+                  {/* Agent 推理日志视图（Manus Max 流式可视化） */}
+                  <AgentThinkingView logs={agentLogs} isOpen={agentThinkingOpen} onToggle={() => setAgentThinkingOpen(v => !v)} />
                   <div className="bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">
                     {streamingContent ? (
                       <div className="prose prose-sm prose-invert max-w-none prose-p:text-white/85 prose-code:text-[#C9A84C] prose-pre:bg-black/50">
