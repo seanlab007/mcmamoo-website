@@ -2105,7 +2105,7 @@ async function toolRunNpmTest(
 
 // ─── 猫眼内容平台：视频合成工具实现 ─────────────────────────────────────────────
 
-// 视频合成任务状态存储（内存中，生产环境应使用 Redis）
+// 视频合成任务状态存储（内存 + Supabase 双写）
 const videoComposeTasks = new Map<string, {
   status: "pending" | "running" | "completed" | "failed";
   progress: number;
@@ -2113,6 +2113,66 @@ const videoComposeTasks = new Map<string, {
   error?: string;
   startedAt: Date;
 }>();
+
+// ─── Supabase 视频任务持久化 ──────────────────────────────────────────────────
+
+async function createVideoTaskInDB(taskId: string, data: {
+  imagePaths: string[];
+  audioPath: string;
+  srtPath: string;
+  outputPath: string;
+  bgmPath?: string;
+  triggeredBy?: string;
+}) {
+  try {
+    await dbFetch("/video_tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        task_id: taskId,
+        status: "pending",
+        progress: 0,
+        image_paths: data.imagePaths,
+        audio_path: data.audioPath,
+        srt_path: data.srtPath,
+        bgm_path: data.bgmPath ?? null,
+        output_path: data.outputPath,
+        triggered_by: data.triggeredBy ?? null,
+        started_at: new Date().toISOString(),
+      }),
+    });
+  } catch (err) {
+    console.error("[VideoTask] Failed to create in DB:", err);
+  }
+}
+
+async function updateVideoTaskInDB(taskId: string, update: {
+  status?: string;
+  progress?: number;
+  resultUrl?: string;
+  errorMessage?: string;
+}) {
+  try {
+    const body: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (update.status) body.status = update.status;
+    if (update.progress !== undefined) body.progress = update.progress;
+    if (update.resultUrl) {
+      body.result_url = update.resultUrl;
+      body.finished_at = new Date().toISOString();
+    }
+    if (update.errorMessage) {
+      body.error_message = update.errorMessage;
+      body.finished_at = new Date().toISOString();
+    }
+    await dbFetch(`/video_tasks?task_id=eq.${encodeURIComponent(taskId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error("[VideoTask] Failed to update in DB:", err);
+  }
+}
+
+// ─── 视频合成工具主体 ─────────────────────────────────────────────────────────
 
 async function toolVideoComposer(
   imagePaths: string[],
@@ -2141,12 +2201,15 @@ async function toolVideoComposer(
     return { success: false, output: "", error: `文件检查失败: ${err.message}` };
   }
 
-  // 记录任务状态
+  // 记录任务状态（内存）
   videoComposeTasks.set(taskId, {
     status: "pending",
     progress: 0,
     startedAt: new Date(),
   });
+
+  // 持久化到 Supabase
+  await createVideoTaskInDB(taskId, { imagePaths, audioPath, srtPath, outputPath, bgmPath });
 
   // 异步执行视频合成（避免阻塞）
   executeVideoCompose(taskId, imagePaths, audioPath, srtPath, outputPath, bgmPath).catch((err) => {
@@ -2155,6 +2218,8 @@ async function toolVideoComposer(
       task.status = "failed";
       task.error = err.message;
     }
+    // 同步失败状态到 DB
+    updateVideoTaskInDB(taskId, { status: "failed", errorMessage: err.message });
   });
 
   return {
@@ -2177,6 +2242,7 @@ async function executeVideoCompose(
 
   task.status = "running";
   task.progress = 10;
+  await updateVideoTaskInDB(taskId, { status: "running", progress: 10 });
 
   try {
     // 导入 video_composer 模块
@@ -2214,30 +2280,73 @@ print("RESULT:", result)
       stderr += data.toString();
     });
 
-    proc.on("close", (code) => {
+    proc.on("close", async (code) => {
       task.progress = 100;
       if (code === 0) {
         task.status = "completed";
         task.outputPath = outputPath;
+        await updateVideoTaskInDB(taskId, {
+          status: "completed",
+          progress: 100,
+          resultUrl: outputPath,
+        });
       } else {
         task.status = "failed";
         task.error = stderr || `Process exited with code ${code}`;
+        await updateVideoTaskInDB(taskId, {
+          status: "failed",
+          progress: 100,
+          errorMessage: task.error,
+        });
       }
     });
 
-    proc.on("error", (err) => {
+    proc.on("error", async (err) => {
       task.status = "failed";
       task.error = err.message;
+      await updateVideoTaskInDB(taskId, {
+        status: "failed",
+        progress: task.progress,
+        errorMessage: err.message,
+      });
     });
 
   } catch (err: any) {
     task.status = "failed";
     task.error = err.message;
+    await updateVideoTaskInDB(taskId, {
+      status: "failed",
+      errorMessage: err.message,
+    });
   }
 }
 
 async function toolVideoComposeStatus(taskId: string): Promise<ToolResult> {
-  const task = videoComposeTasks.get(taskId);
+  // 先从内存中查询
+  let task = videoComposeTasks.get(taskId);
+  
+  // 如果内存中没有，尝试从 DB 查询（支持服务器重启后的离线查询）
+  if (!task) {
+    try {
+      const res = await dbFetch(`/video_tasks?task_id=eq.${encodeURIComponent(taskId)}&select=*&limit=1`);
+      const rows = res.data as any[] | null;
+      const dbTask = rows?.[0];
+      
+      if (dbTask) {
+        // 从 DB 恢复任务状态到内存
+        task = {
+          status: dbTask.status,
+          progress: dbTask.progress,
+          outputPath: dbTask.result_url || dbTask.output_path,
+          error: dbTask.error_message,
+          startedAt: new Date(dbTask.started_at),
+        };
+        videoComposeTasks.set(taskId, task);
+      }
+    } catch (err) {
+      console.error("[VideoTask] Failed to fetch from DB:", err);
+    }
+  }
 
   if (!task) {
     return {
