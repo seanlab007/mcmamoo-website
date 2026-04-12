@@ -40,8 +40,7 @@ import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
 import MaoIndustry from "./components/sections/MaoIndustry";
 
-import ContentPlatform from "./pages/ContentPlatform";
-import AutoClip from "./pages/AutoClip";
+import ContentPlatform from "./features/maoai/pages/ContentPlatform";
 
 function Router() {
   return (
@@ -86,7 +85,7 @@ function Router() {
       
       {/* 猫眼内容平台（已整合到主站） */}
       <Route path={"/content"} component={ContentPlatform} />
-      <Route path={"/autoclip"} component={AutoClip} />
+      <Route path={"/autoclip"} component={ContentPlatform} />
       
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
