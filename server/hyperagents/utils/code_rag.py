@@ -94,27 +94,53 @@ class CodeRAG:
         
         return chunks
 
+    def _get_ollama_embedding(self, text: str, model: str = "nomic-embed-text") -> List[float]:
+        """
+        使用本地 Ollama 获取文本向量 (100% 离线)
+        """
+        import requests
+        
+        # Ollama 默认本地地址
+        url = "http://localhost:11434/api/embeddings"
+        payload = {
+            "model": model,
+            "prompt": text
+        }
+        
+        try:
+            response = requests.post(url, json=payload, timeout=30)
+            response.raise_for_status()
+            # Ollama 返回格式: {"embedding": [0.1, 0.2, ...]}
+            return response.json()["embedding"]
+        except Exception as e:
+            print(f"Ollama Embedding Error: {e}")
+            # 兜底：如果 Ollama 没启动，返回全零向量
+            return [0.0] * 768 # nomic-embed-text 的维度是 768
+
     def get_embedding(self, text: str, model: str = "text-embedding-3-small") -> List[float]:
         """
         获取文本向量。
-        注意：这里建议调用 API，因为本地运行 Embedding 模型也需要不少依赖。
+        优先使用 Ollama，如果 Ollama 不可用则回退到 API。
         """
-        # 优先尝试从环境变量获取 API Key
+        # 尝试使用 Ollama
+        ollama_embedding = self._get_ollama_embedding(text, "nomic-embed-text")
+        if any(x != 0.0 for x in ollama_embedding): # 检查是否是全零向量 (Ollama 失败的标志)
+            return ollama_embedding
+
+        # 如果 Ollama 失败，回退到 API
         api_key = os.getenv("OPENAI_API_KEY") or os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
-            # 如果完全没 Key，返回随机向量用于演示 (生产环境需配置 Key)
-            return [0.1] * 1536 
+            return [0.0] * 1536 # 如果没有 API Key，返回全零向量
             
         import requests
         try:
-            # 默认使用 OpenAI 兼容接口
             url = "https://api.openai.com/v1/embeddings"
             headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
             payload = {"input": text, "model": model}
             response = requests.post(url, json=payload, headers=headers, timeout=10)
             return response.json()["data"][0]["embedding"]
         except Exception as e:
-            print(f"Embedding error: {e}")
+            print(f"API Embedding error: {e}")
             return [0.0] * 1536
 
     def scan_and_index(self):
