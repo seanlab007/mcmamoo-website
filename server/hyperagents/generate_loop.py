@@ -551,6 +551,12 @@ if __name__ == "__main__":
     parser.add_argument("--adversarial-mode", type=str, default="auto", choices=["auto", "strict", "fast"], help="博弈循环子模式")
     parser.add_argument("--adversarial-iterations", type=int, default=3, help="最大迭代次数")
     parser.add_argument("--adversarial-threshold", type=float, default=0.8, help="通过分数阈值")
+    # TriadLoop 三权分立参数
+    parser.add_argument("--triad", action="store_true", help="启用三权分立模式")
+    parser.add_argument("--enable-docker", action="store_true", help="启用 Docker 沙箱验证")
+    parser.add_argument("--enable-cot", action="store_true", default=True, help="启用思维链追踪")
+    parser.add_argument("--disable-cot", action="store_true", help="禁用思维链追踪")
+    parser.add_argument("--test-command", type=str, help="自定义测试命令")
     args = parser.parse_args()
 
     if not args.task:
@@ -561,6 +567,69 @@ if __name__ == "__main__":
         # Adversarial 博弈循环模式
         success = run_adversarial_mode(args.task, args)
         sys.exit(0 if success else 1)
+
+    elif args.mode == "triad" or args.triad:
+        # ═══════════════════════════════════════════════════════════════════════
+        # TriadLoop 三权分立模式
+        # 架构：Coder (Claude) ↔ Reviewer (GPT) ↔ Validator (Pytest)
+        # ═══════════════════════════════════════════════════════════════════════
+        try:
+            from agent.triad_loop import TriadLoop, create_triad_loop, log_thought
+
+            log_step("triad_mode_start", f"三权分立模式启动: {args.task[:80]}",
+                    coder_model=args.coder_model,
+                    reviewer_model=args.reviewer_model,
+                    enable_docker=args.enable_docker,
+                    enable_cot=not args.disable_cot)
+
+            # 创建三权分立循环
+            triad = create_triad_loop(
+                workspace=args.workspace,
+                coder_api_key=args.api_key,
+                reviewer_api_key=args.api_key,
+                coder_model=args.coder_model,
+                reviewer_model=args.reviewer_model,
+                max_iterations=args.adversarial_iterations,
+                score_threshold=args.adversarial_threshold,
+                enable_thought_tracking=not args.disable_cot,
+                enable_docker=args.enable_docker,
+                test_command=args.test_command
+            )
+
+            # 构建上下文
+            context = {"language": args.language}
+            if args.file:
+                context["file_path"] = args.file
+
+            # 运行三权分立循环
+            result = triad.run(task=args.task, context=context, mode="fix")
+
+            # 输出结果
+            print("\n" + "=" * 60)
+            print("三权分立博弈循环执行结果")
+            print("=" * 60)
+            print(f"状态: {'✓ 全部通过' if result.all_passed else '✗ 未通过'}")
+            print(f"最终得分: {result.final_score:.2f}")
+            print(f"迭代次数: {result.total_rounds}")
+            print(f"总耗时: {result.total_time:.2f}s")
+            print("三权检查:")
+            print(f"  Reviewer: {'✓ 通过' if result.reviewer_passed else '✗ 未通过'}")
+            print(f"  Validator: {'✓ 通过' if result.validator_passed else '✗ 未通过'}")
+            if result.converged:
+                print(f"收敛: 是 ({result.convergence_reason})")
+            print("=" * 60)
+
+            sys.exit(0 if result.all_passed else 1)
+
+        except ImportError as e:
+            log_step("error", f"TriadLoop 导入失败: {e}")
+            log_step("hint", "请确保 triad_loop.py 已创建并正确放置在 agent/ 目录")
+            sys.exit(1)
+        except Exception as e:
+            log_step("error", f"TriadLoop 执行错误: {e}", category="logic")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
 
     elif args.mode == "phase3":
         # Phase 3: Self-Provisioning & Adversarial Review

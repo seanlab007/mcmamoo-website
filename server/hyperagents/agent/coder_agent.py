@@ -98,7 +98,8 @@ class CoderAgent:
         api_key: str = None,
         model: str = "gpt-4o",
         workspace: str = None,
-        language: str = "typescript"
+        language: str = "typescript",
+        enable_thought_tracking: bool = True
     ):
         """
         初始化编码员
@@ -108,12 +109,17 @@ class CoderAgent:
             model: 使用的模型
             workspace: 工作目录
             language: 主要编程语言
+            enable_thought_tracking: 启用思维链追踪（CoT）
         """
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
         self.workspace = workspace or os.getcwd()
         self.language = language
+        self.enable_thought_tracking = enable_thought_tracking
         self.generation_history: List[GenerationResult] = []
+
+        # 动态工具发现：已知库的文档缓存
+        self._doc_cache: Dict[str, str] = {}
 
     def generate(
         self,
@@ -226,6 +232,54 @@ Reviewer 审查反馈：
             log_step("error", f"读取文件失败: {e}", file=file_path)
             return ""
 
+    def search_documentation(self, library: str, query: str) -> str:
+        """
+        动态工具发现：查询库/框架的文档
+
+        这是超越 Manus Max 的关键能力之一：当 Coder 不知道某个库怎么用时，
+        它会自主去查文档，而不是胡编乱造。
+
+        Args:
+            library: 库名 (如 "react", "numpy", "fastapi")
+            query: 查询内容 (如 "useEffect", "matrix multiplication")
+
+        Returns:
+            文档片段或使用示例
+        """
+        cache_key = f"{library}:{query}"
+        if cache_key in self._doc_cache:
+            log_step("doc_cache_hit", f"文档缓存命中: {library}", query=query)
+            return self._doc_cache[cache_key]
+
+        log_step("doc_search", f"查询文档: {library}", query=query)
+
+        # 模拟文档搜索（实际可接入官方文档 API）
+        doc_responses = {
+            "react": {
+                "useEffect": "useEffect(effect, deps?): 在组件渲染后执行副作用",
+                "useState": "useState<T>(initial): 返回状态值和 setter",
+                "useRef": "useRef<T>(initial): 返回可变的 ref 对象"
+            },
+            "numpy": {
+                "matrix": "numpy.dot(a, b) 或 a @ b 计算矩阵乘法",
+                "array": "numpy.array(list): 创建数组",
+                "zeros": "numpy.zeros(shape): 创建全零数组"
+            },
+            "fastapi": {
+                "route": "@app.get('/path') 定义 GET 路由",
+                "depend": "Depends(): 依赖注入装饰器",
+                "response": "Response: 控制响应头和状态码"
+            }
+        }
+
+        result = doc_responses.get(library.lower(), {}).get(query, "")
+        if result:
+            self._doc_cache[cache_key] = result
+            return result
+
+        # 尝试联网搜索（生产环境）
+        return f"[{library}] 文档查询结果：{query} - 请参考官方文档"
+
     def _generate_with_llm(
         self,
         context: str,
@@ -233,7 +287,7 @@ Reviewer 审查反馈：
         mode: GenerationMode,
         feedback: str
     ) -> str:
-        """使用 LLM 生成代码"""
+        """使用 LLM 生成代码（带思维链追踪）"""
         mode_instruction = {
             GenerationMode.INITIAL: "请生成完整的、高质量的代码。",
             GenerationMode.REVISION: "请根据 Reviewer 反馈精确修改代码，只改动必要部分。",
@@ -241,12 +295,28 @@ Reviewer 审查反馈：
             GenerationMode.TEST: "请生成相应的测试代码。"
         }
 
+        # 思维链追踪：强制要求先输出 <thought> 再输出代码
+        cot_instruction = ""
+        if self.enable_thought_tracking:
+            cot_instruction = """
+<重要：思维链追踪>
+在输出代码之前，你必须先用 <thought> 标签描述你的推理过程。
+格式：
+  <thought>
+  1. 分析任务需求...
+  2. 确定实现方案...
+  3. 考虑边界情况...
+  4. 开始编写代码...
+  </thought>
+这让用户能看到 AI 的思考过程。
+"""
+
         prompt = f"""你是 **Coder Agent（编码员）**，负责生成高质量代码。
 
 {context}
 
 {mode_instruction[mode]}
-
+{cot_instruction}
 """
 
         if original_code:
@@ -257,16 +327,35 @@ Reviewer 审查反馈：
 ```
 """
 
-        prompt += """
+        if self.enable_thought_tracking:
+            prompt += """
+
+请按以下格式输出：
+<thought>
+[你的推理过程]
+</thought>
+```[语言]
+[生成的代码]
+```
+"""
+        else:
+            prompt += """
 
 请生成代码（只输出代码，不要解释）：
-```"
-        # 代码开始
-
+```[语言]
+[生成的代码]
+```
 """
 
         try:
             response = self._call_llm(prompt)
+
+            # 提取思维链
+            thought_match = re.search(r'<thought>(.*?)</thought>', response, re.DOTALL)
+            if thought_match and self.enable_thought_tracking:
+                thought = thought_match.group(1).strip()
+                log_step("thought", thought, agent="coder", tag="CoT")
+
             # 提取代码块
             match = re.search(r'```(?:\w+)?\s*(.*?)```', response, re.DOTALL)
             if match:
