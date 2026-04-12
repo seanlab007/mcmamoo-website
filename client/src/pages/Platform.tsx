@@ -7,7 +7,7 @@
  * 普通用户：显示用户运营平台
  */
 import { useState } from "react";
-import { ExternalLink, Loader2, AlertCircle, RefreshCw, Lock, Video, MessageSquare, Zap, Shield, User, BookLocked } from "lucide-react";
+import { ExternalLink, Loader2, AlertCircle, RefreshCw, Lock, Video, MessageSquare, Zap, Shield, User, BookOpen } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 // 类型定义
@@ -161,7 +161,7 @@ export default function Platform() {
               href="/notes"
               className="flex flex-col items-center gap-3 p-6 rounded-xl bg-[#111118] border border-white/10 hover:border-amber-500/50 transition-all group"
             >
-              <BookLocked size={24} className="text-amber-400 group-hover:scale-110 transition-transform" />
+              <BookOpen size={24} className="text-amber-400 group-hover:scale-110 transition-transform" />
               <span className="text-white/80 text-sm">私密笔记</span>
             </a>
             <a

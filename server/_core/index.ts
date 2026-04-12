@@ -41,11 +41,8 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
-<<<<<<< HEAD
   // Supabase 邮箱+密码登录（管理员）
   registerSupabaseAuthRoutes(app);
-  // AI 节点协同 + 聊天流 + OpenAI 兼容 API（MaoAI 核心路由）
-=======
 
   // ── 邮箱+密码登录（Supabase Auth，备选路由）────────────────────────────
   app.post("/api/auth/email-login", async (req, res) => {
@@ -103,8 +100,7 @@ async function startServer() {
     }
   });
 
-  // ────────────────────────────────────────────────────────────────────────
->>>>>>> b5daec5 (feat: 更新 MaoAI 至最新版本 - 包含智能 AI 控制中心功能)
+  // AI 节点协同 + 聊天流 + OpenAI 兼容 API（MaoAI 核心路由）
   app.use("/api/ai", aiStreamRouter);
   // 私密云笔记 API（管理员专属）
   app.use("/api/notes", notesRouter);
