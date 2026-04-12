@@ -5153,6 +5153,66 @@ var TOOL_DEFINITIONS = [
         required: ["projectPath"]
       }
     }
+  },
+  // ─── Phase 3: RAG 向量记忆搜索工具 ─────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "vector_memory_search",
+      description: "\u5728\u9879\u76EE\u4EE3\u7801\u5E93\u4E2D\u8FDB\u884C\u8BED\u4E49\u5316\u4EE3\u7801\u641C\u7D22\uFF08RAG\uFF09\u3002\u8F93\u5165\u5173\u952E\u8BCD\u6216\u81EA\u7136\u8BED\u8A00\u63CF\u8FF0\uFF0C\u8FD4\u56DE\u6700\u76F8\u5173\u7684\u4EE3\u7801\u7247\u6BB5\u548C\u6587\u4EF6\u4F4D\u7F6E\u3002\u5F53\u7528\u6237\u95EE'\u4FEE\u6539XXX\u903B\u8F91'\u3001'\u5728\u54EA\u91CC\u627E\u5230XXX\u529F\u80FD'\u65F6\u4F7F\u7528\u3002\u6B64\u5DE5\u5177\u4E0D\u4F7F\u7528\u5916\u90E8\u5411\u91CF\u6570\u636E\u5E93\uFF0C\u800C\u662F\u901A\u8FC7\u591A\u7B56\u7565\u5339\u914D\uFF08\u5173\u952E\u8BCD+\u7ED3\u6784\u5316\u5206\u6790\uFF09\u8FD4\u56DE\u6700\u76F8\u5173\u7684\u4EE3\u7801\u5757\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "\u641C\u7D22\u67E5\u8BE2\uFF08\u5173\u952E\u8BCD\u6216\u81EA\u7136\u8BED\u8A00\u63CF\u8FF0\u60F3\u627E\u7684\u4EE3\u7801\u529F\u80FD\uFF09"
+          },
+          projectPath: {
+            type: "string",
+            description: "\u9879\u76EE\u6839\u76EE\u5F55\u7684\u7EDD\u5BF9\u8DEF\u5F84"
+          },
+          fileTypes: {
+            type: "string",
+            description: "\u8981\u641C\u7D22\u7684\u6587\u4EF6\u7C7B\u578B\uFF0C\u9017\u53F7\u5206\u9694\uFF0C\u5982 'ts,tsx,py'\u3002\u9ED8\u8BA4 'ts,tsx,js,jsx,py'",
+            default: "ts,tsx,js,jsx,py"
+          },
+          maxResults: {
+            type: "number",
+            description: "\u6700\u591A\u8FD4\u56DE\u591A\u5C11\u4E2A\u76F8\u5173\u4EE3\u7801\u5757\uFF0C\u9ED8\u8BA4 5",
+            default: 5
+          }
+        },
+        required: ["query", "projectPath"]
+      }
+    }
+  },
+  // ─── Phase 4: TDD 自我修正工具 ─────────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "run_npm_test",
+      description: "\u5728\u6307\u5B9A\u9879\u76EE\u76EE\u5F55\u8FD0\u884C\u6D4B\u8BD5\u5957\u4EF6\uFF08npm test\uFF09\u3002\u7528\u4E8E TDD \u81EA\u6211\u4FEE\u6B63\u5FAA\u73AF\uFF1A\u5F53 build_verify \u901A\u8FC7\u4F46\u9700\u8981\u786E\u8BA4\u529F\u80FD\u6B63\u786E\u6027\u65F6\uFF0C\u8FD0\u884C\u6D4B\u8BD5\u3002\u8FD4\u56DE\u6D4B\u8BD5\u7ED3\u679C\uFF08\u901A\u8FC7/\u5931\u8D25\uFF09\u548C\u5931\u8D25\u7684\u6D4B\u8BD5\u7528\u4F8B\u8BE6\u60C5\uFF0C\u4F9B AI \u91CD\u65B0\u751F\u6210 Thought \u8FDB\u884C\u81EA\u6211\u4FEE\u6B63\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          projectPath: {
+            type: "string",
+            description: "\u9879\u76EE\u6839\u76EE\u5F55\u7684\u7EDD\u5BF9\u8DEF\u5F84"
+          },
+          testCommand: {
+            type: "string",
+            description: "\u6D4B\u8BD5\u547D\u4EE4\uFF0C\u9ED8\u8BA4 'npm test -- --run'\uFF08Vitest/Jest headless \u6A21\u5F0F\uFF09",
+            default: "npm test -- --run"
+          },
+          timeout: {
+            type: "number",
+            description: "\u8D85\u65F6\u65F6\u95F4\uFF08\u79D2\uFF09\uFF0C\u9ED8\u8BA4 120",
+            default: 120
+          }
+        },
+        required: ["projectPath"]
+      }
+    }
   }
 ];
 TOOL_DEFINITIONS.push(...OPENCLAW_TOOL_DEFINITIONS);
@@ -5298,6 +5358,12 @@ async function executeTool(toolName, args, isAdmin = false) {
         return await toolProjectTreeScanner(args.projectPath, args.maxDepth || 4, args.includePatterns);
       case "build_verify":
         return await toolBuildVerify(args.projectPath, args.buildCommand || "npm run build", args.timeout || 120);
+      // ─── Phase 3 RAG 记忆搜索 ─────────────────────────────────────────────
+      case "vector_memory_search":
+        return await toolVectorMemorySearch(args.query, args.projectPath, args.fileTypes, args.maxResults);
+      // ─── Phase 4 TDD 自我修正 ─────────────────────────────────────────────
+      case "run_npm_test":
+        return await toolRunNpmTest(args.projectPath, args.testCommand, args.timeout);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell \u4EC5\u7BA1\u7406\u5458\u53EF\u7528" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -6146,6 +6212,166 @@ async function runBuildVerifyLoop(projectPath, buildCommand = "npm run build", m
     finalOutput: history[history.length - 1]?.output || "",
     history
   };
+}
+async function toolVectorMemorySearch(query, projectPath, fileTypes = "ts,tsx,js,jsx,py", maxResults = 5) {
+  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
+  const absPath = projectPath || DEFAULT_PATH;
+  const keywords = query.toLowerCase().replace(/[^\w\s]/g, " ").split(/\s+/).filter((w) => w.length > 2);
+  const allowedExts = fileTypes.split(",").map((e) => e.trim()).filter(Boolean);
+  const results = [];
+  try {
+    async function scanDir(dir, depth = 0) {
+      if (depth > 6) return;
+      let entries;
+      try {
+        entries = await fs6.readdir(dir, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const entry of entries) {
+        if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "dist" || entry.name === "__pycache__") continue;
+        const fullPath = path6.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await scanDir(fullPath, depth + 1);
+        } else if (entry.isFile()) {
+          const ext = entry.name.split(".").pop() || "";
+          if (!allowedExts.includes(ext)) continue;
+          try {
+            const stat2 = await fs6.stat(fullPath);
+            if (stat2.size > 5e5) continue;
+            const content = await fs6.readFile(fullPath, "utf8");
+            const lines2 = content.split("\n");
+            let score = 0;
+            const matchedLines = [];
+            for (let i = 0; i < lines2.length; i++) {
+              const line = lines2[i];
+              const lineLower = line.toLowerCase();
+              for (const kw of keywords) {
+                if (lineLower.includes(kw)) {
+                  score += kw.length * 2;
+                  if (/^(export\s+)?(async\s+)?function|^(export\s+)?const\s+\w+\s*=|^class\s+|^interface\s+|^type\s+/.test(line.trim())) {
+                    score += 20;
+                  }
+                  matchedLines.push({ line: i + 1, text: line.trim() });
+                }
+              }
+            }
+            const baseName = path6.basename(fullPath).toLowerCase();
+            for (const kw of keywords) {
+              if (baseName.includes(kw)) score += 30;
+            }
+            if (score > 0) {
+              const preview = matchedLines.slice(0, 3).map((m) => `  L${m.line}: ${m.text}`).join("\n");
+              results.push({
+                path: fullPath.replace(absPath, ""),
+                score,
+                preview,
+                lineStart: matchedLines[0]?.line || 1
+              });
+            }
+          } catch {
+          }
+        }
+      }
+    }
+    await scanDir(absPath);
+    results.sort((a, b) => b.score - a.score);
+    const top = results.slice(0, maxResults);
+    if (top.length === 0) {
+      return {
+        success: true,
+        output: `\u672A\u627E\u5230\u4E0E "${query}" \u76F8\u5173\u7684\u4EE3\u7801\u7247\u6BB5\u3002\u5C1D\u8BD5\u6269\u5927\u641C\u7D22\u8303\u56F4\u6216\u4F7F\u7528\u66F4\u901A\u7528\u7684\u5173\u952E\u8BCD\u3002`,
+        metadata: { query, resultCount: 0 }
+      };
+    }
+    const lines = [];
+    lines.push(`\u627E\u5230 ${top.length} \u4E2A\u76F8\u5173\u4EE3\u7801\u7247\u6BB5\uFF08\u6309\u76F8\u5173\u6027\u6392\u5E8F\uFF09\uFF1A
+`);
+    top.forEach((item, idx) => {
+      lines.push(`
+--- \u7ED3\u679C ${idx + 1} [\u5F97\u5206: ${item.score}] ---`);
+      lines.push(`\u{1F4C4} ${item.path}`);
+      lines.push(item.preview);
+    });
+    lines.push(`
+\u{1F4A1} \u63D0\u793A\uFF1A\u4F7F\u7528 project_tree_scanner \u5DE5\u5177\u53EF\u4EE5\u67E5\u770B\u5B8C\u6574\u7684\u9879\u76EE\u7ED3\u6784\u3002`);
+    return {
+      success: true,
+      output: lines.join("\n"),
+      metadata: { query, resultCount: top.length, scores: top.map((t2) => ({ path: t2.path, score: t2.score })) }
+    };
+  } catch (err) {
+    return { success: false, output: "", error: `RAG \u641C\u7D22\u5931\u8D25: ${err.message}` };
+  }
+}
+async function toolRunNpmTest(projectPath, testCommand = "npm test -- --run", timeout = 120) {
+  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
+  const absPath = projectPath || DEFAULT_PATH;
+  try {
+    const { stdout, stderr } = await execAsync3(testCommand, {
+      cwd: absPath,
+      timeout: timeout * 1e3,
+      maxBuffer: 5 * 1024 * 1024
+    });
+    const output = (stdout + stderr).trim();
+    const passedMatch = output.match(/(\d+) passed/);
+    const failedMatch = output.match(/(\d+) failed/);
+    const passed = passedMatch ? parseInt(passedMatch[1]) : 0;
+    const failed = failedMatch ? parseInt(failedMatch[1]) : 0;
+    if (failed > 0) {
+      const failedTests = [];
+      const lines = output.split("\n");
+      let inFailureBlock = false;
+      for (const line of lines) {
+        if (line.includes("FAIL") || line.includes("\u2715") || line.includes("\xD7")) {
+          inFailureBlock = true;
+          failedTests.push(line.trim());
+        } else if (inFailureBlock && line.trim()) {
+          if (line.match(/^\s{2,}\d+\)|line\s+\d+|Error:|expect\(/) || line.trim().startsWith("at ")) {
+            failedTests.push("  " + line.trim());
+          } else if (!line.includes("\u2713") && !line.includes("\u25CF")) {
+            inFailureBlock = false;
+          }
+        }
+      }
+      return {
+        success: false,
+        output: `\u274C \u6D4B\u8BD5\u5931\u8D25: ${failed} \u4E2A\u6D4B\u8BD5\u672A\u901A\u8FC7
+
+${output.slice(-3e3)}`,
+        metadata: {
+          testPassed: false,
+          passed,
+          failed,
+          failedTests: failedTests.slice(0, 20).join("\n"),
+          rawOutput: output.slice(-5e3)
+        }
+      };
+    }
+    return {
+      success: true,
+      output: `\u2705 \u6240\u6709 ${passed} \u4E2A\u6D4B\u8BD5\u901A\u8FC7
+
+${output.slice(-1e3)}`,
+      metadata: { testPassed: true, passed, failed: 0 }
+    };
+  } catch (err) {
+    const output = err.stdout || err.message || "";
+    const failedMatch = output.match(/(\d+) failed/);
+    const failed = failedMatch ? parseInt(failedMatch[1]) : null;
+    return {
+      success: failed !== null && failed > 0 ? false : true,
+      output: err.killed ? `\u23F1\uFE0F \u6D4B\u8BD5\u6267\u884C\u8D85\u65F6\uFF08${timeout}\u79D2\uFF09` : `\u26A0\uFE0F \u6D4B\u8BD5\u6267\u884C\u5F02\u5E38
+
+${output.slice(-3e3)}`,
+      metadata: {
+        testPassed: failed !== null && failed > 0 ? false : void 0,
+        passed: null,
+        failed,
+        rawOutput: output.slice(-5e3)
+      }
+    };
+  }
 }
 
 // server/contentPlatform.ts
@@ -7917,7 +8143,7 @@ ${JSON.stringify(inputSchema)}` },
   const { enableTools = true } = req.body;
   const adminUser = await getAdminUser(req);
   const toolDefs = enableTools ? adminUser ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS : [];
-  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 && (model === "deepseek-chat" || model === "glm-4-plus" || model === "glm-4-flash" || model === "zai-glm-5" || model === "zai-glm-4-7" || model === "glm-5v-turbo");
+  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 && !!cfg.apiKey;
   try {
     if (hasImage) {
       const debugMsgs = allMessages.map((m) => ({
@@ -7942,6 +8168,11 @@ ${JSON.stringify(inputSchema)}` },
         requestBody.tools = toolDefs;
         requestBody.tool_choice = "auto";
       }
+      res.write(`data: ${JSON.stringify({
+        reactRound: { round: round + 1, status: "thinking", maxRounds: MAX_TOOL_ROUNDS }
+      })}
+
+`);
       const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
@@ -8009,6 +8240,11 @@ ${JSON.stringify(inputSchema)}` },
       }
       const toolCalls = Object.values(toolCallsAccum);
       if (toolCalls.length === 0 || finishReason === "stop") {
+        res.write(`data: ${JSON.stringify({
+          reactEnd: { reason: toolCalls.length === 0 ? "no_tools" : "final_answer", rounds: round + 1 }
+        })}
+
+`);
         res.write("data: [DONE]\n\n");
         res.end();
         return;
@@ -8053,6 +8289,11 @@ ${JSON.stringify(inputSchema)}` },
         });
       }
     }
+    res.write(`data: ${JSON.stringify({
+      reactEnd: { reason: "max_rounds", rounds: MAX_TOOL_ROUNDS }
+    })}
+
+`);
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err) {
