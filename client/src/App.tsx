@@ -40,10 +40,8 @@ import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
 import MaoIndustry from "./components/sections/MaoIndustry";
 
-// 猫眼内容平台跳转地址（本地:3001，云端: mcmamoo.com/content）
-const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
-  ? "/content"
-  : "http://localhost:3001/content";
+import ContentPlatform from "./pages/ContentPlatform";
+import AutoClip from "./pages/AutoClip";
 
 function Router() {
   return (
@@ -86,23 +84,9 @@ function Router() {
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       
-      {/* 猫眼内容平台跳转（已拆分到独立项目） */}
-      <Route path={"/content"}>
-        {() => {
-          if (typeof window !== "undefined") {
-            window.location.href = CONTENT_PLATFORM_URL;
-          }
-          return null;
-        }}
-      </Route>
-      <Route path={"/autoclip"}>
-        {() => {
-          if (typeof window !== "undefined") {
-            window.location.href = CONTENT_PLATFORM_URL.replace("/content", "/autoclip");
-          }
-          return null;
-        }}
-      </Route>
+      {/* 猫眼内容平台（已整合到主站） */}
+      <Route path={"/content"} component={ContentPlatform} />
+      <Route path={"/autoclip"} component={AutoClip} />
       
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />

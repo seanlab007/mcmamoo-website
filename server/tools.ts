@@ -517,6 +517,61 @@ export const TOOL_DEFINITIONS = [
         required: ["task"]
       }
     }
+  },
+
+  // ─── 猫眼内容平台：视频合成引擎 ───────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "video_composer",
+      description: "使用 MoviePy 将图片序列、配音音频和字幕文件合成短视频。支持黑金风格字幕、自动交叉淡入淡出、BGM混音。参数包括图片路径列表、旁白音频路径、SRT字幕文件、输出视频路径和可选的BGM路径。",
+      parameters: {
+        type: "object",
+        properties: {
+          image_paths: {
+            type: "array",
+            items: { type: "string" },
+            description: "图片路径列表（建议每张图对应一个分镜），支持 JPG、PNG"
+          },
+          audio_path: {
+            type: "string",
+            description: "旁白配音文件路径，支持 MP3、WAV"
+          },
+          srt_path: {
+            type: "string",
+            description: "字幕文件路径（SRT 格式）"
+          },
+          output_path: {
+            type: "string",
+            description: "输出视频路径，建议 .mp4 格式"
+          },
+          bgm_path: {
+            type: "string",
+            description: "可选背景音乐路径，用于添加 BGM"
+          }
+        },
+        required: ["image_paths", "audio_path", "srt_path", "output_path"]
+      }
+    }
+  },
+
+  // ─── 猫眼内容平台：视频合成状态查询 ──────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "video_compose_status",
+      description: "查询视频合成任务的状态。返回当前进度、已合成时长、预计剩余时间等信息。",
+      parameters: {
+        type: "object",
+        properties: {
+          taskId: {
+            type: "string",
+            description: "视频合成任务 ID（由 video_composer 返回）"
+          }
+        },
+        required: ["taskId"]
+      }
+    }
   }
 ];
 
@@ -693,6 +748,11 @@ export async function executeTool(
       // ─── Manus Max: HyperAgents ReAct 引擎 ────────────────────────────────
       case "run_agent_loop":
         return await toolRunAgentLoop(args.task, args.domain, args.workspace);
+      // ─── 猫眼内容平台：视频合成引擎 ─────────────────────────────────────
+      case "video_composer":
+        return await toolVideoComposer(args.image_paths, args.audio_path, args.srt_path, args.output_path, args.bgm_path);
+      case "video_compose_status":
+        return await toolVideoComposeStatus(args.taskId);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -2041,4 +2101,188 @@ async function toolRunNpmTest(
       },
     };
   }
+}
+
+// ─── 猫眼内容平台：视频合成工具实现 ─────────────────────────────────────────────
+
+// 视频合成任务状态存储（内存中，生产环境应使用 Redis）
+const videoComposeTasks = new Map<string, {
+  status: "pending" | "running" | "completed" | "failed";
+  progress: number;
+  outputPath?: string;
+  error?: string;
+  startedAt: Date;
+}>();
+
+async function toolVideoComposer(
+  imagePaths: string[],
+  audioPath: string,
+  srtPath: string,
+  outputPath: string,
+  bgmPath?: string
+): Promise<ToolResult> {
+  const taskId = `video_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  // 验证输入文件
+  try {
+    const { existsSync } = await import("fs");
+    for (const img of imagePaths) {
+      if (!existsSync(img)) {
+        return { success: false, output: "", error: `图片文件不存在: ${img}` };
+      }
+    }
+    if (!existsSync(audioPath)) {
+      return { success: false, output: "", error: `音频文件不存在: ${audioPath}` };
+    }
+    if (!existsSync(srtPath)) {
+      return { success: false, output: "", error: `字幕文件不存在: ${srtPath}` };
+    }
+  } catch (err: any) {
+    return { success: false, output: "", error: `文件检查失败: ${err.message}` };
+  }
+
+  // 记录任务状态
+  videoComposeTasks.set(taskId, {
+    status: "pending",
+    progress: 0,
+    startedAt: new Date(),
+  });
+
+  // 异步执行视频合成（避免阻塞）
+  executeVideoCompose(taskId, imagePaths, audioPath, srtPath, outputPath, bgmPath).catch((err) => {
+    const task = videoComposeTasks.get(taskId);
+    if (task) {
+      task.status = "failed";
+      task.error = err.message;
+    }
+  });
+
+  return {
+    success: true,
+    output: `视频合成任务已创建\n\n任务 ID: ${taskId}\n输入图片: ${imagePaths.length} 张\n音频: ${audioPath}\n字幕: ${srtPath}\n输出: ${outputPath}\n\n请使用 video_compose_status 查询进度。`,
+    metadata: { taskId, status: "pending" },
+  };
+}
+
+async function executeVideoCompose(
+  taskId: string,
+  imagePaths: string[],
+  audioPath: string,
+  srtPath: string,
+  outputPath: string,
+  bgmPath?: string
+): Promise<void> {
+  const task = videoComposeTasks.get(taskId);
+  if (!task) return;
+
+  task.status = "running";
+  task.progress = 10;
+
+  try {
+    // 导入 video_composer 模块
+    const videoComposerPath = `${__dirname}/hyperagents/media_engine/video_composer.py`;
+
+    // 构建 Python 调用代码
+    const pythonCode = `
+import sys
+sys.path.insert(0, '${videoComposerPath.replace("/video_composer.py", "")}')
+from video_composer import create_short_video
+
+result = create_short_video(
+    image_paths=${JSON.stringify(imagePaths)},
+    audio_path='${audioPath}',
+    srt_path='${srtPath}',
+    output_path='${outputPath}'${bgmPath ? `,\n    bgm_path='${bgmPath}'` : ""}
+)
+print("RESULT:", result)
+`;
+
+    // 执行 Python 代码
+    const { spawn } = await import("child_process");
+    const proc = spawn("python3", ["-c", pythonCode], {
+      timeout: 600000, // 10分钟超时
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    proc.stdout?.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    proc.stderr?.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    proc.on("close", (code) => {
+      task.progress = 100;
+      if (code === 0) {
+        task.status = "completed";
+        task.outputPath = outputPath;
+      } else {
+        task.status = "failed";
+        task.error = stderr || `Process exited with code ${code}`;
+      }
+    });
+
+    proc.on("error", (err) => {
+      task.status = "failed";
+      task.error = err.message;
+    });
+
+  } catch (err: any) {
+    task.status = "failed";
+    task.error = err.message;
+  }
+}
+
+async function toolVideoComposeStatus(taskId: string): Promise<ToolResult> {
+  const task = videoComposeTasks.get(taskId);
+
+  if (!task) {
+    return {
+      success: false,
+      output: "",
+      error: `任务不存在: ${taskId}`,
+    };
+  }
+
+  const statusLabels: Record<string, string> = {
+    pending: "等待中",
+    running: "合成中",
+    completed: "已完成",
+    failed: "失败",
+  };
+
+  const elapsed = Math.round((Date.now() - task.startedAt.getTime()) / 1000);
+
+  let output = `视频合成任务状态\n\n`;
+  output += `任务 ID: ${taskId}\n`;
+  output += `状态: ${statusLabels[task.status] || task.status}\n`;
+  output += `进度: ${task.progress}%\n`;
+  output += `已用时: ${elapsed}秒\n`;
+
+  if (task.status === "running") {
+    output += `\n预计剩余时间: 约 ${Math.round(elapsed / task.progress * (100 - task.progress))} 秒`;
+  }
+
+  if (task.outputPath) {
+    output += `\n\n输出文件: ${task.outputPath}`;
+  }
+
+  if (task.error) {
+    output += `\n\n错误信息: ${task.error}`;
+  }
+
+  return {
+    success: task.status === "completed",
+    output,
+    metadata: {
+      taskId,
+      status: task.status,
+      progress: task.progress,
+      outputPath: task.outputPath,
+      error: task.error,
+    },
+  };
 }
