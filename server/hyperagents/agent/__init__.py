@@ -20,6 +20,19 @@ from .reviewer_agent import (
     StaticAnalysisRules,
     ReviewerAgent as AdversarialReviewer
 )
+from .coder_agent import (
+    CoderAgent as GenerationCoderAgent,
+    GenerationMode,
+    GenerationResult,
+    CodeContext
+)
+from .adversarial_loop import (
+    AdversarialLoop,
+    LoopResult,
+    LoopStatus,
+    IterationResult,
+    create_adversarial_loop
+)
 
 __all__ = [
     # Swarm 模块
@@ -40,5 +53,16 @@ __all__ = [
     "ReviewIssue",
     "ReviewDimension",
     "StaticAnalysisRules",
-    "AdversarialReviewer"
+    "AdversarialReviewer",
+    # Coder 模块（独立版）
+    "GenerationCoderAgent",
+    "GenerationMode",
+    "GenerationResult",
+    "CodeContext",
+    # Adversarial Loop 模块
+    "AdversarialLoop",
+    "LoopResult",
+    "LoopStatus",
+    "IterationResult",
+    "create_adversarial_loop"
 ]

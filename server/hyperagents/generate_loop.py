@@ -451,6 +451,86 @@ class ReActAgent:
         return "任务已达到最大推理轮次限制（8轮），建议拆分为更小的子任务。"
 
 
+# ─── 博弈循环模式 ───────────────────────────────────────────────────────────
+
+def run_adversarial_mode(task: str, args) -> bool:
+    """
+    运行博弈循环模式（Coder ↔ Reviewer 对抗式开发）
+
+    核心逻辑：
+      1. Coder 生成代码
+      2. Reviewer 严苛审查
+      3. 循环直到通过或达到最大次数
+    """
+    try:
+        from agent.adversarial_loop import AdversarialLoop, create_adversarial_loop
+
+        log_step("adversarial_start", f"博弈循环启动: {task[:80]}",
+                mode=args.mode,
+                coder_model=args.coder_model,
+                reviewer_model=args.reviewer_model,
+                max_iterations=args.adversarial_iterations,
+                threshold=args.adversarial_threshold)
+
+        # 创建博弈循环
+        loop = create_adversarial_loop(
+            workspace=args.workspace,
+            coder_api_key=args.api_key,
+            reviewer_api_key=args.api_key,
+            coder_model=args.coder_model,
+            reviewer_model=args.reviewer_model,
+            max_iterations=args.adversarial_iterations,
+            score_threshold=args.adversarial_threshold
+        )
+
+        # 构建上下文
+        context = {}
+        if args.file:
+            context["file_path"] = args.file
+
+        # 运行循环
+        result = loop.run(task=task, context=context, mode=args.adversarial_mode)
+
+        # 输出结果
+        log_step("adversarial_done",
+                f"博弈循环完成: {'✓ 通过' if result.approved else '✗ 未通过'}",
+                approved=result.approved,
+                score=result.score,
+                iterations=result.iterations,
+                total_time=f"{result.total_time:.2f}s",
+                final_code_length=len(result.final_code),
+                diff_lines=len(result.final_patch.splitlines()))
+
+        # 额外输出最终 patch（供前端展示）
+        if result.final_patch:
+            print(json.dumps({
+                "type": "final_patch",
+                "patch": result.final_patch,
+                "timestamp": time.time()
+            }, ensure_ascii=False), flush=True)
+
+        # 输出迭代历史
+        for ir in result.iteration_results:
+            log_step("adversarial_iteration",
+                    f"第 {ir.iteration} 轮: score={ir.reviewer_result.overall_score:.2f}, "
+                    f"issues={len(ir.reviewer_result.issues)}",
+                    iteration=ir.iteration,
+                    score=ir.reviewer_result.overall_score,
+                    issues_count=len(ir.reviewer_result.issues),
+                    improvement=ir.improvement)
+
+        return result.approved
+
+    except ImportError as e:
+        log_step("error", f"导入博弈循环模块失败: {e}", category="logic")
+        return False
+    except Exception as e:
+        log_step("error", f"博弈循环执行错误: {e}", category="logic")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 # ─── CLI 入口 ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -462,15 +542,27 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default=os.environ.get("OPENAI_MODEL", "gpt-4o"), help="模型")
     parser.add_argument("--workspace", type=str, default=os.environ.get("WORKSPACE", "."), help="工作目录")
     parser.add_argument("--api-key", type=str, default=os.environ.get("OPENAI_API_KEY", ""), help="API Key")
-    parser.add_argument("--mode", type=str, default="react", choices=["react", "swarm", "phase3"], help="运行模式: react(单代理) | swarm(多代理) | phase3(自主环境)")
+    parser.add_argument("--mode", type=str, default="react", choices=["react", "swarm", "phase3", "adversarial"], help="运行模式: react(单代理) | swarm(多代理) | phase3(自主环境) | adversarial(博弈循环)")
     parser.add_argument("--phase3-mode", type=str, default="auto", choices=["auto", "analyze", "provision", "review", "test"], help="Phase 3 子模式")
+    # Adversarial 模式参数
+    parser.add_argument("--file", type=str, default="", help="目标文件路径（用于 adversarial 模式）")
+    parser.add_argument("--coder-model", type=str, default="claude-3-5-sonnet", help="Coder 模型")
+    parser.add_argument("--reviewer-model", type=str, default="gpt-4o", help="Reviewer 模型")
+    parser.add_argument("--adversarial-mode", type=str, default="auto", choices=["auto", "strict", "fast"], help="博弈循环子模式")
+    parser.add_argument("--adversarial-iterations", type=int, default=3, help="最大迭代次数")
+    parser.add_argument("--adversarial-threshold", type=float, default=0.8, help="通过分数阈值")
     args = parser.parse_args()
 
     if not args.task:
         log_step("error", "缺少 --task 参数", category="logic", retry=False)
         sys.exit(1)
 
-    if args.mode == "phase3":
+    if args.mode == "adversarial":
+        # Adversarial 博弈循环模式
+        success = run_adversarial_mode(args.task, args)
+        sys.exit(0 if success else 1)
+
+    elif args.mode == "phase3":
         # Phase 3: Self-Provisioning & Adversarial Review
         try:
             from self_provisioning.self_provisioning import DynamicSandbox, EnvironmentAnalyzer
