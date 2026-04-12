@@ -66,6 +66,9 @@ class ReviewIssue:
     dimension: ReviewDimension
     severity: str  # critical, major, minor
     location: str   # 文件:行号
+    line_number: int = 0  # 新增：具体行号
+    column_start: int = 0  # 新增：列起始位置
+    column_end: int = 0  # 新增：列结束位置
     description: str
     suggestion: str
     code_snippet: str = ""
@@ -270,8 +273,9 @@ class ReviewerAgent:
         return result
 
     def _static_analysis(self, code: str) -> List[ReviewIssue]:
-        """静态分析代码"""
+        """静态分析代码（带行号定位）"""
         issues = []
+        lines = code.splitlines()
 
         for pattern, message, dimension in StaticAnalysisRules.ALL_PATTERNS:
             matches = list(re.finditer(pattern, code, re.MULTILINE | re.DOTALL))
@@ -286,15 +290,28 @@ class ReviewerAgent:
                 elif dimension == ReviewDimension.CORRECTNESS:
                     severity = "major"
 
-                # 提取代码片段（前后各 50 字符）
-                start = max(0, match.start() - 30)
-                end = min(len(code), match.end() + 30)
-                snippet = code[start:end].replace("\n", "\\n")[:100]
+                # 计算行号
+                line_number = code[:match.start()].count('\n') + 1
+                
+                # 计算列位置
+                line_start = code.rfind('\n', 0, match.start()) + 1
+                col_start = match.start() - line_start
+                col_end = col_start + len(match.group())
+
+                # 提取代码片段（当前行）
+                line_idx = line_number - 1
+                if 0 <= line_idx < len(lines):
+                    snippet = lines[line_idx].strip()[:100]
+                else:
+                    snippet = match.group()[:100]
 
                 issues.append(ReviewIssue(
                     dimension=dimension,
                     severity=severity,
-                    location=f"静态分析",
+                    location=f"行 {line_number}",
+                    line_number=line_number,
+                    column_start=col_start,
+                    column_end=col_end,
                     description=message,
                     suggestion=f"建议重构以解决: {message}",
                     code_snippet=snippet
@@ -684,6 +701,175 @@ class ReviewerAgent:
                 ))
 
         return risks
+
+    def generate_test_cases(
+        self,
+        task: str,
+        code: str,
+        language: str = "typescript"
+    ) -> Dict[str, Any]:
+        """
+        生成针对代码问题的测试用例
+
+        这是"超越 Manus Max"的关键能力：
+        Reviewer 不仅找茬，还要写出能证明问题存在的测试。
+
+        Args:
+            task: 任务描述
+            code: 待测试的代码
+            language: 编程语言
+
+        Returns:
+            {
+                "test_cases": List[测试用例],
+                "reproducer_code": str,  # 完整的测试文件
+                "success": bool
+            }
+        """
+        log_step("thought", "Reviewer 正在生成测试用例...", agent="reviewer")
+
+        prompt = f"""作为代码审查员，请为以下代码生成验证测试用例：
+
+任务：{task}
+
+代码：
+```
+{code[:2000]}
+```
+
+请生成 2-3 个测试用例，用于：
+1. **复现测试**：能证明当前代码存在问题的测试（修复前应失败）
+2. **边界测试**：边界条件和异常输入的测试
+3. **回归测试**：确保修复后不会引入新问题的测试
+
+输出格式（严格 JSON）：
+```json
+{{
+  "test_cases": [
+    {{
+      "name": "test_xxx",
+      "description": "测试描述",
+      "code": "实际可执行的测试代码",
+      "expected": "期望结果",
+      "should_fail_before_fix": true
+    }}
+  ]
+}}
+```
+
+注意：
+- 测试代码必须可执行
+- 大部分测试 should_fail_before_fix 应为 true（证明问题存在）"""
+
+        try:
+            response = self._call_llm(prompt)
+            # 解析 JSON
+            json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group(1))
+                test_cases = data.get("test_cases", [])
+                
+                # 构建完整的测试文件
+                reproducer_code = self._build_reproducer_template(
+                    task, test_cases, language
+                )
+                
+                log_step("done", f"生成 {len(test_cases)} 个测试用例",
+                        agent="reviewer", test_count=len(test_cases))
+                
+                return {
+                    "test_cases": test_cases,
+                    "reproducer_code": reproducer_code,
+                    "success": True
+                }
+        except Exception as e:
+            log_step("error", f"测试用例生成失败: {e}", agent="reviewer")
+
+        return {"test_cases": [], "reproducer_code": "", "success": False}
+
+    def _build_reproducer_template(
+        self,
+        task: str,
+        test_cases: List[Dict],
+        language: str
+    ) -> str:
+        """构建 Reproducer 测试模板"""
+        if language == "typescript":
+            test_blocks = "\n".join([
+                f"  it('{tc.get('name', 'test')}', () => {{\n    // {tc.get('description', '')}\n    {tc.get('code', '')}\n  }});"
+                for tc in test_cases
+            ])
+            return f'''// ─── Auto-Generated Reproducer ───────────────────────────────────────────
+// Task: {task}
+// Generated: {time.strftime("%Y-%m-%d %H:%M:%S")}
+
+import {{ describe, it, expect }} from 'vitest';
+
+describe('Reproducer', () => {{
+{test_blocks}
+}});
+'''
+        else:  # Python
+            test_blocks = "\n".join([
+                f"    def {tc.get('name', 'test')}(self):\n        # {tc.get('description', '')}\n        {tc.get('code', '')}"
+                for tc in test_cases
+            ])
+            return f'''# ─── Auto-Generated Reproducer ───────────────────────────────────────────
+# Task: {task}
+# Generated: {time.strftime("%Y-%m-%d %H:%M:%S")}
+
+import unittest
+
+class TestReproducer(unittest.TestCase):
+{test_blocks}
+
+if __name__ == '__main__':
+    unittest.main()
+'''
+
+    def structured_feedback(self, issues: List[ReviewIssue]) -> str:
+        """
+        生成结构化反馈（面向 Coder 的可执行指令）
+
+        关键改进：将 Reviewer 的反馈转换为 Coder 可直接执行的修复指令
+        """
+        if not issues:
+            return "代码审查通过，无问题。"
+
+        feedback_lines = [
+            "=== Reviewer 审查反馈 ===",
+            "",
+            "发现以下问题，请修复：",
+            ""
+        ]
+
+        # 按严重程度和行号排序
+        sorted_issues = sorted(
+            issues,
+            key=lambda x: (
+                0 if x.severity == "critical" else 1 if x.severity == "major" else 2,
+                x.line_number or 999
+            )
+        )
+
+        for i, issue in enumerate(sorted_issues, 1):
+            feedback_lines.append(f"【问题 {i}】")
+            feedback_lines.append(f"  维度: {issue.dimension.value}")
+            feedback_lines.append(f"  严重性: {issue.severity}")
+            feedback_lines.append(f"  位置: {issue.location}" + 
+                                (f" (第 {issue.line_number} 行)" if issue.line_number else ""))
+            feedback_lines.append(f"  问题: {issue.description}")
+            feedback_lines.append(f"  建议: {issue.suggestion}")
+            if issue.code_snippet:
+                feedback_lines.append(f"  代码: {issue.code_snippet}")
+            feedback_lines.append("")
+
+        feedback_lines.append("请根据以上反馈修复代码，确保：")
+        feedback_lines.append("1. 所有 critical 问题必须解决")
+        feedback_lines.append("2. major 问题尽量解决")
+        feedback_lines.append("3. 不要引入新的问题")
+
+        return "\n".join(feedback_lines)
 
 
 # ─── CLI 入口 ────────────────────────────────────────────────────────────────
