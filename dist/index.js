@@ -1822,7 +1822,7 @@ async function sendBulkEmails(recipients, subject, html, text) {
       else failed++;
     }
     if (i + batchSize < recipients.length) {
-      await new Promise((resolve2) => setTimeout(resolve2, 500));
+      await new Promise((resolve3) => setTimeout(resolve3, 500));
     }
   }
   return { success, failed };
@@ -4865,6 +4865,21 @@ var TOOL_DEFINITIONS = [
             type: "string",
             description: "\u76EE\u6807\u5206\u652F\uFF0C\u9ED8\u8BA4 main",
             default: "main"
+          },
+          verify: {
+            type: "boolean",
+            description: "Phase 3 \u529F\u80FD\uFF1A\u63A8\u9001\u6210\u529F\u540E\u81EA\u52A8\u89E6\u53D1 build_verify \u6784\u5EFA\u9A8C\u8BC1\u3002\u5DE5\u7A0B\u7C7B\u4FEE\u6539\u5EFA\u8BAE\u5F00\u542F\u3002",
+            default: false
+          },
+          verifyProjectPath: {
+            type: "string",
+            description: "build_verify \u7684\u9879\u76EE\u8DEF\u5F84\uFF0C\u9ED8\u8BA4 /Users/daiyan/Desktop/mcmamoo-website",
+            default: "/Users/daiyan/Desktop/mcmamoo-website"
+          },
+          verifyMaxRetries: {
+            type: "number",
+            description: "\u6784\u5EFA\u5931\u8D25\u540E\u6700\u5927\u91CD\u8BD5\u6B21\u6570\uFF0C\u9ED8\u8BA4 3",
+            default: 3
           }
         },
         required: ["repo", "files", "message"]
@@ -5083,6 +5098,61 @@ var TOOL_DEFINITIONS = [
         required: ["taskId"]
       }
     }
+  },
+  // ─── Phase 2 新工具：项目结构感知 ─────────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "project_tree_scanner",
+      description: "\u626B\u63CF\u6307\u5B9A\u76EE\u5F55\u7684\u4EE3\u7801\u7ED3\u6784\uFF0C\u751F\u6210\u53EF\u5BFC\u822A\u7684\u76EE\u5F55\u6811\u3002\u7528\u4E8E\u5728\u4FEE\u6539\u4EE3\u7801\u524D\u4E86\u89E3\u9879\u76EE\u5E03\u5C40\uFF0C\u786E\u8BA4\u8981\u4FEE\u6539\u7684\u6587\u4EF6\u4F4D\u7F6E\u3002\u8FD4\u56DE\u6587\u4EF6\u5217\u8868\u3001\u5927\u5C0F\u548C\u6700\u540E\u4FEE\u6539\u65F6\u95F4\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          projectPath: {
+            type: "string",
+            description: "\u9879\u76EE\u6839\u76EE\u5F55\u7684\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u9ED8\u8BA4\u4E3A /Users/daiyan/Desktop/mcmamoo-website"
+          },
+          maxDepth: {
+            type: "number",
+            description: "\u6700\u5927\u626B\u63CF\u6DF1\u5EA6\uFF0C\u9ED8\u8BA4 4 \u5C42\uFF0C\u8D85\u51FA\u6DF1\u5EA6\u7684\u76EE\u5F55\u663E\u793A\u5B50\u76EE\u5F55\u6570\u91CF",
+            default: 4
+          },
+          includePatterns: {
+            type: "string",
+            description: "\u9017\u53F7\u5206\u9694\u7684\u6587\u4EF6\u6269\u5C55\u540D\u8FC7\u6EE4\uFF0C\u5982 'ts,tsx,js,jsx'\u3002\u4E3A\u7A7A\u5219\u5305\u542B\u6240\u6709\u6587\u4EF6",
+            default: ""
+          }
+        },
+        required: ["projectPath"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "build_verify",
+      description: "\u5728\u6307\u5B9A\u9879\u76EE\u76EE\u5F55\u6267\u884C\u6784\u5EFA\u9A8C\u8BC1\uFF08npm run build \u6216 tsconfig \u68C0\u67E5\uFF09\uFF0C\u8FD4\u56DE\u6784\u5EFA\u662F\u5426\u901A\u8FC7\u53CA\u9519\u8BEF\u8BE6\u60C5\u3002\u7528\u4E8E\u4EE3\u7801\u4FEE\u6539\u540E\u81EA\u52A8\u9A8C\u8BC1\uFF0C\u786E\u8BA4\u4EE3\u7801\u65E0\u8BEF\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          projectPath: {
+            type: "string",
+            description: "\u9879\u76EE\u6839\u76EE\u5F55\u7684\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u9ED8\u8BA4\u4E3A /Users/daiyan/Desktop/mcmamoo-website"
+          },
+          buildCommand: {
+            type: "string",
+            description: "\u6784\u5EFA\u547D\u4EE4\uFF0C\u9ED8\u8BA4 'npm run build'",
+            default: "npm run build"
+          },
+          timeout: {
+            type: "number",
+            description: "\u8D85\u65F6\u65F6\u95F4\uFF08\u79D2\uFF09\uFF0C\u9ED8\u8BA4 120",
+            default: 120
+          }
+        },
+        required: ["projectPath"]
+      }
+    }
   }
 ];
 TOOL_DEFINITIONS.push(...OPENCLAW_TOOL_DEFINITIONS);
@@ -5198,7 +5268,15 @@ async function executeTool(toolName, args, isAdmin = false) {
       case "run_code":
         return await toolRunCode(args.language, args.code, args.timeout || 30);
       case "github_push":
-        return await toolGithubPush(args.repo, args.files, args.message, args.branch || "main");
+        return await toolGithubPush(
+          args.repo,
+          args.files,
+          args.message,
+          args.branch || "main",
+          args.verify === true,
+          args.verifyProjectPath,
+          args.verifyMaxRetries
+        );
       case "github_read":
         return await toolGithubRead(args.repo, args.file_path, args.branch || "main");
       case "read_url":
@@ -5215,6 +5293,11 @@ async function executeTool(toolName, args, isAdmin = false) {
         return await toolRunwayImageToVideo(args.promptImage, args.promptText, args.duration);
       case "runway_status":
         return await toolRunwayStatus(args.taskId);
+      // ─── Phase 2 新工具 ───────────────────────────────────────────────────
+      case "project_tree_scanner":
+        return await toolProjectTreeScanner(args.projectPath, args.maxDepth || 4, args.includePatterns);
+      case "build_verify":
+        return await toolBuildVerify(args.projectPath, args.buildCommand || "npm run build", args.timeout || 120);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell \u4EC5\u7BA1\u7406\u5458\u53EF\u7528" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -5317,7 +5400,7 @@ async function toolRunCode(language, code, timeout) {
     });
   }
 }
-async function toolGithubPush(repo, files, message, branch) {
+async function toolGithubPush(repo, files, message, branch, verify, verifyProjectPath, verifyMaxRetries) {
   const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || process.env.GITHUB_PAT;
   if (!token) {
     return {
@@ -5365,13 +5448,34 @@ async function toolGithubPush(repo, files, message, branch) {
     }
   }
   const allOk = results.every((r) => r.startsWith("\u2713"));
+  let verifyResult = "";
+  if (allOk && verify === true) {
+    const loopResult = await runBuildVerifyLoop(
+      verifyProjectPath || "/Users/daiyan/Desktop/mcmamoo-website",
+      "npm run build",
+      verifyMaxRetries || 3
+    );
+    verifyResult = `
+
+## \u{1F504} \u6784\u5EFA\u9A8C\u8BC1\u5FAA\u73AF
+
+**\u603B\u5C1D\u8BD5\u6B21\u6570:** ${loopResult.totalAttempts} / ${verifyMaxRetries || 3}
+
+` + loopResult.history.map(
+      (h) => `${h.passed ? "\u2705" : "\u274C"} \u7B2C ${h.attempt} \u6B21: \u9519\u8BEF\u6570=${h.errorCount} | ${h.passed ? "\u901A\u8FC7" : "\u5931\u8D25"}`
+    ).join("\n") + `
+
+**\u6700\u7EC8\u7ED3\u679C:** ${loopResult.success ? "\u2705 \u5168\u90E8\u901A\u8FC7" : "\u274C \u9A8C\u8BC1\u5931\u8D25\uFF08\u8BF7\u68C0\u67E5\u9519\u8BEF\u5E76\u91CD\u65B0\u63A8\u9001\uFF09"}
+
+` + loopResult.finalOutput;
+  }
   return {
-    success: allOk,
+    success: allOk && (!verify || verifyResult.includes("\u2705")),
     output: `GitHub \u63A8\u9001\u7ED3\u679C\uFF08${repo}@${branch}\uFF09:
 ${results.join("\n")}
 
-Commit: "${message}"`,
-    metadata: { repo, branch, fileCount: files.length }
+Commit: "${message}"` + verifyResult,
+    metadata: { repo, branch, fileCount: files.length, verify, verifyResult }
   };
 }
 async function toolGithubRead(repo, filePath, branch) {
@@ -5806,6 +5910,242 @@ async function toolRunwayStatus(taskId) {
   } catch (err) {
     return { success: false, output: "", error: `Runway \u72B6\u6001\u67E5\u8BE2\u5931\u8D25: ${err.message}` };
   }
+}
+async function toolProjectTreeScanner(projectPath, maxDepth = 4, includePatterns = "") {
+  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
+  const resolvedPath = projectPath && projectPath.trim() ? path6.resolve(projectPath) : DEFAULT_PATH;
+  const allowedExts = includePatterns ? includePatterns.split(",").map((e) => e.trim().replace(/^\./, "")).filter(Boolean) : null;
+  function matchesFilter(name) {
+    if (!allowedExts) return true;
+    const ext = name.includes(".") ? name.split(".").pop() : "";
+    return allowedExts.includes(ext);
+  }
+  async function scanDir(dirPath, depth) {
+    const name = path6.basename(dirPath) || dirPath;
+    const node = { name, type: "directory" };
+    if (depth > maxDepth) {
+      try {
+        const entries = await fs6.readdir(dirPath);
+        node.childCount = entries.length;
+      } catch {
+        node.childCount = 0;
+      }
+      return node;
+    }
+    try {
+      const entries = await fs6.readdir(dirPath, { withFileTypes: true });
+      const children = [];
+      let fileCount = 0;
+      let dirCount = 0;
+      for (const entry of entries) {
+        if (entry.name.startsWith(".") || entry.name === "node_modules" || entry.name === "dist" || entry.name === "build" || entry.name === "__pycache__") continue;
+        const fullPath = path6.join(dirPath, entry.name);
+        if (entry.isDirectory()) {
+          dirCount++;
+          const subNode = await scanDir(fullPath, depth + 1);
+          children.push(subNode);
+        } else if (entry.isFile()) {
+          if (!matchesFilter(entry.name)) continue;
+          fileCount++;
+          try {
+            const stat2 = await fs6.stat(fullPath);
+            children.push({
+              name: entry.name,
+              type: "file",
+              size: stat2.size,
+              modified: stat2.mtime.toISOString()
+            });
+          } catch {
+            children.push({ name: entry.name, type: "file" });
+          }
+        }
+      }
+      children.sort((a, b) => {
+        if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+      node.children = children;
+      node.childCount = fileCount + dirCount;
+    } catch (err) {
+      node.childCount = 0;
+    }
+    return node;
+  }
+  const flatFiles = [];
+  async function collectFiles(dirPath, depth) {
+    if (depth > maxDepth + 2) return;
+    try {
+      const entries = await fs6.readdir(dirPath, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.name.startsWith(".") || entry.name === "node_modules" || entry.name === "dist" || entry.name === "build" || entry.name === "__pycache__") continue;
+        const fullPath = path6.join(dirPath, entry.name);
+        if (entry.isFile() && matchesFilter(entry.name)) {
+          try {
+            const stat2 = await fs6.stat(fullPath);
+            flatFiles.push({
+              path: fullPath,
+              size: stat2.size,
+              modified: stat2.mtime.toISOString()
+            });
+          } catch {
+          }
+        } else if (entry.isDirectory()) {
+          await collectFiles(fullPath, depth + 1);
+        }
+      }
+    } catch {
+    }
+  }
+  try {
+    const tree = await scanDir(resolvedPath, 0);
+    await collectFiles(resolvedPath, 0);
+    const output = `## \u9879\u76EE\u7ED3\u6784\u626B\u63CF\uFF1A${resolvedPath}
+
+**\u626B\u63CF\u6DF1\u5EA6:** ${maxDepth} \u5C42 | **\u6587\u4EF6\u603B\u6570:** ${flatFiles.length}
+
+### \u76EE\u5F55\u6811
+\`\`\`
+${formatTree(tree, 0)}
+\`\`\`
+
+### \u5B8C\u6574\u6587\u4EF6\u5217\u8868\uFF08\u5171 ${flatFiles.length} \u4E2A\uFF09
+
+` + flatFiles.sort((a, b) => a.path.localeCompare(b.path)).map((f) => {
+      const rel = f.path.replace(resolvedPath + "/", "");
+      const size = f.size < 1024 ? `${f.size}B` : `${(f.size / 1024).toFixed(1)}KB`;
+      const date = f.modified ? f.modified.slice(0, 10) : "";
+      return `${rel.padEnd(60)} ${size.padStart(8)}  ${date}`;
+    }).join("\n");
+    return {
+      success: true,
+      output,
+      metadata: {
+        projectPath: resolvedPath,
+        totalFiles: flatFiles.length,
+        maxDepth
+      }
+    };
+  } catch (err) {
+    return { success: false, output: "", error: `\u9879\u76EE\u626B\u63CF\u5931\u8D25: ${err.message}` };
+  }
+}
+function formatTree(node, indent) {
+  const prefix = "  ".repeat(indent);
+  const connector = node.type === "directory" ? "\u{1F4C1} " : "\u{1F4C4} ";
+  let result = `${prefix}${connector}${node.name}`;
+  if (node.type === "directory" && node.childCount !== void 0) {
+    result += ` (${node.childCount} items)`;
+  }
+  if (node.type === "file" && node.size !== void 0) {
+    result += ` (${node.size < 1024 ? node.size + "B" : (node.size / 1024).toFixed(1) + "KB"})`;
+  }
+  result += "\n";
+  if (node.children) {
+    for (const child of node.children) {
+      result += formatTree(child, indent + 1);
+    }
+  }
+  return result;
+}
+async function toolBuildVerify(projectPath, buildCommand = "npm run build", timeout = 120) {
+  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
+  const resolvedPath = projectPath && projectPath.trim() ? path6.resolve(projectPath) : DEFAULT_PATH;
+  try {
+    await fs6.access(path6.join(resolvedPath, "package.json"));
+  } catch {
+    return {
+      success: false,
+      output: "",
+      error: `\u9879\u76EE\u8DEF\u5F84\u4E0D\u5B58\u5728 package.json: ${resolvedPath}`
+    };
+  }
+  const tscResult = await runBuildCommand(`cd "${resolvedPath}" && npx tsc --noEmit 2>&1`, timeout);
+  const hasTypeErrors = tscResult.exitCode !== 0;
+  const buildResult = await runBuildCommand(`cd "${resolvedPath}" && ${buildCommand} 2>&1`, timeout);
+  const buildPassed = buildResult.exitCode === 0;
+  const errorLines = [
+    ...extractErrors(tscResult.stdout + tscResult.stderr, "TypeScript"),
+    ...extractErrors(buildResult.stdout + buildResult.stderr, "Build")
+  ];
+  const summary = buildPassed && !hasTypeErrors ? "\u2705 **\u6784\u5EFA\u901A\u8FC7** \u2014 \u4EE3\u7801\u7C7B\u578B\u68C0\u67E5\u548C\u6784\u5EFA\u5747\u6210\u529F" : hasTypeErrors ? `\u26A0\uFE0F **\u6784\u5EFA\u5B8C\u6210\uFF0C\u4F46\u6709 ${errorLines.length} \u4E2A\u7C7B\u578B\u9519\u8BEF**` : "\u274C **\u6784\u5EFA\u5931\u8D25**";
+  const output = `## \u6784\u5EFA\u9A8C\u8BC1\u7ED3\u679C
+
+**\u9879\u76EE:** ${resolvedPath}
+**\u547D\u4EE4:** ${buildCommand}
+**\u9000\u51FA\u7801:** ${buildResult.exitCode}
+
+${summary}
+
+### \u8BE6\u7EC6\u8F93\u51FA\uFF08\u6700\u540E 100 \u884C\uFF09
+\`\`\`
+${(buildResult.stdout + buildResult.stderr).split("\n").slice(-100).join("\n")}
+\`\`\``;
+  return {
+    success: buildPassed && !hasTypeErrors,
+    output: errorLines.length > 0 ? output + "\n\n### \u9519\u8BEF\u6458\u8981\n" + errorLines.join("\n") : output,
+    metadata: {
+      projectPath: resolvedPath,
+      buildCommand,
+      exitCode: buildResult.exitCode,
+      hasTypeErrors,
+      errorCount: errorLines.length
+    }
+  };
+}
+async function runBuildCommand(cmd, timeoutSec) {
+  return new Promise((resolve3) => {
+    exec3(cmd, { timeout: timeoutSec * 1e3, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+      resolve3({
+        stdout: stdout || "",
+        stderr: stderr || "",
+        exitCode: err?.code ?? (err ? 1 : 0)
+      });
+    });
+  });
+}
+function extractErrors(output, source) {
+  const errorPatterns = [
+    /error TS\d+:/gi,
+    /error:/gi,
+    /Error:/gi,
+    /ERROR/gi,
+    /failed/gi,
+    /Failed/gi
+  ];
+  const lines = output.split("\n");
+  const errors = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed && errorPatterns.some((p) => p.test(trimmed))) {
+      errors.push(`[${source}] ${trimmed}`);
+    }
+  }
+  return errors.slice(0, 50);
+}
+async function runBuildVerifyLoop(projectPath, buildCommand = "npm run build", maxRetries = 3) {
+  const history = [];
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const result = await toolBuildVerify(projectPath, buildCommand);
+    const errorCount = result.metadata?.errorCount || 0;
+    history.push({
+      attempt,
+      passed: result.success,
+      errorCount,
+      output: result.output
+    });
+    if (result.success) {
+      return { success: true, totalAttempts: attempt, finalOutput: result.output, history };
+    }
+    if (attempt < maxRetries) {
+      await new Promise((r) => setTimeout(r, 2e3));
+    }
+  }
+  return {
+    success: false,
+    totalAttempts: maxRetries,
+    finalOutput: history[history.length - 1]?.output || "",
+    history
+  };
 }
 
 // server/contentPlatform.ts
@@ -6288,6 +6628,42 @@ contentPlatformRouter.get("/tasks/:id/status", async (req, res) => {
 });
 
 // server/agents/index.ts
+var REACT_INSTRUCTION = `
+
+## \u63A8\u7406\u6846\u67B6\uFF1A\u5148\u601D\u540E\u884C
+
+\u4F60\u5FC5\u987B\u4E25\u683C\u9075\u5FAA **ReAct (Reasoning + Acting)** \u63A8\u7406\u6846\u67B6\uFF1A
+
+**\u6BCF\u5F53\u4F60\u9700\u8981\u8C03\u7528\u5DE5\u5177\u65F6\uFF0C\u5FC5\u987B\u5148\u5B8C\u6210\u63A8\u7406\u6B65\u9AA4\uFF1A**
+
+1. **Thought\uFF08\u601D\u8003\uFF09** \u2014 \u5206\u6790\u5F53\u524D\u4EFB\u52A1\uFF1A
+   - \u6211\u9700\u8981\u5B8C\u6210\u4EC0\u4E48\uFF1F\u76EE\u6807\u662F\u4EC0\u4E48\uFF1F
+   - \u6211\u5DF2\u7ECF\u638C\u63E1\u4E86\u54EA\u4E9B\u4FE1\u606F\uFF1F
+   - \u6211\u8FD8\u7F3A\u4EC0\u4E48\u4FE1\u606F\uFF1F
+   - \u54EA\u4E2A\u5DE5\u5177\u6700\u9002\u5408\u83B7\u53D6\u7F3A\u5931\u7684\u4FE1\u606F\uFF1F\u4E3A\u4EC0\u4E48\uFF1F
+
+2. **Action\uFF08\u884C\u52A8\uFF09** \u2014 \u660E\u786E\u8C03\u7528\u5DE5\u5177\uFF1A
+   - \u9009\u62E9\u6B63\u786E\u7684\u5DE5\u5177
+   - \u6784\u9020\u7CBE\u786E\u7684\u53C2\u6570\uFF08\u907F\u514D\u6A21\u7CCA\u6216\u9057\u6F0F\uFF09
+   - \u907F\u514D\u91CD\u590D\u8C03\u7528\u76F8\u540C\u7684\u5DE5\u5177\u83B7\u53D6\u76F8\u540C\u7684\u4FE1\u606F
+
+3. **Observation\uFF08\u89C2\u5BDF\uFF09** \u2014 \u5206\u6790\u5DE5\u5177\u8FD4\u56DE\u7ED3\u679C\uFF1A
+   - \u7ED3\u679C\u662F\u5426\u56DE\u7B54\u4E86\u6211\u7684\u95EE\u9898\uFF1F
+   - \u662F\u5426\u9700\u8981\u66F4\u591A\u4FE1\u606F\uFF1F
+   - \u7ED3\u679C\u662F\u5426\u8D85\u51FA\u9884\u671F\uFF1F\u662F\u5426\u9700\u8981\u8C03\u6574\u7B56\u7565\uFF1F
+
+4. **Final Answer\uFF08\u6700\u7EC8\u7B54\u6848\uFF09** \u2014 \u5F53\u4FE1\u606F\u5145\u5206\u65F6\uFF1A
+   - \u7EFC\u5408\u6240\u6709\u89C2\u5BDF\u7ED3\u679C\u7ED9\u51FA\u5B8C\u6574\u56DE\u7B54
+   - \u4E0D\u518D\u8C03\u7528\u66F4\u591A\u5DE5\u5177\uFF0C\u9664\u975E\u7EDD\u5BF9\u5FC5\u8981
+   - \u7B54\u6848\u8981\u5177\u4F53\u3001\u53EF\u64CD\u4F5C\u3001\u76F4\u63A5\u56DE\u7B54\u7528\u6237\u95EE\u9898
+
+**\u91CD\u8981\u539F\u5219\uFF1A**
+- \u4E0D\u8981\u5728\u63A8\u7406\u4E2D\u4F7F\u7528"\u6211\u8BA4\u4E3A"\u8FD9\u7C7B\u6A21\u7CCA\u8868\u8FF0\uFF0C\u8981\u6709\u903B\u8F91\u94FE\u6761
+- \u5DE5\u5177\u8C03\u7528\u4E4B\u95F4\u8981\u6709\u610F\u4E49\uFF0C\u4E0D\u80FD\u673A\u68B0\u91CD\u590D
+- \u4F18\u5148\u4F7F\u7528\u76F4\u63A5\u7684\u5DE5\u5177\u8C03\u7528\u83B7\u53D6\u4E00\u624B\u4FE1\u606F\uFF0C\u800C\u975E\u51ED\u7A7A\u63A8\u65AD
+- \u5F53\u5DE5\u5177\u6267\u884C\u5931\u8D25\u65F6\uFF0C\u5206\u6790\u539F\u56E0\u5E76\u5C1D\u8BD5\u66FF\u4EE3\u65B9\u6848
+
+`;
 var ENGINEERING_AGENTS = [
   {
     id: "frontend-developer",
@@ -7105,7 +7481,8 @@ var CATEGORY_INFO = {
 };
 function getAgentSystemPrompt(agentId) {
   const agent = AGENTS.find((a) => a.id === agentId);
-  return agent?.systemPrompt || "";
+  if (!agent) return REACT_INSTRUCTION;
+  return REACT_INSTRUCTION + "\n\n" + agent.systemPrompt;
 }
 function getAgent(agentId) {
   return AGENTS.find((a) => a.id === agentId);
@@ -8225,10 +8602,10 @@ aiStreamRouter.post("/upload", async (req, res) => {
         }
       }
     });
-    await new Promise((resolve2, reject) => {
+    await new Promise((resolve3, reject) => {
       upload.single("file")(req, res, (err) => {
         if (err) reject(err);
-        else resolve2();
+        else resolve3();
       });
     });
     const file = req.file;
@@ -9085,12 +9462,12 @@ var ARXIV_CATEGORIES = [
   { cat: "q-fin.GN", name: "\u91CF\u5316\u91D1\u878D\xB7\u54C1\u724C\u4F30\u503C", maxResults: 3 }
 ];
 function fetchUrl(url, timeoutMs = 1e4) {
-  return new Promise((resolve2, reject) => {
+  return new Promise((resolve3, reject) => {
     const client = url.startsWith("https") ? https : http;
     const req = client.get(url, { timeout: timeoutMs }, (res) => {
       let data = "";
       res.on("data", (chunk) => data += chunk);
-      res.on("end", () => resolve2(data));
+      res.on("end", () => resolve3(data));
     });
     req.on("error", reject);
     req.on("timeout", () => {
@@ -9475,12 +9852,12 @@ mcpServerRouter.get("/manifest", (req, res) => {
 
 // server/_core/index.ts
 function isPortAvailable(port) {
-  return new Promise((resolve2) => {
+  return new Promise((resolve3) => {
     const server = net.createServer();
     server.listen(port, () => {
-      server.close(() => resolve2(true));
+      server.close(() => resolve3(true));
     });
-    server.on("error", () => resolve2(false));
+    server.on("error", () => resolve3(false));
   });
 }
 async function findAvailablePort(startPort = 3e3) {
