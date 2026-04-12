@@ -462,14 +462,45 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default=os.environ.get("OPENAI_MODEL", "gpt-4o"), help="模型")
     parser.add_argument("--workspace", type=str, default=os.environ.get("WORKSPACE", "."), help="工作目录")
     parser.add_argument("--api-key", type=str, default=os.environ.get("OPENAI_API_KEY", ""), help="API Key")
-    parser.add_argument("--mode", type=str, default="react", choices=["react", "swarm"], help="运行模式: react(单代理) 或 swarm(多代理)")
+    parser.add_argument("--mode", type=str, default="react", choices=["react", "swarm", "phase3"], help="运行模式: react(单代理) | swarm(多代理) | phase3(自主环境)")
+    parser.add_argument("--phase3-mode", type=str, default="auto", choices=["auto", "analyze", "provision", "review", "test"], help="Phase 3 子模式")
     args = parser.parse_args()
 
     if not args.task:
         log_step("error", "缺少 --task 参数", category="logic", retry=False)
         sys.exit(1)
 
-    if args.mode == "swarm":
+    if args.mode == "phase3":
+        # Phase 3: Self-Provisioning & Adversarial Review
+        try:
+            from self_provisioning.self_provisioning import DynamicSandbox, EnvironmentAnalyzer
+            from agent.reviewer_agent import ReviewerAgent as AdversarialReviewer
+
+            log_step("phase3_start", f"Phase 3 启动: {args.task[:80]}", mode=args.phase3_mode)
+
+            if args.phase3_mode in ["auto", "analyze"]:
+                analyzer = EnvironmentAnalyzer(args.workspace)
+                analysis = analyzer.analyze()
+                log_step("phase3_analysis", f"环境分析: {analysis['language']}", **analysis)
+
+            if args.phase3_mode in ["auto", "provision"]:
+                sandbox = DynamicSandbox(args.workspace)
+                inferred = sandbox.infer_services(args.task)
+                if inferred:
+                    config = sandbox.create(inferred, args.task)
+                    log_step("phase3_sandbox", f"沙箱创建: {config.name}", services=[s.name for s in config.services])
+
+            if args.phase3_mode in ["auto", "review"]:
+                reviewer = AdversarialReviewer(api_key=args.api_key, strict_mode=True)
+                log_step("phase3_review", "红蓝对抗审查已初始化")
+
+            log_step("phase3_done", "Phase 3 执行完成")
+            sys.exit(0)
+        except Exception as e:
+            log_step("error", f"Phase 3 执行错误: {e}", category="logic")
+            sys.exit(1)
+
+    elif args.mode == "swarm":
         # Multi-Agent Swarm 模式
         try:
             from agent.swarm import MultiAgentSwarm
