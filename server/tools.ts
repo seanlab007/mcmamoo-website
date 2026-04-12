@@ -135,6 +135,21 @@ export const TOOL_DEFINITIONS = [
             type: "string",
             description: "目标分支，默认 main",
             default: "main"
+          },
+          verify: {
+            type: "boolean",
+            description: "Phase 3 功能：推送成功后自动触发 build_verify 构建验证。工程类修改建议开启。",
+            default: false
+          },
+          verifyProjectPath: {
+            type: "string",
+            description: "build_verify 的项目路径，默认 /Users/daiyan/Desktop/mcmamoo-website",
+            default: "/Users/daiyan/Desktop/mcmamoo-website"
+          },
+          verifyMaxRetries: {
+            type: "number",
+            description: "构建失败后最大重试次数，默认 3",
+            default: 3
           }
         },
         required: ["repo", "files", "message"]
@@ -353,6 +368,64 @@ export const TOOL_DEFINITIONS = [
         required: ["taskId"]
       }
     }
+  },
+
+  // ─── Phase 2 新工具：项目结构感知 ─────────────────────────────────────────────
+
+  {
+    type: "function",
+    function: {
+      name: "project_tree_scanner",
+      description: "扫描指定目录的代码结构，生成可导航的目录树。用于在修改代码前了解项目布局，确认要修改的文件位置。返回文件列表、大小和最后修改时间。",
+      parameters: {
+        type: "object",
+        properties: {
+          projectPath: {
+            type: "string",
+            description: "项目根目录的绝对路径，默认为 /Users/daiyan/Desktop/mcmamoo-website"
+          },
+          maxDepth: {
+            type: "number",
+            description: "最大扫描深度，默认 4 层，超出深度的目录显示子目录数量",
+            default: 4
+          },
+          includePatterns: {
+            type: "string",
+            description: "逗号分隔的文件扩展名过滤，如 'ts,tsx,js,jsx'。为空则包含所有文件",
+            default: ""
+          }
+        },
+        required: ["projectPath"]
+      }
+    }
+  },
+
+  {
+    type: "function",
+    function: {
+      name: "build_verify",
+      description: "在指定项目目录执行构建验证（npm run build 或 tsconfig 检查），返回构建是否通过及错误详情。用于代码修改后自动验证，确认代码无误。",
+      parameters: {
+        type: "object",
+        properties: {
+          projectPath: {
+            type: "string",
+            description: "项目根目录的绝对路径，默认为 /Users/daiyan/Desktop/mcmamoo-website"
+          },
+          buildCommand: {
+            type: "string",
+            description: "构建命令，默认 'npm run build'",
+            default: "npm run build"
+          },
+          timeout: {
+            type: "number",
+            description: "超时时间（秒），默认 120",
+            default: 120
+          }
+        },
+        required: ["projectPath"]
+      }
+    }
   }
 ];
 
@@ -490,7 +563,15 @@ export async function executeTool(
       case "run_code":
         return await toolRunCode(args.language, args.code, args.timeout || 30);
       case "github_push":
-        return await toolGithubPush(args.repo, args.files, args.message, args.branch || "main");
+        return await toolGithubPush(
+          args.repo,
+          args.files,
+          args.message,
+          args.branch || "main",
+          args.verify === true,
+          args.verifyProjectPath,
+          args.verifyMaxRetries
+        );
       case "github_read":
         return await toolGithubRead(args.repo, args.file_path, args.branch || "main");
       case "read_url":
@@ -507,6 +588,11 @@ export async function executeTool(
         return await toolRunwayImageToVideo(args.promptImage, args.promptText, args.duration);
       case "runway_status":
         return await toolRunwayStatus(args.taskId);
+      // ─── Phase 2 新工具 ───────────────────────────────────────────────────
+      case "project_tree_scanner":
+        return await toolProjectTreeScanner(args.projectPath, args.maxDepth || 4, args.includePatterns);
+      case "build_verify":
+        return await toolBuildVerify(args.projectPath, args.buildCommand || "npm run build", args.timeout || 120);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -624,7 +710,10 @@ async function toolGithubPush(
   repo: string,
   files: Array<{ path: string; content: string }>,
   message: string,
-  branch: string
+  branch: string,
+  verify?: boolean,        // Phase 3: 推送后自动触发 build_verify
+  verifyProjectPath?: string,
+  verifyMaxRetries?: number
 ): Promise<ToolResult> {
   // Try multiple GitHub tokens from environment
   const token =
@@ -686,10 +775,29 @@ async function toolGithubPush(
   }
 
   const allOk = results.every(r => r.startsWith("✓"));
+
+  // ─── Phase 3：推送成功后自动触发构建验证循环 ───────────────────────────────
+  let verifyResult: string = "";
+  if (allOk && verify === true) {
+    const loopResult = await runBuildVerifyLoop(
+      verifyProjectPath || "/Users/daiyan/Desktop/mcmamoo-website",
+      "npm run build",
+      verifyMaxRetries || 3
+    );
+    verifyResult = `\n\n## 🔄 构建验证循环\n\n` +
+      `**总尝试次数:** ${loopResult.totalAttempts} / ${verifyMaxRetries || 3}\n\n` +
+      loopResult.history.map(h =>
+        `${h.passed ? "✅" : "❌"} 第 ${h.attempt} 次: ` +
+        `错误数=${h.errorCount} | ${h.passed ? "通过" : "失败"}`
+      ).join("\n") +
+      `\n\n**最终结果:** ${loopResult.success ? "✅ 全部通过" : "❌ 验证失败（请检查错误并重新推送）"}\n\n` +
+      loopResult.finalOutput;
+  }
+
   return {
-    success: allOk,
-    output: `GitHub 推送结果（${repo}@${branch}）:\n${results.join("\n")}\n\nCommit: "${message}"`,
-    metadata: { repo, branch, fileCount: files.length }
+    success: allOk && (!verify || verifyResult.includes("✅")),
+    output: `GitHub 推送结果（${repo}@${branch}）:\n${results.join("\n")}\n\nCommit: "${message}"` + verifyResult,
+    metadata: { repo, branch, fileCount: files.length, verify, verifyResult }
   };
 }
 
@@ -1205,4 +1313,321 @@ async function toolRunwayStatus(taskId: string): Promise<ToolResult> {
   } catch (err: any) {
     return { success: false, output: "", error: `Runway 状态查询失败: ${err.message}` };
   }
+}
+
+// ─── Phase 2 工具实现：项目结构扫描器 ───────────────────────────────────────────
+
+interface TreeNode {
+  name: string;
+  type: "file" | "directory";
+  size?: number;        // bytes, only for files
+  modified?: string;    // ISO date string, only for files
+  children?: TreeNode[];
+  childCount?: number; // only for directories beyond maxDepth
+}
+
+async function toolProjectTreeScanner(
+  projectPath: string,
+  maxDepth: number = 4,
+  includePatterns: string = ""
+): Promise<ToolResult> {
+  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
+  const resolvedPath = projectPath && projectPath.trim() ? path.resolve(projectPath) : DEFAULT_PATH;
+
+  // Filter extensions (e.g. "ts,tsx,js,jsx")
+  const allowedExts = includePatterns
+    ? includePatterns.split(",").map(e => e.trim().replace(/^\./, "")).filter(Boolean)
+    : null;
+
+  function matchesFilter(name: string): boolean {
+    if (!allowedExts) return true;
+    const ext = name.includes(".") ? name.split(".").pop()! : "";
+    return allowedExts.includes(ext);
+  }
+
+  async function scanDir(dirPath: string, depth: number): Promise<TreeNode> {
+    const name = path.basename(dirPath) || dirPath;
+    const node: TreeNode = { name, type: "directory" };
+
+    if (depth > maxDepth) {
+      try {
+        const entries = await fs.readdir(dirPath);
+        node.childCount = entries.length;
+      } catch {
+        node.childCount = 0;
+      }
+      return node;
+    }
+
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true });
+      const children: TreeNode[] = [];
+      let fileCount = 0;
+      let dirCount = 0;
+
+      for (const entry of entries) {
+        // Skip hidden, node_modules, .git, dist, build
+        if (
+          entry.name.startsWith(".") ||
+          entry.name === "node_modules" ||
+          entry.name === "dist" ||
+          entry.name === "build" ||
+          entry.name === "__pycache__"
+        ) continue;
+
+        const fullPath = path.join(dirPath, entry.name);
+
+        if (entry.isDirectory()) {
+          dirCount++;
+          const subNode = await scanDir(fullPath, depth + 1);
+          children.push(subNode);
+        } else if (entry.isFile()) {
+          if (!matchesFilter(entry.name)) continue;
+          fileCount++;
+          try {
+            const stat = await fs.stat(fullPath);
+            children.push({
+              name: entry.name,
+              type: "file",
+              size: stat.size,
+              modified: stat.mtime.toISOString(),
+            });
+          } catch {
+            children.push({ name: entry.name, type: "file" });
+          }
+        }
+      }
+
+      // Directories first, then files
+      children.sort((a, b) => {
+        if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      node.children = children;
+      node.childCount = fileCount + dirCount;
+    } catch (err: any) {
+      node.childCount = 0;
+    }
+
+    return node;
+  }
+
+  // Build flat file list with paths (for LLM to know where to edit)
+  const flatFiles: Array<{ path: string; size: number; modified: string }> = [];
+
+  async function collectFiles(dirPath: string, depth: number): Promise<void> {
+    if (depth > maxDepth + 2) return;
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true });
+      for (const entry of entries) {
+        if (
+          entry.name.startsWith(".") ||
+          entry.name === "node_modules" ||
+          entry.name === "dist" ||
+          entry.name === "build" ||
+          entry.name === "__pycache__"
+        ) continue;
+        const fullPath = path.join(dirPath, entry.name);
+        if (entry.isFile() && matchesFilter(entry.name)) {
+          try {
+            const stat = await fs.stat(fullPath);
+            flatFiles.push({
+              path: fullPath,
+              size: stat.size,
+              modified: stat.mtime.toISOString(),
+            });
+          } catch { /* skip */ }
+        } else if (entry.isDirectory()) {
+          await collectFiles(fullPath, depth + 1);
+        }
+      }
+    } catch { /* skip */ }
+  }
+
+  try {
+    const tree = await scanDir(resolvedPath, 0);
+    await collectFiles(resolvedPath, 0);
+
+    const output = `## 项目结构扫描：${resolvedPath}\n\n` +
+      `**扫描深度:** ${maxDepth} 层 | **文件总数:** ${flatFiles.length}\n\n` +
+      `### 目录树\n\`\`\`\n${formatTree(tree, 0)}\n\`\`\`\n\n` +
+      `### 完整文件列表（共 ${flatFiles.length} 个）\n\n` +
+      flatFiles
+        .sort((a, b) => a.path.localeCompare(b.path))
+        .map(f => {
+          const rel = f.path.replace(resolvedPath + "/", "");
+          const size = f.size < 1024 ? `${f.size}B` : `${(f.size / 1024).toFixed(1)}KB`;
+          const date = f.modified ? f.modified.slice(0, 10) : "";
+          return `${rel.padEnd(60)} ${size.padStart(8)}  ${date}`;
+        })
+        .join("\n");
+
+    return {
+      success: true,
+      output,
+      metadata: {
+        projectPath: resolvedPath,
+        totalFiles: flatFiles.length,
+        maxDepth,
+      },
+    };
+  } catch (err: any) {
+    return { success: false, output: "", error: `项目扫描失败: ${err.message}` };
+  }
+}
+
+function formatTree(node: TreeNode, indent: number): string {
+  const prefix = "  ".repeat(indent);
+  const connector = node.type === "directory" ? "📁 " : "📄 ";
+  let result = `${prefix}${connector}${node.name}`;
+  if (node.type === "directory" && node.childCount !== undefined) {
+    result += ` (${node.childCount} items)`;
+  }
+  if (node.type === "file" && node.size !== undefined) {
+    result += ` (${node.size < 1024 ? node.size + "B" : (node.size / 1024).toFixed(1) + "KB"})`;
+  }
+  result += "\n";
+  if (node.children) {
+    for (const child of node.children) {
+      result += formatTree(child, indent + 1);
+    }
+  }
+  return result;
+}
+
+// ─── Phase 2 工具实现：构建验证 ────────────────────────────────────────────────
+
+async function toolBuildVerify(
+  projectPath: string,
+  buildCommand: string = "npm run build",
+  timeout: number = 120
+): Promise<ToolResult> {
+  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
+  const resolvedPath = projectPath && projectPath.trim() ? path.resolve(projectPath) : DEFAULT_PATH;
+
+  // Check if package.json exists
+  try {
+    await fs.access(path.join(resolvedPath, "package.json"));
+  } catch {
+    return {
+      success: false,
+      output: "",
+      error: `项目路径不存在 package.json: ${resolvedPath}`
+    };
+  }
+
+  // Run TypeScript type check first (fast, catches type errors)
+  const tscResult = await runBuildCommand(`cd "${resolvedPath}" && npx tsc --noEmit 2>&1`, timeout);
+  const hasTypeErrors = tscResult.exitCode !== 0;
+
+  // Run the actual build
+  const buildResult = await runBuildCommand(`cd "${resolvedPath}" && ${buildCommand} 2>&1`, timeout);
+  const buildPassed = buildResult.exitCode === 0;
+
+  // Collect error lines
+  const errorLines = [
+    ...extractErrors(tscResult.stdout + tscResult.stderr, "TypeScript"),
+    ...extractErrors(buildResult.stdout + buildResult.stderr, "Build"),
+  ];
+
+  const summary = buildPassed && !hasTypeErrors
+    ? "✅ **构建通过** — 代码类型检查和构建均成功"
+    : hasTypeErrors
+    ? `⚠️ **构建完成，但有 ${errorLines.length} 个类型错误**`
+    : "❌ **构建失败**";
+
+  const output = `## 构建验证结果\n\n` +
+    `**项目:** ${resolvedPath}\n` +
+    `**命令:** ${buildCommand}\n` +
+    `**退出码:** ${buildResult.exitCode}\n\n` +
+    `${summary}\n\n` +
+    `### 详细输出（最后 100 行）\n\`\`\`\n${(buildResult.stdout + buildResult.stderr).split("\n").slice(-100).join("\n")}\n\`\`\``;
+
+  return {
+    success: buildPassed && !hasTypeErrors,
+    output: errorLines.length > 0 ? output + "\n\n### 错误摘要\n" + errorLines.join("\n") : output,
+    metadata: {
+      projectPath: resolvedPath,
+      buildCommand,
+      exitCode: buildResult.exitCode,
+      hasTypeErrors,
+      errorCount: errorLines.length,
+    },
+  };
+}
+
+async function runBuildCommand(cmd: string, timeoutSec: number): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  return new Promise((resolve) => {
+    exec(cmd, { timeout: timeoutSec * 1000, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+      resolve({
+        stdout: stdout || "",
+        stderr: stderr || "",
+        exitCode: err?.code ?? (err ? 1 : 0),
+      });
+    });
+  });
+}
+
+function extractErrors(output: string, source: string): string[] {
+  const errorPatterns = [
+    /error TS\d+:/gi,
+    /error:/gi,
+    /Error:/gi,
+    /ERROR/gi,
+    /failed/gi,
+    /Failed/gi,
+  ];
+  const lines = output.split("\n");
+  const errors: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed && errorPatterns.some(p => p.test(trimmed))) {
+      errors.push(`[${source}] ${trimmed}`);
+    }
+  }
+  return errors.slice(0, 50); // cap at 50 errors
+}
+
+// ─── Phase 3：github_push 触发构建验证循环（内部逻辑）─────────────────────────────
+// 注意：此函数不对外暴露工具，由 aiStream.ts 在 github_push 后自动调用
+
+export async function runBuildVerifyLoop(
+  projectPath: string,
+  buildCommand: string = "npm run build",
+  maxRetries: number = 3
+): Promise<{
+  success: boolean;
+  totalAttempts: number;
+  finalOutput: string;
+  history: Array<{ attempt: number; passed: boolean; errorCount: number; output: string }>;
+}> {
+  const history: Array<{ attempt: number; passed: boolean; errorCount: number; output: string }> = [];
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const result = await toolBuildVerify(projectPath, buildCommand);
+    const errorCount = result.metadata?.errorCount || 0;
+    history.push({
+      attempt,
+      passed: result.success,
+      errorCount,
+      output: result.output,
+    });
+
+    if (result.success) {
+      return { success: true, totalAttempts: attempt, finalOutput: result.output, history };
+    }
+
+    if (attempt < maxRetries) {
+      // Wait 2 seconds before retry
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+
+  return {
+    success: false,
+    totalAttempts: maxRetries,
+    finalOutput: history[history.length - 1]?.output || "",
+    history,
+  };
 }
