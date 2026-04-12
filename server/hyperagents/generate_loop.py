@@ -3,20 +3,28 @@
 MaoAI HyperAgents Engine — Manus Max 架构
 ─────────────────────────────────────────────────────────────────────────────
 核心：ReAct (Reasoning + Acting) 自主循环 + 流式 JSON 日志输出
+支持：Multi-Agent Swarm (多代理集群协作)
 
 输出格式（每行 JSON，flush=True）：
   { "type": "start",      "task": "...", "timestamp": 1234567890 }
   { "type": "thought",    "round": 1, "content": "...", "timestamp": 1234567890 }
   { "type": "action",     "round": 1, "tool": "...", "args": {...}, "timestamp": 1234567890 }
-  { "type": "observation","round": 1, "tool": "...", "success": true, "output": "...", "error": null, "timestamp": 1234567890 }
+  { "type": "observation","round": 1, "tool": "...", "success": true, "output": "...", "timestamp": 1234567890 }
   { "type": "score",      "round": 1, "score": 0.82, "reasoning": "...", "timestamp": 1234567890 }
   { "type": "patch",      "round": 2, "diff": "...", "timestamp": 1234567890 }
   { "type": "iteration",   "round": 2, "status": "improved|worse|same", "timestamp": 1234567890 }
   { "type": "error",      "category": "env|timeout|logic", "message": "...", "retry": true, "timestamp": 1234567890 }
   { "type": "done",       "answer": "...", "rounds": 3, "timestamp": 1234567890 }
 
+  Multi-Agent Swarm 日志：
+  { "type": "swarm_start", "task": "...", "agents": ["architect", "coder", "reviewer", "test"] }
+  { "type": "swarm_step",  "agent": "architect|coder|reviewer|test", "step": "...", "status": "..." }
+  { "type": "swarm_review","approved": true/false, "score": 0.85, "issues": [...] }
+  { "type": "swarm_done",  "success": true, "iterations": 2, "answer": "..." }
+
 用法：
-  python3 generate_loop.py --task "优化登录逻辑" --domain coding --workspace /path/to/project
+  python3 generate_loop.py --task "优化登录逻辑" --domain coding --mode swarm --workspace /path/to/project
+  python3 generate_loop.py --task "优化登录逻辑" --domain coding --mode react --workspace /path/to/project
 """
 
 import sys
@@ -454,26 +462,58 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default=os.environ.get("OPENAI_MODEL", "gpt-4o"), help="模型")
     parser.add_argument("--workspace", type=str, default=os.environ.get("WORKSPACE", "."), help="工作目录")
     parser.add_argument("--api-key", type=str, default=os.environ.get("OPENAI_API_KEY", ""), help="API Key")
+    parser.add_argument("--mode", type=str, default="react", choices=["react", "swarm"], help="运行模式: react(单代理) 或 swarm(多代理)")
     args = parser.parse_args()
 
     if not args.task:
         log_step("error", "缺少 --task 参数", category="logic", retry=False)
         sys.exit(1)
 
-    agent = ReActAgent(
-        api_key=args.api_key,
-        model=args.model,
-        workspace=args.workspace,
-        domain=args.domain,
-    )
+    if args.mode == "swarm":
+        # Multi-Agent Swarm 模式
+        try:
+            from agent.swarm import MultiAgentSwarm
+        except ImportError:
+            log_step("error", "swarm 模块未找到，请确保 agent/swarm.py 存在", category="logic")
+            sys.exit(1)
 
-    try:
-        answer = agent.run(args.task)
-        # 已在 run() 中通过 log_step("done") 输出，这里仅确保 flush
-        sys.stdout.flush()
-    except KeyboardInterrupt:
-        log_step("error", "用户中断执行", category="env", retry=False)
-        sys.exit(130)
-    except Exception as e:
-        log_step("error", f"未预期错误: {e}", category="logic", retry=False)
-        sys.exit(1)
+        log_step("swarm_start", f"启动 Multi-Agent Swarm: {args.task[:80]}",
+                mode="swarm", domain=args.domain, model=args.model)
+
+        swarm = MultiAgentSwarm(
+            api_key=args.api_key,
+            model=args.model,
+            workspace=args.workspace
+        )
+
+        try:
+            result = swarm.run(args.task)
+            log_step("swarm_done", "Multi-Agent Swarm 执行完成",
+                    success=result["success"],
+                    iterations=result["iterations"],
+                    answer=result["answer"])
+            sys.stdout.flush()
+        except KeyboardInterrupt:
+            log_step("error", "用户中断执行", category="env", retry=False)
+            sys.exit(130)
+        except Exception as e:
+            log_step("error", f"未预期错误: {e}", category="logic", retry=False)
+            sys.exit(1)
+    else:
+        # ReAct 单代理模式（原有逻辑）
+        agent = ReActAgent(
+            api_key=args.api_key,
+            model=args.model,
+            workspace=args.workspace,
+            domain=args.domain,
+        )
+
+        try:
+            answer = agent.run(args.task)
+            sys.stdout.flush()
+        except KeyboardInterrupt:
+            log_step("error", "用户中断执行", category="env", retry=False)
+            sys.exit(130)
+        except Exception as e:
+            log_step("error", f"未预期错误: {e}", category="logic", retry=False)
+            sys.exit(1)
