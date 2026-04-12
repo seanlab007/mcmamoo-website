@@ -1,11 +1,5 @@
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
-  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
-}) : x)(function(x) {
-  if (typeof require !== "undefined") return require.apply(this, arguments);
-  throw Error('Dynamic require of "' + x + '" is not supported');
-});
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
 };
@@ -467,32 +461,6 @@ function vitePluginManusDebugCollector() {
     }
   };
 }
-function vitePluginAnalyticsInject() {
-  return {
-    name: "analytics-inject",
-    transformIndexHtml(html) {
-      const endpoint = process.env.VITE_ANALYTICS_ENDPOINT;
-      const websiteId = process.env.VITE_ANALYTICS_WEBSITE_ID;
-      if (!endpoint || !websiteId) {
-        return html;
-      }
-      return {
-        html,
-        tags: [
-          {
-            tag: "script",
-            attrs: {
-              defer: true,
-              src: `${endpoint}/umami`,
-              "data-website-id": websiteId
-            },
-            injectTo: "body"
-          }
-        ]
-      };
-    }
-  };
-}
 var PROJECT_ROOT, LOG_DIR, MAX_LOG_SIZE_BYTES, TRIM_TARGET_BYTES, plugins, vite_config_default;
 var init_vite_config = __esm({
   "vite.config.ts"() {
@@ -501,7 +469,7 @@ var init_vite_config = __esm({
     LOG_DIR = path2.join(PROJECT_ROOT, ".manus-logs");
     MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024;
     TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6);
-    plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginAnalyticsInject()];
+    plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
     vite_config_default = defineConfig({
       plugins,
       resolve: {
@@ -532,10 +500,15 @@ var init_vite_config = __esm({
         fs: {
           strict: true,
           deny: ["**/.*"]
+        },
+        proxy: {
+          // AutoClip Python FastAPI 后端代理（端口 8000）
+          "/api": {
+            target: "http://localhost:8000",
+            changeOrigin: true
+            // 注意：autoclip 后端响应可能包含 CORS headers，如有需要可加 rewrite
+          }
         }
-        // 注意：/api 路由全部直接由 Express (localhost:3000) 处理，不再代理到 FastAPI
-        // 前端通过 VITE_BACKEND_URL=http://localhost:3000 直接调用 Express API
-        // 如果后续需要部分代理到 FastAPI (8000)，可以在这里单独配置
       }
     });
   }
@@ -902,11 +875,12 @@ var init_imageGeneration = __esm({
 import "dotenv/config";
 import express2 from "express";
 import { createServer } from "http";
+import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 
 // shared/const.ts
-var COOKIE_NAME = "app_session_id";
-var ONE_YEAR_MS = 1e3 * 60 * 60 * 24 * 365;
+var COOKIE_NAME2 = "app_session_id";
+var ONE_YEAR_MS2 = 1e3 * 60 * 60 * 24 * 365;
 var AXIOS_TIMEOUT_MS = 3e4;
 var UNAUTHED_ERR_MSG = "Please login (10001)";
 var NOT_ADMIN_ERR_MSG = "You do not have required permission (10002)";
@@ -922,7 +896,7 @@ function isSecureRequest(req) {
   const protoList = Array.isArray(forwardedProto) ? forwardedProto : forwardedProto.split(",");
   return protoList.some((proto) => proto.trim().toLowerCase() === "https");
 }
-function getSessionCookieOptions(req) {
+function getSessionCookieOptions2(req) {
   const secure = isSecureRequest(req);
   return {
     httpOnly: true,
@@ -1079,7 +1053,7 @@ var SDKServer = class {
   }
   async signSession(payload, options = {}) {
     const issuedAt = Date.now();
-    const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
+    const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS2;
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1e3);
     const secretKey = this.getSessionSecret();
     const normalizedAppId = payload.appId || ENV.appId || "maoai-local";
@@ -1136,7 +1110,7 @@ var SDKServer = class {
   }
   async authenticateRequest(req) {
     const cookies = this.parseCookies(req.headers.cookie);
-    const sessionCookie = cookies.get(COOKIE_NAME);
+    const sessionCookie = cookies.get(COOKIE_NAME2);
     const bearerToken = this.getBearerToken(req);
     const rawSessionToken = sessionCookie ?? bearerToken;
     const session = await this.verifySession(rawSessionToken);
@@ -1172,7 +1146,7 @@ var SDKServer = class {
     return user;
   }
 };
-var sdk = new SDKServer();
+var sdk2 = new SDKServer();
 
 // server/_core/oauth.ts
 import { createHash } from "crypto";
@@ -1197,8 +1171,8 @@ function registerOAuthRoutes(app) {
       return;
     }
     try {
-      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
+      const tokenResponse = await sdk2.exchangeCodeForToken(code, state);
+      const userInfo = await sdk2.getUserInfo(tokenResponse.accessToken);
       if (!userInfo.openId) {
         res.status(400).json({ error: "openId missing from user info" });
         return;
@@ -1210,12 +1184,12 @@ function registerOAuthRoutes(app) {
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: /* @__PURE__ */ new Date()
       });
-      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
+      const sessionToken = await sdk2.createSessionToken(userInfo.openId, {
         name: userInfo.name || "",
-        expiresInMs: ONE_YEAR_MS
+        expiresInMs: ONE_YEAR_MS2
       });
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      const cookieOptions = getSessionCookieOptions2(req);
+      res.cookie(COOKIE_NAME2, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS2 });
       let dest = "/";
       try {
         const stateData = JSON.parse(atob(state));
@@ -1265,12 +1239,12 @@ function registerOAuthRoutes(app) {
           console.log("[Auth] User may already exist, continuing...");
         }
       }
-      const sessionToken = await sdk.createSessionToken(adminOpenId, {
+      const sessionToken = await sdk2.createSessionToken(adminOpenId, {
         name: "\u7BA1\u7406\u5458",
-        expiresInMs: ONE_YEAR_MS
+        expiresInMs: ONE_YEAR_MS2
       });
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      const cookieOptions = getSessionCookieOptions2(req);
+      res.cookie(COOKIE_NAME2, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS2 });
       res.json({
         success: true,
         role: "admin",
@@ -1278,8 +1252,183 @@ function registerOAuthRoutes(app) {
         sessionToken
       });
     } catch (error) {
-      console.error("[Auth] Email login failed", error);
-      res.status(500).json({ error: "\u767B\u5F55\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5" });
+      console.error("[Auth] Email login failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "\u767B\u5F55\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5: " + message });
+    }
+  });
+}
+
+// server/_core/supabaseAuth.ts
+var SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+var SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
+var SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY ?? "";
+function getApiKey() {
+  return SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
+}
+async function getUserByOpenId2(openId) {
+  const key = getApiKey();
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error("[SupabaseREST] getUserByOpenId error:", resp.status, err);
+    return null;
+  }
+  const rows = await resp.json();
+  return rows.length > 0 ? rows[0] : null;
+}
+async function getUserByEmail(email) {
+  const key = getApiKey();
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+  if (!resp.ok) return null;
+  const rows = await resp.json();
+  return rows.length > 0 ? rows[0] : null;
+}
+async function updateUserOpenId(id, openId, lastSignedIn) {
+  const key = getApiKey();
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?id=eq.${id}`,
+    {
+      method: "PATCH",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ openId, lastSignedIn })
+    }
+  );
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error("[SupabaseREST] updateUserOpenId error:", resp.status, err);
+  }
+}
+async function upsertUser2(user) {
+  const key = getApiKey();
+  const resp = await fetch(
+    `${SUPABASE_URL}/rest/v1/users`,
+    {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal"
+      },
+      body: JSON.stringify(user)
+    }
+  );
+  if (!resp.ok) {
+    const err = await resp.text();
+    console.error("[SupabaseREST] upsertUser error:", resp.status, err);
+    throw new Error(`Failed to upsert user: ${resp.status} ${err}`);
+  }
+}
+function registerSupabaseAuthRoutes(app) {
+  app.post("/api/auth/email-login", async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      res.status(400).json({ error: "email and password are required" });
+      return;
+    }
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      res.status(500).json({ error: "Supabase not configured" });
+      return;
+    }
+    try {
+      const authResp = await fetch(
+        `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ email, password })
+        }
+      );
+      const authData = await authResp.json();
+      if (!authData.access_token || !authData.user) {
+        res.status(401).json({
+          error: authData.error_description || authData.error || "Invalid credentials"
+        });
+        return;
+      }
+      const openId = `supabase:${authData.user.id}`;
+      const userEmail = authData.user.email ?? email;
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const ownerEmail = process.env.OWNER_EMAIL ?? "benedictashford20@gmail.com";
+      const isAdminEmail = userEmail === ownerEmail || userEmail === "sean_lab@me.com";
+      let existingUser = await getUserByOpenId2(openId);
+      let role = isAdminEmail ? "admin" : "user";
+      if (!existingUser) {
+        const userByEmail = await getUserByEmail(userEmail);
+        if (userByEmail) {
+          const userId = userByEmail.id;
+          await updateUserOpenId(userId, openId, now);
+          role = isAdminEmail ? "admin" : userByEmail.role ?? "user";
+          existingUser = { ...userByEmail, openId, role };
+        } else {
+          await upsertUser2({
+            openId,
+            email: userEmail,
+            name: userEmail.split("@")[0],
+            loginMethod: "email",
+            lastSignedIn: now,
+            role
+          });
+        }
+      } else {
+        role = isAdminEmail ? "admin" : existingUser.role ?? "user";
+        const key = getApiKey();
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
+          {
+            method: "PATCH",
+            headers: {
+              apikey: key,
+              Authorization: `Bearer ${key}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ lastSignedIn: now, role })
+          }
+        );
+      }
+      const sessionToken = await sdk2.createSessionToken(openId, {
+        name: userEmail.split("@")[0],
+        expiresInMs: ONE_YEAR_MS2
+      });
+      const cookieOptions = getSessionCookieOptions2(req);
+      res.cookie(COOKIE_NAME2, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS2 });
+      const finalRedirectTo = req.body.redirectTo ?? (role === "admin" ? "/admin/nodes" : "/maoai");
+      res.json({
+        success: true,
+        role,
+        redirectTo: finalRedirectTo,
+        sessionToken
+        // 供前端存入 localStorage，用于跨域 Authorization header
+      });
+    } catch (error) {
+      console.error("[SupabaseAuth] Email login failed:", error);
+      res.status(500).json({ error: "Login failed" });
     }
   });
 }
@@ -1442,7 +1591,9 @@ var MODEL_CONFIGS = {
     provider: "deepseek",
     model: "deepseek-chat",
     baseUrl: DEEPSEEK_BASE,
-    apiKey: process.env.DEEPSEEK_API_KEY || "",
+    get apiKey() {
+      return process.env.DEEPSEEK_API_KEY || "";
+    },
     maxTokens: 4096
   },
   "deepseek-reasoner": {
@@ -1451,7 +1602,9 @@ var MODEL_CONFIGS = {
     provider: "deepseek",
     model: "deepseek-reasoner",
     baseUrl: DEEPSEEK_BASE,
-    apiKey: process.env.DEEPSEEK_API_KEY || "",
+    get apiKey() {
+      return process.env.DEEPSEEK_API_KEY || "";
+    },
     maxTokens: 8192
   },
   // ── 智谱 GLM ───────────────────────────────────────────────────────────────
@@ -1461,7 +1614,9 @@ var MODEL_CONFIGS = {
     provider: "zhipu",
     model: "glm-4-flash",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() {
+      return process.env.ZHIPU_API_KEY || "";
+    },
     maxTokens: 4096
   },
   "glm-4-plus": {
@@ -1470,7 +1625,9 @@ var MODEL_CONFIGS = {
     provider: "zhipu",
     model: "glm-4-plus",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() {
+      return process.env.ZHIPU_API_KEY || "";
+    },
     maxTokens: 4096
   },
   "glm-4-air": {
@@ -1479,7 +1636,9 @@ var MODEL_CONFIGS = {
     provider: "zhipu",
     model: "glm-4-air",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() {
+      return process.env.ZHIPU_API_KEY || "";
+    },
     maxTokens: 4096
   },
   "glm-z1-flash": {
@@ -1488,7 +1647,9 @@ var MODEL_CONFIGS = {
     provider: "zhipu",
     model: "glm-z1-flash",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() {
+      return process.env.ZHIPU_API_KEY || "";
+    },
     maxTokens: 4096
   },
   "glm-4v-flash": {
@@ -1497,7 +1658,9 @@ var MODEL_CONFIGS = {
     provider: "zhipu",
     model: "glm-4v-flash",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() {
+      return process.env.ZHIPU_API_KEY || "";
+    },
     maxTokens: 4096,
     supportsVision: true
   },
@@ -1508,7 +1671,9 @@ var MODEL_CONFIGS = {
     provider: "groq",
     model: "llama-3.3-70b-versatile",
     baseUrl: GROQ_BASE,
-    apiKey: process.env.GROQ_API_KEY || "",
+    get apiKey() {
+      return process.env.GROQ_API_KEY || "";
+    },
     maxTokens: 4096
   },
   "llama-3.1-8b": {
@@ -1517,7 +1682,9 @@ var MODEL_CONFIGS = {
     provider: "groq",
     model: "llama-3.1-8b-instant",
     baseUrl: GROQ_BASE,
-    apiKey: process.env.GROQ_API_KEY || "",
+    get apiKey() {
+      return process.env.GROQ_API_KEY || "";
+    },
     maxTokens: 4096
   },
   "gemma2-9b": {
@@ -1526,7 +1693,9 @@ var MODEL_CONFIGS = {
     provider: "groq",
     model: "gemma2-9b-it",
     baseUrl: GROQ_BASE,
-    apiKey: process.env.GROQ_API_KEY || "",
+    get apiKey() {
+      return process.env.GROQ_API_KEY || "";
+    },
     maxTokens: 4096
   },
   // ── Gemini ─────────────────────────────────────────────────────────────────
@@ -1536,7 +1705,9 @@ var MODEL_CONFIGS = {
     provider: "gemini",
     model: "gemini-2.5-flash-preview-04-17",
     baseUrl: GEMINI_BASE,
-    apiKey: process.env.GEMINI_API_KEY || "",
+    get apiKey() {
+      return process.env.GEMINI_API_KEY || "";
+    },
     maxTokens: 8192,
     supportsVision: true
   },
@@ -1546,34 +1717,35 @@ var MODEL_CONFIGS = {
     provider: "gemini",
     model: "gemini-2.5-pro-preview-03-25",
     baseUrl: GEMINI_BASE,
-    apiKey: process.env.GEMINI_API_KEY || "",
+    get apiKey() {
+      return process.env.GEMINI_API_KEY || "";
+    },
     maxTokens: 8192,
     supportsVision: true
   },
   // ── 智谱 GLM-5V-TurboAutoClaw（BigModel 多模态）─────────────────────────────────
-  // 基于智谱 BigModel 开放平台 GLM-5V-TurboAutoClaw 模型
-  // 200K 上下文，支持图片/视频/文本多模态输入，面向视觉编程和 Agent 工作流优化
-  // API Doc: https://docs.bigmodel.cn/cn/guide/models/vlm/glm-5v-turbo
   "glm-5v-turbo": {
     name: "GLM-5V-Turbo",
     badge: "VL-TURBO",
     provider: "zhipu",
     model: "glm-5v-turbo",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() {
+      return process.env.ZHIPU_API_KEY || "";
+    },
     maxTokens: 8192,
     supportsVision: true
   },
   // ── Z.ai 平台（GLM-5 / GLM-4.7）────────────────────────────────────────────
-  // Z.ai 是智谱推出的全球 AI 模型体验平台，提供 GLM-5、GLM-4.7 等模型
-  // API Doc: https://docs.z.ai/api-reference/llm/chat-completion
   "zai-glm-5": {
     name: "Z.ai GLM-5",
     badge: "GLM5",
     provider: "zai",
     model: "glm-5",
     baseUrl: ZAI_BASE,
-    apiKey: process.env.ZAI_API_KEY || "",
+    get apiKey() {
+      return process.env.ZAI_API_KEY || "";
+    },
     maxTokens: 8192
   },
   "zai-glm-4-7": {
@@ -1582,7 +1754,9 @@ var MODEL_CONFIGS = {
     provider: "zai",
     model: "glm-4.7",
     baseUrl: ZAI_BASE,
-    apiKey: process.env.ZAI_API_KEY || "",
+    get apiKey() {
+      return process.env.ZAI_API_KEY || "";
+    },
     maxTokens: 8192
   }
   // ── AutoClaw（澳龙）本地节点配置说明 ─────────────────────────────────────────
@@ -1960,14 +2134,13 @@ import { z as z3 } from "zod";
 
 // supabase/sales-client.ts
 import { createClient } from "@supabase/supabase-js";
-var SUPABASE_URL = process.env.SUPABASE_URL || "https://fczherphuixpdjuevzsh.supabase.co";
-var SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjemhlcnBodWl4cGRqdWV2enNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDM0OTEsImV4cCI6MjA4OTIxOTQ5MX0.t7FSUWbWDsKIcU-m-1ul65aVVu87RZn0zHleqccDEo4";
-var SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || "";
-var supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-var supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+var SUPABASE_URL2 = "https://fczherphuixpdjuevzsh.supabase.co";
+var SUPABASE_ANON_KEY2 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjemhlcnBodWl4cGRqdWV2enNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NDM0OTEsImV4cCI6MjA4OTIxOTQ5MX0.t7FSUWbWDsKIcU-m-1ul65aVVu87RZn0zHleqccDEo4";
+var SUPABASE_SERVICE_KEY2 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjemhlcnBodWl4cGRqdWV2enNoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzY0MzQ5MSwiZXhwIjoyMDg5MjE5NDkxfQ.XgyphQNQtmOPx1hFl5WyL5W_FCLOW8iX6k5ryf9KNIg";
+var supabase = createClient(SUPABASE_URL2, SUPABASE_ANON_KEY2);
+var supabaseAdmin = SUPABASE_SERVICE_KEY2 ? createClient(SUPABASE_URL2, SUPABASE_SERVICE_KEY2) : supabase;
 async function getSalesLeads(filters) {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  let query = client.from("sales_leads").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("sales_leads").select("*").order("created_at", { ascending: false });
   if (filters?.status) {
     query = query.eq("status", filters.status);
   }
@@ -1979,32 +2152,27 @@ async function getSalesLeads(filters) {
   return data;
 }
 async function getSalesLeadById(id) {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  const { data, error } = await client.from("sales_leads").select("*").eq("id", id).single();
+  const { data, error } = await supabase.from("sales_leads").select("*").eq("id", id).single();
   if (error) throw error;
   return data;
 }
 async function createSalesLead(lead) {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  const { data, error } = await client.from("sales_leads").insert(lead).select().single();
+  const { data, error } = await supabase.from("sales_leads").insert(lead).select().single();
   if (error) throw error;
   return data;
 }
 async function updateSalesLead(id, updates) {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  const { data, error } = await client.from("sales_leads").update(updates).eq("id", id).select().single();
+  const { data, error } = await supabase.from("sales_leads").update(updates).eq("id", id).select().single();
   if (error) throw error;
   return data;
 }
 async function deleteSalesLead(id) {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  const { error } = await client.from("sales_leads").delete().eq("id", id);
+  const { error } = await supabase.from("sales_leads").delete().eq("id", id);
   if (error) throw error;
   return true;
 }
 async function getOutreachTemplates(type) {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  let query = client.from("outreach_templates").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("outreach_templates").select("*").order("created_at", { ascending: false });
   if (type) {
     query = query.eq("type", type);
   }
@@ -2013,8 +2181,7 @@ async function getOutreachTemplates(type) {
   return data;
 }
 async function getOutreachActivities(leadId) {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  let query = client.from("outreach_activities").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("outreach_activities").select("*").order("created_at", { ascending: false });
   if (leadId) {
     query = query.eq("lead_id", leadId);
   }
@@ -2023,14 +2190,12 @@ async function getOutreachActivities(leadId) {
   return data;
 }
 async function createOutreachActivity(activity) {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  const { data, error } = await client.from("outreach_activities").insert(activity).select().single();
+  const { data, error } = await supabase.from("outreach_activities").insert(activity).select().single();
   if (error) throw error;
   return data;
 }
 async function getPipelineStats() {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  const { data, error } = await client.from("sales_leads").select("status");
+  const { data, error } = await supabase.from("sales_leads").select("status");
   if (error) throw error;
   const stats = {
     total: data.length,
@@ -2051,12 +2216,11 @@ async function getPipelineStats() {
   return stats;
 }
 async function getAIInsights() {
-  const client = SUPABASE_SERVICE_KEY ? supabaseAdmin : supabase;
-  const { data: opportunities, error: oppError } = await client.from("sales_leads").select("*").gte("score", 80).limit(3);
+  const { data: opportunities, error: oppError } = await supabase.from("sales_leads").select("*").gte("score", 80).limit(3);
   if (oppError) throw oppError;
   const threeDaysAgo = /* @__PURE__ */ new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-  const { data: risks, error: riskError } = await client.from("sales_leads").select("*").lt("last_contact", threeDaysAgo.toISOString()).limit(3);
+  const { data: risks, error: riskError } = await supabase.from("sales_leads").select("*").lt("last_contact", threeDaysAgo.toISOString()).limit(3);
   if (riskError) throw riskError;
   const insights = [
     ...opportunities.map((lead) => ({
@@ -2921,8 +3085,8 @@ var appRouter = router({
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      const cookieOptions = getSessionCookieOptions2(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME2, { ...cookieOptions, maxAge: -1 });
       return {
         success: true
       };
@@ -3441,7 +3605,7 @@ var appRouter = router({
 async function createContext(opts) {
   let user = null;
   try {
-    user = await sdk.authenticateRequest(opts.req);
+    user = await sdk2.authenticateRequest(opts.req);
   } catch (error) {
     user = null;
   }
@@ -3504,7 +3668,7 @@ async function setupVite(app, server) {
   });
 }
 function serveStatic(app) {
-  const distPath = process.env.NODE_ENV === "development" ? path3.resolve(__dirname, "../..", "dist", "public") : path3.resolve(__dirname, "public");
+  const distPath = path3.resolve(__dirname, "..", "..", "dist", "public");
   if (!fs3.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
@@ -5816,7 +5980,7 @@ async function updateContentTask(taskId, update) {
 }
 async function requireAdmin(req) {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (user && user.role === "admin") return user;
     return null;
   } catch {
@@ -5825,7 +5989,7 @@ async function requireAdmin(req) {
 }
 async function requireAuth(req) {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     return user ?? null;
   } catch {
     return null;
@@ -6106,7 +6270,7 @@ contentPlatformRouter.get("/tasks/:id/status", async (req, res) => {
     let user = null;
     let isAdmin = false;
     try {
-      user = await sdk.authenticateRequest(req);
+      user = await sdk2.authenticateRequest(req);
       isAdmin = user?.role === "admin";
     } catch {
     }
@@ -6951,7 +7115,7 @@ function getAgent(agentId) {
 var aiStreamRouter = Router2();
 async function getAdminUser(req) {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (user && user.role === "admin") return user;
     return null;
   } catch {
@@ -7173,7 +7337,7 @@ aiStreamRouter.post("/chat/stream", async (req, res) => {
   let callerOpenId = "";
   let callerRole = "user";
   try {
-    const callerUser = await sdk.authenticateRequest(req);
+    const callerUser = await sdk2.authenticateRequest(req);
     callerOpenId = callerUser?.openId ?? "";
     callerRole = callerUser?.role ?? "user";
   } catch {
@@ -7821,7 +7985,7 @@ aiStreamRouter.get("/node/skills", async (req, res) => {
 });
 aiStreamRouter.get("/skill/list", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -7869,7 +8033,7 @@ setInterval(async () => {
 }, 60 * 1e3);
 aiStreamRouter.post("/image/generate", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -7892,7 +8056,7 @@ aiStreamRouter.post("/image/generate", async (req, res) => {
 });
 aiStreamRouter.post("/midjourney/imagine", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -7918,7 +8082,7 @@ aiStreamRouter.post("/midjourney/imagine", async (req, res) => {
 });
 aiStreamRouter.post("/midjourney/status", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -7938,7 +8102,7 @@ aiStreamRouter.post("/midjourney/status", async (req, res) => {
 });
 aiStreamRouter.post("/midjourney/upscale", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -7958,7 +8122,7 @@ aiStreamRouter.post("/midjourney/upscale", async (req, res) => {
 });
 aiStreamRouter.post("/runway/text-to-video", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -7984,7 +8148,7 @@ aiStreamRouter.post("/runway/text-to-video", async (req, res) => {
 });
 aiStreamRouter.post("/runway/image-to-video", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -8011,7 +8175,7 @@ aiStreamRouter.post("/runway/image-to-video", async (req, res) => {
 });
 aiStreamRouter.post("/runway/status", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -8031,7 +8195,7 @@ aiStreamRouter.post("/runway/status", async (req, res) => {
 });
 aiStreamRouter.post("/upload", async (req, res) => {
   try {
-    const user = await sdk.authenticateRequest(req);
+    const user = await sdk2.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "\u8BF7\u5148\u767B\u5F55" });
       return;
@@ -8409,7 +8573,7 @@ data: ${JSON.stringify(data)}
     const historyR = await sbGet(
       `/messages?conversation_id=eq.${conversationId}&order=created_at.asc&limit=20&select=role,content`
     );
-    const history = historyR.data || [];
+    const history = Array.isArray(historyR.data) ? historyR.data : [];
     let searchContext = "";
     if (useSearch || needsSearch(message)) {
       sendEvent("status", { text: "\u6B63\u5728\u8054\u7F51\u641C\u7D22..." });
@@ -9118,855 +9282,9 @@ async function fetchAllDigests(options) {
   };
 }
 
-// server/chanmama.ts
-import { Router as Router5 } from "express";
-var chanmamaRouter = Router5();
-var CMM_BASE = "https://api-service.chanmama.com";
-var CMM_TOKEN_FILE = "/tmp/cmm_token.txt";
-function getCmmToken() {
-  const token = process.env.CMM_TOKEN;
-  if (token) return token;
-  try {
-    const fs7 = __require("fs");
-    if (fs7.existsSync(CMM_TOKEN_FILE)) {
-      const t2 = fs7.readFileSync(CMM_TOKEN_FILE, "utf-8").trim();
-      return t2 || null;
-    }
-  } catch {
-  }
-  return null;
-}
-function cmmHeaders(token) {
-  const t2 = token || getCmmToken() || "";
-  return {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-    "Authorization": `Bearer ${t2}`,
-    "token": t2,
-    "Accept": "application/json, text/plain, */*",
-    "Referer": "https://www.chanmama.com/",
-    "Origin": "https://www.chanmama.com",
-    "appId": "10000"
-  };
-}
-var MOCK_AUTHORS = {
-  "\u9999\u6C34": [
-    {
-      id: "author_001",
-      nickname: "\u9999\u6C1B\u535A\u4E3B\u5C0F\u96C5",
-      platform: "douyin",
-      fans: 892e3,
-      avg_views: 45600,
-      avg_likes: 3200,
-      engage_rate: 7.02,
-      category: "\u7F8E\u5986\u9999\u6C1B",
-      recent_videos: 12,
-      brand_cooperate: true,
-      avatar: ""
-    },
-    {
-      id: "author_002",
-      nickname: "Perfume\u8FBE\u4EBALulu",
-      platform: "douyin",
-      fans: 123e4,
-      avg_views: 78e3,
-      avg_likes: 5600,
-      engage_rate: 7.18,
-      category: "\u751F\u6D3B\u65B9\u5F0F",
-      recent_videos: 18,
-      brand_cooperate: false,
-      avatar: ""
-    },
-    {
-      id: "author_003",
-      nickname: "\u6CD5\u5F0F\u751F\u6D3B\u8BB0",
-      platform: "xiaohongshu",
-      fans: 456e3,
-      avg_views: 23e3,
-      avg_likes: 1890,
-      engage_rate: 8.21,
-      category: "\u9999\u6C1B\u751F\u6D3B",
-      recent_videos: 8,
-      brand_cooperate: true,
-      avatar: ""
-    }
-  ],
-  "diptyque": [
-    {
-      id: "author_008",
-      nickname: "\u8721\u70DB\u4E0E\u9999\u6C34\u7814\u7A76\u6240",
-      platform: "xiaohongshu",
-      fans: 734e3,
-      avg_views: 56e3,
-      avg_likes: 4800,
-      engage_rate: 8.57,
-      category: "\u9999\u6C1B\u751F\u6D3B",
-      recent_videos: 14,
-      brand_cooperate: true,
-      avatar: ""
-    },
-    {
-      id: "author_009",
-      nickname: "\u6CD5\u5F0F\u8C03\u9999\u65E5\u8BB0",
-      platform: "xiaohongshu",
-      fans: 512e3,
-      avg_views: 38e3,
-      avg_likes: 3600,
-      engage_rate: 9.47,
-      category: "\u5C0F\u4F17\u9999\u6C1B",
-      recent_videos: 9,
-      brand_cooperate: true,
-      avatar: ""
-    },
-    {
-      id: "author_010",
-      nickname: "\u8F7B\u5962\u9999\u6C34\u9274\u8D4F",
-      platform: "douyin",
-      fans: 98e4,
-      avg_views: 67e3,
-      avg_likes: 5200,
-      engage_rate: 7.76,
-      category: "\u8F7B\u5962\u751F\u6D3B",
-      recent_videos: 21,
-      brand_cooperate: false,
-      avatar: ""
-    }
-  ],
-  "\u7956\u9A6C\u9F99": [
-    {
-      id: "author_001",
-      nickname: "\u9999\u6C1B\u535A\u4E3B\u5C0F\u96C5",
-      platform: "douyin",
-      fans: 892e3,
-      avg_views: 45600,
-      avg_likes: 3200,
-      engage_rate: 7.02,
-      category: "\u7F8E\u5986\u9999\u6C1B",
-      recent_videos: 12,
-      brand_cooperate: true,
-      avatar: ""
-    }
-  ],
-  "\u51B0\u5E0C\u9ECE": [
-    {
-      id: "author_006",
-      nickname: "\u56FD\u8D27\u9999\u6C1B\u6D4B\u8BC4",
-      platform: "douyin",
-      fans: 567e3,
-      avg_views: 34200,
-      avg_likes: 2890,
-      engage_rate: 8.45,
-      category: "\u56FD\u8D27\u7F8E\u5986",
-      recent_videos: 20,
-      brand_cooperate: true,
-      avatar: ""
-    },
-    {
-      id: "author_007",
-      nickname: "\u9999\u6C34\u65B0\u624B\u6751",
-      platform: "xiaohongshu",
-      fans: 178e3,
-      avg_views: 12300,
-      avg_likes: 1100,
-      engage_rate: 8.94,
-      category: "\u9999\u6C34\u5165\u5751",
-      recent_videos: 30,
-      brand_cooperate: false,
-      avatar: ""
-    }
-  ]
-};
-var MOCK_NOTES = {
-  "diptyque": [
-    {
-      id: "note_008",
-      title: "diptyque 34\u53F7\u8721\u70DB\uFF5C\u4F4F\u5728\u5DF4\u9ECE\u7684\u611F\u89C9\u539F\u6765\u662F\u8FD9\u4E2A\u5473\u9053",
-      views: 312e3,
-      likes: 27800,
-      comments: 1890,
-      shares: 1230,
-      platform: "xiaohongshu",
-      content_type: "\u56FE\u6587",
-      tags: ["diptyque", "\u9999\u6C1B\u8721\u70DB", "\u6CD5\u5F0F\u751F\u6D3B"],
-      author: "\u8721\u70DB\u4E0E\u9999\u6C34\u7814\u7A76\u6240",
-      date: "2026-03-13",
-      engage_rate: 9.57
-    },
-    {
-      id: "note_009",
-      title: "diptyque\u5168\u7CFB\u9999\u6C34\u6D4B\u8BC4\uFF01\u5230\u5E95\u54EA\u6B3E\u503C\u5F97\u4E70\uFF1F\u6DF1\u5EA6\u907F\u5751\u6307\u5357",
-      views: 245e3,
-      likes: 22300,
-      comments: 1560,
-      shares: 980,
-      platform: "douyin",
-      content_type: "\u89C6\u9891",
-      tags: ["diptyque", "\u9999\u6C34\u6D4B\u8BC4", "\u6CD5\u5F0F\u9999\u6C34"],
-      author: "\u8F7B\u5962\u9999\u6C34\u9274\u8D4F",
-      date: "2026-03-11",
-      engage_rate: 10.14
-    }
-  ],
-  "\u7956\u9A6C\u9F99": [
-    {
-      id: "note_001",
-      title: "\u7956\u9A6C\u9F99\u82F1\u56FD\u68A8\u4E0E\u5C0F\u82CD\u5170\uFF5C\u79CB\u5929\u4E13\u5C5E\u7684\u767D\u6708\u5149",
-      views: 234500,
-      likes: 18900,
-      comments: 1230,
-      shares: 890,
-      platform: "xiaohongshu",
-      content_type: "\u56FE\u6587",
-      tags: ["\u7956\u9A6C\u9F99", "\u9999\u6C34\u63A8\u8350", "\u79CB\u51AC\u9999\u6C34"],
-      author: "\u9999\u6C1B\u535A\u4E3B\u5C0F\u96C5",
-      date: "2026-03-10",
-      engage_rate: 8.96
-    },
-    {
-      id: "note_002",
-      title: "\u6211\u7528\u4E86\u4E09\u5E74\u7956\u9A6C\u9F99\uFF0C\u7EC8\u4E8E\u627E\u5230\u4E86\u547D\u5B9A\u9999\u6C34",
-      views: 189e3,
-      likes: 15600,
-      comments: 980,
-      shares: 760,
-      platform: "xiaohongshu",
-      content_type: "\u56FE\u6587",
-      tags: ["\u7956\u9A6C\u9F99", "\u9999\u6C34\u65E5\u8BB0", "\u547D\u5B9A\u9999\u6C34"],
-      author: "\u6CD5\u5F0F\u751F\u6D3B\u8BB0",
-      date: "2026-03-08",
-      engage_rate: 9.17
-    }
-  ],
-  "\u51B0\u5E0C\u9ECE": [
-    {
-      id: "note_006",
-      title: "\u56FD\u8D27\u4E4B\u5149\uFF01\u51B0\u5E0C\u9ECE\u9999\u6C34\u771F\u7684\u5AB2\u7F8E\u5927\u724C\u5417\uFF1F\u5B9E\u6D4B\u544A\u8BC9\u4F60",
-      views: 156e3,
-      likes: 14200,
-      comments: 890,
-      shares: 456,
-      platform: "douyin",
-      content_type: "\u89C6\u9891",
-      tags: ["\u51B0\u5E0C\u9ECE", "\u56FD\u8D27\u9999\u6C34", "\u5E73\u66FF\u5927\u724C"],
-      author: "\u56FD\u8D27\u9999\u6C1B\u6D4B\u8BC4",
-      date: "2026-03-11",
-      engage_rate: 9.97
-    }
-  ]
-};
-chanmamaRouter.get("/author/search", async (req, res) => {
-  const keyword = req.query.keyword || "\u9999\u6C34";
-  const platform = req.query.platform || "douyin";
-  const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.page_size) || 20;
-  const token = getCmmToken();
-  if (token) {
-    try {
-      const params = new URLSearchParams({
-        keyword,
-        platform,
-        page: String(page),
-        page_size: String(pageSize)
-      });
-      const response = await fetch(`${CMM_BASE}/v5/home/author/search?${params}`, {
-        headers: cmmHeaders(token)
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-    } catch (err) {
-      console.warn("[ChanMama] API\u8C03\u7528\u5931\u8D25\uFF0C\u4F7F\u7528\u6A21\u62DF\u6570\u636E:", err);
-    }
-  }
-  const mockKey = Object.keys(MOCK_AUTHORS).find((k) => keyword.includes(k)) || "\u9999\u6C34";
-  const allAuthors = MOCK_AUTHORS[mockKey] || MOCK_AUTHORS["\u9999\u6C34"];
-  const filteredAuthors = platform !== "all" ? allAuthors.filter((a) => a.platform === platform) : allAuthors;
-  const startIndex = (page - 1) * pageSize;
-  const pagedAuthors = filteredAuthors.slice(startIndex, startIndex + pageSize);
-  res.json({
-    code: 0,
-    msg: "success",
-    data: {
-      list: pagedAuthors,
-      page,
-      page_size: pageSize,
-      total: filteredAuthors.length
-    }
-  });
-});
-chanmamaRouter.get("/note/list", async (req, res) => {
-  const keyword = req.query.keyword || "\u9999\u6C34";
-  const platform = req.query.platform || "douyin";
-  const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.page_size) || 20;
-  const token = getCmmToken();
-  if (token) {
-    try {
-      const params = new URLSearchParams({
-        keyword,
-        platform,
-        page: String(page),
-        page_size: String(pageSize)
-      });
-      const response = await fetch(`${CMM_BASE}/v5/home/author/hand/write/list?${params}`, {
-        headers: cmmHeaders(token)
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-    } catch (err) {
-      console.warn("[ChanMama] API\u8C03\u7528\u5931\u8D25\uFF0C\u4F7F\u7528\u6A21\u62DF\u6570\u636E:", err);
-    }
-  }
-  const mockKey = Object.keys(MOCK_NOTES).find((k) => keyword.includes(k)) || "diptyque";
-  const allNotes = MOCK_NOTES[mockKey] || MOCK_NOTES["diptyque"];
-  const filteredNotes = platform !== "all" ? allNotes.filter((n) => n.platform === platform) : allNotes;
-  const startIndex = (page - 1) * pageSize;
-  const pagedNotes = filteredNotes.slice(startIndex, startIndex + pageSize);
-  res.json({
-    code: 0,
-    msg: "success",
-    data: {
-      list: pagedNotes,
-      page,
-      page_size: pageSize,
-      total: filteredNotes.length
-    }
-  });
-});
-chanmamaRouter.get("/brand/stats", async (req, res) => {
-  const brand = req.query.brand || "diptyque";
-  res.json({
-    code: 0,
-    msg: "success",
-    data: {
-      brand,
-      total_authors: 156,
-      total_notes: 2340,
-      avg_engage_rate: 8.5,
-      top_platform: "xiaohongshu",
-      growth_rate: 12.5,
-      competitors: ["\u7956\u9A6C\u9F99", "Tom Ford", "Le Labo"]
-    }
-  });
-});
-chanmamaRouter.get("/health", async (req, res) => {
-  const token = getCmmToken();
-  res.json({
-    status: "ok",
-    token_configured: !!token,
-    api_base: CMM_BASE,
-    timestamp: (/* @__PURE__ */ new Date()).toISOString()
-  });
-});
-var chanmama_default = chanmamaRouter;
-
-// server/contentOps.ts
-import { Router as Router6 } from "express";
-init_db();
-init_aiNodes();
-var contentOpsRouter = Router6();
-async function getAdminUser2(req) {
-  try {
-    const user = await sdk.authenticateRequest(req);
-    if (user && user.role === "admin") return user;
-    return null;
-  } catch {
-    return null;
-  }
-}
-async function selectAiNode() {
-  try {
-    const nodes = await getAiNodes(true);
-    if (!nodes || nodes.length === 0) return null;
-    const candidates = nodes.filter((n) => n.isOnline !== false && n.isActive !== false);
-    if (candidates.length === 0) return null;
-    return candidates[0];
-  } catch {
-    return null;
-  }
-}
-async function callAIStream(messages, user, feature, res) {
-  try {
-    const node = await selectAiNode();
-    if (!node) {
-      res.write(`data: ${JSON.stringify({ error: "\u6CA1\u6709\u53EF\u7528\u7684AI\u8282\u70B9\uFF0C\u8BF7\u5148\u914D\u7F6EAI\u8282\u70B9", done: true })}
-
-`);
-      res.end();
-      return;
-    }
-    const payload = {
-      model: node.modelId || "default",
-      messages,
-      stream: true
-    };
-    const apiKey = node.token;
-    const baseUrl = node.baseUrl.replace(/\/$/, "");
-    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-      res.write(`data: ${JSON.stringify({ error: `AI\u8C03\u7528\u5931\u8D25: ${response.status}`, done: true })}
-
-`);
-      res.end();
-      return;
-    }
-    const reader = response.body?.getReader();
-    if (!reader) {
-      res.write(`data: ${JSON.stringify({ error: "\u65E0\u6CD5\u8BFB\u53D6\u54CD\u5E94\u6D41", done: true })}
-
-`);
-      res.end();
-      return;
-    }
-    const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const data = line.slice(6);
-          if (data === "[DONE]") {
-            res.write(`data: ${JSON.stringify({ done: true, provider: node.name })}
-
-`);
-          } else {
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices?.[0]?.delta?.content || "";
-              const finish = parsed.choices?.[0]?.finish_reason;
-              res.write(`data: ${JSON.stringify({
-                chunk: delta,
-                done: !!finish,
-                provider: node.name
-              })}
-
-`);
-            } catch {
-            }
-          }
-        }
-      }
-    }
-    res.write(`data: ${JSON.stringify({ done: true, provider: node.name })}
-
-`);
-    res.end();
-  } catch (err) {
-    console.error("[ContentOps] AI\u8C03\u7528\u9519\u8BEF:", err);
-    res.write(`data: ${JSON.stringify({ error: err.message || "AI\u8C03\u7528\u5931\u8D25", done: true })}
-
-`);
-    res.end();
-  }
-}
-contentOpsRouter.post("/brand-analysis", async (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("X-Accel-Buffering", "no");
-  const { brands = ["diptyque", "\u7956\u9A6C\u9F99"], platforms = ["\u5C0F\u7EA2\u4E66", "\u6296\u97F3"], topic = "\u9999\u6C34\u9999\u6C1B" } = req.body;
-  const user = await getAdminUser2(req);
-  const brandsStr = brands.join("\u3001");
-  const platformsStr = platforms.join("\u3001");
-  const messages = [
-    {
-      role: "system",
-      content: "\u4F60\u662F\u4E13\u4E1A\u7684\u9999\u6C34\u9999\u6C1B\u884C\u4E1A\u793E\u5A92\u8FD0\u8425\u5206\u6790\u5E08\uFF0C\u64C5\u957F\u5206\u6790\u54C1\u724C\u6295\u653E\u7B56\u7565\u548C\u7206\u6B3E\u5185\u5BB9\u89C4\u5F8B\u3002"
-    },
-    {
-      role: "user",
-      content: `\u8BF7\u5BF9\u4EE5\u4E0B\u9999\u6C34\u9999\u6C1B\u54C1\u724C\u5728\u793E\u4EA4\u5A92\u4F53\u4E0A\u7684\u6295\u653E\u7B56\u7565\u505A\u6DF1\u5EA6\u5206\u6790\uFF1A
-
-\u54C1\u724C\u5217\u8868\uFF1A${brandsStr}
-\u5206\u6790\u5E73\u53F0\uFF1A${platformsStr}
-\u54C1\u7C7B\uFF1A${topic}
-
-\u8BF7\u6309\u4EE5\u4E0B\u7ED3\u6784\u8F93\u51FA\u5206\u6790\u62A5\u544A\uFF08\u7528JSON\u683C\u5F0F\uFF09\uFF1A
-{
-  "summary": "\u603B\u4F53\u5E02\u573A\u5206\u6790\uFF08200\u5B57\uFF09",
-  "brands": [
-    {
-      "name": "\u54C1\u724C\u540D",
-      "positioning": "\u54C1\u724C\u5B9A\u4F4D",
-      "target_audience": "\u76EE\u6807\u4EBA\u7FA4",
-      "content_style": "\u5185\u5BB9\u98CE\u683C\u7279\u70B9",
-      "platforms": {
-        "\u5C0F\u7EA2\u4E66": {
-          "strategy": "\u6295\u653E\u7B56\u7565",
-          "viral_elements": ["\u7206\u6B3E\u5143\u7D201", "\u7206\u6B3E\u5143\u7D202"],
-          "typical_titles": ["\u5178\u578B\u7206\u6B3E\u6807\u98981", "\u5178\u578B\u7206\u6B3E\u6807\u98982"]
-        },
-        "\u6296\u97F3": {
-          "strategy": "\u6295\u653E\u7B56\u7565",
-          "viral_elements": ["\u7206\u6B3E\u5143\u7D201", "\u7206\u6B3E\u5143\u7D202"],
-          "video_hooks": ["\u89C6\u9891\u5F00\u573A\u94A9\u5B501", "\u89C6\u9891\u5F00\u573A\u94A9\u5B502"]
-        }
-      },
-      "viral_copywriting": {
-        "title_formula": "\u7206\u6B3E\u6807\u9898\u516C\u5F0F",
-        "emotional_triggers": ["\u60C5\u7EEA\u89E6\u53D1\u70B91", "\u60C5\u7EEA\u89E6\u53D1\u70B92"]
-      }
-    }
-  ],
-  "viral_patterns": {
-    "title_structures": ["\u6807\u9898\u7ED3\u67841", "\u6807\u9898\u7ED3\u67842"],
-    "content_frameworks": ["\u5185\u5BB9\u6846\u67B61", "\u5185\u5BB9\u6846\u67B62"],
-    "emotion_keywords": ["\u9AD8\u9891\u60C5\u7EEA\u8BCD1", "\u9AD8\u9891\u60C5\u7EEA\u8BCD2"]
-  },
-  "recommendations": ["\u5EFA\u8BAE1", "\u5EFA\u8BAE2", "\u5EFA\u8BAE3"]
-}`
-    }
-  ];
-  await callAIStream(messages, user, "brand_analysis", res);
-});
-contentOpsRouter.post("/copy-generation", async (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("X-Accel-Buffering", "no");
-  const { brand, platform = "\u5C0F\u7EA2\u4E66", content_type = "\u56FE\u6587", style = "\u60C5\u7EEA\u5171\u9E23", keywords = [] } = req.body;
-  const user = await getAdminUser2(req);
-  const messages = [
-    {
-      role: "system",
-      content: `\u4F60\u662F${platform}\u9876\u7EA7\u5185\u5BB9\u521B\u4F5C\u8005\uFF0C\u4E13\u6CE8\u9999\u6C34\u9999\u6C1B\u8D5B\u9053\uFF0C\u719F\u6089\u5E73\u53F0\u7B97\u6CD5\u548C\u7206\u6B3E\u89C4\u5F8B\u3002`
-    },
-    {
-      role: "user",
-      content: `\u8BF7\u4E3A\u9999\u6C34\u54C1\u724C\u300C${brand}\u300D\u751F\u6210\u4E00\u7BC7\u7206\u6B3E${content_type}\u6587\u6848\u3002
-
-\u8981\u6C42\uFF1A
-- \u98CE\u683C\uFF1A${style}
-- \u5173\u952E\u8BCD\uFF1A${keywords.join("\u3001") || "\u4EA7\u54C1\u5356\u70B9\u3001\u7528\u6237\u75DB\u70B9"}
-- \u8BED\u8A00\u98CE\u683C\u8981\u7B26\u5408${platform}\u5E73\u53F0\u8C03\u6027
-
-\u8BF7\u6309\u4EE5\u4E0B\u683C\u5F0F\u8F93\u51FA\uFF1A
-
-\u3010\u7206\u6B3E\u6807\u9898\u3011
-1. \u6807\u9898\u4E00
-2. \u6807\u9898\u4E8C\uFF08\u542Bemoji\uFF09
-3. \u6807\u9898\u4E09\uFF08\u542Bemoji\uFF09
-
-\u3010\u6B63\u6587\u5185\u5BB9\u3011
-\u5B8C\u6574\u6587\u6848\u5185\u5BB9\uFF08\u7ED3\u6784\u6E05\u6670\uFF0C\u60C5\u7EEA\u9012\u8FDB\uFF09
-
-\u3010\u8BDD\u9898\u6807\u7B7E\u3011
-#\u6807\u7B7E1 #\u6807\u7B7E2 #\u6807\u7B7E3 #\u6807\u7B7E4 #\u6807\u7B7E5 #\u6807\u7B7E6 #\u6807\u7B7E7 #\u6807\u7B7E8
-
-\u3010\u53D1\u5E03\u5EFA\u8BAE\u3011
-\u6700\u4F73\u53D1\u5E03\u65F6\u95F4\u548C\u914D\u56FE\u98CE\u683C\u5EFA\u8BAE
-
-\u3010\u7206\u6B3E\u5206\u6790\u3011
-\u8FD9\u7BC7\u6587\u6848\u4E3A\u4EC0\u4E48\u4F1A\u7206\uFF08\u7ED3\u6784\u62C6\u89E3\uFF09`
-    }
-  ];
-  await callAIStream(messages, user, "copy_generation", res);
-});
-contentOpsRouter.post("/trends", async (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("X-Accel-Buffering", "no");
-  const { keyword = "\u9999\u6C34", platform = "\u5C0F\u7EA2\u4E66" } = req.body;
-  const user = await getAdminUser2(req);
-  const messages = [
-    {
-      role: "system",
-      content: "\u4F60\u662F\u5185\u5BB9\u8FD0\u8425\u8D8B\u52BF\u5206\u6790\u5E08\uFF0C\u64C5\u957F\u53D1\u73B0\u793E\u4EA4\u5A92\u4F53\u70ED\u70B9\u8BDD\u9898\u548C\u5185\u5BB9\u8D8B\u52BF\u3002"
-    },
-    {
-      role: "user",
-      content: `\u8BF7\u5206\u6790\u300C${keyword}\u300D\u5728${platform}\u4E0A\u7684\u5F53\u524D\u70ED\u70B9\u8D8B\u52BF\u3002
-
-\u8F93\u51FAJSON\u683C\u5F0F\uFF1A
-{
-  "keyword": "${keyword}",
-  "platform": "${platform}",
-  "hot_topics": [
-    {"title": "\u70ED\u70B9\u8BDD\u9898", "heat_score": 95, "content_type": "\u56FE\u6587/\u89C6\u9891", "reason": "\u7206\u706B\u539F\u56E0"}
-  ],
-  "emerging_trends": ["\u65B0\u5174\u8D8B\u52BF1", "\u65B0\u5174\u8D8B\u52BF2"],
-  "audience_insights": {
-    "main_demographic": "\u4E3B\u8981\u4EBA\u7FA4",
-    "search_intent": ["\u641C\u7D22\u610F\u56FE1", "\u641C\u7D22\u610F\u56FE2"],
-    "pain_points": ["\u75DB\u70B91", "\u75DB\u70B92"]
-  },
-  "content_opportunities": [
-    {"topic": "\u5185\u5BB9\u673A\u4F1A\u70B9", "difficulty": "\u6613/\u4E2D/\u96BE", "potential": "\u9AD8/\u4E2D/\u4F4E"}
-  ],
-  "recommended_hashtags": ["#\u6807\u7B7E1", "#\u6807\u7B7E2", "#\u6807\u7B7E3"]
-}`
-    }
-  ];
-  await callAIStream(messages, user, "trends", res);
-});
-contentOpsRouter.post("/viral-analysis", async (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("X-Accel-Buffering", "no");
-  const { content = "", platform = "\u5C0F\u7EA2\u4E66" } = req.body;
-  const user = await getAdminUser2(req);
-  const messages = [
-    {
-      role: "system",
-      content: "\u4F60\u662F\u9876\u7EA7\u5185\u5BB9\u7B56\u7565\u5E08\uFF0C\u64C5\u957F\u62C6\u89E3\u7206\u6B3E\u5185\u5BB9\u903B\u8F91\u548C\u4F20\u64AD\u89C4\u5F8B\u3002"
-    },
-    {
-      role: "user",
-      content: `\u8BF7\u62C6\u89E3\u5206\u6790\u4EE5\u4E0B${platform}\u5185\u5BB9\u7684\u7206\u6B3E\u903B\u8F91\uFF1A
-
-${content || "\u3010\u793A\u4F8B\u5185\u5BB9\u3011\n\u6807\u9898\uFF1A\u8FD9\u6B3E\u9999\u6C34\u8BA9\u6211\u95FA\u871C\u8FFD\u7740\u95EE\u94FE\u63A5\n\u6B63\u6587\uFF1A\u53C8\u88AB\u8FFD\u95EE\u9999\u6C34\u4E86\uFF01\u8FD9\u6B21\u662F\u7956\u9A6C\u9F99\u7684\u82F1\u56FD\u68A8\u4E0E\u5C0F\u82CD\u5170...\uFF08\u793A\u4F8B\u6587\u6848\uFF09"}
-
-## \u6807\u9898\u62C6\u89E3
-- \u6807\u9898\u7ED3\u6784\u516C\u5F0F\uFF1A
-- \u5173\u952E\u94A9\u5B50\u8BCD\uFF1A
-- \u60C5\u7EEA\u89E6\u53D1\u70B9\uFF1A
-
-## \u5185\u5BB9\u7ED3\u6784\u5206\u6790
-- \u5F00\u5934\uFF08\u6293\u6CE8\u610F\u529B\uFF09\uFF1A
-- \u4E2D\u95F4\uFF08\u5EFA\u7ACB\u4FE1\u4EFB\uFF09\uFF1A
-- \u7ED3\u5C3E\uFF08\u4FC3\u4E92\u52A8/\u884C\u52A8\uFF09\uFF1A
-
-## \u7206\u6B3E\u6838\u5FC3\u539F\u56E0\uFF083-5\u6761\uFF09
-
-## \u4EFF\u5199\u6A21\u677F
-\u57FA\u4E8E\u6B64\u5185\u5BB9\u7ED9\u51FA\u53EF\u590D\u7528\u7684\u521B\u4F5C\u6A21\u677F\u6846\u67B6
-
-## \u4F18\u5316\u5EFA\u8BAE
-\u5982\u4F55\u5728\u6B64\u57FA\u7840\u4E0A\u8FDB\u4E00\u6B65\u63D0\u5347\u6570\u636E`
-    }
-  ];
-  await callAIStream(messages, user, "viral_analysis", res);
-});
-contentOpsRouter.post("/calendar", async (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("X-Accel-Buffering", "no");
-  const { brand, platforms = ["\u5C0F\u7EA2\u4E66", "\u6296\u97F3"], days = 7 } = req.body;
-  const user = await getAdminUser2(req);
-  const messages = [
-    {
-      role: "system",
-      content: "\u4F60\u662F\u8D44\u6DF1\u5185\u5BB9\u8FD0\u8425\u7B56\u5212\uFF0C\u7CBE\u901A\u9999\u6C34\u9999\u6C1B\u54C1\u724C\u7684\u591A\u5E73\u53F0\u5185\u5BB9\u77E9\u9635\u89C4\u5212\u3002"
-    },
-    {
-      role: "user",
-      content: `\u4E3A\u9999\u6C34\u54C1\u724C\u300C${brand}\u300D\u751F\u6210\u672A\u6765${days}\u5929\u7684\u5185\u5BB9\u53D1\u5E03\u65E5\u5386\u3002
-
-\u5E73\u53F0\uFF1A${platforms.join("\u3001")}
-
-\u8BF7\u8F93\u51FAJSON\u683C\u5F0F\uFF1A
-{
-  "brand": "${brand}",
-  "period": "${days}\u5929",
-  "calendar": [
-    {
-      "date": "Day 1 (\u5468\u4E00)",
-      "theme": "\u5F53\u65E5\u4E3B\u9898",
-      "posts": [
-        {
-          "platform": "${platforms[0] || "\u5C0F\u7EA2\u4E66"}",
-          "time": "19:30",
-          "content_type": "\u56FE\u6587",
-          "title": "\u5EFA\u8BAE\u6807\u9898",
-          "core_message": "\u6838\u5FC3\u4F20\u8FBE\u4FE1\u606F",
-          "visual_style": "\u89C6\u89C9\u98CE\u683C\u5EFA\u8BAE",
-          "tags": ["\u6807\u7B7E1", "\u6807\u7B7E2"]
-        }
-      ]
-    }
-  ],
-  "weekly_strategy": "\u672C\u5468\u6574\u4F53\u7B56\u7565",
-  "key_dates": ["\u91CD\u70B9\u8282\u70B91", "\u91CD\u70B9\u8282\u70B92"]
-}`
-    }
-  ];
-  await callAIStream(messages, user, "content_calendar", res);
-});
-contentOpsRouter.get("/providers", async (req, res) => {
-  try {
-    const nodes = await getAiNodes();
-    const providers = (nodes || []).map((node) => ({
-      id: node.id,
-      name: node.name,
-      type: node.type,
-      baseUrl: node.baseUrl,
-      modelId: node.modelId,
-      isOnline: node.isOnline,
-      isLocal: node.isLocal,
-      isPaid: node.isPaid
-    }));
-    res.json({
-      status: "ok",
-      providers,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString()
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message || "\u83B7\u53D6AI\u63D0\u4F9B\u5546\u5931\u8D25" });
-  }
-});
-contentOpsRouter.get("/models", async (req, res) => {
-  try {
-    const nodes = await getAiNodes();
-    const models = [];
-    for (const node of nodes || []) {
-      if (node.modelId) {
-        models.push({
-          id: `${node.id}-${node.modelId}`,
-          provider: node.name,
-          providerId: node.id,
-          modelId: node.modelId,
-          type: node.type,
-          isOnline: node.isOnline !== false,
-          isLocal: node.isLocal
-        });
-      }
-    }
-    res.json({
-      status: "ok",
-      models,
-      count: models.length,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString()
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message || "\u83B7\u53D6\u6A21\u578B\u5217\u8868\u5931\u8D25" });
-  }
-});
-contentOpsRouter.get("/points", async (req, res) => {
-  try {
-    const user = await getAdminUser2(req);
-    if (user) {
-      const userId = user.id || user.userId || "default";
-      const { data: pointsData } = await dbFetch(
-        `/user_points?user_id=eq.${userId}&select=*`
-      );
-      if (pointsData && pointsData.length > 0) {
-        return res.json({
-          status: "ok",
-          balance: pointsData[0].balance || 0,
-          totalEarned: pointsData[0].total_earned || 0,
-          totalUsed: pointsData[0].total_used || 0,
-          userId
-        });
-      }
-    }
-    res.json({
-      status: "ok",
-      balance: 1e3,
-      totalEarned: 1e3,
-      totalUsed: 0,
-      userId: user?.id || "guest",
-      message: user ? "\u7528\u6237\u79EF\u5206" : "\u8BBF\u5BA2\u9ED8\u8BA4\u79EF\u5206"
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message || "\u83B7\u53D6\u79EF\u5206\u5931\u8D25" });
-  }
-});
-contentOpsRouter.get("/trend/topics", async (req, res) => {
-  try {
-    const { industry } = req.query;
-    const industryContext = industry || "\u901A\u7528";
-    const messages = [
-      {
-        role: "system",
-        content: `\u4F60\u662F\u4E00\u4E2A\u5185\u5BB9\u8FD0\u8425\u4E13\u5BB6\uFF0C\u64C5\u957F\u5206\u6790${industryContext}\u884C\u4E1A\u7684\u70ED\u70B9\u8D8B\u52BF\u3002
-\u8BF7\u63A8\u83505-10\u4E2A\u5F53\u524D\u70ED\u95E8\u7684\u5185\u5BB9\u4E3B\u9898\uFF0C\u683C\u5F0F\u4E3AJSON\u6570\u7EC4\uFF0C\u6BCF\u4E2A\u4E3B\u9898\u5305\u542B\uFF1A
-- title: \u4E3B\u9898\u6807\u9898
-- heat: \u70ED\u5EA6\u8BC4\u5206(1-100)
-- keywords: \u76F8\u5173\u5173\u952E\u8BCD\u6570\u7EC4
-- reason: \u4E3A\u4EC0\u4E48\u63A8\u8350\u8FD9\u4E2A\u4E3B\u9898`
-      },
-      {
-        role: "user",
-        content: `\u8BF7\u63A8\u8350${industryContext}\u884C\u4E1A\u8FD1\u671F\u7684\u70ED\u70B9\u5185\u5BB9\u4E3B\u9898`
-      }
-    ];
-    const node = await selectAiNode();
-    if (!node) {
-      return res.json({
-        status: "ok",
-        topics: getDefaultTopics(industryContext),
-        count: 5,
-        source: "default"
-      });
-    }
-    const response = await callAIStream(messages, null, "trend_topics", res);
-    if (!res.writableEnded) {
-      const result = await generateStaticResponse(messages, node);
-      res.json({
-        status: "ok",
-        topics: result,
-        count: result.length,
-        source: "ai"
-      });
-    }
-  } catch (err) {
-    res.status(500).json({
-      error: err.message || "\u83B7\u53D6\u70ED\u70B9\u4E3B\u9898\u5931\u8D25",
-      fallback: getDefaultTopics(req.query.industry || "\u901A\u7528")
-    });
-  }
-});
-function getDefaultTopics(industry) {
-  const defaults = {
-    "\u7F8E\u5986": [
-      { title: "\u65E9C\u665AA\u62A4\u80A4routine", heat: 95, keywords: ["\u62A4\u80A4", "\u6210\u5206\u515A", "\u529F\u6548\u62A4\u80A4"], reason: "\u6301\u7EED\u706B\u7206\u7684\u62A4\u80A4\u6982\u5FF5" },
-      { title: "\u5E73\u4EF7\u66FF\u4EE3\u6D4B\u8BC4", heat: 88, keywords: ["\u6D4B\u8BC4", "\u5E73\u4EF7", "\u79CD\u8349"], reason: "\u6D88\u8D39\u8005\u8FFD\u6C42\u6027\u4EF7\u6BD4" },
-      { title: "\u6362\u5B63\u62A4\u80A4\u6307\u5357", heat: 85, keywords: ["\u6362\u5B63", "\u654F\u611F", "\u4FDD\u6E7F"], reason: "\u5B63\u8282\u6027\u521A\u9700" }
-    ],
-    "\u98DF\u54C1": [
-      { title: "\u65B9\u4FBF\u901F\u98DF\u6D4B\u8BC4", heat: 90, keywords: ["\u901F\u98DF", "\u6D4B\u8BC4", "\u5B85\u7ECF\u6D4E"], reason: "\u61D2\u4EBA\u7ECF\u6D4E\u6301\u7EED\u5347\u6E29" },
-      { title: "\u5065\u5EB7\u96F6\u98DF\u63A8\u8350", heat: 85, keywords: ["\u5065\u5EB7", "\u96F6\u98DF", "\u51CF\u8102"], reason: "\u5065\u5EB7\u610F\u8BC6\u63D0\u5347" }
-    ],
-    "\u901A\u7528": [
-      { title: "\u65B0\u54C1\u5F00\u7BB1", heat: 88, keywords: ["\u5F00\u7BB1", "\u6D4B\u8BC4", "\u65B0\u54C1"], reason: "\u5185\u5BB9\u4E92\u52A8\u7387\u9AD8" },
-      { title: "\u597D\u7269\u5206\u4EAB", heat: 85, keywords: ["\u79CD\u8349", "\u63A8\u8350", "\u597D\u7269"], reason: "\u6C38\u6052\u7684\u70ED\u95E8\u8BDD\u9898" },
-      { title: "\u4F7F\u7528\u6559\u7A0B", heat: 82, keywords: ["\u6559\u7A0B", "\u6280\u5DE7", "\u5E72\u8D27"], reason: "\u5B9E\u7528\u4EF7\u503C\u9AD8" }
-    ]
-  };
-  return defaults[industry] || defaults["\u901A\u7528"];
-}
-async function generateStaticResponse(messages, node) {
-  try {
-    const response = await fetch(`${node.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...node.apiKey ? { "Authorization": `Bearer ${node.apiKey}` } : {}
-      },
-      body: JSON.stringify({
-        model: node.modelId || "gpt-3.5-turbo",
-        messages,
-        max_tokens: 1e3
-      })
-    });
-    if (!response.ok) throw new Error(`AI API\u9519\u8BEF: ${response.status}`);
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "";
-    try {
-      return JSON.parse(content);
-    } catch {
-      return getDefaultTopics("\u901A\u7528");
-    }
-  } catch {
-    return getDefaultTopics("\u901A\u7528");
-  }
-}
-var contentOps_default = contentOpsRouter;
-
 // server/mcp-server.ts
-import { Router as Router7 } from "express";
-var mcpServerRouter = Router7();
+import { Router as Router5 } from "express";
+var mcpServerRouter = Router5();
 var MCP_PROTOCOL_VERSION = "2025-03-26";
 var SERVER_INFO = {
   name: "maoai-mcp-server",
@@ -10156,12 +9474,30 @@ mcpServerRouter.get("/manifest", (req, res) => {
 });
 
 // server/_core/index.ts
+function isPortAvailable(port) {
+  return new Promise((resolve2) => {
+    const server = net.createServer();
+    server.listen(port, () => {
+      server.close(() => resolve2(true));
+    });
+    server.on("error", () => resolve2(false));
+  });
+}
+async function findAvailablePort(startPort = 3e3) {
+  for (let port = startPort; port < startPort + 20; port++) {
+    if (await isPortAvailable(port)) {
+      return port;
+    }
+  }
+  throw new Error(`No available port found starting from ${startPort}`);
+}
 async function startServer() {
   const app = express2();
   const server = createServer(app);
   app.use(express2.json({ limit: "50mb" }));
   app.use(express2.urlencoded({ limit: "50mb", extended: true }));
   registerOAuthRoutes(app);
+  registerSupabaseAuthRoutes(app);
   app.post("/api/auth/email-login", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -10181,6 +9517,8 @@ async function startServer() {
         }
       );
       const authText = await authResp.text();
+      console.log("[email-login] Auth response status:", authResp.status);
+      console.log("[email-login] Auth response body:", authText.substring(0, 500));
       const authData = JSON.parse(authText);
       if (!authData.access_token || !authData.user) {
         res.status(401).json({ error: authData.error_description || "\u90AE\u7BB1\u6216\u5BC6\u7801\u9519\u8BEF" });
@@ -10209,8 +9547,6 @@ async function startServer() {
   app.use("/api/ai", aiStream_default);
   app.use("/api/notes", notesRouter);
   app.use("/api/chat", chatRouter);
-  app.use("/api/chanmama", chanmama_default);
-  app.use("/api/content-ops", contentOps_default);
   app.use("/api/mcp", mcpServerRouter);
   app.use(
     "/api/trpc",
@@ -10222,21 +9558,16 @@ async function startServer() {
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
   });
-  app.get("/api/debug/env", (_req, res) => {
-    res.json({
-      SUPABASE_URL: process.env.SUPABASE_URL ?? "MISSING",
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? "OK(" + process.env.SUPABASE_ANON_KEY.substring(0, 10) + "...)" : "MISSING",
-      SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY ? "OK" : "MISSING",
-      NODE_ENV: process.env.NODE_ENV,
-      PORT: process.env.PORT
-    });
-  });
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
-  const port = parseInt(process.env.PORT || "3000");
+  const preferredPort = parseInt(process.env.PORT || "3000");
+  const port = await findAvailablePort(preferredPort);
+  if (port !== preferredPort) {
+    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+  }
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     function scheduleNextDigestFetch() {
