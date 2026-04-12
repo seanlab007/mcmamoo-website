@@ -8,6 +8,46 @@
 
 import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS } from "../tools";
 
+// ─── ReAct 思维链指令（全局自动注入）────────────────────────────────────────────
+// 强制所有 Agent 在每次工具调用前进行显式推理
+// Thought → Action → Observation → Final Answer
+export const REACT_INSTRUCTION = `
+
+## 推理框架：先思后行
+
+你必须严格遵循 **ReAct (Reasoning + Acting)** 推理框架：
+
+**每当你需要调用工具时，必须先完成推理步骤：**
+
+1. **Thought（思考）** — 分析当前任务：
+   - 我需要完成什么？目标是什么？
+   - 我已经掌握了哪些信息？
+   - 我还缺什么信息？
+   - 哪个工具最适合获取缺失的信息？为什么？
+
+2. **Action（行动）** — 明确调用工具：
+   - 选择正确的工具
+   - 构造精确的参数（避免模糊或遗漏）
+   - 避免重复调用相同的工具获取相同的信息
+
+3. **Observation（观察）** — 分析工具返回结果：
+   - 结果是否回答了我的问题？
+   - 是否需要更多信息？
+   - 结果是否超出预期？是否需要调整策略？
+
+4. **Final Answer（最终答案）** — 当信息充分时：
+   - 综合所有观察结果给出完整回答
+   - 不再调用更多工具，除非绝对必要
+   - 答案要具体、可操作、直接回答用户问题
+
+**重要原则：**
+- 不要在推理中使用"我认为"这类模糊表述，要有逻辑链条
+- 工具调用之间要有意义，不能机械重复
+- 优先使用直接的工具调用获取一手信息，而非凭空推断
+- 当工具执行失败时，分析原因并尝试替代方案
+
+`;
+
 // ─── Agent 定义 ─────────────────────────────────────────────────────────────────
 
 export interface Agent {
@@ -913,10 +953,11 @@ export function getToolsForAgent(agentId: string, isAdmin: boolean = false): typ
   return allTools.filter(t => toolNames.includes(t.function.name)) as typeof TOOL_DEFINITIONS;
 }
 
-// 获取 Agent 系统提示词
+// 获取 Agent 系统提示词（含 ReAct 思维链指令）
 export function getAgentSystemPrompt(agentId: string): string {
   const agent = AGENTS.find(a => a.id === agentId);
-  return agent?.systemPrompt || "";
+  if (!agent) return REACT_INSTRUCTION;
+  return REACT_INSTRUCTION + "\n\n" + agent.systemPrompt;
 }
 
 // 根据 Agent ID 获取 Agent 信息
