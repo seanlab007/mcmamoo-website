@@ -163,6 +163,8 @@ export default function MaoAIChat() {
   const dragCounterRef = useRef(0);
   const [currentToolCalls, setCurrentToolCalls] = useState<ToolCallStep[]>([]);
   const [currentAgent, setCurrentAgent] = useState<string | null>(null);
+  // ReAct 推理轮次状态
+  const [reactRound, setReactRound] = useState<{ round: number; maxRounds: number } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -759,6 +761,7 @@ export default function MaoAIChat() {
     let capturedNodeInfo: ActiveNodeInfo | null = null;
     const liveToolCalls: ToolCallStep[] = [];
     setCurrentToolCalls([]);
+    setReactRound(null);
 
     try {
       const resp = await fetch(`${BACKEND_URL}/api/ai/chat/stream`, {
@@ -840,6 +843,12 @@ export default function MaoAIChat() {
                   };
                   setCurrentToolCalls([...liveToolCalls]);
                 }
+              } else if (chunk.reactRound) {
+                // ReAct 推理轮次开始
+                setReactRound({ round: chunk.reactRound.round, maxRounds: chunk.reactRound.maxRounds });
+              } else if (chunk.reactEnd) {
+                // ReAct 推理结束，清除轮次状态
+                setReactRound(null);
               }
             } catch { /* skip */ }
           }
@@ -871,9 +880,11 @@ export default function MaoAIChat() {
         if (convId) await saveMessageToDB(convId, "assistant", fullContent, selectedId);
       }
       setCurrentToolCalls([]);
+      setReactRound(null);
     } finally {
       setIsStreaming(false);
       setStreamingContent("");
+      setReactRound(null);
       abortRef.current = null;
     }
   };
@@ -1424,6 +1435,29 @@ export default function MaoAIChat() {
                   )}
                   {currentToolCalls.length > 0 && (
                     <ToolCallSteps steps={currentToolCalls} live={true} />
+                  )}
+                  {/* ReAct 推理轮次指示器 */}
+                  {reactRound && (
+                    <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-[#C9A84C]/10 border border-[#C9A84C]/30 rounded text-[11px]">
+                      <div className="flex gap-1">
+                        {Array.from({ length: reactRound.maxRounds }, (_, i) => (
+                          <div
+                            key={i}
+                            className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                              i < reactRound.round
+                                ? "bg-emerald-400/60"
+                                : i === reactRound.round - 1
+                                ? "bg-[#C9A84C] animate-pulse"
+                                : "bg-white/20"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[#C9A84C]/80">
+                        🔄 推理中 · 第 {reactRound.round}/{reactRound.maxRounds} 轮
+                      </span>
+                      <span className="text-white/30">· ReAct Thinking</span>
+                    </div>
                   )}
                   <div className="bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">
                     {streamingContent ? (
