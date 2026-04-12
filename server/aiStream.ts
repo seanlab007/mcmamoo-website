@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { spawn } from "child_process";
 import { MODEL_CONFIGS } from "./models";
 import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog, getNodeSkills, getAllNodeSkills, upsertNodeSkill, deleteNodeSkill, deleteAllNodeSkills, setNodeSkillEnabled } from "./db";
 import { dbFetch } from "./aiNodes";
@@ -1333,6 +1334,102 @@ aiStreamRouter.post("/upload", async (req: Request, res: Response) => {
     console.error("[Upload] Error:", err);
     res.status(500).json({ error: err.message || "文件解析失败" });
   }
+});
+
+// ─── HyperAgents Python Engine — 流式推理日志 ─────────────────────────────────────
+// POST /api/ai/agent/stream
+// 启动 Python HyperAgents Engine，通过 SSE 将 ReAct 推理日志实时推送到前端
+// 请求体: { task: string, domain?: "coding"|"research"|"general", workspace?: string }
+aiStreamRouter.post("/agent/stream", async (req: Request, res: Response) => {
+  const { task, domain = "general", workspace = "." } = req.body as {
+    task: string;
+    domain?: string;
+    workspace?: string;
+  };
+
+  if (!task || typeof task !== "string" || !task.trim()) {
+    res.status(400).json({ error: "Missing required field: task" });
+    return;
+  }
+
+  const admin = await getAdminUser(req);
+  if (!admin) {
+    res.status(403).json({ error: "仅限管理员使用 HyperAgents" });
+    return;
+  }
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const PYTHON_SCRIPT = `${__dirname}/hyperagents/generate_loop.py`;
+  const PYTHON_CMD = (process.env.PYTHON3_PATH || "python3");
+
+  const pythonProcess = spawn(PYTHON_CMD, [
+    PYTHON_SCRIPT,
+    "--task", task.trim(),
+    "--domain", domain,
+    "--workspace", workspace,
+  ], {
+    cwd: workspace,
+    env: {
+      ...process.env,
+      PYTHONIOENCODING: "utf-8",
+    },
+    timeout: 120000,
+  });
+
+  let hasErrored = false;
+
+  pythonProcess.stdout.on("data", (data: Buffer) => {
+    const lines = data.toString("utf-8").split("\n");
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      try {
+        const logEntry = JSON.parse(line);
+        // 通过 SSE 发送 agentLog 事件，frontend 实时渲染"推理日志"视图
+        res.write(`data: ${JSON.stringify({ agentLog: logEntry })}\n\n`);
+      } catch {
+        // 非 JSON 输出（如 Python stderr）作为普通消息
+        console.log("[Python Raw stdout]:", line.substring(0, 200));
+        res.write(`data: ${JSON.stringify({ agentLog: { type: "raw", message: line.substring(0, 200), timestamp: Date.now() / 1000 } })}\n\n`);
+      }
+    }
+  });
+
+  pythonProcess.stderr.on("data", (data: Buffer) => {
+    if (hasErrored) return;
+    hasErrored = true;
+    const errMsg = data.toString("utf-8").trim();
+    console.warn("[HyperAgents stderr]:", errMsg.substring(0, 300));
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "env", message: errMsg.substring(0, 300), timestamp: Date.now() / 1000 } })}\n\n`);
+  });
+
+  pythonProcess.on("close", (code: number | null) => {
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "done", exitCode: code, timestamp: Date.now() / 1000 } })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  });
+
+  pythonProcess.on("error", (err: Error) => {
+    console.error("[HyperAgents spawn error]:", err);
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "env", message: `启动失败: ${err.message}`, timestamp: Date.now() / 1000 } })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  });
+
+  // 超时保护：5 分钟
+  setTimeout(() => {
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "timeout", message: "执行超时（5分钟）", timestamp: Date.now() / 1000 } })}\n\n`);
+      res.write("data: [DONE]\n\n");
+      res.end();
+      pythonProcess.kill("SIGTERM");
+    }
+  }, 5 * 60 * 1000);
 });
 
 // ─── Health check ─────────────────────────────────────────────
