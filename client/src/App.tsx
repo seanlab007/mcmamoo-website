@@ -41,6 +41,7 @@ import AdminRouting from "./pages/AdminRouting";
 import MaoIndustry from "./components/sections/MaoIndustry";
 
 import ContentPlatform from "./features/maoai/pages/ContentPlatform";
+import MaoStrategy from "./pages/MaoStrategy";
 
 function Router() {
   return (
@@ -82,6 +83,9 @@ function Router() {
       {/* 兼容旧路由 */}
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
+      
+      {/* 毛战略决策部 - MaoAI 核心战略中枢 */}
+      <Route path={"/strategy"} component={MaoStrategy} />
       
       {/* 猫眼内容平台（已整合到主站） */}
       <Route path={"/content"} component={ContentPlatform} />
