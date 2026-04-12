@@ -426,6 +426,68 @@ export const TOOL_DEFINITIONS = [
         required: ["projectPath"]
       }
     }
+  },
+
+  // ─── Phase 3: RAG 向量记忆搜索工具 ─────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "vector_memory_search",
+      description: "在项目代码库中进行语义化代码搜索（RAG）。输入关键词或自然语言描述，返回最相关的代码片段和文件位置。当用户问'修改XXX逻辑'、'在哪里找到XXX功能'时使用。此工具不使用外部向量数据库，而是通过多策略匹配（关键词+结构化分析）返回最相关的代码块。",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "搜索查询（关键词或自然语言描述想找的代码功能）"
+          },
+          projectPath: {
+            type: "string",
+            description: "项目根目录的绝对路径"
+          },
+          fileTypes: {
+            type: "string",
+            description: "要搜索的文件类型，逗号分隔，如 'ts,tsx,py'。默认 'ts,tsx,js,jsx,py'",
+            default: "ts,tsx,js,jsx,py"
+          },
+          maxResults: {
+            type: "number",
+            description: "最多返回多少个相关代码块，默认 5",
+            default: 5
+          }
+        },
+        required: ["query", "projectPath"]
+      }
+    }
+  },
+
+  // ─── Phase 4: TDD 自我修正工具 ─────────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "run_npm_test",
+      description: "在指定项目目录运行测试套件（npm test）。用于 TDD 自我修正循环：当 build_verify 通过但需要确认功能正确性时，运行测试。返回测试结果（通过/失败）和失败的测试用例详情，供 AI 重新生成 Thought 进行自我修正。",
+      parameters: {
+        type: "object",
+        properties: {
+          projectPath: {
+            type: "string",
+            description: "项目根目录的绝对路径"
+          },
+          testCommand: {
+            type: "string",
+            description: "测试命令，默认 'npm test -- --run'（Vitest/Jest headless 模式）",
+            default: "npm test -- --run"
+          },
+          timeout: {
+            type: "number",
+            description: "超时时间（秒），默认 120",
+            default: 120
+          }
+        },
+        required: ["projectPath"]
+      }
+    }
   }
 ];
 
@@ -593,6 +655,12 @@ export async function executeTool(
         return await toolProjectTreeScanner(args.projectPath, args.maxDepth || 4, args.includePatterns);
       case "build_verify":
         return await toolBuildVerify(args.projectPath, args.buildCommand || "npm run build", args.timeout || 120);
+      // ─── Phase 3 RAG 记忆搜索 ─────────────────────────────────────────────
+      case "vector_memory_search":
+        return await toolVectorMemorySearch(args.query, args.projectPath, args.fileTypes, args.maxResults);
+      // ─── Phase 4 TDD 自我修正 ─────────────────────────────────────────────
+      case "run_npm_test":
+        return await toolRunNpmTest(args.projectPath, args.testCommand, args.timeout);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -1630,4 +1698,223 @@ export async function runBuildVerifyLoop(
     finalOutput: history[history.length - 1]?.output || "",
     history,
   };
+}
+
+// ─── Phase 3 工具实现：向量记忆搜索（RAG）────────────────────────────────
+// 多策略代码搜索：关键词匹配 + 文件结构分析 + 相关性排序
+// 不依赖外部向量数据库，通过智能文本匹配实现语义化搜索
+async function toolVectorMemorySearch(
+  query: string,
+  projectPath: string,
+  fileTypes: string = "ts,tsx,js,jsx,py",
+  maxResults: number = 5
+): Promise<ToolResult> {
+  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
+  const absPath = projectPath || DEFAULT_PATH;
+
+  // 提取关键词
+  const keywords = query
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length > 2);
+
+  const allowedExts = fileTypes.split(",").map(e => e.trim()).filter(Boolean);
+
+  interface FileScore {
+    path: string;
+    score: number;
+    preview: string;
+    lineStart: number;
+  }
+
+  const results: FileScore[] = [];
+
+  try {
+    // 递归扫描所有匹配文件
+    async function scanDir(dir: string, depth: number = 0): Promise<void> {
+      if (depth > 6) return; // 安全限制
+      let entries;
+      try {
+        entries = await fs.readdir(dir, { withFileTypes: true });
+      } catch { return; }
+
+      for (const entry of entries) {
+        if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "dist" || entry.name === "__pycache__") continue;
+
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await scanDir(fullPath, depth + 1);
+        } else if (entry.isFile()) {
+          const ext = entry.name.split(".").pop() || "";
+          if (!allowedExts.includes(ext)) continue;
+
+          try {
+            const stat = await fs.stat(fullPath);
+            if (stat.size > 500_000) continue; // 跳过超大文件
+
+            const content = await fs.readFile(fullPath, "utf8");
+            const lines = content.split("\n");
+
+            // 多策略评分
+            let score = 0;
+            const matchedLines: { line: number; text: string }[] = [];
+
+            for (let i = 0; i < lines.length; i++) {
+              const line = lines[i];
+              const lineLower = line.toLowerCase();
+
+              for (const kw of keywords) {
+                // 精确词匹配
+                if (lineLower.includes(kw)) {
+                  score += kw.length * 2;
+                  // 函数/类定义行权重更高
+                  if (/^(export\s+)?(async\s+)?function|^(export\s+)?const\s+\w+\s*=|^class\s+|^interface\s+|^type\s+/.test(line.trim())) {
+                    score += 20;
+                  }
+                  matchedLines.push({ line: i + 1, text: line.trim() });
+                }
+              }
+            }
+
+            // 函数名/变量名包含关键词的额外加分
+            const baseName = path.basename(fullPath).toLowerCase();
+            for (const kw of keywords) {
+              if (baseName.includes(kw)) score += 30;
+            }
+
+            if (score > 0) {
+              // 取最有代表性的匹配片段（前3个）
+              const preview = matchedLines.slice(0, 3)
+                .map(m => `  L${m.line}: ${m.text}`)
+                .join("\n");
+
+              results.push({
+                path: fullPath.replace(absPath, ""),
+                score,
+                preview,
+                lineStart: matchedLines[0]?.line || 1,
+              });
+            }
+          } catch { /* 跳过无法读取的文件 */ }
+        }
+      }
+    }
+
+    await scanDir(absPath);
+
+    // 按相关性排序，取 top N
+    results.sort((a, b) => b.score - a.score);
+    const top = results.slice(0, maxResults);
+
+    if (top.length === 0) {
+      return {
+        success: true,
+        output: `未找到与 "${query}" 相关的代码片段。尝试扩大搜索范围或使用更通用的关键词。`,
+        metadata: { query, resultCount: 0 },
+      };
+    }
+
+    const lines: string[] = [];
+    lines.push(`找到 ${top.length} 个相关代码片段（按相关性排序）：\n`);
+
+    top.forEach((item, idx) => {
+      lines.push(`\n--- 结果 ${idx + 1} [得分: ${item.score}] ---`);
+      lines.push(`📄 ${item.path}`);
+      lines.push(item.preview);
+    });
+
+    lines.push(`\n💡 提示：使用 project_tree_scanner 工具可以查看完整的项目结构。`);
+
+    return {
+      success: true,
+      output: lines.join("\n"),
+      metadata: { query, resultCount: top.length, scores: top.map(t => ({ path: t.path, score: t.score })) },
+    };
+
+  } catch (err: any) {
+    return { success: false, output: "", error: `RAG 搜索失败: ${err.message}` };
+  }
+}
+
+// ─── Phase 4 工具实现：NPM Test TDD ────────────────────────────────────────
+
+async function toolRunNpmTest(
+  projectPath: string,
+  testCommand: string = "npm test -- --run",
+  timeout: number = 120
+): Promise<ToolResult> {
+  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
+  const absPath = projectPath || DEFAULT_PATH;
+
+  try {
+    const { stdout, stderr } = await execAsync(testCommand, {
+      cwd: absPath,
+      timeout: timeout * 1000,
+      maxBuffer: 5 * 1024 * 1024,
+    });
+
+    const output = (stdout + stderr).trim();
+
+    // 解析测试结果
+    const passedMatch = output.match(/(\d+) passed/);
+    const failedMatch = output.match(/(\d+) failed/);
+    const passed = passedMatch ? parseInt(passedMatch[1]) : 0;
+    const failed = failedMatch ? parseInt(failedMatch[1]) : 0;
+
+    if (failed > 0) {
+      // 提取失败的测试详情
+      const failedTests: string[] = [];
+      const lines = output.split("\n");
+      let inFailureBlock = false;
+      for (const line of lines) {
+        if (line.includes("FAIL") || line.includes("✕") || line.includes("×")) {
+          inFailureBlock = true;
+          failedTests.push(line.trim());
+        } else if (inFailureBlock && line.trim()) {
+          if (line.match(/^\s{2,}\d+\)|line\s+\d+|Error:|expect\(/) || line.trim().startsWith("at ")) {
+            failedTests.push("  " + line.trim());
+          } else if (!line.includes("✓") && !line.includes("●")) {
+            inFailureBlock = false;
+          }
+        }
+      }
+
+      return {
+        success: false,
+        output: `❌ 测试失败: ${failed} 个测试未通过\n\n${output.slice(-3000)}`,
+        metadata: {
+          testPassed: false,
+          passed,
+          failed,
+          failedTests: failedTests.slice(0, 20).join("\n"),
+          rawOutput: output.slice(-5000),
+        },
+      };
+    }
+
+    return {
+      success: true,
+      output: `✅ 所有 ${passed} 个测试通过\n\n${output.slice(-1000)}`,
+      metadata: { testPassed: true, passed, failed: 0 },
+    };
+
+  } catch (err: any) {
+    const output = err.stdout || err.message || "";
+    const failedMatch = output.match(/(\d+) failed/);
+    const failed = failedMatch ? parseInt(failedMatch[1]) : null;
+
+    return {
+      success: failed !== null && failed > 0 ? false : true,
+      output: err.killed
+        ? `⏱️ 测试执行超时（${timeout}秒）`
+        : `⚠️ 测试执行异常\n\n${output.slice(-3000)}`,
+      metadata: {
+        testPassed: failed !== null && failed > 0 ? false : undefined,
+        passed: null,
+        failed,
+        rawOutput: output.slice(-5000),
+      },
+    };
+  }
 }

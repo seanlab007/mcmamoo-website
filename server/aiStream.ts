@@ -503,10 +503,9 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   const { enableTools = true } = req.body;
   const adminUser = await getAdminUser(req);
   const toolDefs = enableTools ? (adminUser ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS) : [];
-  // Vision models don't support function calling
-  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 &&
-    (model === "deepseek-chat" || model === "glm-4-plus" || model === "glm-4-flash" ||
-     model === "zai-glm-5" || model === "zai-glm-4-7" || model === "glm-5v-turbo");
+      // Vision models don't support function calling
+  // All cloud models with an apiKey support OpenAI-style function calling
+  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 && !!cfg.apiKey;
 
   try {
     // Debug: log vision request structure
@@ -540,6 +539,11 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         requestBody.tools = toolDefs;
         requestBody.tool_choice = "auto";
       }
+
+      // ── ReAct 推理轮次通知（SSE，frontend 显示"正在思考..."动画）─────────────
+      res.write(`data: ${JSON.stringify({
+        reactRound: { round: round + 1, status: "thinking", maxRounds: MAX_TOOL_ROUNDS }
+      })}\n\n`);
 
       const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
         method: "POST",
@@ -610,6 +614,9 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
 
       // ── No tool calls → final answer, done ───────────────────────────────
       if (toolCalls.length === 0 || finishReason === "stop") {
+        res.write(`data: ${JSON.stringify({
+          reactEnd: { reason: toolCalls.length === 0 ? "no_tools" : "final_answer", rounds: round + 1 }
+        })}\n\n`);
         res.write("data: [DONE]\n\n");
         res.end();
         return;
@@ -663,6 +670,9 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     }
 
     // Reached max rounds without final answer
+    res.write(`data: ${JSON.stringify({
+      reactEnd: { reason: "max_rounds", rounds: MAX_TOOL_ROUNDS }
+    })}\n\n`);
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err: any) {
