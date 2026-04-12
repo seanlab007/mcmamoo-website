@@ -208,6 +208,44 @@ class CoderAgent:
             if context.get("constraints"):
                 ctx += f"\n约束条件：{', '.join(context['constraints'])}"
 
+            # ═══════════════════════════════════════════════════════════════════════
+            # C. 项目全景感知：注入相关组件上下文
+            # ═══════════════════════════════════════════════════════════════════════
+            if context.get("knowledge_graph"):
+                kg = context["knowledge_graph"]
+                related = kg.get("related_components", [])
+                deps = kg.get("dependency_files", [])
+
+                if related:
+                    ctx += "\n\n" + "═" * 60
+                    ctx += "\n📦 项目全景感知 - 相关组件："
+                    ctx += "\n" + "─" * 60
+                    for comp in related[:5]:
+                        if isinstance(comp, dict):
+                            name = comp.get("name", "unknown")
+                            file_path = comp.get("file_path", "")
+                            node = comp.get("node", {})
+                            if isinstance(node, dict):
+                                signature = node.get("signature", "")
+                                docstring = node.get("docstring", "")[:100]
+                                ctx += f"\n• {name}"
+                                if signature:
+                                    ctx += f"\n  签名: {signature}"
+                                if docstring:
+                                    ctx += f"\n  说明: {docstring}..."
+                        elif isinstance(comp, str):
+                            ctx += f"\n• {comp}"
+                    ctx += "\n" + "═" * 60
+
+                if deps:
+                    ctx += "\n\n" + "─" * 60
+                    ctx += "\n🔗 依赖文件："
+                    for dep in deps[:3]:
+                        name = dep.get("name", "unknown")
+                        fp = dep.get("file_path", "")
+                        ctx += f"\n• {name} ({fp})"
+                    ctx += "\n" + "─" * 60
+
         if mode == GenerationMode.REVISION and feedback:
             ctx += f"""
 ═══════════════════════════════════════════════════
