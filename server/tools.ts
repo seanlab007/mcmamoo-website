@@ -488,6 +488,35 @@ export const TOOL_DEFINITIONS = [
         required: ["projectPath"]
       }
     }
+  },
+
+  // ─── Manus Max: HyperAgents ReAct 自主循环引擎 ──────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "run_agent_loop",
+      description: "启动 HyperAgents Python 引擎，运行 ReAct 推理循环（Thought→Action→Observation→Score→Patch→Repeat），支持代码工程、深度研究、通用任务。自动调用工具、执行验证、返回最终答案。这是 MaoAI Manus Max 架构的核心能力，适合复杂多步骤任务。",
+      parameters: {
+        type: "object",
+        properties: {
+          task: {
+            type: "string",
+            description: "任务描述（可以是代码优化、深度研究、复杂分析等）"
+          },
+          domain: {
+            type: "string",
+            enum: ["coding", "research", "general"],
+            description: "领域：coding（代码工程）、research（深度研究）、general（通用）",
+            default: "general"
+          },
+          workspace: {
+            type: "string",
+            description: "工作目录路径（用于代码工程），默认 /Users/daiyan/Desktop/mcmamoo-website"
+          }
+        },
+        required: ["task"]
+      }
+    }
   }
 ];
 
@@ -661,6 +690,9 @@ export async function executeTool(
       // ─── Phase 4 TDD 自我修正 ─────────────────────────────────────────────
       case "run_npm_test":
         return await toolRunNpmTest(args.projectPath, args.testCommand, args.timeout);
+      // ─── Manus Max: HyperAgents ReAct 引擎 ────────────────────────────────
+      case "run_agent_loop":
+        return await toolRunAgentLoop(args.task, args.domain, args.workspace);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -932,6 +964,98 @@ async function toolReadUrl(url: string, extractTextOnly: boolean): Promise<ToolR
   } catch (e: any) {
     return { success: false, output: "", error: `读取失败: ${e.message}` };
   }
+}
+
+// ─── HyperAgents Python Engine — Manus Max ──────────────────────────────────
+// 使用 Python ReAct 循环引擎，支持流式 JSON 日志
+async function toolRunAgentLoop(
+  task: string,
+  domain: "coding" | "research" | "general" = "general",
+  workspace: string = ""
+): Promise<ToolResult> {
+  const { spawn } = await import("child_process");
+  const resolvedWorkspace = workspace || "/Users/daiyan/Desktop/mcmamoo-website";
+
+  const PYTHON_SCRIPT = `${__dirname}/hyperagents/generate_loop.py`;
+  const PYTHON_CMD = (process.env.PYTHON3_PATH || "python3");
+
+  return new Promise((resolve) => {
+    const collectedLogs: string[] = [];
+    const pythonProcess = spawn(PYTHON_CMD, [
+      PYTHON_SCRIPT,
+      "--task", task,
+      "--domain", domain,
+      "--workspace", resolvedWorkspace,
+    ], {
+      cwd: resolvedWorkspace,
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+    });
+
+    let hasErrored = false;
+
+    pythonProcess.stdout.on("data", (data: Buffer) => {
+      const lines = data.toString("utf-8").split("\n");
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const entry = JSON.parse(trimmed);
+          if (entry.type === "done") {
+            resolve({
+              success: true,
+              output: entry.message || entry.answer || "Agent 执行完成",
+              metadata: { domain, rounds: entry.rounds, logs: collectedLogs.slice(0, 20) },
+            });
+          } else if (entry.type === "error" && !entry.retry) {
+            if (!hasErrored) {
+              hasErrored = true;
+              resolve({
+                success: false,
+                output: "",
+                error: `[${entry.category}] ${entry.message}`,
+              });
+            }
+          } else {
+            collectedLogs.push(`[${entry.type}] ${entry.message}`);
+          }
+        } catch {
+          collectedLogs.push(trimmed.slice(0, 100));
+        }
+      }
+    });
+
+    pythonProcess.stderr.on("data", (data: Buffer) => {
+      if (!hasErrored) {
+        hasErrored = true;
+        resolve({ success: false, output: "", error: `Python stderr: ${data.toString().slice(0, 300)}` });
+      }
+    });
+
+    pythonProcess.on("error", (err: Error) => {
+      if (!hasErrored) {
+        hasErrored = true;
+        resolve({ success: false, output: "", error: `启动 Python 引擎失败: ${err.message}` });
+      }
+    });
+
+    pythonProcess.on("close", (code: number | null) => {
+      if (!hasErrored && collectedLogs.length > 0) {
+        resolve({
+          success: code === 0,
+          output: `Agent 执行完成（退出码: ${code}）\n\n日志摘要:\n${collectedLogs.slice(0, 10).join("\n")}`,
+          error: code !== 0 ? `Exit code: ${code}` : undefined,
+        });
+      }
+    });
+
+    // 5分钟超时保护
+    setTimeout(() => {
+      if (!hasErrored) {
+        pythonProcess.kill("SIGTERM");
+        resolve({ success: false, output: "", error: "Agent 执行超时（5分钟）" });
+      }
+    }, 5 * 60 * 1000);
+  });
 }
 
 // ─── DeerFlow Deep Research Helper ─────────────────────────────────────────
