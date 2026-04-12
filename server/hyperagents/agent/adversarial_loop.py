@@ -50,7 +50,7 @@ from enum import Enum
 
 # 导入 Agent
 from .coder_agent import CoderAgent, GenerationMode, GenerationResult
-from .reviewer_agent import ReviewerAgent, ReviewResult
+from .reviewer_agent import ReviewerAgent, ReviewResult, ReviewIssue
 
 
 # ─── 日志工具 ────────────────────────────────────────────────────────────────
@@ -100,6 +100,9 @@ class LoopResult:
     total_time: float = 0.0
     feedback: str = ""
     error: str = ""
+    test_results: Dict[str, Any] = field(default_factory=dict)  # 新增：测试结果
+    converged: bool = False  # 新增：是否收敛
+    convergence_reason: str = ""  # 新增：收敛原因
 
 
 # ─── Adversarial Loop ────────────────────────────────────────────────────────
@@ -110,15 +113,21 @@ class AdversarialLoop:
 
     核心算法：
       1. Coder 生成代码（首次）或修复代码（非首次）
-      2. Reviewer 严苛审查，输出结构化反馈
+      2. Reviewer 严苛审查 + 生成测试用例
       3. 如果通过（score >= threshold），退出循环
-      4. 如果未通过，将反馈传给 Coder，进入下一轮
+      4. 如果未通过，将结构化反馈传给 Coder，进入下一轮
       5. 达到最大迭代次数，退出循环
+      6. 收敛检测：如果改进幅度过小，提前退出
 
     评分策略：
       - 异构博弈：建议 Coder 用 Claude，Reviewer 用 GPT-4
       - 阈值严格：默认 0.8，只有高质量代码才能通过
       - 关键漏洞：存在 critical 级别问题，直接拒绝
+
+    超越 Manus Max 的关键特性：
+      1. 测试驱动验证：Reviewer 生成测试用例，确保代码可运行
+      2. 收敛检测：自动识别"改进停滞"，避免无效迭代
+      3. 结构化反馈：带行号的精确反馈，指引 Coder 精准修复
     """
 
     def __init__(
@@ -131,7 +140,9 @@ class AdversarialLoop:
         coder_api_key: str = None,
         reviewer_api_key: str = None,
         coder_model: str = "claude-3-5-sonnet",
-        reviewer_model: str = "gpt-4o"
+        reviewer_model: str = "gpt-4o",
+        enable_test_generation: bool = True,  # 新增：是否启用测试生成
+        convergence_threshold: float = 0.02    # 新增：收敛阈值（改进小于此值认为收敛）
     ):
         """
         初始化博弈循环
@@ -146,6 +157,8 @@ class AdversarialLoop:
             reviewer_api_key: Reviewer 的 API Key
             coder_model: Coder 使用的模型
             reviewer_model: Reviewer 使用的模型
+            enable_test_generation: 是否启用测试用例生成
+            convergence_threshold: 收敛阈值（连续两轮改进小于此值认为收敛）
         """
         self.workspace = workspace or os.getcwd()
 
@@ -163,6 +176,8 @@ class AdversarialLoop:
 
         self.max_iterations = max_iterations
         self.score_threshold = score_threshold
+        self.enable_test_generation = enable_test_generation
+        self.convergence_threshold = convergence_threshold
         self.iteration_results: List[IterationResult] = []
 
     def run(
@@ -200,12 +215,16 @@ class AdversarialLoop:
                 task=task,
                 max_iterations=self.max_iterations,
                 threshold=threshold,
-                mode=mode)
+                mode=mode,
+                enable_test=self.enable_test_generation)
 
         self.iteration_results = []
         current_iteration = 0
         accumulated_feedback = ""
         previous_score = 0.0
+        score_history = []  # 用于收敛检测
+        consecutive_no_improvement = 0  # 连续未改进次数
+        test_results = {}  # 测试结果
 
         while current_iteration < self.max_iterations:
             current_iteration += 1
@@ -225,7 +244,7 @@ class AdversarialLoop:
                     mode=GenerationMode.INITIAL
                 )
             else:
-                # 修复模式：传入 Reviewer 的反馈
+                # 修复模式：传入 Reviewer 的结构化反馈
                 coder_result = self.coder.generate(
                     task=task,
                     context=context,
@@ -247,7 +266,7 @@ class AdversarialLoop:
                     iteration=current_iteration,
                     diff_lines=coder_result.diff_lines)
 
-            # ── Step 2: Reviewer 审查代码 ──────────────────────────────
+            # ── Step 2: Reviewer 审查代码 + 生成测试 ──────────────────
             log_step("thought", f"Reviewer 正在审查代码...",
                     iteration=current_iteration)
 
@@ -256,19 +275,39 @@ class AdversarialLoop:
                 context={"task": task, **(context or {})}
             )
 
+            # 新增：生成测试用例（超越 Manus Max 的关键能力）
+            if self.enable_test_generation and reviewer_result.issues:
+                log_step("thought", f"Reviewer 正在生成测试用例...",
+                        iteration=current_iteration)
+                test_data = self.reviewer.generate_test_cases(
+                    task=task,
+                    code=coder_result.code,
+                    language=context.get("language", "typescript") if context else "typescript"
+                )
+                test_results[f"iteration_{current_iteration}"] = test_data
+                if test_data.get("success"):
+                    log_step("observation", f"生成了 {len(test_data.get('test_cases', []))} 个测试用例",
+                            iteration=current_iteration, test_count=len(test_data.get('test_cases', [])))
+
             # ── Step 3: 判断是否通过 ───────────────────────────────────
             critical_issues = [i for i in reviewer_result.issues if i.severity == "critical"]
             improvement = reviewer_result.overall_score - previous_score
             previous_score = reviewer_result.overall_score
+            
+            # 记录分数历史（用于收敛检测）
+            score_history.append(reviewer_result.overall_score)
 
-            # 构建反馈
+            # 收敛检测：连续两轮改进小于阈值
+            if len(score_history) >= 2:
+                recent_improvement = score_history[-1] - score_history[-2]
+                if abs(recent_improvement) < self.convergence_threshold:
+                    consecutive_no_improvement += 1
+                else:
+                    consecutive_no_improvement = 0
+
+            # 构建结构化反馈（带行号）
             if reviewer_result.issues:
-                feedback_parts = []
-                for issue in reviewer_result.issues[:5]:  # 最多 5 个问题
-                    feedback_parts.append(f"[{issue.severity}] {issue.dimension.value}: {issue.description}")
-                    if issue.suggestion:
-                        feedback_parts.append(f"  → {issue.suggestion}")
-                accumulated_feedback = "\n".join(feedback_parts)
+                accumulated_feedback = self.reviewer.structured_feedback(reviewer_result.issues)
             else:
                 accumulated_feedback = ""
 
@@ -297,7 +336,17 @@ class AdversarialLoop:
                         issues=[{"dim": i.dimension.value, "sev": i.severity, "desc": i.description[:50]}
                                 for i in reviewer_result.issues[:3]])
 
-            # ── Step 4: 判断是否退出循环 ───────────────────────────────
+            # ── Step 4: 收敛检测 ──────────────────────────────────────
+            converged = False
+            convergence_reason = ""
+            if consecutive_no_improvement >= 2 and current_iteration >= 2:
+                converged = True
+                convergence_reason = f"连续 {consecutive_no_improvement} 轮改进小于阈值 {self.convergence_threshold}"
+                log_step("observation", f"检测到收敛：{convergence_reason}",
+                        iteration=current_iteration,
+                        score_history=score_history)
+
+            # ── Step 5: 判断是否退出循环 ───────────────────────────────
             if reviewer_result.approved and reviewer_result.overall_score >= threshold:
                 # 通过！退出循环
                 log_step("done", f"✓ 审查通过！最终得分: {reviewer_result.overall_score:.2f}",
@@ -314,15 +363,21 @@ class AdversarialLoop:
                     final_patch=coder_result.patch,
                     iteration_results=self.iteration_results,
                     total_time=time.time() - start_time,
-                    feedback=accumulated_feedback
+                    feedback=accumulated_feedback,
+                    test_results=test_results,
+                    converged=converged,
+                    convergence_reason=convergence_reason
                 )
 
-            elif current_iteration >= self.max_iterations:
-                # 达到最大次数，退出
-                log_step("done", f"✗ 达到最大迭代次数（{self.max_iterations}），审查未通过",
+            elif current_iteration >= self.max_iterations or converged:
+                # 达到最大次数或收敛，退出
+                reason = "收敛" if converged else f"达到最大迭代次数（{self.max_iterations}）"
+                log_step("done", f"✗ {reason}，审查未通过",
                         iteration=current_iteration,
                         final_score=reviewer_result.overall_score,
-                        threshold=threshold)
+                        threshold=threshold,
+                        converged=converged,
+                        score_history=score_history)
 
                 return LoopResult(
                     status=LoopStatus.REJECTED,
@@ -333,14 +388,18 @@ class AdversarialLoop:
                     final_patch=coder_result.patch,
                     iteration_results=self.iteration_results,
                     total_time=time.time() - start_time,
-                    feedback=f"达到最大迭代次数（{self.max_iterations}），仍存在 {len(reviewer_result.issues)} 个问题"
+                    feedback=f"{reason}，仍存在 {len(reviewer_result.issues)} 个问题",
+                    test_results=test_results,
+                    converged=converged,
+                    convergence_reason=convergence_reason
                 )
 
             else:
                 # 未通过，继续下一轮
                 log_step("thought", f"审查未通过，将反馈传给 Coder 进行第 {current_iteration + 1} 轮...",
                         iteration=current_iteration,
-                        next_iteration=current_iteration + 1)
+                        next_iteration=current_iteration + 1,
+                        improvement=improvement)
 
         # 不应该到达这里
         return LoopResult(
@@ -386,12 +445,23 @@ class AdversarialLoop:
             return {}
 
         scores = [r.reviewer_result.overall_score for r in self.iteration_results]
+        total_issues = sum(len(r.reviewer_result.issues) for r in self.iteration_results)
+        
         return {
             "total_iterations": len(self.iteration_results),
             "final_score": scores[-1] if scores else 0.0,
             "score_progression": scores,
             "improvement": scores[-1] - scores[0] if len(scores) > 1 else 0.0,
-            "final_approved": self.iteration_results[-1].reviewer_result.approved if self.iteration_results else False
+            "final_approved": self.iteration_results[-1].reviewer_result.approved if self.iteration_results else False,
+            "total_issues_found": total_issues,
+            "issues_resolved": sum(
+                1 for r in self.iteration_results 
+                for i in r.reviewer_result.issues 
+                if i.severity in ["critical", "major"]
+            ),
+            "avg_improvement_per_iteration": (
+                (scores[-1] - scores[0]) / (len(scores) - 1) if len(scores) > 1 else 0.0
+            )
         }
 
 
@@ -404,7 +474,9 @@ def create_adversarial_loop(
     coder_model: str = "claude-3-5-sonnet",
     reviewer_model: str = "gpt-4o",
     max_iterations: int = 3,
-    score_threshold: float = 0.8
+    score_threshold: float = 0.8,
+    enable_test_generation: bool = True,
+    convergence_threshold: float = 0.02
 ) -> AdversarialLoop:
     """
     创建博弈循环实例（便捷工厂函数）
@@ -421,7 +493,9 @@ def create_adversarial_loop(
         coder_api_key=coder_api_key,
         reviewer_api_key=reviewer_api_key,
         coder_model=coder_model,
-        reviewer_model=reviewer_model
+        reviewer_model=reviewer_model,
+        enable_test_generation=enable_test_generation,
+        convergence_threshold=convergence_threshold
     )
 
 
@@ -442,6 +516,12 @@ if __name__ == "__main__":
     parser.add_argument("--api-key", type=str, default=os.environ.get("OPENAI_API_KEY", ""),
                        help="API Key（用于 Coder 和 Reviewer）")
     parser.add_argument("--workspace", type=str, default=".", help="工作目录")
+    parser.add_argument("--enable-test", action="store_true", default=True,
+                       help="启用测试用例生成（超越 Manus 的关键能力）")
+    parser.add_argument("--no-test", action="store_true",
+                       help="禁用测试用例生成")
+    parser.add_argument("--convergence-threshold", type=float, default=0.02,
+                       help="收敛阈值")
     args = parser.parse()
 
     # 创建博弈循环
@@ -452,7 +532,9 @@ if __name__ == "__main__":
         coder_model=args.coder_model,
         reviewer_model=args.reviewer_model,
         max_iterations=args.max_iterations,
-        score_threshold=args.threshold
+        score_threshold=args.threshold,
+        enable_test_generation=not args.no_test,
+        convergence_threshold=args.convergence_threshold
     )
 
     # 构建上下文
@@ -469,6 +551,8 @@ if __name__ == "__main__":
     print(f"最终得分: {result.score:.2f}")
     print(f"迭代次数: {result.iterations}")
     print(f"总耗时: {result.total_time:.2f}s")
+    if result.converged:
+        print(f"收敛: 是 ({result.convergence_reason})")
     print("-" * 60)
 
     if result.feedback:
@@ -482,5 +566,15 @@ if __name__ == "__main__":
             print(f"  第 {i+1} 轮: score={ir.reviewer_result.overall_score:.2f}, "
                   f"issues={len(ir.reviewer_result.issues)}, "
                   f"improvement={ir.improvement:+.2f}")
+
+    # 输出测试结果
+    if result.test_results:
+        print("-" * 60)
+        print("测试用例生成:")
+        for key, test_data in result.test_results.items():
+            if test_data.get("success"):
+                print(f"  {key}: {len(test_data.get('test_cases', []))} 个测试用例")
+            else:
+                print(f"  {key}: 生成失败")
 
     print("=" * 60)
