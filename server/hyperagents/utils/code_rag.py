@@ -146,7 +146,7 @@ class CodeRAG:
     def scan_and_index(self):
         """扫描工作区并建立索引"""
         for root, _, files in os.walk(self.workspace):
-            if 'node_modules' in root or '.git' in root or 'venv' in root:
+            if 'node_modules' in root or '.git' in root or 'venv' in root or 'dist' in root or 'build' in root or '.next' in root:
                 continue
             for file in files:
                 if any(file.endswith(ext) for ext in self.supported_extensions):
