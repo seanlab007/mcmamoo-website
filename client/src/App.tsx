@@ -22,7 +22,7 @@ import WechatFloat from "./components/WechatFloat";
 import IPLicensing from "./pages/IPLicensing";
 import Pricing from "./pages/Pricing";
 import Press from "./pages/Press";
-// MaoAI Feature
+// MaoAI Feature — all pages and routes from the unified feature folder
 import {
   MaoAIChat,
   MaoAILogin,
@@ -38,54 +38,55 @@ import AdminLogs from "./pages/AdminLogs";
 import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
+import ContentDashboard from "./pages/ContentDashboard";
+import ContentLogin from "./pages/ContentLogin";
+import AdminContentJobs from "./pages/AdminContentJobs";
+import AutoClip from "./pages/AutoClip";
 import MaoIndustry from "./components/sections/MaoIndustry";
-
-import ContentPlatform from "./features/maoai/pages/ContentPlatform";
 
 function Router() {
   return (
     <Switch>
-      {/* 官网首页 */}
       <Route path={"/"} component={Home} />
-      
-      {/* 案例页面 */}
       <Route path={"/cases/xietaitai"} component={CaseXieTaitai} />
       <Route path={"/cases/xiaoxiandun"} component={CaseXiaoxiandun} />
       <Route path={"/cases/jiangzhong"} component={CaseJiangzhong} />
       <Route path={"/cases/xiaoguan"} component={CaseXiaoguan} />
       <Route path={"/cases/pangge"} component={CasePangge} />
       
-      {/* 旗下子公司 */}
+      {/* 旗下子公司路由 */}
       <Route path={"/mao-think-tank"} component={MaoThinkTank} />
-      <Route path={"/maothink"} component={MaoThinkTank} />
+      <Route path={"/maothink"} component={MaoThinkTank} /> {/* 兼容旧路由 */}
       <Route path={"/whale-pictures"} component={WhalePictures} />
       <Route path={"/mao-industry"} component={MaoIndustry} />
-      
-      {/* 管理后台（部分） */}
+
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />
-      <Route path={"/admin/ai-nodes"} component={AdminAiNodes} />
+      <Route path={"/admin/ai-nodes" } component={AdminAiNodes} />
       <Route path={"/platform"} component={Platform} />
       <Route path={"/chat"} component={Chat} />
       <Route path={"/notes"} component={Notes} />
       <Route path={"/ip-licensing"} component={IPLicensing} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/press"} component={Press} />
-      <Route path={"/openclaw"} component={OpenClaw} />
-      <Route path={"/millennium-clock"} component={MillenniumClock} />
-      
-      {/* MaoAI */}
+      <Route path={"/mao-ai"} component={MaoAIChat} />         {/* legacy alias → /maoai */}
+      <Route path={"/deerflow"} component={MaoAIChat} />       {/* legacy alias → /maoai/research */}
       <Route path={MAOAI_ROUTES.CHAT} component={MaoAIChat} />
+      <Route path={MAOAI_ROUTES.RESEARCH} component={MaoAIChat} />
       <Route path={MAOAI_ROUTES.LOGIN} component={MaoAILogin} />
+      <Route path={"/mao-ai-pricing"} component={MaoAIPricing} /> {/* legacy alias → /maoai/pricing */}
       <Route path={MAOAI_ROUTES.PRICING} component={MaoAIPricing} />
       <Route path={MAOAI_ROUTES.SALES} component={MaoAISales} />
-      {/* 兼容旧路由 */}
-      <Route path={"/mao-ai"} component={MaoAIChat} />
-      <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       
-      {/* 猫眼内容平台（已整合到主站） */}
-      <Route path={"/content"} component={ContentPlatform} />
-      <Route path={"/autoclip"} component={ContentPlatform} />
+      {/* 猫眼增长引擎 Mc&Mamoo Growth Engine 内容平台 */}
+      <Route path={"/content/login"} component={ContentLogin} />
+      <Route path={"/content"} component={ContentDashboard} />
+      <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
+      
+      {/* 其他功能页面 */}
+      <Route path={"/openclaw"} component={OpenClaw} />
+      <Route path={"/millennium-clock"} component={MillenniumClock} />
+      <Route path={"/autoclip"} component={AutoClip} />
       
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
