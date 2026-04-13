@@ -55,7 +55,7 @@
 ## 3. 避坑指南 (Anti-Pattern Prevention)
 
 *   **排除干扰**：自动跳过 `node_modules`, `dist`, `build`, `.next` 等非源码目录。
-*   **本地优先**：优先调用本地 Ollama (all-minilm) 进行向量化，确保隐私与速度。
+*   **本地优先**：优先调用本地 Ollama (nomic-embed-text) 进行向量化，确保隐私与速度。
 *   **实时反馈**：所有执行过程必须输出 `[STEP X/Y]` 实时日志，严禁长时间静默。
 
 ---

@@ -11,7 +11,7 @@ class CodeRAG:
         self.index_data = self._load_index()
         # 默认使用本地 all-minilm 模型，适配旧版 Ollama
         self.ollama_url = "http://localhost:11434/api/embeddings"
-        self.model = "all-minilm"
+        self.model = "nomic-embed-text"
 
     def _load_index(self) -> List[Dict[str, Any]]:
         if os.path.exists(self.index_path):
