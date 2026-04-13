@@ -92,26 +92,6 @@ export default function MaoStrategy() {
       setIsUnitedFrontLoading(false);
     }
   }, [unitedFrontProblemDescription, stakeholders]);
-    if (!problemDescription.trim()) {
-      setError("请输入您的战略问题。");
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    setAnalysisResult(null);
-
-    try {
-      const response = await axios.post("/api/strategy/contradiction", {
-        problemDescription,
-      });
-      setAnalysisResult(response.data);
-    } catch (err) {
-      console.error("矛盾分析失败:", err);
-      setError("矛盾分析失败，请检查后端服务或稍后再试。");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [problemDescription]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white p-6">

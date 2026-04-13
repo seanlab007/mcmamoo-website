@@ -73,7 +73,33 @@ export const MAOAI_CLOUD_MODELS = [
     available: false,
     isLocal: false as const,
   },
+  {
+    id: "maoai-core-2",
+    name: "MaoAI Core 2.0",
+    badge: "手脑合一",
+    description: "毛泽东战略思想 + 马斯克第一性原理 + 三权分立执行",
+    supportsVision: false,
+    available: true,
+    isLocal: false as const,
+    isStrategicMode: true,
+  },
 ] as const;
+
+/** MaoAI Core 2.0 战略模式配置 */
+export const MAOAI_CORE_2_CONFIG = {
+  websocketUrl: "ws://localhost:8765",
+  triadLoopEnabled: true,
+  codersEnabled: true,
+  reviewerEnabled: true,
+  validatorEnabled: true,
+  strategistEnabled: true,
+  phases: {
+    strategist: { name: "战略分析", icon: "🎯", color: "text-red-400" },
+    coders: { name: "代码生成", icon: "⚙️", color: "text-blue-400" },
+    reviewer: { name: "批判审查", icon: "🔍", color: "text-amber-400" },
+    validator: { name: "验证测试", icon: "✅", color: "text-emerald-400" },
+  },
+} as const;
 
 // ─── Tool Display ─────────────────────────────────────────────────────────────
 

@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { AgentModeSelector } from "../components/AgentModeSelector";
 import { AtomicModeToggle } from "../components/Phase5Status";
+import { TriadLoopStatus } from "../components/TriadLoopStatus";
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
@@ -14,7 +15,7 @@ import { Streamdown } from "streamdown";
 import { useLocation } from "wouter";
 import { useContentSubscription } from "@/hooks/useContentSubscription";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { MAOAI_ROUTES, MAOAI_BACKEND_URL, MAOAI_TOOL_DISPLAY } from "../constants";
+import { MAOAI_ROUTES, MAOAI_BACKEND_URL, MAOAI_TOOL_DISPLAY, MAOAI_CLOUD_MODELS } from "../constants";
 import type {
   MessageContent,
   Message,
@@ -25,6 +26,7 @@ import type {
   Conversation,
   PendingFile,
   ToolCallStep,
+  TriadLoopState,
 } from "../types";
 
 const BACKEND_URL = MAOAI_BACKEND_URL;
@@ -292,6 +294,21 @@ export default function MaoAIChat() {
   // Agent 推理日志（Manus Max 流式可视化）
   const [agentLogs, setAgentLogs] = useState<any[]>([]);
   const [agentThinkingOpen, setAgentThinkingOpen] = useState(true);
+
+  // ─── MaoAI Core 2.0: 三权分立状态 ──────────────────────────────────────
+  const [triadLoopState, setTriadLoopState] = useState<TriadLoopState>({
+    isConnected: false,
+    isRunning: false,
+    currentPhase: "idle",
+    currentAgent: null,
+    currentRound: 0,
+    totalRounds: 0,
+    messages: [],
+    score: null,
+  });
+
+  // 判断是否为战略模式（MaoAI Core 2.0）
+  const isStrategicMode = selectedId === "maoai-core-2";
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -991,6 +1008,38 @@ export default function MaoAIChat() {
               } else if (chunk.agentLog) {
                 // Agent 推理日志（Manus Max 流式可视化）
                 setAgentLogs(prev => [...prev, chunk.agentLog]);
+              } else if (chunk.triadPhase) {
+                // TriadLoop 阶段更新
+                setTriadLoopState(prev => ({
+                  ...prev,
+                  currentPhase: chunk.triadPhase,
+                  currentAgent: chunk.agent || prev.currentAgent,
+                  currentRound: chunk.round ?? prev.currentRound,
+                  isRunning: true,
+                }));
+              } else if (chunk.triadMessage) {
+                // TriadLoop 消息
+                setTriadLoopState(prev => ({
+                  ...prev,
+                  messages: [...prev.messages.slice(-99), chunk.triadMessage],
+                }));
+                // 同时添加到 AgentLogs 用于显示
+                setAgentLogs(prev => [...prev, chunk.triadMessage]);
+              } else if (chunk.triadScore !== undefined) {
+                // TriadLoop 分数更新
+                setTriadLoopState(prev => ({
+                  ...prev,
+                  score: chunk.triadScore,
+                }));
+              } else if (chunk.triadEnd) {
+                // TriadLoop 结束
+                setTriadLoopState(prev => ({
+                  ...prev,
+                  isRunning: false,
+                  currentPhase: chunk.error ? "error" : "completed",
+                  finalCode: chunk.code,
+                  error: chunk.error,
+                }));
               }
             } catch { /* skip */ }
           }
@@ -1031,6 +1080,20 @@ export default function MaoAIChat() {
       setAgentLogs([]);
       abortRef.current = null;
     }
+  };
+
+  // ─── TriadLoop 状态重置 ────────────────────────────────────────────────
+  const resetTriadLoop = () => {
+    setTriadLoopState({
+      isConnected: false,
+      isRunning: false,
+      currentPhase: "idle",
+      currentAgent: null,
+      currentRound: 0,
+      totalRounds: 0,
+      messages: [],
+      score: null,
+    });
   };
 
   const handleSend = () => {
@@ -1416,6 +1479,14 @@ export default function MaoAIChat() {
                 }}
                 compact
               />
+              {/* ─── MaoAI Core 2.0: 三权分立可视化 ─────────────────────────── */}
+              {isStrategicMode && (
+                <TriadLoopStatus
+                  modelId={selectedId}
+                  compact
+                  onStateChange={setTriadLoopState}
+                />
+              )}
               {/* Image mode badge */}
               {inputMode === "image" && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 border border-purple-500/30 text-purple-400/80 text-xs" style={{ fontFamily: "'DM Mono', monospace" }}>
@@ -1489,6 +1560,14 @@ export default function MaoAIChat() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* ─── MaoAI Core 2.0: 完整三权分立可视化 ──────────────────────── */}
+            {isStrategicMode && (
+              <TriadLoopStatus
+                modelId={selectedId}
+                onStateChange={setTriadLoopState}
+              />
             )}
 
             {/* Message list */}

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Zap, Scissors, AlertCircle } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Zap, Scissors, AlertCircle, BookOpen, Database, Wifi, WifiOff, Loader2 } from "lucide-react";
+import { MAOAI_LOCAL_OLLAMA, MAOAI_BACKEND_URL } from "../constants";
 
 /**
  * AtomicModeToggle - 原子化/传统模式切换
@@ -130,31 +131,121 @@ function FileIcon({ size = 12 }: { size?: number }) {
 }
 
 /**
- * CodeRAGIndicator - Code RAG 状态指示器
+ * OllamaRAGIndicator - Ollama RAG 状态指示器
  *
- * 显示 RAG 检索状态和节省的 Token 数
+ * 显示 RAG 检索状态、Ollama 连接状态和节省的 Token 数
  */
-interface CodeRAGIndicatorProps {
+interface OllamaRAGIndicatorProps {
   enabled: boolean;
   chunksRetrieved?: number;
   tokenSaved?: number;
+  ollamaUrl?: string;
 }
 
-export function CodeRAGIndicator({ enabled, chunksRetrieved = 0, tokenSaved = 0 }: CodeRAGIndicatorProps) {
+export function OllamaRAGIndicator({
+  enabled,
+  chunksRetrieved = 0,
+  tokenSaved = 0,
+  ollamaUrl = MAOAI_LOCAL_OLLAMA.baseUrl
+}: OllamaRAGIndicatorProps) {
+  const [ollamaStatus, setOllamaStatus] = useState<"checking" | "online" | "offline">("checking");
+  const [indexInfo, setIndexInfo] = useState<{ chunks: number; dim: number } | null>(null);
+
+  // 检测 Ollama 连接状态
+  useEffect(() => {
+    if (!enabled) return;
+
+    const checkOllama = async () => {
+      try {
+        const resp = await fetch(`${ollamaUrl}/api/tags`, { method: "GET" });
+        if (resp.ok) {
+          setOllamaStatus("online");
+          // 获取已安装的模型
+          const data = await resp.json();
+          console.log("[OllamaRAG] Models:", data.models?.length || 0);
+        } else {
+          setOllamaStatus("offline");
+        }
+      } catch {
+        setOllamaStatus("offline");
+      }
+    };
+
+    checkOllama();
+    const interval = setInterval(checkOllama, 30000); // 每 30 秒检查一次
+    return () => clearInterval(interval);
+  }, [enabled, ollamaUrl]);
+
+  // 获取 RAG 索引状态
+  useEffect(() => {
+    if (!enabled || ollamaStatus !== "online") return;
+
+    const fetchIndexStatus = async () => {
+      try {
+        // 尝试从后端获取 RAG 索引信息
+        const resp = await fetch(`${MAOAI_BACKEND_URL}/api/chat/rag/status`);
+        if (resp.ok) {
+          const data = await resp.json();
+          setIndexInfo(data);
+        }
+      } catch {
+        // 忽略错误，使用默认值
+      }
+    };
+
+    fetchIndexStatus();
+  }, [enabled, ollamaStatus]);
+
   if (!enabled) return null;
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-[10px] text-blue-400">
-      <BookOpen size={10} />
-      <span>RAG</span>
-      {chunksRetrieved > 0 && (
-        <span className="opacity-60">{chunksRetrieved} 片段</span>
+    <div className="flex items-center gap-2 px-2 py-1 bg-blue-500/10 border border-blue-500/20 text-[10px]">
+      {/* Ollama 连接状态 */}
+      {ollamaStatus === "checking" && (
+        <Loader2 size={10} className="text-white/40 animate-spin" />
       )}
+      {ollamaStatus === "online" && (
+        <Wifi size={10} className="text-emerald-400" />
+      )}
+      {ollamaStatus === "offline" && (
+        <WifiOff size={10} className="text-red-400" />
+      )}
+
+      {/* RAG 标签 */}
+      <span className={`${ollamaStatus === "online" ? "text-blue-400" : "text-white/40"}`}>
+        RAG
+      </span>
+
+      {/* 索引片段数 */}
+      {(chunksRetrieved > 0 || indexInfo?.chunks) && (
+        <span className="text-blue-400/60">
+          {chunksRetrieved || indexInfo?.chunks || 0} 片段
+        </span>
+      )}
+
+      {/* Token 节省 */}
       {tokenSaved > 0 && (
-        <span className="opacity-60">-{tokenSaved}t</span>
+        <span className="text-emerald-400/60">
+          -{tokenSaved}t
+        </span>
+      )}
+
+      {/* 离线提示 */}
+      {ollamaStatus === "offline" && (
+        <span className="text-red-400/60 text-[9px]">
+          (本地离线)
+        </span>
       )}
     </div>
   );
+}
+
+/**
+ * CodeRAGIndicator - 兼容旧接口
+ * @deprecated 使用 OllamaRAGIndicator 代替
+ */
+export function CodeRAGIndicator(props: Omit<OllamaRAGIndicatorProps, "ollamaUrl">) {
+  return <OllamaRAGIndicator {...props} />;
 }
 
 /**
@@ -211,8 +302,8 @@ export function Phase5Status({
       {/* 原子化模式开关 */}
       <AtomicModeToggle enabled={atomicMode} onChange={onToggleAtomic} compact />
 
-      {/* RAG 指示器 */}
-      <CodeRAGIndicator enabled={codeRAGEnabled} />
+      {/* RAG 指示器（带 Ollama 连接状态） */}
+      <OllamaRAGIndicator enabled={codeRAGEnabled} />
 
       {/* Token 节省 */}
       {tokenSaved > 0 && (

@@ -57,6 +57,45 @@ export type CloudModel = {
   supportsVision?: boolean;
   available?: boolean;
   isLocal: false;
+  isStrategicMode?: boolean;
+};
+
+// ─── TriadLoop Types ─────────────────────────────────────────────────────────
+
+export type TriadAgentType = "strategist" | "coders" | "reviewer" | "validator";
+
+export type TriadPhase = 
+  | "idle"
+  | "strategist_analyzing"
+  | "coders_generating"
+  | "reviewer_reviewing"
+  | "validator_testing"
+  | "converging"
+  | "completed"
+  | "error";
+
+export type TriadMessageType = "thinking" | "action" | "result" | "feedback" | "converge" | "error";
+
+export type TriadMessage = {
+  agent: TriadAgentType;
+  type: TriadMessageType;
+  content: string;
+  timestamp: string;
+  round: number;
+  metadata?: Record<string, unknown>;
+};
+
+export type TriadLoopState = {
+  isConnected: boolean;
+  isRunning: boolean;
+  currentPhase: TriadPhase;
+  currentAgent: TriadAgentType | null;
+  currentRound: number;
+  totalRounds: number;
+  messages: TriadMessage[];
+  score: number | null;
+  finalCode?: string;
+  error?: string;
 };
 
 export type LocalNode = {

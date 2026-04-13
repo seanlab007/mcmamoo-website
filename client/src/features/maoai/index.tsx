@@ -19,7 +19,8 @@ export { default as MaoAICustomerService } from "./pages/CustomerService";
 
 // Components
 export { AgentModeSelector } from "./components/AgentModeSelector";
-export { AtomicModeToggle, CodeRAGIndicator, TokenStats, Phase5Status } from "./components/Phase5Status";
+export { AtomicModeToggle, CodeRAGIndicator, OllamaRAGIndicator, TokenStats, Phase5Status } from "./components/Phase5Status";
+export { TriadLoopStatus } from "./components/TriadLoopStatus";
 
 // Constants
 export {
@@ -28,6 +29,8 @@ export {
   MAOAI_TOOL_DISPLAY,
   MAOAI_TIER_LABELS,
   MAOAI_LOCAL_OLLAMA,
+  MAOAI_CLOUD_MODELS,
+  MAOAI_CORE_2_CONFIG,
 } from "./constants";
 
 // Types
@@ -47,4 +50,8 @@ export type {
   LeadStatus,
   MaoAIRoute,
   MaoAIInputMode,
+  TriadLoopState,
+  TriadAgentType,
+  TriadPhase,
+  TriadMessage,
 } from "./types";
