@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from code_rag import CodeRAG
 
 INDEX_FILE = ".code_rag_index.json"
-OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
+OLLAMA_EMBEDDING_MODEL = "all-minilm"
 OLLAMA_URL = "http://localhost:11434/api/embeddings"
 
 def check_ollama_status():

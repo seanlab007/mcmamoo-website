@@ -82,7 +82,7 @@ class CodeRAG:
             paragraphs = re.split(r'\n\s*\n', content)
             current_chunk = ""
             for p in paragraphs:
-                if len(current_chunk) + len(p) < 1000: # 每个块约 1000 字
+                if len(current_chunk) + len(p) < 300: # 进一步减小块大小以适配旧版 Ollama 的上下文限制
                     current_chunk += p + "\n\n"
                 else:
                     if current_chunk:
@@ -97,8 +97,8 @@ class CodeRAG:
             
             if not matches:
                 lines = content.split('\n')
-                for i in range(0, len(lines), 50):
-                    chunk_text = '\n'.join(lines[i:i+50])
+                for i in range(0, len(lines), 15): # 进一步减小代码切片行数
+                    chunk_text = '\n'.join(lines[i:i+15])
                     chunks.append({"text": chunk_text, "name": f"chunk_{i//50}"})
             else:
                 for i, match in enumerate(matches):
@@ -109,7 +109,7 @@ class CodeRAG:
         
         return chunks
 
-    def _get_ollama_embedding(self, text: str, model: str = "nomic-embed-text") -> List[float]:
+    def _get_ollama_embedding(self, text: str, model: str = "all-minilm") -> List[float]:
         """
         使用本地 Ollama 获取文本向量 (100% 离线)
         """
@@ -122,15 +122,31 @@ class CodeRAG:
             "prompt": text
         }
         
-        try:
-            response = requests.post(url, json=payload, timeout=30)
-            response.raise_for_status()
-            # Ollama 返回格式: {"embedding": [0.1, 0.2, ...]}
-            return response.json()["embedding"]
-        except Exception as e:
-            print(f"Ollama Embedding Error: {e}")
-            # 兜底：如果 Ollama 没启动，返回全零向量
-            return [0.0] * 768 # nomic-embed-text 的维度是 768
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, json=payload, timeout=30)
+                if response.status_code == 500:
+                    error_msg = response.json().get("error", "Unknown error")
+                    print(f"Ollama 500 Error (Attempt {attempt+1}/{max_retries}): {error_msg}")
+                    if "exceeds the context length" in error_msg:
+                        # 如果是长度问题，直接截断文本再试，每次减半
+                        text = text[:len(text)//2]
+                        payload["prompt"] = text
+                        if len(text) < 10: # 如果文本太短，直接跳过
+                            break
+                        continue
+                    time.sleep(1)
+                    continue
+                response.raise_for_status()
+                return response.json()["embedding"]
+            except Exception as e:
+                print(f"Ollama Embedding Error (Attempt {attempt+1}/{max_retries}): {e}")
+                time.sleep(1)
+        
+        # 兜底：如果多次尝试失败，返回全零向量
+        return [0.0] * 384 # all-minilm 的维度是 384
 
     def get_embedding(self, text: str, model: str = "text-embedding-3-small") -> List[float]:
         """
@@ -138,7 +154,7 @@ class CodeRAG:
         优先使用 Ollama，如果 Ollama 不可用则回退到 API。
         """
         # 尝试使用 Ollama
-        ollama_embedding = self._get_ollama_embedding(text, "nomic-embed-text")
+        ollama_embedding = self._get_ollama_embedding(text, "all-minilm")
         if any(x != 0.0 for x in ollama_embedding): # 检查是否是全零向量 (Ollama 失败的标志)
             return ollama_embedding
 
@@ -175,7 +191,8 @@ class CodeRAG:
                             "file": rel_path,
                             "name": chunk["name"]
                         })
-        self.store.save()
+                    # 每处理完一个文件保存一次
+                    self.store.save()
 
     def query(self, prompt: str, top_k: int = 3) -> str:
         """根据提示词检索相关代码上下文"""
