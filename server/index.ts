@@ -10,6 +10,7 @@ import { registerOAuthRoutes } from "./_core/oauth";
 import { registerSupabaseAuthRoutes } from "./_core/supabaseAuth";
 import { mcpServerRouter } from "./mcp-server";
 import { notesRouter } from "./notes";
+import { strategicAnalysisRouter } from "./strategicAnalysis";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +36,8 @@ async function startServer() {
   app.use("/api/mcp", mcpServerRouter);
   // 私密云笔记 API（管理员专属）
   app.use("/api/notes", notesRouter);
+  // MaoAI 战略分析 API（毛战略决策部）
+  app.use("/api/strategy", strategicAnalysisRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
