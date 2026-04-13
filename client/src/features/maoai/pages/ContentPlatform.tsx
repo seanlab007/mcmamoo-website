@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import React, { useState } from "react";
+import { AlertCircle, RefreshCw, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -30,7 +30,10 @@ export default function ContentPlatform() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">猫眼内容平台</h1>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <Zap className="w-8 h-8 text-[#d4af37]" />
+            猫眼内容平台
+          </h1>
           <p className="text-muted-foreground mt-1">智能内容生产与自动化分发中枢</p>
         </div>
         <Button 
@@ -80,7 +83,7 @@ export default function ContentPlatform() {
       {/* Footer Info */}
       <div className="mt-6 text-xs text-muted-foreground text-center">
         <p>内容平台运行于 <code className="bg-black/50 px-2 py-1 rounded">{CONTENT_PLATFORM_URL}</code></p>
-        <p className="mt-2">如需修改服务地址，请编辑 <code className="bg-black/50 px-2 py-1 rounded">CONTENT_PLATFORM_URL</code> 常量</p>
+        <p className="mt-2">如需战略决策支持，请访问 <a href="/strategy" className="text-[#d4af37] hover:underline">毛战略决策部</a></p>
       </div>
     </div>
   );

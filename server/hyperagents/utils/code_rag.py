@@ -66,35 +66,50 @@ class CodeRAG:
     def __init__(self, workspace: str, index_file: str = ".code_rag_index.json"):
         self.workspace = workspace
         self.store = SimpleVectorStore(os.path.join(workspace, index_file))
-        self.supported_extensions = ['.py', '.ts', '.tsx', '.js', '.jsx']
+        self.supported_extensions = ['.py', '.ts', '.tsx', '.js', '.jsx', '.txt', '.md']
 
-    def chunk_code(self, file_path: str) -> List[Dict[str, Any]]:
-        """将代码按函数/类进行智能切片"""
+    def chunk_content(self, file_path: str) -> List[Dict[str, Any]]:
+        """将代码或文本按逻辑块进行智能切片"""
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
         chunks = []
-        # 简单的正则切片逻辑 (支持 Python/TS)
-        # 匹配 class 或 function 定义
-        pattern = r'(?:class|def|function|const\s+\w+\s*=\s*(?:\([^)]*\)|async\s*\([^)]*\))\s*=>)\s+([a-zA-Z_]\w*)'
-        matches = list(re.finditer(pattern, content))
-        
-        if not matches:
-            # 如果没匹配到，按行数切片
-            lines = content.split('\n')
-            for i in range(0, len(lines), 50):
-                chunk_text = '\n'.join(lines[i:i+50])
-                chunks.append({"text": chunk_text, "name": f"chunk_{i//50}"})
+        file_ext = os.path.splitext(file_path)[1].lower()
+
+        if file_ext in ['.txt', '.md']:
+            # 文本文件：按段落或固定长度切片
+            # 优先按双换行符（段落）切分
+            paragraphs = re.split(r'\n\s*\n', content)
+            current_chunk = ""
+            for p in paragraphs:
+                if len(current_chunk) + len(p) < 300: # 进一步减小块大小以适配旧版 Ollama 的上下文限制
+                    current_chunk += p + "\n\n"
+                else:
+                    if current_chunk:
+                        chunks.append({"text": current_chunk.strip(), "name": "text_block"})
+                    current_chunk = p + "\n\n"
+            if current_chunk:
+                chunks.append({"text": current_chunk.strip(), "name": "text_block"})
         else:
-            for i, match in enumerate(matches):
-                start = match.start()
-                end = matches[i+1].start() if i+1 < len(matches) else len(content)
-                chunk_text = content[start:end].strip()
-                chunks.append({"text": chunk_text, "name": match.group(1)})
+            # 代码文件：按函数/类切片
+            pattern = r'(?:class|def|function|const\s+\w+\s*=\s*(?:\([^)]*\)|async\s*\([^)]*\))\s*=>)\s+([a-zA-Z_]\w*)'
+            matches = list(re.finditer(pattern, content))
+            
+            if not matches:
+                lines = content.split('\n')
+                for i in range(0, len(lines), 15): # 进一步减小代码切片行数
+                    chunk_text = '\n'.join(lines[i:i+15])
+                    chunks.append({"text": chunk_text, "name": f"chunk_{i//50}"})
+            else:
+                for i, match in enumerate(matches):
+                    start = match.start()
+                    end = matches[i+1].start() if i+1 < len(matches) else len(content)
+                    chunk_text = content[start:end].strip()
+                    chunks.append({"text": chunk_text, "name": match.group(1)})
         
         return chunks
 
-    def _get_ollama_embedding(self, text: str, model: str = "nomic-embed-text") -> List[float]:
+    def _get_ollama_embedding(self, text: str, model: str = "all-minilm") -> List[float]:
         """
         使用本地 Ollama 获取文本向量 (100% 离线)
         """
@@ -107,15 +122,31 @@ class CodeRAG:
             "prompt": text
         }
         
-        try:
-            response = requests.post(url, json=payload, timeout=30)
-            response.raise_for_status()
-            # Ollama 返回格式: {"embedding": [0.1, 0.2, ...]}
-            return response.json()["embedding"]
-        except Exception as e:
-            print(f"Ollama Embedding Error: {e}")
-            # 兜底：如果 Ollama 没启动，返回全零向量
-            return [0.0] * 768 # nomic-embed-text 的维度是 768
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, json=payload, timeout=30)
+                if response.status_code == 500:
+                    error_msg = response.json().get("error", "Unknown error")
+                    print(f"Ollama 500 Error (Attempt {attempt+1}/{max_retries}): {error_msg}")
+                    if "exceeds the context length" in error_msg:
+                        # 如果是长度问题，直接截断文本再试，每次减半
+                        text = text[:len(text)//2]
+                        payload["prompt"] = text
+                        if len(text) < 10: # 如果文本太短，直接跳过
+                            break
+                        continue
+                    time.sleep(1)
+                    continue
+                response.raise_for_status()
+                return response.json()["embedding"]
+            except Exception as e:
+                print(f"Ollama Embedding Error (Attempt {attempt+1}/{max_retries}): {e}")
+                time.sleep(1)
+        
+        # 兜底：如果多次尝试失败，返回全零向量
+        return [0.0] * 384 # all-minilm 的维度是 384
 
     def get_embedding(self, text: str, model: str = "text-embedding-3-small") -> List[float]:
         """
@@ -123,7 +154,7 @@ class CodeRAG:
         优先使用 Ollama，如果 Ollama 不可用则回退到 API。
         """
         # 尝试使用 Ollama
-        ollama_embedding = self._get_ollama_embedding(text, "nomic-embed-text")
+        ollama_embedding = self._get_ollama_embedding(text, "all-minilm")
         if any(x != 0.0 for x in ollama_embedding): # 检查是否是全零向量 (Ollama 失败的标志)
             return ollama_embedding
 
@@ -153,14 +184,15 @@ class CodeRAG:
                     file_path = os.path.join(root, file)
                     rel_path = os.path.relpath(file_path, self.workspace)
                     print(f"Indexing {rel_path}...")
-                    chunks = self.chunk_code(file_path)
+                    chunks = self.chunk_content(file_path)
                     for chunk in chunks:
                         vector = self.get_embedding(chunk["text"])
                         self.store.add(chunk["text"], vector, {
                             "file": rel_path,
                             "name": chunk["name"]
                         })
-        self.store.save()
+                    # 每处理完一个文件保存一次
+                    self.store.save()
 
     def query(self, prompt: str, top_k: int = 3) -> str:
         """根据提示词检索相关代码上下文"""
