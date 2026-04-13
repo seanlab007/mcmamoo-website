@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ContradictionAnalysisAgent } from "./hyperagents/agent/contradiction_analysis_agent";
 import { LongWarAgent } from "./hyperagents/agent/long_war_agent";
 import { UnitedFrontAgent } from "./hyperagents/agent/united_front_agent";
+import { TacticalExecutionAgent } from "./hyperagents/agent/tactical_execution_agent";
 import { MaoRAG } from "./hyperagents/utils/mao_rag";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -21,6 +22,7 @@ let maoRAGInstance: MaoRAG | null = null;
 let contradictionAgent: ContradictionAnalysisAgent | null = null;
 let longWarAgent: LongWarAgent | null = null;
 let unitedFrontAgent: UnitedFrontAgent | null = null;
+let tacticalExecutionAgent: TacticalExecutionAgent | null = null;
 
 async function initStrategicAgents() {
     try {
@@ -33,9 +35,11 @@ async function initStrategicAgents() {
         contradictionAgent = new ContradictionAnalysisAgent(workspaceRoot, maoRAGInstance);
         longWarAgent = new LongWarAgent(workspaceRoot, maoRAGInstance);
         unitedFrontAgent = new UnitedFrontAgent(workspaceRoot, maoRAGInstance);
+        tacticalExecutionAgent = new TacticalExecutionAgent(workspaceRoot, maoRAGInstance);
         console.log("[StrategicAnalysis] ContradictionAnalysisAgent initialized.");
         console.log("[StrategicAnalysis] LongWarAgent initialized.");
         console.log("[StrategicAnalysis] UnitedFrontAgent initialized.");
+        console.log("[StrategicAnalysis] TacticalExecutionAgent initialized.");
     } catch (error) {
         console.error("[StrategicAnalysis] Failed to initialize agents:", error);
     }
@@ -64,7 +68,6 @@ strategicAnalysisRouter.post("/contradiction", async (req, res) => {
     }
 });
 
-// 可以添加其他战略分析接口，例如持久战推演、统一战线构建等
 strategicAnalysisRouter.post("/long_war", async (req, res) => {
     if (!longWarAgent) {
         return res.status(500).json({ error: "Long War agent not initialized." });
@@ -102,5 +105,75 @@ strategicAnalysisRouter.post("/united_front", async (req, res) => {
     } catch (error) {
         console.error("[StrategicAnalysis] United Front analysis failed:", error);
         res.status(500).json({ error: "Failed to perform United Front analysis." });
+    }
+});
+
+strategicAnalysisRouter.post("/tactical", async (req, res) => {
+    if (!tacticalExecutionAgent) {
+        return res.status(500).json({ error: "Tactical Execution agent not initialized." });
+    }
+
+    const { problemDescription, currentStrength, enemyStrength, resources } = req.body;
+
+    if (!problemDescription || !currentStrength || !enemyStrength || !resources) {
+        return res.status(400).json({ error: "Missing required parameters for tactical execution." });
+    }
+
+    try {
+        const analysisResult = await tacticalExecutionAgent.analyze_tactics(problemDescription, currentStrength, enemyStrength, resources);
+        res.json(analysisResult);
+    } catch (error) {
+        console.error("[StrategicAnalysis] Tactical Execution analysis failed:", error);
+        res.status(500).json({ error: "Failed to perform Tactical Execution analysis." });
+    }
+});
+
+// 新增：双 Agent 相互 Review 路由
+strategicAnalysisRouter.post("/dual_review", async (req, res) => {
+    const { initialProposal } = req.body;
+
+    if (!initialProposal) {
+        return res.status(400).json({ error: "initialProposal is required." });
+    }
+
+    try {
+        // 由于 DualAgentReviewSystem 是 Python 实现，这里通过 Python 脚本调用
+        const { exec } = await import("child_process");
+        const util = await import("util");
+        const execPromise = util.promisify(exec);
+
+        const pythonScript = `
+import asyncio
+import json
+import sys
+import os
+
+# 确保可以导入 hyperagents
+sys.path.insert(0, os.path.join(os.getcwd(), "server"))
+from hyperagents.agent.dual_agent_review import DualAgentReviewSystem
+
+async def main():
+    system = DualAgentReviewSystem(os.getcwd())
+    result = await system.run_review_session("${initialProposal.replace(/"/g, '\\"')}")
+    print(json.dumps(result, ensure_ascii=False))
+
+if __name__ == "__main__":
+    asyncio.run(main())
+`;
+        const tempScriptPath = path.join(workspaceRoot, "temp_dual_review.py");
+        const fs = await import("fs/promises");
+        await fs.writeFile(tempScriptPath, pythonScript);
+
+        const { stdout, stderr } = await execPromise(`python3 ${tempScriptPath}`);
+        await fs.unlink(tempScriptPath);
+
+        if (stderr && !stdout) {
+            throw new Error(stderr);
+        }
+
+        res.json(JSON.parse(stdout));
+    } catch (error) {
+        console.error("[StrategicAnalysis] Dual Review failed:", error);
+        res.status(500).json({ error: "Failed to perform Dual Review analysis." });
     }
 });

@@ -66,11 +66,11 @@ class ReviewIssue:
     dimension: ReviewDimension
     severity: str  # critical, major, minor
     location: str   # 文件:行号
+    description: str
+    suggestion: str
     line_number: int = 0  # 新增：具体行号
     column_start: int = 0  # 新增：列起始位置
     column_end: int = 0  # 新增：列结束位置
-    description: str
-    suggestion: str
     code_snippet: str = ""
 
 
