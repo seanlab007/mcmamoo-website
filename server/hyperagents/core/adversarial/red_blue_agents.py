@@ -63,7 +63,7 @@ class AdversarialResult:
 
 class RedAgent:
     """
-    红军Agent - 证明方案可行
+    红军Agent - 证明方案可行 (集成毛泽东思想战略 RAG)
     
     职责:
     - 找出所有成功要素
@@ -74,7 +74,7 @@ class RedAgent:
     
     def __init__(self, model: str = "claude-3-5-sonnet"):
         self.model = model
-        self.name = "RedAgent"
+        self.name = "RedAgent (Mao Strategic)"
     
     async def prove_viability(self, proposal: Proposal) -> ViabilityReport:
         """
@@ -123,7 +123,7 @@ class RedAgent:
 
 class BlueAgent:
     """
-    蓝军Agent - 寻找毁灭性风险
+    蓝军Agent - 寻找毁灭性风险 (集成马斯克第一性原理 RAG)
     
     职责:
     - 找出所有致命漏洞
@@ -134,7 +134,7 @@ class BlueAgent:
     
     def __init__(self, model: str = "gpt-4o"):
         self.model = model
-        self.name = "BlueAgent"
+        self.name = "BlueAgent (Musk Engineering)"
     
     async def find_killers(self, proposal: Proposal) -> RiskReport:
         """

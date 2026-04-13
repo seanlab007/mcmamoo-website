@@ -212,7 +212,9 @@ class StrategicSentinel:
         # 新闻监控
         if "news" in self.config:
             self.monitors["news"] = NewsMonitor(
-                keywords=self.config["news"].get("keywords", ["AI", "低空经济"])
+                keywords=self.config["news"].get("keywords", [
+                    "AI", "低空经济", "商业航天", "AI算力", "人形机器人", "具身智能", "马斯克", "毛泽东思想"
+                ])
             )
         
         # 指标监控

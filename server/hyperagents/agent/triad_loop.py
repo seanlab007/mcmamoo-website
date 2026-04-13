@@ -60,6 +60,14 @@ try:
 except ImportError:
     HAS_PATCH_UTILS = False
 
+# ─── MaoAI Core 2.0: 手脑合一核心模块集成 ────────────────────────────────────────
+try:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../core"))
+    from core import BrowserAgent, DecisionLedger, StreamBroker, VisionStrategist
+    HAS_CORE_2_0 = True
+except ImportError:
+    HAS_CORE_2_0 = False
+
 
 def log_step(step_type: str, message: str = "", **kwargs):
     entry = {
@@ -219,6 +227,16 @@ class TriadLoop:
         self.consecutive_no_improvement = 0
         self._consecutive_high_similarity = 0  # 新增：连续高相似度计数
         self._token_saved = 0  # 累计节省的 Token 数
+
+        # ─── Core 2.0 实例初始化 ──────────────────────────────────────────────
+        self.browser_agent = None
+        self.decision_ledger = None
+        self.stream_broker = None
+        if HAS_CORE_2_0:
+            self.browser_agent = BrowserAgent()
+            self.decision_ledger = DecisionLedger(workspace=self.workspace)
+            self.stream_broker = StreamBroker()
+            log_step("triad_init", "MaoAI Core 2.0 模块已加载", core_2_0=True)
 
     def _get_knowledge_graph_context(self, task: str) -> Dict[str, Any]:
         """
