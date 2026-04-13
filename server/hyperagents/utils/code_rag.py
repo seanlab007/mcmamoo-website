@@ -66,31 +66,46 @@ class CodeRAG:
     def __init__(self, workspace: str, index_file: str = ".code_rag_index.json"):
         self.workspace = workspace
         self.store = SimpleVectorStore(os.path.join(workspace, index_file))
-        self.supported_extensions = ['.py', '.ts', '.tsx', '.js', '.jsx']
+        self.supported_extensions = ['.py', '.ts', '.tsx', '.js', '.jsx', '.txt', '.md']
 
-    def chunk_code(self, file_path: str) -> List[Dict[str, Any]]:
-        """将代码按函数/类进行智能切片"""
+    def chunk_content(self, file_path: str) -> List[Dict[str, Any]]:
+        """将代码或文本按逻辑块进行智能切片"""
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
         chunks = []
-        # 简单的正则切片逻辑 (支持 Python/TS)
-        # 匹配 class 或 function 定义
-        pattern = r'(?:class|def|function|const\s+\w+\s*=\s*(?:\([^)]*\)|async\s*\([^)]*\))\s*=>)\s+([a-zA-Z_]\w*)'
-        matches = list(re.finditer(pattern, content))
-        
-        if not matches:
-            # 如果没匹配到，按行数切片
-            lines = content.split('\n')
-            for i in range(0, len(lines), 50):
-                chunk_text = '\n'.join(lines[i:i+50])
-                chunks.append({"text": chunk_text, "name": f"chunk_{i//50}"})
+        file_ext = os.path.splitext(file_path)[1].lower()
+
+        if file_ext in ['.txt', '.md']:
+            # 文本文件：按段落或固定长度切片
+            # 优先按双换行符（段落）切分
+            paragraphs = re.split(r'\n\s*\n', content)
+            current_chunk = ""
+            for p in paragraphs:
+                if len(current_chunk) + len(p) < 1000: # 每个块约 1000 字
+                    current_chunk += p + "\n\n"
+                else:
+                    if current_chunk:
+                        chunks.append({"text": current_chunk.strip(), "name": "text_block"})
+                    current_chunk = p + "\n\n"
+            if current_chunk:
+                chunks.append({"text": current_chunk.strip(), "name": "text_block"})
         else:
-            for i, match in enumerate(matches):
-                start = match.start()
-                end = matches[i+1].start() if i+1 < len(matches) else len(content)
-                chunk_text = content[start:end].strip()
-                chunks.append({"text": chunk_text, "name": match.group(1)})
+            # 代码文件：按函数/类切片
+            pattern = r'(?:class|def|function|const\s+\w+\s*=\s*(?:\([^)]*\)|async\s*\([^)]*\))\s*=>)\s+([a-zA-Z_]\w*)'
+            matches = list(re.finditer(pattern, content))
+            
+            if not matches:
+                lines = content.split('\n')
+                for i in range(0, len(lines), 50):
+                    chunk_text = '\n'.join(lines[i:i+50])
+                    chunks.append({"text": chunk_text, "name": f"chunk_{i//50}"})
+            else:
+                for i, match in enumerate(matches):
+                    start = match.start()
+                    end = matches[i+1].start() if i+1 < len(matches) else len(content)
+                    chunk_text = content[start:end].strip()
+                    chunks.append({"text": chunk_text, "name": match.group(1)})
         
         return chunks
 
@@ -153,7 +168,7 @@ class CodeRAG:
                     file_path = os.path.join(root, file)
                     rel_path = os.path.relpath(file_path, self.workspace)
                     print(f"Indexing {rel_path}...")
-                    chunks = self.chunk_code(file_path)
+                    chunks = self.chunk_content(file_path)
                     for chunk in chunks:
                         vector = self.get_embedding(chunk["text"])
                         self.store.add(chunk["text"], vector, {
