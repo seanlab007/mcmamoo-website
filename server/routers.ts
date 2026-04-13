@@ -35,6 +35,7 @@ import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfi
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
 import { autoclipRouter } from "./autoclip";
 import { salesRouter } from "./sales";
+import { accountingRouter } from "./accounting";
 import {
   generateVideo,
   getVideoTaskStatus,
@@ -46,6 +47,7 @@ export const appRouter = router({
   system: systemRouter,
   autoclip: autoclipRouter,
   sales: salesRouter,
+  accounting: accountingRouter,
   video: router({
     // 获取可用视频模型列表
     listModels: publicProcedure.query(() => {

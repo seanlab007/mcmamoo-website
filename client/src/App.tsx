@@ -43,6 +43,14 @@ import MaoIndustry from "./components/sections/MaoIndustry";
 import ContentPlatform from "./features/maoai/pages/ContentPlatform";
 import MaoStrategy from "./pages/MaoStrategy";
 
+// 代账功能
+import {
+  AccountingDashboard,
+  AccountingInvoices,
+  AccountingJournal,
+  AccountingTaxCalendar,
+} from "./features/accounting";
+
 function Router() {
   return (
     <Switch>
@@ -86,6 +94,12 @@ function Router() {
       
       {/* 毛战略决策部 - MaoAI 核心战略中枢 */}
       <Route path={"/strategy"} component={MaoStrategy} />
+
+      {/* 代账功能 */}
+      <Route path={"/accounting"} component={AccountingDashboard} />
+      <Route path={"/accounting/invoices"} component={AccountingInvoices} />
+      <Route path={"/accounting/journal"} component={AccountingJournal} />
+      <Route path={"/accounting/tax-calendar"} component={AccountingTaxCalendar} />
       
       {/* 猫眼内容平台（已整合到主站） */}
       <Route path={"/content"} component={ContentPlatform} />
