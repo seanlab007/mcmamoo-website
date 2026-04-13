@@ -8,11 +8,90 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function MaoStrategy() {
   const [activeTab, setActiveTab] = useState("overview");
   const [problemDescription, setProblemDescription] = useState("");
+  const [longWarProblemDescription, setLongWarProblemDescription] = useState("");
+  const [enemyStrength, setEnemyStrength] = useState("");
+  const [ourStrength, setOurStrength] = useState("");
+  const [longWarAnalysisResult, setLongWarAnalysisResult] = useState<any>(null);
+  const [isLongWarLoading, setIsLongWarLoading] = useState(false);
+  const [longWarError, setLongWarError] = useState<string | null>(null);
+
+  const [unitedFrontProblemDescription, setUnitedFrontProblemDescription] = useState("");
+  const [stakeholders, setStakeholders] = useState<string>(""); // Comma separated string
+  const [unitedFrontAnalysisResult, setUnitedFrontAnalysisResult] = useState<any>(null);
+  const [isUnitedFrontLoading, setIsUnitedFrontLoading] = useState(false);
+  const [unitedFrontError, setUnitedFrontError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleAnalyzeContradiction = useCallback(async () => {
+    if (!problemDescription.trim()) {
+      setError("请输入您的战略问题。");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setAnalysisResult(null);
+
+    try {
+      const response = await axios.post("/api/strategy/contradiction", {
+        problemDescription,
+      });
+      setAnalysisResult(response.data);
+    } catch (err) {
+      console.error("矛盾分析失败:", err);
+      setError("矛盾分析失败，请检查后端服务或稍后再试。");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [problemDescription]);
+
+  const handleAnalyzeLongWar = useCallback(async () => {
+    if (!longWarProblemDescription.trim() || !enemyStrength.trim() || !ourStrength.trim()) {
+      setLongWarError("请完整输入战略问题、敌方力量和我方力量。");
+      return;
+    }
+    setIsLongWarLoading(true);
+    setLongWarError(null);
+    setLongWarAnalysisResult(null);
+
+    try {
+      const response = await axios.post("/api/strategy/long_war", {
+        problemDescription: longWarProblemDescription,
+        enemyStrength,
+        ourStrength,
+      });
+      setLongWarAnalysisResult(response.data);
+    } catch (err) {
+      console.error("持久战推演失败:", err);
+      setLongWarError("持久战推演失败，请检查后端服务或稍后再试。");
+    } finally {
+      setIsLongWarLoading(false);
+    }
+  }, [longWarProblemDescription, enemyStrength, ourStrength]);
+
+  const handleAnalyzeUnitedFront = useCallback(async () => {
+    if (!unitedFrontProblemDescription.trim() || !stakeholders.trim()) {
+      setUnitedFrontError("请完整输入战略问题和利益相关方。");
+      return;
+    }
+    setIsUnitedFrontLoading(true);
+    setUnitedFrontError(null);
+    setUnitedFrontAnalysisResult(null);
+
+    try {
+      const response = await axios.post("/api/strategy/united_front", {
+        problemDescription: unitedFrontProblemDescription,
+        stakeholders: stakeholders.split(',').map(s => s.trim()).filter(s => s),
+      });
+      setUnitedFrontAnalysisResult(response.data);
+    } catch (err) {
+      console.error("统一战线分析失败:", err);
+      setUnitedFrontError("统一战线分析失败，请检查后端服务或稍后再试。");
+    } finally {
+      setIsUnitedFrontLoading(false);
+    }
+  }, [unitedFrontProblemDescription, stakeholders]);
     if (!problemDescription.trim()) {
       setError("请输入您的战略问题。");
       return;
@@ -117,14 +196,34 @@ export default function MaoStrategy() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="p-4 bg-[#1a1a1a] rounded border border-white/5">
-                    <p className="text-xs text-muted-foreground mb-2">定义竞争对手与市场环境</p>
+                    <p className="text-xs text-muted-foreground mb-2">输入您的战略问题</p>
                     <textarea 
-                      className="w-full h-20 bg-[#0a0a0a] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-muted-foreground focus:outline-none focus:border-[#d4af37]/50"
-                      placeholder="例如：对手优势、我们的资源、市场变化趋势"
+                      className="w-full h-16 bg-[#0a0a0a] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-muted-foreground focus:outline-none focus:border-[#d4af37]/50 mb-2"
+                      placeholder="例如：猫眼内容平台如何在大厂垄断下长期发展？"
+                      value={longWarProblemDescription}
+                      onChange={(e) => setLongWarProblemDescription(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mb-2">敌方力量描述</p>
+                    <textarea 
+                      className="w-full h-16 bg-[#0a0a0a] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-muted-foreground focus:outline-none focus:border-[#d4af37]/50 mb-2"
+                      placeholder="例如：对手技术领先，资金雄厚"
+                      value={enemyStrength}
+                      onChange={(e) => setEnemyStrength(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mb-2">我方力量描述</p>
+                    <textarea 
+                      className="w-full h-16 bg-[#0a0a0a] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-muted-foreground focus:outline-none focus:border-[#d4af37]/50"
+                      placeholder="例如：用户粘性高，创新能力强"
+                      value={ourStrength}
+                      onChange={(e) => setOurStrength(e.target.value)}
                     />
                   </div>
-                  <Button className="w-full bg-[#d4af37] text-black hover:bg-[#b8962e] font-medium">
-                    推演方案
+                  <Button 
+                    className="w-full bg-[#d4af37] text-black hover:bg-[#b8962e] font-medium"
+                    onClick={handleAnalyzeLongWar}
+                    disabled={isLongWarLoading}
+                  >
+                    {isLongWarLoading ? "推演中..." : "推演方案"}
                   </Button>
                 </div>
               </CardContent>
@@ -144,14 +243,27 @@ export default function MaoStrategy() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="p-4 bg-[#1a1a1a] rounded border border-white/5">
-                    <p className="text-xs text-muted-foreground mb-2">分析利益相关方与合作机会</p>
+                    <p className="text-xs text-muted-foreground mb-2">输入您的战略问题</p>
                     <textarea 
-                      className="w-full h-20 bg-[#0a0a0a] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-muted-foreground focus:outline-none focus:border-[#d4af37]/50"
-                      placeholder="例如：潜在合作伙伴、共同利益、联盟结构"
+                      className="w-full h-16 bg-[#0a0a0a] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-muted-foreground focus:outline-none focus:border-[#d4af37]/50 mb-2"
+                      placeholder="例如：如何联合中小内容创作者对抗平台垄断？"
+                      value={unitedFrontProblemDescription}
+                      onChange={(e) => setUnitedFrontProblemDescription(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mb-2">利益相关方 (逗号分隔)</p>
+                    <textarea 
+                      className="w-full h-16 bg-[#0a0a0a] border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-muted-foreground focus:outline-none focus:border-[#d4af37]/50"
+                      placeholder="例如：中小内容创作者, 独立媒体, 垂直社区"
+                      value={stakeholders}
+                      onChange={(e) => setStakeholders(e.target.value)}
                     />
                   </div>
-                  <Button className="w-full bg-[#d4af37] text-black hover:bg-[#b8962e] font-medium">
-                    构建联盟
+                  <Button 
+                    className="w-full bg-[#d4af37] text-black hover:bg-[#b8962e] font-medium"
+                    onClick={handleAnalyzeUnitedFront}
+                    disabled={isUnitedFrontLoading}
+                  >
+                    {isUnitedFrontLoading ? "构建中..." : "构建联盟"}
                   </Button>
                 </div>
               </CardContent>
@@ -253,12 +365,12 @@ export default function MaoStrategy() {
             </CardContent>
           </Card>
 
-          {/* 分析结果 */}
+          {/* 矛盾分析结果 */}
           <Card className="bg-[#141414] border-white/5">
             <CardHeader>
               <CardTitle className="text-[#d4af37] flex items-center gap-2">
                 <Brain className="w-5 h-5" />
-                分析结果
+                矛盾分析结果
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -311,6 +423,148 @@ export default function MaoStrategy() {
                 <div className="text-center py-12 text-muted-foreground">
                   <Brain className="w-12 h-12 mx-auto mb-4 opacity-30" />
                   <p>等待您的战略问题输入...</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 持久战推演结果 */}
+          <Card className="bg-[#141414] border-white/5">
+            <CardHeader>
+              <CardTitle className="text-[#d4af37] flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                持久战推演结果
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLongWarLoading && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Zap className="w-12 h-12 mx-auto mb-4 animate-pulse opacity-50" />
+                  <p>正在推演持久战战略，请稍候...</p>
+                </div>
+              )}
+              {longWarError && (
+                <div className="text-center py-12 text-red-500">
+                  <p>{longWarError}</p>
+                </div>
+              )}
+              {longWarAnalysisResult && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">当前局势判断</h3>
+                    <p className="text-base text-white">{longWarAnalysisResult.currentSituation}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">战略阶段</h3>
+                    <p className="text-base text-white">{longWarAnalysisResult.strategicPhase}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">阶段特点与任务</h3>
+                    <p className="text-base text-white">{longWarAnalysisResult.phaseCharacteristics}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">战略原则</h3>
+                    <div className="space-y-2 text-base text-white">
+                      {longWarAnalysisResult.strategicPrinciples.map((item: string, index: number) => (
+                        <p key={index}>• {item}</p>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">行动建议</h3>
+                    <div className="space-y-2 text-base text-white">
+                      {longWarAnalysisResult.actionSuggestions.map((item: string, index: number) => (
+                        <p key={index}>• {item}</p>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">相关《毛选》原文引用</h3>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      {longWarAnalysisResult.maoQuotes.map((quote: any, index: number) => (
+                        <p key={index} className="italic border-l-2 border-[#d4af37]/30 pl-2">
+                          "{quote.text}" — 《毛泽东选集》第{quote.volume}卷《{quote.chapter}》
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!isLongWarLoading && !longWarError && !longWarAnalysisResult && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Zap className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>等待您的持久战推演输入...</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 统一战线分析结果 */}
+          <Card className="bg-[#141414] border-white/5">
+            <CardHeader>
+              <CardTitle className="text-[#d4af37] flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                统一战线分析结果
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isUnitedFrontLoading && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-4 animate-pulse opacity-50" />
+                  <p>正在构建统一战线策略，请稍候...</p>
+                </div>
+              )}
+              {unitedFrontError && (
+                <div className="text-center py-12 text-red-500">
+                  <p>{unitedFrontError}</p>
+                </div>
+              )}
+              {unitedFrontAnalysisResult && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">主要敌人</h3>
+                    <p className="text-base text-white">{unitedFrontAnalysisResult.enemyIdentification}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">我们的朋友</h3>
+                    <p className="text-base text-white">{unitedFrontAnalysisResult.friendIdentification}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">中间力量</h3>
+                    <p className="text-base text-white">{unitedFrontAnalysisResult.neutralForces}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">联盟策略</h3>
+                    <div className="space-y-2 text-base text-white">
+                      {unitedFrontAnalysisResult.allianceStrategy.map((item: string, index: number) => (
+                        <p key={index}>• {item}</p>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">应遵循的原则</h3>
+                    <div className="space-y-2 text-base text-white">
+                      {unitedFrontAnalysisResult.principlesToFollow.map((item: string, index: number) => (
+                        <p key={index}>• {item}</p>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#d4af37] mb-2">相关《毛选》原文引用</h3>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      {unitedFrontAnalysisResult.maoQuotes.map((quote: any, index: number) => (
+                        <p key={index} className="italic border-l-2 border-[#d4af37]/30 pl-2">
+                          "{quote.text}" — 《毛泽东选集》第{quote.volume}卷《{quote.chapter}》
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!isUnitedFrontLoading && !unitedFrontError && !unitedFrontAnalysisResult && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>等待您的统一战线分析输入...</p>
                 </div>
               )}
             </CardContent>
