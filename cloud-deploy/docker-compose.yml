@@ -1,47 +1,61 @@
-version: '3.8'
+# docker-compose.yml - Gemma-31B-CRACK 云端部署配置
+# 包含安全增强 + 持久化存储 + 健康检查
 
 services:
-  # Ollama GPU 服务
   ollama:
     image: ollama/ollama:latest
-    container_name: maoai-ollama
-    volumes:
-      - ollama_data:/root/.ollama
-      - ./models:/models
+    container_name: gemma-ollama
+    restart: unless-stopped
     ports:
       - "11434:11434"
+    volumes:
+      # 持久化模型存储（关键：重启后不丢失）
+      - ollama_models:/models
+      # 可选：挂载本地 GGUF 文件
+      - ./models:/models/models
     environment:
-      - OLLAMA_HOST=0.0.0.0
-      - OLLAMA_MODELS=/models
-    # GPU 支持（仅 Linux + NVIDIA）
+      # 安全：限制访问来源
+      - OLLAMA_ORIGINS=https://maoyan.vip,https://zhengyuanzhiyin.com,https://*.vercel.app
+      # 并发限制
+      - OLLAMA_MAX_LOADED_MODELS=1
+      # 显存优化
+      - CUDA_VISIBLE_DEVICES=0
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: all
+              count: 1
               capabilities: [gpu]
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
-      - maoai-net
+      - ollama-network
 
-  # Nginx 反向代理 + 认证
-  proxy:
+  # Nginx 反向代理（可选，增强安全性）
+  nginx-proxy:
     image: nginx:alpine
-    container_name: maoai-proxy
+    container_name: ollama-proxy
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "11435:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - ollama
     networks:
-      - maoai-net
-    restart: unless-stopped
+      - ollama-network
+    profiles:
+      - with-proxy
 
 volumes:
-  ollama_data:
+  ollama_models:
+    driver: local
 
 networks:
-  maoai-net:
+  ollama-network:
     driver: bridge
