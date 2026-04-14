@@ -36,3 +36,63 @@
 ## 5. 审美标准 (Aesthetic Standard)
 - **UI 风格**：严格遵循“黑金 (Dark Gold)”审美 (#d4af37)。
 - **交互**：所有 AI 生成内容必须带上 `[MaoAI-Think]` 标签，展示推理过程。
+
+## 6. Phase 6: 异构模型博弈 (Heterogeneous Model Debate) — 新增
+
+### 三权分立角色更新
+| 角色 | 核心职责 | 推荐模型 | 备选模型 |
+| :--- | :--- | :--- | :--- |
+| **Coder** | 代码生成 + Agentic 工具链 | **Claude Code Local** (工具链模式) | Claude API (纯文本) |
+| **Reviewer** | 逻辑审查 + 测试用例生成 | **GLM-4-Plus** (智谱) | GPT-4o / DeepSeek-V3 |
+| **Validator** | 测试验证 | Pytest / Sandbox | **GLM-4 沙箱模拟** (降级) |
+
+### 核心理念
+- **Claude 写，GLM 审**：两套独立推理体系相互制衡，消除单一模型盲点
+- **OpenAI-compatible 协议**：GLM-4 零配置接入（智谱 API 兼容 OpenAI v1）
+- **自动模型路由**：根据模型名前缀自动选 Provider（glm/claude/openai）
+- **降级保护**：任一模型不可用时自动 fallback，不中断博弈循环
+
+### 快速启用异构博弈
+
+**Python 直接调用：**
+```python
+from server.hyperagents.agent.triad_loop import create_triad_loop
+
+triad = create_triad_loop(
+    workspace="/path/to/project",
+    coder_model="claude-3-5-sonnet",
+    reviewer_model="glm-4-plus",       # GLM-4 作 Reviewer
+    heterogeneous_mode=True,            # 一键异构博弈
+)
+result = triad.run(task="修复登录模块的类型错误")
+```
+
+**CLI 调用：**
+```bash
+python3 -m server.hyperagents.agent.triad_loop \
+  --task "优化数据库查询性能" \
+  --heterogeneous \
+  --reviewer-provider glm \
+  --glm-model glm-4-plus \
+  --claude-local
+```
+
+**TS 层调用（triadLoopIntegration.ts）：**
+```typescript
+await executeTriadLoop({
+  taskId: 42,
+  task: "重构认证中间件",
+  heterogeneous: true,
+  reviewerProvider: "glm",
+  glmModel: "glm-4-plus",
+  claudeLocal: false,  // 暂无本地 Anthropic Key 时设 false
+});
+```
+
+### 环境变量
+```env
+ZHIPU_API_KEY=xxx              # 智谱 GLM-4（已配置）
+GLM_MODEL=glm-4-plus           # GLM 默认模型
+ANTHROPIC_API_KEY=sk-ant-xxx   # Claude API（可选）
+CLAUDE_CODE_MODE=auto          # auto | local | api
+```

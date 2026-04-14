@@ -24,6 +24,17 @@ export interface TriadTaskRequest {
   mode?: "fix" | "generate";
   workspace?: string;
   context?: Record<string, any>;
+  // ─── Phase 6: 异构模型博弈参数 ───────────────────────────────────────────
+  /** 一键开启异构博弈模式：Claude 写 + GLM-4 审 */
+  heterogeneous?: boolean;
+  /** Reviewer 提供商："glm" | "openai" */
+  reviewerProvider?: "glm" | "openai";
+  /** GLM-4 模型名，默认 glm-4-plus */
+  glmModel?: string;
+  /** 是否使用 Claude Code Local（有工具链 Agentic 能力） */
+  claudeLocal?: boolean;
+  /** 是否使用 GLM-4 作为 Validator（沙箱模拟） */
+  glmValidator?: boolean;
 }
 
 export interface TriadTaskResult {
@@ -41,7 +52,20 @@ export interface TriadTaskResult {
  * 执行 TriadLoop 任务
  */
 export async function executeTriadLoop(request: TriadTaskRequest): Promise<TriadTaskResult> {
-  const { taskId, task, language = "python", mode = "fix", workspace, context = {} } = request;
+  const {
+    taskId,
+    task,
+    language = "python",
+    mode = "fix",
+    workspace,
+    context = {},
+    // ─── Phase 6 参数 ───────────────────────────────────────────────────────
+    heterogeneous = false,
+    reviewerProvider,
+    glmModel = "glm-4-plus",
+    claudeLocal = false,
+    glmValidator = false,
+  } = request;
 
   console.log(`[TriadLoop] Starting task #${taskId}: ${task.substring(0, 50)}...`);
 
@@ -66,6 +90,23 @@ export async function executeTriadLoop(request: TriadTaskRequest): Promise<Triad
       "--no-rag",          // RAG 可选启用
       "--no-atomic",       // 原子化模式可选
     ];
+
+    // ─── Phase 6: 异构模型博弈参数 ─────────────────────────────────────────
+    if (heterogeneous) {
+      args.push("--heterogeneous");
+    }
+    if (reviewerProvider) {
+      args.push("--reviewer-provider", reviewerProvider);
+    }
+    if (glmModel && (heterogeneous || reviewerProvider === "glm")) {
+      args.push("--glm-model", glmModel);
+    }
+    if (claudeLocal) {
+      args.push("--claude-local");
+    }
+    if (glmValidator) {
+      args.push("--glm-validator");
+    }
 
     // 执行 Python 脚本
     const result = await executePython(args);

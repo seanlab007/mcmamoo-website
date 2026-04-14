@@ -38,6 +38,52 @@ from .coder_agent import CoderAgent, GenerationMode, GenerationResult
 from .reviewer_agent import ReviewerAgent, ReviewResult
 from .validator_agent import ValidatorAgent, ValidationResult, ValidationStatus
 
+# ─── Phase 6: 异构模型博弈适配器 ─────────────────────────────────────────────
+# Claude (Coder 写) + GLM-4 (Reviewer/Validator 审) = MAOAI_THINKING_PROTOCOL 三权分立
+try:
+    from .glm_adapter import glm_review, glm_generate_test_cases, glm_validate, is_glm_available
+    HAS_GLM = True
+except ImportError:
+    HAS_GLM = False
+
+try:
+    from .claude_code_adapter import claude_generate, is_claude_available
+    HAS_CLAUDE_CODE = True
+except ImportError:
+    HAS_CLAUDE_CODE = False
+
+
+# ─── 模型路由配置 ────────────────────────────────────────────────────────────
+
+MODEL_ROUTES = {
+    # Coder 层
+    "claude-3-5-sonnet": "claude-api",
+    "claude-3-5-sonnet-20241022": "claude-api",
+    "claude-3-opus": "claude-api",
+    "claude-local": "claude-local",     # Claude Code Local（有工具链）
+
+    # Reviewer 层
+    "glm-4-plus": "glm",
+    "glm-4-air": "glm",
+    "glm-4-flash": "glm",
+    "glm-4": "glm",
+    "gpt-4o": "openai",
+    "gpt-4": "openai",
+    "deepseek-v3": "openai",            # DeepSeek 兼容 OpenAI 协议
+}
+
+
+def get_model_provider(model: str) -> str:
+    """根据模型名推断 Provider"""
+    if not model:
+        return "openai"
+    lower = model.lower()
+    if lower.startswith("glm") or "zhipu" in lower:
+        return "glm"
+    if lower.startswith("claude") or lower == "claude-local":
+        return "claude"
+    return MODEL_ROUTES.get(model, "openai")
+
 # ─── 新增：知识图谱 + Code RAG 支持 ────────────────────────────────────────────
 try:
     import sys
@@ -140,14 +186,20 @@ class TriadLoop:
     三权分立博弈循环
 
     三个角色：
-      1. Coder (Claude)：代码生成
-      2. Reviewer (GPT)：逻辑审查 + 生成测试用例
-      3. Validator (Pytest)：测试验证
+      1. Coder (Claude / Claude Code Local)：代码生成
+      2. Reviewer (GLM-4 / GPT)：逻辑审查 + 生成测试用例
+      3. Validator (Pytest / GLM-4 沙箱模拟)：测试验证
 
-    新增 Phase 5 功能：
+    Phase 5 功能：
       4. 原子化代码修改：基于 Unified Diff 的外科手术式修改
       5. Code RAG：向量检索增强的上下文注入
       6. 智能收敛检测：分数 + Patch 相似度双重检测
+
+    Phase 6 新增（异构模型博弈）：
+      7. Claude Code Local：Coder 具备完整工具链（Read/Write/Bash）
+      8. GLM-4 Reviewer：替换 GPT，实现"Claude 写 + GLM 审"架构
+      9. GLM-4 Validator：当沙箱不可用时，GLM-4 作为模拟验证层
+      10. 模型路由：自动根据模型名选择 Provider（glm/claude/openai）
     """
 
     def __init__(
@@ -165,15 +217,80 @@ class TriadLoop:
         test_command: str = None,
         enable_knowledge_graph: bool = True,
         # ─── Phase 5 新增参数 ────────────────────────────────────────────────
-        enable_atomic_mode: bool = True,     # 启用原子化修改模式
-        enable_code_rag: bool = True,          # 启用 Code RAG 向量检索
-        auto_apply_patch: bool = True,         # 自动应用 Patch
-        rag_top_k: int = 5                     # RAG 检索数量
+        enable_atomic_mode: bool = True,
+        enable_code_rag: bool = True,
+        auto_apply_patch: bool = True,
+        rag_top_k: int = 5,
+        # ─── Phase 6: 异构模型博弈参数 ──────────────────────────────────────
+        # Coder 配置
+        use_claude_code_local: bool = None,  # None=自动检测, True=强制local, False=强制API
+        claude_api_key: str = None,           # Anthropic API Key（也可用 ANTHROPIC_API_KEY）
+        # Reviewer 配置（GLM-4 备选）
+        reviewer_provider: str = None,        # None=自动, "glm", "openai"
+        glm_api_key: str = None,             # 智谱 API Key（也可用 ZHIPU_API_KEY）
+        glm_model: str = None,               # GLM 模型，默认 glm-4-plus
+        # Validator 配置
+        use_glm_validator: bool = None,       # None=有pytest才用pytest, True=强制GLM
+        # 异构博弈模式快捷开关
+        heterogeneous_mode: bool = None,      # 一键开启 Claude写+GLM审 模式
     ):
         self.workspace = workspace or os.getcwd()
         self.coder_model = coder_model
         self.reviewer_model = reviewer_model
         self.enable_knowledge_graph = enable_knowledge_graph and HAS_KNOWLEDGE_GRAPH
+
+        # ─── Phase 6: 异构模型路由初始化 ─────────────────────────────────────
+
+        # 快捷模式：heterogeneous_mode=True → Claude 写 + GLM 审
+        if heterogeneous_mode is True:
+            _glm_ok = HAS_GLM and is_glm_available(glm_api_key)
+            _claude_ok = HAS_CLAUDE_CODE and is_claude_available(claude_api_key)
+            if _glm_ok:
+                reviewer_provider = reviewer_provider or "glm"
+            if _claude_ok:
+                use_claude_code_local = use_claude_code_local  # 保持自动检测
+
+            log_step("triad_init",
+                     f"异构模型博弈模式: Coder=Claude({coder_model}) "
+                     f"Reviewer={'GLM-4' if _glm_ok else reviewer_model} "
+                     f"Validator={'GLM-4沙箱' if _glm_ok and use_glm_validator else 'pytest'}",
+                     glm_available=_glm_ok,
+                     claude_available=_claude_ok,
+                     mode="heterogeneous")
+
+        # 确定 Reviewer Provider
+        auto_provider = get_model_provider(reviewer_model)
+        self._reviewer_provider = reviewer_provider or auto_provider
+
+        # 确定 GLM 配置
+        self._glm_api_key = glm_api_key or os.environ.get("ZHIPU_API_KEY", "")
+        self._glm_model = glm_model or os.environ.get("GLM_MODEL", "glm-4-plus")
+        self._glm_available = HAS_GLM and bool(self._glm_api_key)
+
+        # 如果 reviewer_model 以 "glm" 开头，自动切换 provider
+        if reviewer_model.lower().startswith("glm"):
+            self._reviewer_provider = "glm"
+            self._glm_model = reviewer_model
+
+        # 确定 Claude Code Local 模式
+        self._claude_api_key = claude_api_key or os.environ.get("ANTHROPIC_API_KEY", "")
+        self._claude_available = HAS_CLAUDE_CODE and bool(self._claude_api_key)
+        if use_claude_code_local is not None:
+            self._use_claude_local = use_claude_code_local and self._claude_available
+        else:
+            self._use_claude_local = False  # 默认不强制 local，CoderAgent 自行处理
+
+        # Validator 配置
+        _glm_validator_ok = self._glm_available and (use_glm_validator is True)
+        self._use_glm_validator = _glm_validator_ok
+
+        log_step("triad_init",
+                 "Phase 6 异构模型路由",
+                 reviewer_provider=self._reviewer_provider,
+                 glm_available=self._glm_available,
+                 glm_model=self._glm_model if self._glm_available else "N/A",
+                 claude_local=self._use_claude_local,
+                 glm_validator=self._use_glm_validator)
 
         # ─── Phase 5: 原子化模式 ──────────────────────────────────────────────
         self.enable_atomic_mode = enable_atomic_mode and HAS_PATCH_UTILS
@@ -203,7 +320,7 @@ class TriadLoop:
         self.enable_docker = enable_docker
         self.test_command = test_command
 
-        # ─── 原子化模式传递给 CoderAgent ──────────────────────────────────────
+        # ─── Coder Agent（支持 Claude Code Local 透传）───────────────────────
         self.coder = CoderAgent(
             api_key=coder_api_key,
             model=coder_model,
@@ -212,9 +329,22 @@ class TriadLoop:
             enable_atomic_mode=self.enable_atomic_mode,
             auto_apply_patch=self.auto_apply_patch
         )
+
+        # ─── Reviewer Agent（GLM-4 或 OpenAI，按 provider 路由）─────────────
+        # ReviewerAgent 内部走 OPENAI_BASE_URL，GLM-4 通过重写 env 注入
+        # Phase 6: 如果 provider=glm，覆盖 reviewer 的 api_key 和 base_url
+        _reviewer_api_key = reviewer_api_key
+        if self._reviewer_provider == "glm" and self._glm_available:
+            _reviewer_api_key = self._glm_api_key
+            # 通过环境变量覆盖 ReviewerAgent 的 base_url（OpenAI-compatible）
+            os.environ.setdefault("OPENAI_BASE_URL", "https://open.bigmodel.cn/api/paas/v4")
+            log_step("triad_init",
+                     f"Reviewer 使用 GLM-4: {self._glm_model}",
+                     base_url="https://open.bigmodel.cn/api/paas/v4")
+
         self.reviewer = ReviewerAgent(
-            api_key=reviewer_api_key,
-            model=reviewer_model,
+            api_key=_reviewer_api_key,
+            model=self._glm_model if self._reviewer_provider == "glm" else reviewer_model,
             workspace=self.workspace
         )
         self.validator = ValidatorAgent(
@@ -571,33 +701,104 @@ class TriadLoop:
 
             log_thought("reviewer", "正在审查代码，识别潜在问题...", round_num=self.current_round)
 
-            reviewer_result = self.reviewer.review(
-                task=task,
-                code=current_code,
-                language=context.get("language", "python")
-            )
+            # ─── Phase 6: Reviewer 模型路由 ──────────────────────────────────
+            if self._reviewer_provider == "glm" and self._glm_available and HAS_GLM:
+                # GLM-4 作为 Reviewer（异构博弈核心）
+                log_step("reviewer_route", f"路由到 GLM-4: {self._glm_model}",
+                         provider="glm", model=self._glm_model)
 
-            log_step("reviewer_reviewed",
-                    f"Reviewer 完成: score={reviewer_result.overall_score:.2f}",
-                    round=self.current_round,
-                    approved=reviewer_result.approved,
-                    issues=len(reviewer_result.issues))
+                glm_result = glm_review(
+                    task=task,
+                    code=current_code,
+                    language=context.get("language", "python"),
+                    api_key=self._glm_api_key,
+                    model=self._glm_model,
+                )
+
+                # 将 glm_result 转换为 ReviewResult 兼容对象
+                from dataclasses import dataclass as _dc
+                from typing import List as _List
+
+                @_dc
+                class _GLMReviewResult:
+                    approved: bool
+                    overall_score: float
+                    issues: _List
+                    summary: str = ""
+
+                    @property
+                    def issues(self):
+                        return self._issues
+
+                    @issues.setter
+                    def issues(self, v):
+                        self._issues = v
+
+                # 构建兼容 ReviewResult 的轻量对象
+                class _CompatIssue:
+                    def __init__(self, d):
+                        self.severity = d.get("severity", "minor")
+                        self.description = d.get("description", "")
+                        self.dimension = d.get("dimension", "unknown")
+
+                class _CompatReviewResult:
+                    def __init__(self, d):
+                        self.approved = d.get("approved", False)
+                        self.overall_score = d.get("overall_score", 0.5)
+                        self.issues = [_CompatIssue(i) for i in d.get("issues", [])]
+                        self.summary = d.get("summary", "")
+
+                reviewer_result = _CompatReviewResult(glm_result)
+                log_step("reviewer_reviewed",
+                        f"GLM-4 Reviewer 完成: score={reviewer_result.overall_score:.2f}",
+                        round=self.current_round,
+                        approved=reviewer_result.approved,
+                        issues=len(reviewer_result.issues),
+                        provider="glm")
+            else:
+                # 原始 ReviewerAgent（OpenAI / GPT-4o）
+                reviewer_result = self.reviewer.review(
+                    task=task,
+                    code=current_code,
+                    language=context.get("language", "python")
+                )
+
+                log_step("reviewer_reviewed",
+                        f"Reviewer 完成: score={reviewer_result.overall_score:.2f}",
+                        round=self.current_round,
+                        approved=reviewer_result.approved,
+                        issues=len(reviewer_result.issues))
 
             # ═══════════════════════════════════════════════════════════════════════════
             # A. 自生成测试用例：Reviewer 生成 Bug 复现测试
             # ═══════════════════════════════════════════════════════════════════════════
-            test_result = self.reviewer.generate_test_cases(
-                task=task,
-                code=current_code,
-                language=context.get("language", "python"),
-                issues=reviewer_result.issues  # 传入已发现的问题
-            )
 
-            if test_result.get("success"):
+            # ─── Phase 6: GLM-4 生成测试用例 ─────────────────────────────────
+            if self._reviewer_provider == "glm" and self._glm_available and HAS_GLM:
+                test_result = glm_generate_test_cases(
+                    task=task,
+                    code=current_code,
+                    language=context.get("language", "python"),
+                    issues=reviewer_result.issues,
+                    api_key=self._glm_api_key,
+                    model=self._glm_model,
+                )
                 log_step("reviewer_test_cases",
-                        f"生成 {len(test_result.get('test_cases', []))} 个测试用例")
+                        f"GLM-4 生成 {len(test_result.get('test_cases', []))} 个测试用例",
+                        provider="glm")
             else:
-                log_step("reviewer_test_cases", "测试用例生成失败，使用默认测试")
+                test_result = self.reviewer.generate_test_cases(
+                    task=task,
+                    code=current_code,
+                    language=context.get("language", "python"),
+                    issues=reviewer_result.issues
+                )
+
+                if test_result.get("success"):
+                    log_step("reviewer_test_cases",
+                            f"生成 {len(test_result.get('test_cases', []))} 个测试用例")
+                else:
+                    log_step("reviewer_test_cases", "测试用例生成失败，使用默认测试")
 
             # ═══════════════════════════════════════════════════════════════
             # 第三权：Validator 测试验证
@@ -800,11 +1001,23 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default="fix", choices=["fix", "generate"], help="运行模式")
     parser.add_argument("--test-command", type=str, help="自定义测试命令")
     parser.add_argument("--docker", action="store_true", help="启用 Docker 沙箱")
-    # ─── Phase 5 新增参数 ────────────────────────────────────────────────────────
+    # ─── Phase 5 参数 ────────────────────────────────────────────────────────
     parser.add_argument("--no-atomic", action="store_true", help="禁用原子化模式")
     parser.add_argument("--no-rag", action="store_true", help="禁用 Code RAG")
     parser.add_argument("--no-auto-patch", action="store_true", help="不自动应用 Patch")
     parser.add_argument("--rag-top-k", type=int, default=5, help="RAG 检索数量")
+    # ─── Phase 6: 异构模型博弈参数 ───────────────────────────────────────────
+    parser.add_argument(
+        "--heterogeneous", action="store_true",
+        help="开启异构博弈模式（Claude 写 + GLM-4 审）"
+    )
+    parser.add_argument(
+        "--reviewer-provider", type=str, choices=["glm", "openai", "auto"], default="auto",
+        help="Reviewer 模型提供商（glm / openai）"
+    )
+    parser.add_argument("--glm-model", type=str, default="glm-4-plus", help="GLM-4 模型名")
+    parser.add_argument("--claude-local", action="store_true", help="使用 Claude Code Local（有工具链）")
+    parser.add_argument("--glm-validator", action="store_true", help="使用 GLM-4 作为 Validator")
 
     args = parser.parse_args()
 
@@ -816,11 +1029,17 @@ if __name__ == "__main__":
         score_threshold=args.score_threshold,
         enable_docker=args.docker,
         test_command=args.test_command,
-        # ─── Phase 5 新增 ─────────────────────────────────────────────────────
+        # ─── Phase 5 ────────────────────────────────────────────────────────
         enable_atomic_mode=not args.no_atomic,
         enable_code_rag=not args.no_rag,
         auto_apply_patch=not args.no_auto_patch,
-        rag_top_k=args.rag_top_k
+        rag_top_k=args.rag_top_k,
+        # ─── Phase 6: 异构模型博弈 ──────────────────────────────────────────
+        heterogeneous_mode=args.heterogeneous,
+        reviewer_provider=None if args.reviewer_provider == "auto" else args.reviewer_provider,
+        glm_model=args.glm_model,
+        use_claude_code_local=args.claude_local if args.claude_local else None,
+        use_glm_validator=args.glm_validator,
     )
 
     result = triad.run(task=args.task, context={"language": args.language}, mode=args.mode)
@@ -838,10 +1057,11 @@ if __name__ == "__main__":
     if result.converged:
         print(f"收敛: 是 ({result.convergence_reason})")
 
-    # ─── Phase 5 性能统计 ──────────────────────────────────────────────────────
-    print("\nPhase 5 性能统计:")
+    print("\nPhase 5/6 性能统计:")
     print(f"  原子化模式: {not args.no_atomic}")
     print(f"  Code RAG: {not args.no_rag}")
+    print(f"  异构博弈: {args.heterogeneous}")
+    print(f"  Claude Local: {args.claude_local}")
+    print(f"  GLM-4 Reviewer: {args.reviewer_provider == 'glm' or args.heterogeneous}")
     print(f"  Token 节省: 约 {result.patch_similarity * 100:.0f}% (预估)")
-
     print("=" * 60)
