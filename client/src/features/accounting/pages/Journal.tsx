@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { trpcClient } from "@/lib/trpc";
+import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ export function AccountingJournal() {
   const { data: entries, isLoading } = useQuery({
     queryKey: ["accounting", "journal", statusFilter],
     queryFn: () =>
-      trpcClient.accounting.listJournalEntries.query(
+      trpc.accounting.listJournalEntries.query(
         statusFilter !== "all" ? { status: statusFilter as "draft" | "confirmed" | "posted" } : undefined
       ),
   });
@@ -29,7 +29,7 @@ export function AccountingJournal() {
   // 更新凭证状态
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: "draft" | "confirmed" | "posted" }) => {
-      return trpcClient.accounting.updateJournalStatus.mutate({ id, status });
+      return trpc.accounting.updateJournalStatus.mutate({ id, status });
     },
     onSuccess: () => {
       toast.success("状态更新成功");

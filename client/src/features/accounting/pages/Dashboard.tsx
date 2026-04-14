@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { trpcClient } from "@/lib/trpc";
+import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Receipt, Calendar, BarChart3, Plus, ArrowRight } from "lucide-react";
@@ -15,14 +15,14 @@ export function AccountingDashboard() {
   // 获取发票统计
   const { data: invoiceStats, isLoading: statsLoading } = useQuery({
     queryKey: ["accounting", "invoiceStats"],
-    queryFn: () => trpcClient.accounting.getInvoiceStats.query(),
+    queryFn: () => trpc.accounting.getInvoiceStats.query(),
   });
 
   // 获取即将到期的税务事件
   const { data: upcomingTaxEvents } = useQuery({
     queryKey: ["accounting", "taxCalendar", "upcoming"],
     queryFn: () =>
-      trpcClient.accounting.getTaxCalendar.query({
+      trpc.accounting.getTaxCalendar.query({
         month: new Date().getMonth() + 1,
       }),
   });
@@ -31,7 +31,7 @@ export function AccountingDashboard() {
   const { data: financialReport } = useQuery({
     queryKey: ["accounting", "financialReport"],
     queryFn: () =>
-      trpcClient.accounting.getFinancialReport.query({
+      trpc.accounting.getFinancialReport.query({
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1,
       }),

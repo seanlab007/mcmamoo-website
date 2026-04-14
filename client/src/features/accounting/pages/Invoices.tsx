@@ -4,7 +4,7 @@
 
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { trpcClient } from "@/lib/trpc";
+import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ export function AccountingInvoices() {
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["accounting", "invoices", filter],
     queryFn: () =>
-      trpcClient.accounting.listInvoices.query(
+      trpc.accounting.listInvoices.query(
         filter !== "all" ? { status: filter as "pending" | "processed" | "archived" } : undefined
       ),
   });
@@ -30,7 +30,7 @@ export function AccountingInvoices() {
   // 上传发票
   const uploadMutation = useMutation({
     mutationFn: async (imageData: string) => {
-      return trpcClient.accounting.uploadInvoice.mutate({
+      return trpc.accounting.uploadInvoice.mutate({
         imageData,
         invoiceType: "fapiao",
       });
@@ -49,7 +49,7 @@ export function AccountingInvoices() {
   // 更新发票状态
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: "pending" | "processed" | "archived" }) => {
-      return trpcClient.accounting.updateInvoiceStatus.mutate({ id, status });
+      return trpc.accounting.updateInvoiceStatus.mutate({ id, status });
     },
     onSuccess: () => {
       toast.success("状态更新成功");
@@ -60,7 +60,7 @@ export function AccountingInvoices() {
   // 删除发票
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return trpcClient.accounting.deleteInvoice.mutate({ id });
+      return trpc.accounting.deleteInvoice.mutate({ id });
     },
     onSuccess: () => {
       toast.success("删除成功");

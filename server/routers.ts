@@ -301,23 +301,35 @@ export const appRouter = router({
   // ─── AI 模型 / 状态 / 预设 ────────────────────────────────────────────────
   ai: router({
     models: publicProcedure.query(async () => {
-      return Object.entries(MODEL_CONFIGS).map(([id, cfg]) => ({
-        id,
-        name: cfg.name,
-        badge: cfg.badge,
-        provider: cfg.provider,
-        supportsVision: cfg.supportsVision ?? false,
-        configured: !!cfg.apiKey,
-        available: !!cfg.apiKey,
-      }));
+      return Object.entries(MODEL_CONFIGS).map(([id, cfg]) => {
+        // 本地模型不需要 API Key，只要有配置就可用
+        const isLocal = cfg.isLocal ?? false;
+        const hasApiKey = !!cfg.apiKey;
+        return {
+          id,
+          name: cfg.name,
+          badge: cfg.badge,
+          provider: cfg.provider,
+          supportsVision: cfg.supportsVision ?? false,
+          configured: isLocal || hasApiKey,
+          available: isLocal || hasApiKey, // 本地模型总是可用（如果 Ollama 服务运行中）
+          isLocal,
+        };
+      });
     }),
     status: publicProcedure.query(async () => {
       const nodes = await getAiNodes();
       const onlineNodes = nodes.filter((n) => n.isOnline).length;
       return {
         ok: true,
-        models: Object.entries(MODEL_CONFIGS).reduce<Record<string, { name: string; configured: boolean; badge: string }>>((acc, [id, cfg]) => {
-          acc[id] = { name: cfg.name, configured: !!cfg.apiKey, badge: cfg.badge };
+        models: Object.entries(MODEL_CONFIGS).reduce<Record<string, { name: string; configured: boolean; badge: string; isLocal?: boolean }>>((acc, [id, cfg]) => {
+          const isLocal = cfg.isLocal ?? false;
+          acc[id] = { 
+            name: cfg.name, 
+            configured: isLocal || !!cfg.apiKey, 
+            badge: cfg.badge,
+            isLocal,
+          };
           return acc;
         }, {}),
         nodes: { total: nodes.length, online: onlineNodes },

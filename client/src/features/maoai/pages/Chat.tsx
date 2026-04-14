@@ -4,11 +4,12 @@ import { AgentModeSelector } from "../components/AgentModeSelector";
 import { AtomicModeToggle } from "../components/Phase5Status";
 import { TriadLoopStatus } from "../components/TriadLoopStatus";
 import { RedBlueAdversarialStatus } from "../components/RedBlueAdversarialStatus";
+import { HealingStatus } from "../components/HealingStatus";
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
   Wand2, Image as ImageIcon, Crown, Zap, Paperclip, FileText, FileJson, Table2,
-  LayoutGrid, Lock, Search, BookOpen, Swords,
+  LayoutGrid, Lock, Search, BookOpen, Swords, Bandage,
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -1495,6 +1496,10 @@ export default function MaoAIChat() {
                   compact
                 />
               )}
+              {/* ─── MaoAI Core 3.0: 自愈状态（Compact）─────────────────────── */}
+              {isStrategicMode && (
+                <HealingStatus compact />
+              )}
               {/* Image mode badge */}
               {inputMode === "image" && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 border border-purple-500/30 text-purple-400/80 text-xs" style={{ fontFamily: "'DM Mono', monospace" }}>
@@ -1586,6 +1591,19 @@ export default function MaoAIChat() {
                   console.log("[Chat] 红蓝对抗结束，胜者:", winner);
                 }}
               />
+            )}
+
+            {/* ─── MaoAI Core 3.0: 自愈状态（完整模式）────────────────────── */}
+            {isStrategicMode && (
+              <div className="border border-slate-700/50 rounded-lg overflow-hidden">
+                <div className="px-4 py-2 bg-slate-800/50 border-b border-slate-700/30 flex items-center gap-2">
+                  <Bandage className="w-4 h-4 text-amber-400" />
+                  <span className="text-sm font-medium text-slate-300">🩹 HealingAgent - 运行时自愈系统</span>
+                </div>
+                <div className="p-4">
+                  <HealingStatus />
+                </div>
+              </div>
             )}
 
             {/* Message list */}

@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { trpcClient } from "@/lib/trpc";
+import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ export function AccountingTaxCalendar() {
   const { data: events, isLoading } = useQuery({
     queryKey: ["accounting", "taxCalendar", selectedMonth],
     queryFn: () =>
-      trpcClient.accounting.getTaxCalendar.query({
+      trpc.accounting.getTaxCalendar.query({
         month: selectedMonth,
         year: new Date().getFullYear(),
       }),
@@ -35,7 +35,7 @@ export function AccountingTaxCalendar() {
       deadline: string;
       description?: string;
     }) => {
-      return trpcClient.accounting.addTaxEvent.mutate(data);
+      return trpc.accounting.addTaxEvent.mutate(data);
     },
     onSuccess: () => {
       toast.success("添加成功");
@@ -46,7 +46,7 @@ export function AccountingTaxCalendar() {
   // 完成税务事件
   const completeEventMutation = useMutation({
     mutationFn: async (id: number) => {
-      return trpcClient.accounting.completeTaxEvent.mutate({ id });
+      return trpc.accounting.completeTaxEvent.mutate({ id });
     },
     onSuccess: () => {
       toast.success("已标记为完成");

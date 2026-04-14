@@ -128,7 +128,7 @@ async function localFetch(p, options = {}) {
   }
   return { ok: false, status: 405, data: null };
 }
-async function dbFetch(p, options = {}, prefer) {
+async function dbFetch2(p, options = {}, prefer) {
   if (isSupabaseConfigured()) {
     return sbFetch(p, options, prefer);
   }
@@ -203,32 +203,32 @@ async function upsertUser(user) {
   if (user.name !== void 0) payload.name = user.name ?? null;
   if (user.email !== void 0) payload.email = user.email ?? null;
   if (user.loginMethod !== void 0) payload.loginMethod = user.loginMethod ?? null;
-  const r = existing ? await dbFetch(
+  const r = existing ? await dbFetch2(
     `/users?openId=eq.${encodeURIComponent(user.openId)}`,
     { method: "PATCH", body: JSON.stringify(payload) }
-  ) : await dbFetch("/users", { method: "POST", body: JSON.stringify(payload) });
+  ) : await dbFetch2("/users", { method: "POST", body: JSON.stringify(payload) });
   if (!r.ok) {
     console.error("[DB] upsertUser failed:", r.status, r.data);
     throw new Error(`upsertUser failed: ${r.status}`);
   }
 }
 async function getUserByOpenId(openId) {
-  const r = await dbFetch(`/users?openId=eq.${encodeURIComponent(openId)}&limit=1`);
+  const r = await dbFetch2(`/users?openId=eq.${encodeURIComponent(openId)}&limit=1`);
   const rows = r.data;
   return rows?.[0];
 }
 async function listUsers() {
-  const r = await dbFetch("/users?order=id.asc&select=id,name,email,role,lastSignedIn,createdAt");
+  const r = await dbFetch2("/users?order=id.asc&select=id,name,email,role,lastSignedIn,createdAt");
   return r.data ?? [];
 }
 async function updateUserRole(id, role) {
-  await dbFetch(
+  await dbFetch2(
     `/users?id=eq.${id}`,
     { method: "PATCH", body: JSON.stringify({ role, updatedAt: (/* @__PURE__ */ new Date()).toISOString() }) }
   );
 }
 async function createMaoApplication(data) {
-  const r = await dbFetch(
+  const r = await dbFetch2(
     "/mao_applications",
     { method: "POST", body: JSON.stringify({ ...data, status: data.status ?? "pending" }) },
     "return=minimal"
@@ -236,23 +236,23 @@ async function createMaoApplication(data) {
   if (!r.ok) throw new Error(`createMaoApplication failed: ${r.status}`);
 }
 async function listMaoApplications() {
-  const r = await dbFetch("/mao_applications?order=createdAt.asc");
+  const r = await dbFetch2("/mao_applications?order=createdAt.asc");
   return r.data ?? [];
 }
 async function updateMaoApplicationStatus(id, status) {
-  await dbFetch(
+  await dbFetch2(
     `/mao_applications?id=eq.${id}`,
     { method: "PATCH", body: JSON.stringify({ status, updatedAt: (/* @__PURE__ */ new Date()).toISOString() }) }
   );
 }
 async function updateMaoApplicationNotes(id, notes) {
-  await dbFetch(
+  await dbFetch2(
     `/mao_applications?id=eq.${id}`,
     { method: "PATCH", body: JSON.stringify({ notes, updatedAt: (/* @__PURE__ */ new Date()).toISOString() }) }
   );
 }
 async function subscribeBrief(email) {
-  const r = await dbFetch(
+  const r = await dbFetch2(
     "/brief_subscribers",
     { method: "POST", body: JSON.stringify({ email }) },
     "resolution=merge-duplicates"
@@ -260,7 +260,7 @@ async function subscribeBrief(email) {
   if (!r.ok && r.status !== 409) throw new Error(`subscribeBrief failed: ${r.status}`);
 }
 async function listBriefSubscribers() {
-  const r = await dbFetch("/brief_subscribers?order=createdAt.asc");
+  const r = await dbFetch2("/brief_subscribers?order=createdAt.asc");
   return r.data ?? [];
 }
 async function listSubscriberEmails() {
@@ -269,16 +269,16 @@ async function listSubscriberEmails() {
 }
 async function getAiNodes(onlineOnly) {
   const filter = onlineOnly ? "?isLocal=eq.true&order=priority.asc" : "?order=priority.asc";
-  const r = await dbFetch(`/ai_nodes${filter}`);
+  const r = await dbFetch2(`/ai_nodes${filter}`);
   return r.data ?? [];
 }
 async function getAiNodeById(id) {
-  const r = await dbFetch(`/ai_nodes?id=eq.${id}&limit=1`);
+  const r = await dbFetch2(`/ai_nodes?id=eq.${id}&limit=1`);
   const rows = r.data;
   return rows?.[0] ?? null;
 }
 async function createAiNode(data) {
-  const r = await dbFetch(
+  const r = await dbFetch2(
     "/ai_nodes",
     { method: "POST", body: JSON.stringify(data) },
     "return=representation"
@@ -287,7 +287,7 @@ async function createAiNode(data) {
   return rows?.[0] ?? null;
 }
 async function updateAiNode(id, data) {
-  await dbFetch(`/ai_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(data) });
+  await dbFetch2(`/ai_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(data) });
 }
 async function updateNodePingStatus(id, isOnline, lastPingMs) {
   const body = {
@@ -296,44 +296,44 @@ async function updateNodePingStatus(id, isOnline, lastPingMs) {
     lastHeartbeatAt: (/* @__PURE__ */ new Date()).toISOString()
   };
   if (lastPingMs !== void 0) body.lastPingMs = lastPingMs;
-  await dbFetch(`/ai_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(body) });
+  await dbFetch2(`/ai_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(body) });
 }
 async function getRoutingRules() {
-  const r = await dbFetch("/routing_rules?order=priority.asc");
+  const r = await dbFetch2("/routing_rules?order=priority.asc");
   return r.data ?? [];
 }
 async function createNodeLog(data) {
   try {
-    await dbFetch("/node_logs", { method: "POST", body: JSON.stringify(data) }, "return=minimal");
+    await dbFetch2("/node_logs", { method: "POST", body: JSON.stringify(data) }, "return=minimal");
   } catch {
   }
 }
 async function getNodeSkills(nodeId) {
-  const r = await dbFetch(`/node_skills?nodeId=eq.${nodeId}&order=skillId.asc`);
+  const r = await dbFetch2(`/node_skills?nodeId=eq.${nodeId}&order=skillId.asc`);
   return r.data ?? [];
 }
 async function getAllNodeSkills() {
-  const r = await dbFetch("/node_skills?order=nodeId.asc");
+  const r = await dbFetch2("/node_skills?order=nodeId.asc");
   return r.data ?? [];
 }
 async function upsertNodeSkill(data) {
-  await dbFetch(
+  await dbFetch2(
     "/node_skills",
     { method: "POST", body: JSON.stringify(data) },
     "resolution=merge-duplicates"
   );
 }
 async function deleteNodeSkill(nodeId, skillId) {
-  await dbFetch(
+  await dbFetch2(
     `/node_skills?nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`,
     { method: "DELETE" }
   );
 }
 async function deleteAllNodeSkills(nodeId) {
-  await dbFetch(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
+  await dbFetch2(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
 }
 async function setNodeSkillEnabled(nodeId, skillId, isEnabled) {
-  await dbFetch(
+  await dbFetch2(
     `/node_skills?nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`,
     { method: "PATCH", body: JSON.stringify({ isActive: isEnabled }) }
   );
@@ -502,11 +502,9 @@ var init_vite_config = __esm({
           deny: ["**/.*"]
         },
         proxy: {
-          // AutoClip Python FastAPI 后端代理（端口 8000）
           "/api": {
-            target: "http://localhost:8000",
+            target: "http://localhost:8080",
             changeOrigin: true
-            // 注意：autoclip 后端响应可能包含 CORS headers，如有需要可加 rewrite
           }
         }
       }
@@ -1758,7 +1756,7 @@ var MODEL_CONFIGS = {
       return process.env.ZAI_API_KEY || "";
     },
     maxTokens: 8192
-  }
+  },
   // ── AutoClaw（澳龙）本地节点配置说明 ─────────────────────────────────────────
   // AutoClaw 是智谱推出的本地版 OpenClaw（澳龙），需在本地安装运行
   // 它没有独立的云端 API，而是作为本地节点接入 MaoAI
@@ -1768,10 +1766,25 @@ var MODEL_CONFIGS = {
   //   3. 通过 /api/ai/node/register 接口注册本地节点
   //   4. 注册成功后，AutoClaw 将作为 local:<nodeId> 模型出现在模型列表中
   // 注意：AutoClaw 本身不支持 function calling，其 Agent 能力通过 Skills 系统实现
+  // ── 本地 Ollama 模型 ─────────────────────────────────────────────────────────
+  // Ollama 本地运行，无需 API Key，baseUrl 固定为 localhost:11434
+  "ollama-local": {
+    name: "Ollama (Local)",
+    badge: "LOCAL",
+    provider: "ollama",
+    model: process.env.OLLAMA_MODEL || "llama3",
+    baseUrl: "http://localhost:11434/v1",
+    get apiKey() {
+      return "ollama";
+    },
+    // 占位符，Ollama 不需要真实 API Key
+    maxTokens: 4096,
+    isLocal: true
+  }
 };
 
 // server/routers.ts
-import { z as z4 } from "zod";
+import { z as z5 } from "zod";
 
 // server/email.ts
 import nodemailer from "nodemailer";
@@ -2606,6 +2619,452 @@ var salesRouter = router({
   })
 });
 
+// server/accounting.ts
+init_aiNodes();
+import { z as z4 } from "zod";
+var ACCOUNTING_RULES = {
+  "\u529E\u516C\u7528\u54C1": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u529E\u516C\u8D39\u7528\u62A5\u9500" },
+  "\u9910\u996E\u53D1\u7968": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u4E1A\u52A1\u62DB\u5F85\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u4E1A\u52A1\u62DB\u5F85\u8D39" },
+  "\u5DEE\u65C5\u8D39": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u5DEE\u65C5\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u5458\u5DE5\u5DEE\u65C5\u62A5\u9500" },
+  "\u4EA4\u901A\u8D39": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u4EA4\u901A\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u4EA4\u901A\u8D39\u7528\u62A5\u9500" },
+  "\u4F4F\u5BBF\u8D39": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u5DEE\u65C5\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u51FA\u5DEE\u4F4F\u5BBF\u8D39" },
+  "\u54A8\u8BE2\u670D\u52A1": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u54A8\u8BE2\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u54A8\u8BE2\u670D\u52A1\u8D39" },
+  "\u8F6F\u4EF6\u670D\u52A1": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u6280\u672F\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u8F6F\u4EF6\u670D\u52A1\u8D39" },
+  "\u5E7F\u544A\u5BA3\u4F20": { debit_account: "6602 \u9500\u552E\u8D39\u7528-\u5E7F\u544A\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u5E7F\u544A\u5BA3\u4F20\u8D39" },
+  "\u901A\u8BAF\u8D39": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u901A\u8BAF\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u901A\u8BAF\u8D39\u7528" },
+  "\u5FEB\u9012\u8D39": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u5FEB\u9012\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u5FEB\u9012\u90AE\u5BC4\u8D39" },
+  "\u6C34\u7535\u6C14": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u6C34\u7535\u8D39", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u6C34\u7535\u6C14\u8D39\u7528" },
+  "\u623F\u79DF": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u623F\u79DF", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u623F\u5C4B\u79DF\u91D1" },
+  "\u5DE5\u8D44": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u5DE5\u8D44", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u5458\u5DE5\u5DE5\u8D44" },
+  "\u793E\u4FDD": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u793E\u4FDD", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u793E\u4FDD\u516C\u79EF\u91D1" },
+  "\u9ED8\u8BA4": { debit_account: "6602 \u7BA1\u7406\u8D39\u7528-\u5176\u4ED6", credit_account: "1002 \u94F6\u884C\u5B58\u6B3E", description: "\u5176\u4ED6\u8D39\u7528" }
+};
+function classifyInvoice(text) {
+  const patterns = [
+    { pattern: /办公|文具|纸张|打印/i, category: "\u529E\u516C\u7528\u54C1", confidence: 0.9 },
+    { pattern: /餐饮|餐厅|酒店|饭店/i, category: "\u9910\u996E\u53D1\u7968", confidence: 0.85 },
+    { pattern: /差旅|机票|火车|船票/i, category: "\u5DEE\u65C5\u8D39", confidence: 0.9 },
+    { pattern: /交通|打车|滴滴|地铁|公交/i, category: "\u4EA4\u901A\u8D39", confidence: 0.85 },
+    { pattern: /住宿|宾馆|酒店/i, category: "\u4F4F\u5BBF\u8D39", confidence: 0.9 },
+    { pattern: /咨询|顾问|代理/i, category: "\u54A8\u8BE2\u670D\u52A1", confidence: 0.85 },
+    { pattern: /软件|saas|云服务/i, category: "\u8F6F\u4EF6\u670D\u52A1", confidence: 0.9 },
+    { pattern: /广告|宣传|推广/i, category: "\u5E7F\u544A\u5BA3\u4F20", confidence: 0.85 },
+    { pattern: /电话|电信|移动|联通/i, category: "\u901A\u8BAF\u8D39", confidence: 0.9 },
+    { pattern: /快递|邮寄|物流/i, category: "\u5FEB\u9012\u8D39", confidence: 0.85 },
+    { pattern: /水电|燃气|物业/i, category: "\u6C34\u7535\u6C14", confidence: 0.9 },
+    { pattern: /房租|租赁|租金/i, category: "\u623F\u79DF", confidence: 0.95 },
+    { pattern: /工资|薪酬|奖金/i, category: "\u5DE5\u8D44", confidence: 0.95 },
+    { pattern: /社保|公积金|医保/i, category: "\u793E\u4FDD", confidence: 0.95 }
+  ];
+  for (const { pattern, category, confidence } of patterns) {
+    if (pattern.test(text)) {
+      return { category, confidence };
+    }
+  }
+  return { category: "\u9ED8\u8BA4", confidence: 0.5 };
+}
+var accountingRouter = router({
+  // ─── 发票管理 ─────────────────────────────────────────────────────────────
+  /**
+   * 上传发票图片并进行OCR识别
+   */
+  uploadInvoice: protectedProcedure.input(
+    z4.object({
+      imageData: z4.string(),
+      // base64 encoded image
+      invoiceType: z4.enum(["fapiao", "receipt"]).optional().default("fapiao")
+    })
+  ).mutation(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    const ocrResult = await simulateOCR(input.imageData);
+    const { category, confidence } = classifyInvoice(ocrResult.text);
+    const taxRate = ocrResult.taxRate || 0.06;
+    const taxAmount = Math.round(ocrResult.amount * taxRate * 100) / 100;
+    const invoiceData = {
+      open_id: openId,
+      invoice_type: input.invoiceType,
+      amount: ocrResult.amount,
+      tax_amount: taxAmount,
+      title: ocrResult.title || "\u672A\u5F00\u7968",
+      tax_number: ocrResult.taxNumber || "",
+      date: ocrResult.date || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+      items: JSON.stringify(ocrResult.items || []),
+      ocr_confidence: confidence,
+      status: "pending",
+      created_at: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    const r = await dbFetch2("/invoices", {
+      method: "POST",
+      body: JSON.stringify(invoiceData)
+    }, "return=representation");
+    const rows = r.data;
+    const invoiceId = rows?.[0]?.id;
+    if (invoiceId && confidence > 0.6) {
+      const rule = ACCOUNTING_RULES[category] || ACCOUNTING_RULES["\u9ED8\u8BA4"];
+      const voucherNumber = `\u8BB0-${(/* @__PURE__ */ new Date()).getFullYear()}${String((/* @__PURE__ */ new Date()).getMonth() + 1).padStart(2, "0")}${String(Date.now()).slice(-6)}`;
+      await dbFetch2("/journal_entries", {
+        method: "POST",
+        body: JSON.stringify({
+          open_id: openId,
+          invoice_id: invoiceId,
+          voucher_number: voucherNumber,
+          entry_date: invoiceData.date,
+          description: `${rule.description} - ${ocrResult.title}`,
+          debit_account: rule.debit_account,
+          debit_amount: ocrResult.amount,
+          credit_account: rule.credit_account,
+          credit_amount: ocrResult.amount,
+          status: "draft",
+          created_at: (/* @__PURE__ */ new Date()).toISOString()
+        })
+      });
+    }
+    return {
+      success: true,
+      invoiceId,
+      category,
+      confidence,
+      taxAmount,
+      message: `\u53D1\u7968\u8BC6\u522B\u5B8C\u6210\uFF0C\u81EA\u52A8\u5F52\u7C7B\u4E3A"${category}"`
+    };
+  }),
+  /**
+   * 获取发票列表
+   */
+  listInvoices: protectedProcedure.input(
+    z4.object({
+      status: z4.enum(["pending", "processed", "archived"]).optional(),
+      limit: z4.number().optional().default(50)
+    }).optional()
+  ).query(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    let query = `/invoices?open_id=eq.${encodeURIComponent(openId)}&order=created_at.desc`;
+    if (input?.status) {
+      query += `&status=eq.${input.status}`;
+    }
+    if (input?.limit) {
+      query += `&limit=${input.limit}`;
+    }
+    const r = await dbFetch2(query);
+    const invoices = r.data ?? [];
+    return invoices.map((inv) => ({
+      ...inv,
+      items: typeof inv.items === "string" ? JSON.parse(inv.items) : inv.items
+    }));
+  }),
+  /**
+   * 获取发票统计
+   */
+  getInvoiceStats: protectedProcedure.query(async ({ ctx }) => {
+    const openId = ctx.user.openId;
+    const r = await dbFetch2(`/invoices?open_id=eq.${encodeURIComponent(openId)}`);
+    const invoices = r.data ?? [];
+    const stats = {
+      total: invoices.length,
+      pending: invoices.filter((i) => i.status === "pending").length,
+      processed: invoices.filter((i) => i.status === "processed").length,
+      totalAmount: invoices.reduce((sum, i) => sum + (i.amount || 0), 0),
+      totalTax: invoices.reduce((sum, i) => sum + (i.tax_amount || 0), 0),
+      thisMonth: invoices.filter((i) => {
+        const invDate = new Date(i.date);
+        const now = /* @__PURE__ */ new Date();
+        return invDate.getMonth() === now.getMonth() && invDate.getFullYear() === now.getFullYear();
+      }).reduce((sum, i) => sum + (i.amount || 0), 0)
+    };
+    return stats;
+  }),
+  /**
+   * 更新发票状态
+   */
+  updateInvoiceStatus: protectedProcedure.input(
+    z4.object({
+      id: z4.number().int().positive(),
+      status: z4.enum(["pending", "processed", "archived"])
+    })
+  ).mutation(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    await dbFetch2(
+      `/invoices?id=eq.${input.id}&open_id=eq.${encodeURIComponent(openId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: input.status,
+          updated_at: (/* @__PURE__ */ new Date()).toISOString()
+        })
+      }
+    );
+    return { success: true };
+  }),
+  /**
+   * 删除发票
+   */
+  deleteInvoice: protectedProcedure.input(z4.object({ id: z4.number().int().positive() })).mutation(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    await dbFetch2(
+      `/invoices?id=eq.${input.id}&open_id=eq.${encodeURIComponent(openId)}`,
+      { method: "DELETE" }
+    );
+    return { success: true };
+  }),
+  // ─── 记账凭证 ─────────────────────────────────────────────────────────────
+  /**
+   * 获取记账凭证列表
+   */
+  listJournalEntries: protectedProcedure.input(
+    z4.object({
+      status: z4.enum(["draft", "confirmed", "posted"]).optional(),
+      startDate: z4.string().optional(),
+      endDate: z4.string().optional(),
+      limit: z4.number().optional().default(100)
+    }).optional()
+  ).query(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    let query = `/journal_entries?open_id=eq.${encodeURIComponent(openId)}&order=entry_date.desc`;
+    if (input?.status) {
+      query += `&status=eq.${input.status}`;
+    }
+    if (input?.startDate) {
+      query += `&entry_date=gte.${input.startDate}`;
+    }
+    if (input?.endDate) {
+      query += `&entry_date=lte.${input.endDate}`;
+    }
+    if (input?.limit) {
+      query += `&limit=${input.limit}`;
+    }
+    const r = await dbFetch2(query);
+    return r.data ?? [];
+  }),
+  /**
+   * 更新凭证状态
+   */
+  updateJournalStatus: protectedProcedure.input(
+    z4.object({
+      id: z4.number().int().positive(),
+      status: z4.enum(["draft", "confirmed", "posted"])
+    })
+  ).mutation(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    await dbFetch2(
+      `/journal_entries?id=eq.${input.id}&open_id=eq.${encodeURIComponent(openId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: input.status
+        })
+      }
+    );
+    return { success: true };
+  }),
+  /**
+   * 获取财务报表
+   */
+  getFinancialReport: protectedProcedure.input(
+    z4.object({
+      year: z4.number().int().min(2020).max(2100).optional(),
+      month: z4.number().int().min(1).max(12).optional()
+    }).optional()
+  ).query(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    const now = /* @__PURE__ */ new Date();
+    const targetYear = input?.year || now.getFullYear();
+    const targetMonth = input?.month || now.getMonth() + 1;
+    const startDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-01`;
+    const endDate = `${targetYear}-${String(targetMonth).padStart(2, "0")}-31`;
+    const r = await dbFetch2(
+      `/journal_entries?open_id=eq.${encodeURIComponent(openId)}&entry_date=gte.${startDate}&entry_date=lte.${endDate}&status=eq.posted`
+    );
+    const entries = r.data ?? [];
+    const accountStats = {};
+    for (const entry of entries) {
+      accountStats[entry.debit_account] = (accountStats[entry.debit_account] || 0) + entry.debit_amount;
+    }
+    const totalExpenses = entries.reduce((sum, e) => sum + e.debit_amount, 0);
+    const categories = {
+      \u7BA1\u7406\u8D39\u7528: Object.entries(accountStats).filter(([k]) => k.includes("\u7BA1\u7406\u8D39\u7528")).reduce((sum, [, v]) => sum + v, 0),
+      \u9500\u552E\u8D39\u7528: Object.entries(accountStats).filter(([k]) => k.includes("\u9500\u552E\u8D39\u7528")).reduce((sum, [, v]) => sum + v, 0),
+      \u8D22\u52A1\u8D39\u7528: Object.entries(accountStats).filter(([k]) => k.includes("\u8D22\u52A1\u8D39\u7528")).reduce((sum, [, v]) => sum + v, 0),
+      \u5176\u4ED6: Object.entries(accountStats).filter(([k]) => !k.includes("\u7BA1\u7406\u8D39\u7528") && !k.includes("\u9500\u552E\u8D39\u7528") && !k.includes("\u8D22\u52A1\u8D39\u7528")).reduce((sum, [, v]) => sum + v, 0)
+    };
+    return {
+      year: targetYear,
+      month: targetMonth,
+      totalExpenses,
+      categories,
+      accountStats,
+      entryCount: entries.length
+    };
+  }),
+  // ─── 税务日历 ─────────────────────────────────────────────────────────────
+  /**
+   * 获取税务日历
+   */
+  getTaxCalendar: protectedProcedure.input(
+    z4.object({
+      year: z4.number().int().min(2020).max(2100).optional(),
+      month: z4.number().int().min(1).max(12).optional()
+    }).optional()
+  ).query(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    const now = /* @__PURE__ */ new Date();
+    const targetYear = input?.year || now.getFullYear();
+    let query = `/tax_calendar?open_id=eq.${encodeURIComponent(openId)}&order=deadline.asc`;
+    if (input?.month) {
+      const startDate = `${targetYear}-${String(input.month).padStart(2, "0")}-01`;
+      const endDate = `${targetYear}-${String(input.month).padStart(2, "0")}-31`;
+      query += `&deadline=gte.${startDate}&deadline=lte.${endDate}`;
+    }
+    const r = await dbFetch2(query);
+    const userEvents = r.data ?? [];
+    const presetEvents = generatePresetTaxEvents(targetYear, openId);
+    return [...presetEvents, ...userEvents].sort(
+      (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+    );
+  }),
+  /**
+   * 添加税务事件
+   */
+  addTaxEvent: protectedProcedure.input(
+    z4.object({
+      taxType: z4.enum(["vat", "income_tax", "personal_tax", "other"]),
+      eventName: z4.string().min(1).max(200),
+      deadline: z4.string(),
+      description: z4.string().max(500).optional()
+    })
+  ).mutation(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    const r = await dbFetch2("/tax_calendar", {
+      method: "POST",
+      body: JSON.stringify({
+        open_id: openId,
+        tax_type: input.taxType,
+        event_name: input.eventName,
+        deadline: input.deadline,
+        description: input.description || "",
+        status: "pending",
+        created_at: (/* @__PURE__ */ new Date()).toISOString()
+      })
+    }, "return=representation");
+    return { success: true, id: r.data?.[0]?.id };
+  }),
+  /**
+   * 完成税务事件
+   */
+  completeTaxEvent: protectedProcedure.input(z4.object({ id: z4.number().int().positive() })).mutation(async ({ input, ctx }) => {
+    const openId = ctx.user.openId;
+    await dbFetch2(
+      `/tax_calendar?id=eq.${input.id}&open_id=eq.${encodeURIComponent(openId)}`,
+      { method: "PATCH", body: JSON.stringify({ status: "completed" }) }
+    );
+    return { success: true };
+  }),
+  // ─── 智能记账建议 ─────────────────────────────────────────────────────────
+  /**
+   * 获取智能记账建议
+   */
+  getAccountingSuggestions: protectedProcedure.input(
+    z4.object({
+      keyword: z4.string().min(1).max(100)
+    })
+  ).query(async ({ input }) => {
+    const keyword = input.keyword.toLowerCase();
+    const matches = Object.entries(ACCOUNTING_RULES).filter(
+      ([key]) => key.includes(input.keyword) || keyword.includes(key.toLowerCase())
+    );
+    if (matches.length > 0) {
+      return matches.map(([_, rule]) => ({
+        category: _,
+        ...rule
+      }));
+    }
+    return [
+      {
+        category: "\u9ED8\u8BA4",
+        ...ACCOUNTING_RULES["\u9ED8\u8BA4"]
+      }
+    ];
+  }),
+  /**
+   * 获取会计科目列表
+   */
+  getAccountCategories: publicProcedure.query(() => {
+    return Object.entries(ACCOUNTING_RULES).map(([category, rule]) => ({
+      category,
+      ...rule
+    }));
+  })
+});
+async function simulateOCR(imageData) {
+  await new Promise((resolve3) => setTimeout(resolve3, 500));
+  const amount = Math.round((Math.random() * 5e3 + 100) * 100) / 100;
+  const taxRates = [0.03, 0.06, 0.09, 0.13];
+  return {
+    amount,
+    taxRate: taxRates[Math.floor(Math.random() * taxRates.length)],
+    title: "\u4E0A\u6D77\u793A\u4F8B\u79D1\u6280\u6709\u9650\u516C\u53F8",
+    taxNumber: `91310000MA1FL${String(Math.floor(Math.random() * 1e5)).padStart(6, "0")}`,
+    date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+    text: "\u529E\u516C\u7528\u54C1\u91C7\u8D2D",
+    items: [
+      {
+        description: "\u529E\u516C\u7528\u54C1",
+        quantity: 1,
+        unit_price: amount,
+        amount,
+        tax_rate: taxRates[Math.floor(Math.random() * taxRates.length)],
+        tax_amount: Math.round(amount * 0.06 * 100) / 100
+      }
+    ]
+  };
+}
+function generatePresetTaxEvents(year, openId) {
+  const events = [];
+  for (let month = 1; month <= 12; month++) {
+    events.push({
+      id: -month,
+      open_id: openId,
+      tax_type: "vat",
+      event_name: `${month}\u6708\u589E\u503C\u7A0E\u7533\u62A5`,
+      deadline: `${year}-${String(month).padStart(2, "0")}-15`,
+      description: `\u589E\u503C\u7A0E\u53CA\u9644\u52A0\u7A0E\u8D39\u7533\u62A5\u622A\u6B62\u65E5\uFF08\u5B63\u5EA6\u5185\u6708\u5EA6\u7533\u62A5\uFF09`,
+      status: /* @__PURE__ */ new Date() > /* @__PURE__ */ new Date(`${year}-${String(month).padStart(2, "0")}-15`) ? "completed" : "pending",
+      created_at: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  }
+  const quarters = [
+    { month: 4, label: "\u7B2C\u4E00\u5B63\u5EA6" },
+    { month: 7, label: "\u7B2C\u4E8C\u5B63\u5EA6" },
+    { month: 10, label: "\u7B2C\u4E09\u5B63\u5EA6" },
+    { month: 1, label: "\u7B2C\u56DB\u5B63\u5EA6" }
+  ];
+  quarters.forEach((q, i) => {
+    const actualYear = q.month === 1 ? year + 1 : year;
+    events.push({
+      id: -(100 + i),
+      open_id: openId,
+      tax_type: "income_tax",
+      event_name: `${q.label}\u4F01\u4E1A\u6240\u5F97\u7A0E\u9884\u7F34`,
+      deadline: `${actualYear}-${String(q.month).padStart(2, "0")}-15`,
+      description: `\u4F01\u4E1A\u6240\u5F97\u7A0E\u5B63\u5EA6\u9884\u7F34\u7533\u62A5\u622A\u6B62\u65E5`,
+      status: /* @__PURE__ */ new Date() > /* @__PURE__ */ new Date(`${actualYear}-${String(q.month).padStart(2, "0")}-15`) ? "completed" : "pending",
+      created_at: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  });
+  for (let month = 1; month <= 12; month++) {
+    events.push({
+      id: -(200 + month),
+      open_id: openId,
+      tax_type: "personal_tax",
+      event_name: `${month}\u6708\u4E2A\u4EBA\u6240\u5F97\u7A0E\u7533\u62A5`,
+      deadline: `${year}-${String(month).padStart(2, "0")}-07`,
+      description: `\u4E2A\u4EBA\u6240\u5F97\u7A0E\u4EE3\u6263\u4EE3\u7F34\u7533\u62A5\u622A\u6B62\u65E5`,
+      status: /* @__PURE__ */ new Date() > /* @__PURE__ */ new Date(`${year}-${String(month).padStart(2, "0")}-07`) ? "completed" : "pending",
+      created_at: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  }
+  return events;
+}
+
 // server/video.ts
 var RUNWAY_API_URL = "https://api.useapi.net/v1/runwayml";
 var KLING_API_URL = "https://api.klingapi.com/v1";
@@ -3039,6 +3498,7 @@ var appRouter = router({
   system: systemRouter,
   autoclip: autoclipRouter,
   sales: salesRouter,
+  accounting: accountingRouter,
   video: router({
     // 获取可用视频模型列表
     listModels: publicProcedure.query(() => {
@@ -3046,14 +3506,14 @@ var appRouter = router({
     }),
     // 文生视频 / 图生视频
     generate: protectedProcedure.input(
-      z4.object({
-        prompt: z4.string().min(1).max(5e3),
-        model: z4.string().optional(),
-        duration: z4.number().int().min(1).max(15).optional(),
-        aspectRatio: z4.enum(["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"]).optional(),
-        imageUrl: z4.string().url().optional(),
-        negativePrompt: z4.string().max(1e3).optional(),
-        seed: z4.number().int().optional()
+      z5.object({
+        prompt: z5.string().min(1).max(5e3),
+        model: z5.string().optional(),
+        duration: z5.number().int().min(1).max(15).optional(),
+        aspectRatio: z5.enum(["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"]).optional(),
+        imageUrl: z5.string().url().optional(),
+        negativePrompt: z5.string().max(1e3).optional(),
+        seed: z5.number().int().optional()
       })
     ).mutation(async ({ input }) => {
       const options = {
@@ -3074,9 +3534,9 @@ var appRouter = router({
     }),
     // 查询任务状态
     getStatus: protectedProcedure.input(
-      z4.object({
-        taskId: z4.string(),
-        provider: z4.enum(["runway", "kling", "jimeng"])
+      z5.object({
+        taskId: z5.string(),
+        provider: z5.enum(["runway", "kling", "jimeng"])
       })
     ).query(async ({ input }) => {
       return await getVideoTaskStatus(input.taskId, input.provider);
@@ -3100,9 +3560,9 @@ var appRouter = router({
     }),
     // Admin: update user role
     updateUserRole: protectedProcedure.input(
-      z4.object({
-        userId: z4.number().int().positive(),
-        role: z4.enum(["user", "admin"])
+      z5.object({
+        userId: z5.number().int().positive(),
+        role: z5.enum(["user", "admin"])
       })
     ).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") {
@@ -3115,12 +3575,12 @@ var appRouter = router({
   // Contact form submission with email notification
   contact: router({
     submit: publicProcedure.input(
-      z4.object({
-        name: z4.string().min(1).max(128),
-        company: z4.string().min(1).max(256),
-        phone: z4.string().min(1).max(64),
-        message: z4.string().max(2e3).optional(),
-        email: z4.string().email().optional()
+      z5.object({
+        name: z5.string().min(1).max(128),
+        company: z5.string().min(1).max(256),
+        phone: z5.string().min(1).max(64),
+        message: z5.string().max(2e3).optional(),
+        email: z5.string().email().optional()
       })
     ).mutation(async ({ input }) => {
       const adminEmail = process.env.SMTP_USER || "";
@@ -3159,11 +3619,11 @@ var appRouter = router({
   // Mao Think Tank consultation application
   mao: router({
     submitApplication: publicProcedure.input(
-      z4.object({
-        name: z4.string().min(1).max(128),
-        organization: z4.string().min(1).max(256),
-        consultType: z4.string().min(1).max(128),
-        description: z4.string().max(2e3).optional()
+      z5.object({
+        name: z5.string().min(1).max(128),
+        organization: z5.string().min(1).max(256),
+        consultType: z5.string().min(1).max(128),
+        description: z5.string().max(2e3).optional()
       })
     ).mutation(async ({ input }) => {
       await createMaoApplication({
@@ -3191,8 +3651,8 @@ var appRouter = router({
     }),
     // Subscribe to strategic brief
     subscribeBrief: publicProcedure.input(
-      z4.object({
-        email: z4.string().email()
+      z5.object({
+        email: z5.string().email()
       })
     ).mutation(async ({ input }) => {
       await subscribeBrief(input.email);
@@ -3211,9 +3671,9 @@ var appRouter = router({
     }),
     // Admin: update application status (protected - admin only)
     updateApplicationStatus: protectedProcedure.input(
-      z4.object({
-        id: z4.number().int().positive(),
-        status: z4.enum(["pending", "approved", "rejected", "reviewing"])
+      z5.object({
+        id: z5.number().int().positive(),
+        status: z5.enum(["pending", "approved", "rejected", "reviewing"])
       })
     ).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") {
@@ -3224,9 +3684,9 @@ var appRouter = router({
     }),
     // Admin: update application notes (protected - admin only)
     updateApplicationNotes: protectedProcedure.input(
-      z4.object({
-        id: z4.number().int().positive(),
-        notes: z4.string().max(2e3)
+      z5.object({
+        id: z5.number().int().positive(),
+        notes: z5.string().max(2e3)
       })
     ).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") {
@@ -3237,9 +3697,9 @@ var appRouter = router({
     }),
     // Admin: send newsletter to all subscribers (protected - admin only)
     sendNewsletter: protectedProcedure.input(
-      z4.object({
-        subject: z4.string().min(1).max(256),
-        content: z4.string().min(1).max(1e4)
+      z5.object({
+        subject: z5.string().min(1).max(256),
+        content: z5.string().min(1).max(1e4)
       })
     ).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") {
@@ -3257,15 +3717,21 @@ var appRouter = router({
   // ─── AI 模型 / 状态 / 预设 ────────────────────────────────────────────────
   ai: router({
     models: publicProcedure.query(async () => {
-      return Object.entries(MODEL_CONFIGS).map(([id, cfg]) => ({
-        id,
-        name: cfg.name,
-        badge: cfg.badge,
-        provider: cfg.provider,
-        supportsVision: cfg.supportsVision ?? false,
-        configured: !!cfg.apiKey,
-        available: !!cfg.apiKey
-      }));
+      return Object.entries(MODEL_CONFIGS).map(([id, cfg]) => {
+        const isLocal = cfg.isLocal ?? false;
+        const hasApiKey = !!cfg.apiKey;
+        return {
+          id,
+          name: cfg.name,
+          badge: cfg.badge,
+          provider: cfg.provider,
+          supportsVision: cfg.supportsVision ?? false,
+          configured: isLocal || hasApiKey,
+          available: isLocal || hasApiKey,
+          // 本地模型总是可用（如果 Ollama 服务运行中）
+          isLocal
+        };
+      });
     }),
     status: publicProcedure.query(async () => {
       const nodes = await getAiNodes();
@@ -3273,7 +3739,13 @@ var appRouter = router({
       return {
         ok: true,
         models: Object.entries(MODEL_CONFIGS).reduce((acc, [id, cfg]) => {
-          acc[id] = { name: cfg.name, configured: !!cfg.apiKey, badge: cfg.badge };
+          const isLocal = cfg.isLocal ?? false;
+          acc[id] = {
+            name: cfg.name,
+            configured: isLocal || !!cfg.apiKey,
+            badge: cfg.badge,
+            isLocal
+          };
           return acc;
         }, {}),
         nodes: { total: nodes.length, online: onlineNodes },
@@ -3281,12 +3753,12 @@ var appRouter = router({
       };
     }),
     presets: publicProcedure.query(async () => {
-      const r = await dbFetch("/system_prompts?is_active=eq.true&order=sort_order.asc");
+      const r = await dbFetch2("/system_prompts?is_active=eq.true&order=sort_order.asc");
       return r.data ?? [];
     }),
-    chat: protectedProcedure.input(z4.object({
-      messages: z4.array(z4.object({ role: z4.string(), content: z4.string() })),
-      modelId: z4.string().optional()
+    chat: protectedProcedure.input(z5.object({
+      messages: z5.array(z5.object({ role: z5.string(), content: z5.string() })),
+      modelId: z5.string().optional()
     })).mutation(async ({ input }) => {
       return { message: "Use /api/ai/stream for streaming chat", modelId: input.modelId };
     })
@@ -3297,39 +3769,39 @@ var appRouter = router({
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       return await getAiNodes();
     }),
-    create: protectedProcedure.input(z4.object({
-      name: z4.string(),
-      baseUrl: z4.string().url(),
-      token: z4.string(),
-      type: z4.string().optional(),
-      modelId: z4.string().optional(),
-      isLocal: z4.boolean().optional(),
-      isPaid: z4.boolean().optional(),
-      isActive: z4.boolean().optional()
+    create: protectedProcedure.input(z5.object({
+      name: z5.string(),
+      baseUrl: z5.string().url(),
+      token: z5.string(),
+      type: z5.string().optional(),
+      modelId: z5.string().optional(),
+      isLocal: z5.boolean().optional(),
+      isPaid: z5.boolean().optional(),
+      isActive: z5.boolean().optional()
     })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       return await createAiNode({ ...input, isOnline: false });
     }),
-    update: protectedProcedure.input(z4.object({
-      id: z4.number().int().positive(),
-      name: z4.string().optional(),
-      baseUrl: z4.string().url().optional(),
-      token: z4.string().optional(),
-      isActive: z4.boolean().optional(),
-      isPaid: z4.boolean().optional(),
-      isLocal: z4.boolean().optional()
+    update: protectedProcedure.input(z5.object({
+      id: z5.number().int().positive(),
+      name: z5.string().optional(),
+      baseUrl: z5.string().url().optional(),
+      token: z5.string().optional(),
+      isActive: z5.boolean().optional(),
+      isPaid: z5.boolean().optional(),
+      isLocal: z5.boolean().optional()
     })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       const { id, ...data } = input;
       await updateAiNode(id, data);
       return { success: true };
     }),
-    delete: protectedProcedure.input(z4.object({ id: z4.number().int().positive() })).mutation(async ({ input, ctx }) => {
+    delete: protectedProcedure.input(z5.object({ id: z5.number().int().positive() })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
-      await dbFetch(`/ai_nodes?id=eq.${input.id}`, { method: "DELETE" });
+      await dbFetch2(`/ai_nodes?id=eq.${input.id}`, { method: "DELETE" });
       return { success: true };
     }),
-    ping: protectedProcedure.input(z4.object({ id: z4.number().int().positive() })).mutation(async ({ input, ctx }) => {
+    ping: protectedProcedure.input(z5.object({ id: z5.number().int().positive() })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       const node = await getAiNodeById(input.id);
       if (!node) throw new TRPCError4({ code: "NOT_FOUND" });
@@ -3344,15 +3816,15 @@ var appRouter = router({
         return { ok: false, online: false, latency: null, pingMs: null };
       }
     }),
-    getSkills: protectedProcedure.input(z4.object({ nodeId: z4.number().int().positive().optional() })).query(async ({ input, ctx }) => {
+    getSkills: protectedProcedure.input(z5.object({ nodeId: z5.number().int().positive().optional() })).query(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       const skills = input.nodeId ? await getNodeSkills(input.nodeId) : await getAllNodeSkills();
       return { skills };
     }),
-    toggleSkill: protectedProcedure.input(z4.object({
-      nodeId: z4.number().int().positive(),
-      skillId: z4.string(),
-      isEnabled: z4.boolean()
+    toggleSkill: protectedProcedure.input(z5.object({
+      nodeId: z5.number().int().positive(),
+      skillId: z5.string(),
+      isEnabled: z5.boolean()
     })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       await setNodeSkillEnabled(input.nodeId, input.skillId, input.isEnabled);
@@ -3365,46 +3837,46 @@ var appRouter = router({
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       return await getRoutingRules();
     }),
-    create: protectedProcedure.input(z4.object({
-      name: z4.string(),
-      mode: z4.string(),
-      nodeIds: z4.string().optional(),
-      priority: z4.number().optional(),
-      isDefault: z4.boolean().optional(),
-      isActive: z4.boolean().optional(),
-      failover: z4.boolean().optional(),
-      loadBalance: z4.string().optional()
+    create: protectedProcedure.input(z5.object({
+      name: z5.string(),
+      mode: z5.string(),
+      nodeIds: z5.string().optional(),
+      priority: z5.number().optional(),
+      isDefault: z5.boolean().optional(),
+      isActive: z5.boolean().optional(),
+      failover: z5.boolean().optional(),
+      loadBalance: z5.string().optional()
     })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
-      const r = await dbFetch("/routing_rules", { method: "POST", body: input }, "return=representation");
+      const r = await dbFetch2("/routing_rules", { method: "POST", body: input }, "return=representation");
       return r.data?.[0] ?? null;
     }),
-    update: protectedProcedure.input(z4.object({
-      id: z4.number().int().positive(),
-      name: z4.string().optional(),
-      mode: z4.string().optional(),
-      nodeIds: z4.string().optional(),
-      priority: z4.number().optional(),
-      isDefault: z4.boolean().optional(),
-      isActive: z4.boolean().optional(),
-      failover: z4.boolean().optional(),
-      loadBalance: z4.string().optional()
+    update: protectedProcedure.input(z5.object({
+      id: z5.number().int().positive(),
+      name: z5.string().optional(),
+      mode: z5.string().optional(),
+      nodeIds: z5.string().optional(),
+      priority: z5.number().optional(),
+      isDefault: z5.boolean().optional(),
+      isActive: z5.boolean().optional(),
+      failover: z5.boolean().optional(),
+      loadBalance: z5.string().optional()
     })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       const { id, ...data } = input;
-      await dbFetch(`/routing_rules?id=eq.${id}`, { method: "PATCH", body: data });
+      await dbFetch2(`/routing_rules?id=eq.${id}`, { method: "PATCH", body: data });
       return { success: true };
     }),
-    delete: protectedProcedure.input(z4.object({ id: z4.number().int().positive() })).mutation(async ({ input, ctx }) => {
+    delete: protectedProcedure.input(z5.object({ id: z5.number().int().positive() })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
-      await dbFetch(`/routing_rules?id=eq.${input.id}`, { method: "DELETE" });
+      await dbFetch2(`/routing_rules?id=eq.${input.id}`, { method: "DELETE" });
       return { success: true };
     })
   }),
   // ─── 计费 / 订阅 ──────────────────────────────────────────────────────────
   billing: router({
     mySubscription: protectedProcedure.query(async ({ ctx }) => {
-      const r = await dbFetch(`/user_subscriptions?open_id=eq.${encodeURIComponent(ctx.user.openId)}&limit=1`);
+      const r = await dbFetch2(`/user_subscriptions?open_id=eq.${encodeURIComponent(ctx.user.openId)}&limit=1`);
       const rows = r.data;
       const row = rows?.[0];
       return {
@@ -3424,11 +3896,11 @@ var appRouter = router({
         contentUsed: row?.content_used ?? 0
       };
     }),
-    createOrder: protectedProcedure.input(z4.object({
-      plan: z4.enum(["content", "strategic"]),
-      amount: z4.number().optional()
+    createOrder: protectedProcedure.input(z5.object({
+      plan: z5.enum(["content", "strategic"]),
+      amount: z5.number().optional()
     })).mutation(async ({ input, ctx }) => {
-      const r = await dbFetch("/orders", {
+      const r = await dbFetch2("/orders", {
         method: "POST",
         body: {
           user_open_id: ctx.user.openId,
@@ -3444,15 +3916,15 @@ var appRouter = router({
   }),
   // ─── 对话历史 ─────────────────────────────────────────────────────────────
   conversations: router({
-    list: protectedProcedure.input(z4.object({ limit: z4.number().optional() }).optional()).query(async ({ ctx, input }) => {
+    list: protectedProcedure.input(z5.object({ limit: z5.number().optional() }).optional()).query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 50;
-      const r = await dbFetch(
+      const r = await dbFetch2(
         `/conversations?open_id=eq.${encodeURIComponent(ctx.user.openId)}&order=updated_at.desc&limit=${limit}`
       );
       return r.data ?? [];
     }),
-    create: protectedProcedure.input(z4.object({ title: z4.string().optional(), model: z4.string().optional() })).mutation(async ({ input, ctx }) => {
-      const r = await dbFetch("/conversations", {
+    create: protectedProcedure.input(z5.object({ title: z5.string().optional(), model: z5.string().optional() })).mutation(async ({ input, ctx }) => {
+      const r = await dbFetch2("/conversations", {
         method: "POST",
         body: {
           open_id: ctx.user.openId,
@@ -3465,20 +3937,20 @@ var appRouter = router({
       const rows = r.data;
       return rows?.[0] ?? null;
     }),
-    update: protectedProcedure.input(z4.object({ id: z4.union([z4.string(), z4.number()]), title: z4.string().optional(), model: z4.string().optional() })).mutation(async ({ input, ctx }) => {
+    update: protectedProcedure.input(z5.object({ id: z5.union([z5.string(), z5.number()]), title: z5.string().optional(), model: z5.string().optional() })).mutation(async ({ input, ctx }) => {
       const id = String(input.id);
       const patch = { updated_at: (/* @__PURE__ */ new Date()).toISOString() };
       if (input.title !== void 0) patch.title = input.title;
       if (input.model !== void 0) patch.model = input.model;
-      await dbFetch(
+      await dbFetch2(
         `/conversations?id=eq.${id}&open_id=eq.${encodeURIComponent(ctx.user.openId)}`,
         { method: "PATCH", body: patch }
       );
       return { success: true };
     }),
-    delete: protectedProcedure.input(z4.object({ id: z4.union([z4.string(), z4.number()]) })).mutation(async ({ input, ctx }) => {
+    delete: protectedProcedure.input(z5.object({ id: z5.union([z5.string(), z5.number()]) })).mutation(async ({ input, ctx }) => {
       const id = String(input.id);
-      await dbFetch(
+      await dbFetch2(
         `/conversations?id=eq.${id}&open_id=eq.${encodeURIComponent(ctx.user.openId)}`,
         { method: "DELETE" }
       );
@@ -3487,24 +3959,24 @@ var appRouter = router({
   }),
   // ─── 消息记录 ─────────────────────────────────────────────────────────────
   messages: router({
-    list: protectedProcedure.input(z4.object({ conversationId: z4.union([z4.string(), z4.number()]), limit: z4.number().optional() })).query(async ({ input }) => {
+    list: protectedProcedure.input(z5.object({ conversationId: z5.union([z5.string(), z5.number()]), limit: z5.number().optional() })).query(async ({ input }) => {
       const convId = String(input.conversationId);
       const limit = input.limit ?? 100;
-      const r = await dbFetch(
+      const r = await dbFetch2(
         `/messages?conversation_id=eq.${encodeURIComponent(convId)}&order=created_at.asc&limit=${limit}`
       );
       return r.data ?? [];
     }),
-    save: protectedProcedure.input(z4.object({
-      conversationId: z4.union([z4.string(), z4.number()]),
-      role: z4.enum(["user", "assistant", "system"]),
-      content: z4.string(),
-      modelId: z4.string().optional(),
-      model: z4.string().optional()
+    save: protectedProcedure.input(z5.object({
+      conversationId: z5.union([z5.string(), z5.number()]),
+      role: z5.enum(["user", "assistant", "system"]),
+      content: z5.string(),
+      modelId: z5.string().optional(),
+      model: z5.string().optional()
       // alias for modelId
     })).mutation(async ({ input }) => {
       const convId = String(input.conversationId);
-      const r = await dbFetch("/messages", {
+      const r = await dbFetch2("/messages", {
         method: "POST",
         body: {
           conversation_id: convId,
@@ -3520,14 +3992,14 @@ var appRouter = router({
   }),
   // ─── 千禧钟预约 ──────────────────────────────────────────────────────────
   millenniumClock: router({
-    createReservation: publicProcedure.input(z4.object({
-      name: z4.string().min(1).max(64),
-      phone: z4.string().min(1).max(32),
-      email: z4.string().email().optional(),
-      message: z4.string().max(500).optional(),
-      visitDate: z4.string().optional()
+    createReservation: publicProcedure.input(z5.object({
+      name: z5.string().min(1).max(64),
+      phone: z5.string().min(1).max(32),
+      email: z5.string().email().optional(),
+      message: z5.string().max(500).optional(),
+      visitDate: z5.string().optional()
     })).mutation(async ({ input }) => {
-      const r = await dbFetch("/millennium_clock_reservations", {
+      const r = await dbFetch2("/millennium_clock_reservations", {
         method: "POST",
         body: { ...input, status: "pending", created_at: (/* @__PURE__ */ new Date()).toISOString() }
       }, "return=representation");
@@ -3543,21 +4015,21 @@ var appRouter = router({
     }),
     getReservations: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
-      const r = await dbFetch("/millennium_clock_reservations?order=created_at.desc");
+      const r = await dbFetch2("/millennium_clock_reservations?order=created_at.desc");
       return r.data ?? [];
     })
   }),
   // ─── 咨询询价 ─────────────────────────────────────────────────────────────
   consulting: router({
-    createInquiry: publicProcedure.input(z4.object({
-      name: z4.string().min(1).max(128),
-      company: z4.string().max(256).optional(),
-      email: z4.string().email().optional(),
-      phone: z4.string().max(64).optional(),
-      service: z4.string().max(256).optional(),
-      message: z4.string().max(5e3).optional()
+    createInquiry: publicProcedure.input(z5.object({
+      name: z5.string().min(1).max(128),
+      company: z5.string().max(256).optional(),
+      email: z5.string().email().optional(),
+      phone: z5.string().max(64).optional(),
+      service: z5.string().max(256).optional(),
+      message: z5.string().max(5e3).optional()
     })).mutation(async ({ input }) => {
-      const r = await dbFetch("/consulting_inquiries", {
+      const r = await dbFetch2("/consulting_inquiries", {
         method: "POST",
         body: { ...input, status: "pending", created_at: (/* @__PURE__ */ new Date()).toISOString() }
       }, "return=representation");
@@ -3573,17 +4045,17 @@ var appRouter = router({
     }),
     getInquiries: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
-      const r = await dbFetch("/consulting_inquiries?order=created_at.desc");
+      const r = await dbFetch2("/consulting_inquiries?order=created_at.desc");
       return r.data ?? [];
     }),
-    updateStatus: protectedProcedure.input(z4.object({
-      id: z4.number().int().positive(),
-      status: z4.string(),
+    updateStatus: protectedProcedure.input(z5.object({
+      id: z5.number().int().positive(),
+      status: z5.string(),
       // flexible status: pending/contacted/closed/new/signed/dropped/etc
-      notes: z4.string().optional()
+      notes: z5.string().optional()
     })).mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
-      await dbFetch(`/consulting_inquiries?id=eq.${input.id}`, {
+      await dbFetch2(`/consulting_inquiries?id=eq.${input.id}`, {
         method: "PATCH",
         body: { status: input.status, notes: input.notes ?? null, updated_at: (/* @__PURE__ */ new Date()).toISOString() }
       });
@@ -3592,10 +4064,10 @@ var appRouter = router({
   }),
   // ─── 节点日志 ─────────────────────────────────────────────────────────────
   logs: router({
-    list: protectedProcedure.input(z4.object({ limit: z4.number().int().min(1).max(500).optional() })).query(async ({ ctx, input }) => {
+    list: protectedProcedure.input(z5.object({ limit: z5.number().int().min(1).max(500).optional() })).query(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") throw new TRPCError4({ code: "FORBIDDEN" });
       const limit = input?.limit ?? 100;
-      const r = await dbFetch(`/node_logs?order=created_at.desc&limit=${limit}`);
+      const r = await dbFetch2(`/node_logs?order=created_at.desc&limit=${limit}`);
       return r.data ?? [];
     })
   })
@@ -3624,7 +4096,7 @@ import path3 from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 var __filename = fileURLToPath(import.meta.url);
-var __dirname = path3.dirname(__filename);
+var __dirname2 = path3.dirname(__filename);
 async function setupVite(app, server) {
   const serverOptions = {
     middlewareMode: true,
@@ -3649,7 +4121,7 @@ async function setupVite(app, server) {
     }
     try {
       const clientTemplate = path3.resolve(
-        __dirname,
+        __dirname2,
         "../..",
         "client",
         "index.html"
@@ -3668,7 +4140,7 @@ async function setupVite(app, server) {
   });
 }
 function serveStatic(app) {
-  const distPath = path3.resolve(__dirname, "..", "..", "dist", "public");
+  const distPath = path3.resolve(__dirname2, "..", "..", "dist", "public");
   if (!fs3.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
@@ -3682,6 +4154,7 @@ function serveStatic(app) {
 
 // server/aiStream.ts
 import { Router as Router2 } from "express";
+import { spawn as spawn2 } from "child_process";
 init_db();
 init_aiNodes();
 import mammoth from "mammoth";
@@ -4535,8 +5008,8 @@ import * as path5 from "path";
 import { fileURLToPath as fileURLToPath2 } from "url";
 var execAsync2 = promisify3(exec2);
 var __filename2 = fileURLToPath2(import.meta.url);
-var __dirname2 = path5.dirname(__filename2);
-var CLAUDE_CODE_DIR = path5.resolve(__dirname2, "../../claude-code-python");
+var __dirname3 = path5.dirname(__filename2);
+var CLAUDE_CODE_DIR = path5.resolve(__dirname3, "../../claude-code-python");
 async function isClaudeCodeAvailable() {
   try {
     await fs5.access(CLAUDE_CODE_DIR);
@@ -5213,6 +5686,87 @@ var TOOL_DEFINITIONS = [
         required: ["projectPath"]
       }
     }
+  },
+  // ─── Manus Max: HyperAgents ReAct 自主循环引擎 ──────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "run_agent_loop",
+      description: "\u542F\u52A8 HyperAgents Python \u5F15\u64CE\uFF0C\u8FD0\u884C ReAct \u63A8\u7406\u5FAA\u73AF\uFF08Thought\u2192Action\u2192Observation\u2192Score\u2192Patch\u2192Repeat\uFF09\uFF0C\u652F\u6301\u4EE3\u7801\u5DE5\u7A0B\u3001\u6DF1\u5EA6\u7814\u7A76\u3001\u901A\u7528\u4EFB\u52A1\u3002\u81EA\u52A8\u8C03\u7528\u5DE5\u5177\u3001\u6267\u884C\u9A8C\u8BC1\u3001\u8FD4\u56DE\u6700\u7EC8\u7B54\u6848\u3002\u8FD9\u662F MaoAI Manus Max \u67B6\u6784\u7684\u6838\u5FC3\u80FD\u529B\uFF0C\u9002\u5408\u590D\u6742\u591A\u6B65\u9AA4\u4EFB\u52A1\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          task: {
+            type: "string",
+            description: "\u4EFB\u52A1\u63CF\u8FF0\uFF08\u53EF\u4EE5\u662F\u4EE3\u7801\u4F18\u5316\u3001\u6DF1\u5EA6\u7814\u7A76\u3001\u590D\u6742\u5206\u6790\u7B49\uFF09"
+          },
+          domain: {
+            type: "string",
+            enum: ["coding", "research", "general"],
+            description: "\u9886\u57DF\uFF1Acoding\uFF08\u4EE3\u7801\u5DE5\u7A0B\uFF09\u3001research\uFF08\u6DF1\u5EA6\u7814\u7A76\uFF09\u3001general\uFF08\u901A\u7528\uFF09",
+            default: "general"
+          },
+          workspace: {
+            type: "string",
+            description: "\u5DE5\u4F5C\u76EE\u5F55\u8DEF\u5F84\uFF08\u7528\u4E8E\u4EE3\u7801\u5DE5\u7A0B\uFF09\uFF0C\u9ED8\u8BA4 /Users/daiyan/Desktop/mcmamoo-website"
+          }
+        },
+        required: ["task"]
+      }
+    }
+  },
+  // ─── 猫眼内容平台：视频合成引擎 ───────────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "video_composer",
+      description: "\u4F7F\u7528 MoviePy \u5C06\u56FE\u7247\u5E8F\u5217\u3001\u914D\u97F3\u97F3\u9891\u548C\u5B57\u5E55\u6587\u4EF6\u5408\u6210\u77ED\u89C6\u9891\u3002\u652F\u6301\u9ED1\u91D1\u98CE\u683C\u5B57\u5E55\u3001\u81EA\u52A8\u4EA4\u53C9\u6DE1\u5165\u6DE1\u51FA\u3001BGM\u6DF7\u97F3\u3002\u53C2\u6570\u5305\u62EC\u56FE\u7247\u8DEF\u5F84\u5217\u8868\u3001\u65C1\u767D\u97F3\u9891\u8DEF\u5F84\u3001SRT\u5B57\u5E55\u6587\u4EF6\u3001\u8F93\u51FA\u89C6\u9891\u8DEF\u5F84\u548C\u53EF\u9009\u7684BGM\u8DEF\u5F84\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          image_paths: {
+            type: "array",
+            items: { type: "string" },
+            description: "\u56FE\u7247\u8DEF\u5F84\u5217\u8868\uFF08\u5EFA\u8BAE\u6BCF\u5F20\u56FE\u5BF9\u5E94\u4E00\u4E2A\u5206\u955C\uFF09\uFF0C\u652F\u6301 JPG\u3001PNG"
+          },
+          audio_path: {
+            type: "string",
+            description: "\u65C1\u767D\u914D\u97F3\u6587\u4EF6\u8DEF\u5F84\uFF0C\u652F\u6301 MP3\u3001WAV"
+          },
+          srt_path: {
+            type: "string",
+            description: "\u5B57\u5E55\u6587\u4EF6\u8DEF\u5F84\uFF08SRT \u683C\u5F0F\uFF09"
+          },
+          output_path: {
+            type: "string",
+            description: "\u8F93\u51FA\u89C6\u9891\u8DEF\u5F84\uFF0C\u5EFA\u8BAE .mp4 \u683C\u5F0F"
+          },
+          bgm_path: {
+            type: "string",
+            description: "\u53EF\u9009\u80CC\u666F\u97F3\u4E50\u8DEF\u5F84\uFF0C\u7528\u4E8E\u6DFB\u52A0 BGM"
+          }
+        },
+        required: ["image_paths", "audio_path", "srt_path", "output_path"]
+      }
+    }
+  },
+  // ─── 猫眼内容平台：视频合成状态查询 ──────────────────────────────────────
+  {
+    type: "function",
+    function: {
+      name: "video_compose_status",
+      description: "\u67E5\u8BE2\u89C6\u9891\u5408\u6210\u4EFB\u52A1\u7684\u72B6\u6001\u3002\u8FD4\u56DE\u5F53\u524D\u8FDB\u5EA6\u3001\u5DF2\u5408\u6210\u65F6\u957F\u3001\u9884\u8BA1\u5269\u4F59\u65F6\u95F4\u7B49\u4FE1\u606F\u3002",
+      parameters: {
+        type: "object",
+        properties: {
+          taskId: {
+            type: "string",
+            description: "\u89C6\u9891\u5408\u6210\u4EFB\u52A1 ID\uFF08\u7531 video_composer \u8FD4\u56DE\uFF09"
+          }
+        },
+        required: ["taskId"]
+      }
+    }
   }
 ];
 TOOL_DEFINITIONS.push(...OPENCLAW_TOOL_DEFINITIONS);
@@ -5364,6 +5918,14 @@ async function executeTool(toolName, args, isAdmin = false) {
       // ─── Phase 4 TDD 自我修正 ─────────────────────────────────────────────
       case "run_npm_test":
         return await toolRunNpmTest(args.projectPath, args.testCommand, args.timeout);
+      // ─── Manus Max: HyperAgents ReAct 引擎 ────────────────────────────────
+      case "run_agent_loop":
+        return await toolRunAgentLoop(args.task, args.domain, args.workspace);
+      // ─── 猫眼内容平台：视频合成引擎 ─────────────────────────────────────
+      case "video_composer":
+        return await toolVideoComposer(args.image_paths, args.audio_path, args.srt_path, args.output_path, args.bgm_path);
+      case "video_compose_status":
+        return await toolVideoComposeStatus(args.taskId);
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell \u4EC5\u7BA1\u7406\u5458\u53EF\u7528" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
@@ -5592,6 +6154,88 @@ async function toolReadUrl(url, extractTextOnly) {
   } catch (e) {
     return { success: false, output: "", error: `\u8BFB\u53D6\u5931\u8D25: ${e.message}` };
   }
+}
+async function toolRunAgentLoop(task, domain = "general", workspace = "") {
+  const { spawn: spawn3 } = await import("child_process");
+  const resolvedWorkspace = workspace || "/Users/daiyan/Desktop/mcmamoo-website";
+  const PYTHON_SCRIPT = `${__dirname}/hyperagents/generate_loop.py`;
+  const PYTHON_CMD = process.env.PYTHON3_PATH || "python3";
+  return new Promise((resolve3) => {
+    const collectedLogs = [];
+    const pythonProcess = spawn3(PYTHON_CMD, [
+      PYTHON_SCRIPT,
+      "--task",
+      task,
+      "--domain",
+      domain,
+      "--workspace",
+      resolvedWorkspace
+    ], {
+      cwd: resolvedWorkspace,
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" }
+    });
+    let hasErrored = false;
+    pythonProcess.stdout.on("data", (data) => {
+      const lines = data.toString("utf-8").split("\n");
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const entry = JSON.parse(trimmed);
+          if (entry.type === "done") {
+            resolve3({
+              success: true,
+              output: entry.message || entry.answer || "Agent \u6267\u884C\u5B8C\u6210",
+              metadata: { domain, rounds: entry.rounds, logs: collectedLogs.slice(0, 20) }
+            });
+          } else if (entry.type === "error" && !entry.retry) {
+            if (!hasErrored) {
+              hasErrored = true;
+              resolve3({
+                success: false,
+                output: "",
+                error: `[${entry.category}] ${entry.message}`
+              });
+            }
+          } else {
+            collectedLogs.push(`[${entry.type}] ${entry.message}`);
+          }
+        } catch {
+          collectedLogs.push(trimmed.slice(0, 100));
+        }
+      }
+    });
+    pythonProcess.stderr.on("data", (data) => {
+      if (!hasErrored) {
+        hasErrored = true;
+        resolve3({ success: false, output: "", error: `Python stderr: ${data.toString().slice(0, 300)}` });
+      }
+    });
+    pythonProcess.on("error", (err) => {
+      if (!hasErrored) {
+        hasErrored = true;
+        resolve3({ success: false, output: "", error: `\u542F\u52A8 Python \u5F15\u64CE\u5931\u8D25: ${err.message}` });
+      }
+    });
+    pythonProcess.on("close", (code) => {
+      if (!hasErrored && collectedLogs.length > 0) {
+        resolve3({
+          success: code === 0,
+          output: `Agent \u6267\u884C\u5B8C\u6210\uFF08\u9000\u51FA\u7801: ${code}\uFF09
+
+\u65E5\u5FD7\u6458\u8981:
+${collectedLogs.slice(0, 10).join("\n")}`,
+          error: code !== 0 ? `Exit code: ${code}` : void 0
+        });
+      }
+    });
+    setTimeout(() => {
+      if (!hasErrored) {
+        pythonProcess.kill("SIGTERM");
+        resolve3({ success: false, output: "", error: "Agent \u6267\u884C\u8D85\u65F6\uFF085\u5206\u949F\uFF09" });
+      }
+    }, 5 * 60 * 1e3);
+  });
 }
 function getDeerFlowConfig() {
   return {
@@ -6373,11 +7017,398 @@ ${output.slice(-3e3)}`,
     };
   }
 }
+var videoComposeTasks = /* @__PURE__ */ new Map();
+async function createVideoTaskInDB(taskId, data) {
+  try {
+    await dbFetch("/video_tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        task_id: taskId,
+        status: "pending",
+        progress: 0,
+        image_paths: data.imagePaths,
+        audio_path: data.audioPath,
+        srt_path: data.srtPath,
+        bgm_path: data.bgmPath ?? null,
+        output_path: data.outputPath,
+        triggered_by: data.triggeredBy ?? null,
+        started_at: (/* @__PURE__ */ new Date()).toISOString()
+      })
+    });
+  } catch (err) {
+    console.error("[VideoTask] Failed to create in DB:", err);
+  }
+}
+async function updateVideoTaskInDB(taskId, update) {
+  try {
+    const body = { updated_at: (/* @__PURE__ */ new Date()).toISOString() };
+    if (update.status) body.status = update.status;
+    if (update.progress !== void 0) body.progress = update.progress;
+    if (update.resultUrl) {
+      body.result_url = update.resultUrl;
+      body.finished_at = (/* @__PURE__ */ new Date()).toISOString();
+    }
+    if (update.errorMessage) {
+      body.error_message = update.errorMessage;
+      body.finished_at = (/* @__PURE__ */ new Date()).toISOString();
+    }
+    await dbFetch(`/video_tasks?task_id=eq.${encodeURIComponent(taskId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body)
+    });
+  } catch (err) {
+    console.error("[VideoTask] Failed to update in DB:", err);
+  }
+}
+async function toolVideoComposer(imagePaths, audioPath, srtPath, outputPath, bgmPath) {
+  const taskId = `video_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  try {
+    const { existsSync } = await import("fs");
+    for (const img of imagePaths) {
+      if (!existsSync(img)) {
+        return { success: false, output: "", error: `\u56FE\u7247\u6587\u4EF6\u4E0D\u5B58\u5728: ${img}` };
+      }
+    }
+    if (!existsSync(audioPath)) {
+      return { success: false, output: "", error: `\u97F3\u9891\u6587\u4EF6\u4E0D\u5B58\u5728: ${audioPath}` };
+    }
+    if (!existsSync(srtPath)) {
+      return { success: false, output: "", error: `\u5B57\u5E55\u6587\u4EF6\u4E0D\u5B58\u5728: ${srtPath}` };
+    }
+  } catch (err) {
+    return { success: false, output: "", error: `\u6587\u4EF6\u68C0\u67E5\u5931\u8D25: ${err.message}` };
+  }
+  videoComposeTasks.set(taskId, {
+    status: "pending",
+    progress: 0,
+    startedAt: /* @__PURE__ */ new Date()
+  });
+  await createVideoTaskInDB(taskId, { imagePaths, audioPath, srtPath, outputPath, bgmPath });
+  executeVideoCompose(taskId, imagePaths, audioPath, srtPath, outputPath, bgmPath).catch((err) => {
+    const task = videoComposeTasks.get(taskId);
+    if (task) {
+      task.status = "failed";
+      task.error = err.message;
+    }
+    updateVideoTaskInDB(taskId, { status: "failed", errorMessage: err.message });
+  });
+  return {
+    success: true,
+    output: `\u89C6\u9891\u5408\u6210\u4EFB\u52A1\u5DF2\u521B\u5EFA
+
+\u4EFB\u52A1 ID: ${taskId}
+\u8F93\u5165\u56FE\u7247: ${imagePaths.length} \u5F20
+\u97F3\u9891: ${audioPath}
+\u5B57\u5E55: ${srtPath}
+\u8F93\u51FA: ${outputPath}
+
+\u8BF7\u4F7F\u7528 video_compose_status \u67E5\u8BE2\u8FDB\u5EA6\u3002`,
+    metadata: { taskId, status: "pending" }
+  };
+}
+async function executeVideoCompose(taskId, imagePaths, audioPath, srtPath, outputPath, bgmPath) {
+  const task = videoComposeTasks.get(taskId);
+  if (!task) return;
+  task.status = "running";
+  task.progress = 10;
+  await updateVideoTaskInDB(taskId, { status: "running", progress: 10 });
+  try {
+    const videoComposerPath = `${__dirname}/hyperagents/media_engine/video_composer.py`;
+    const pythonCode = `
+import sys
+sys.path.insert(0, '${videoComposerPath.replace("/video_composer.py", "")}')
+from video_composer import create_short_video
+
+result = create_short_video(
+    image_paths=${JSON.stringify(imagePaths)},
+    audio_path='${audioPath}',
+    srt_path='${srtPath}',
+    output_path='${outputPath}'${bgmPath ? `,
+    bgm_path='${bgmPath}'` : ""}
+)
+print("RESULT:", result)
+`;
+    const { spawn: spawn3 } = await import("child_process");
+    const proc = spawn3("python3", ["-c", pythonCode], {
+      timeout: 6e5
+      // 10分钟超时
+    });
+    let stdout = "";
+    let stderr = "";
+    proc.stdout?.on("data", (data) => {
+      stdout += data.toString();
+    });
+    proc.stderr?.on("data", (data) => {
+      stderr += data.toString();
+    });
+    proc.on("close", async (code) => {
+      task.progress = 100;
+      if (code === 0) {
+        task.status = "completed";
+        task.outputPath = outputPath;
+        await updateVideoTaskInDB(taskId, {
+          status: "completed",
+          progress: 100,
+          resultUrl: outputPath
+        });
+      } else {
+        task.status = "failed";
+        task.error = stderr || `Process exited with code ${code}`;
+        await updateVideoTaskInDB(taskId, {
+          status: "failed",
+          progress: 100,
+          errorMessage: task.error
+        });
+      }
+    });
+    proc.on("error", async (err) => {
+      task.status = "failed";
+      task.error = err.message;
+      await updateVideoTaskInDB(taskId, {
+        status: "failed",
+        progress: task.progress,
+        errorMessage: err.message
+      });
+    });
+  } catch (err) {
+    task.status = "failed";
+    task.error = err.message;
+    await updateVideoTaskInDB(taskId, {
+      status: "failed",
+      errorMessage: err.message
+    });
+  }
+}
+async function toolVideoComposeStatus(taskId) {
+  let task = videoComposeTasks.get(taskId);
+  if (!task) {
+    try {
+      const res = await dbFetch(`/video_tasks?task_id=eq.${encodeURIComponent(taskId)}&select=*&limit=1`);
+      const rows = res.data;
+      const dbTask = rows?.[0];
+      if (dbTask) {
+        task = {
+          status: dbTask.status,
+          progress: dbTask.progress,
+          outputPath: dbTask.result_url || dbTask.output_path,
+          error: dbTask.error_message,
+          startedAt: new Date(dbTask.started_at)
+        };
+        videoComposeTasks.set(taskId, task);
+      }
+    } catch (err) {
+      console.error("[VideoTask] Failed to fetch from DB:", err);
+    }
+  }
+  if (!task) {
+    return {
+      success: false,
+      output: "",
+      error: `\u4EFB\u52A1\u4E0D\u5B58\u5728: ${taskId}`
+    };
+  }
+  const statusLabels = {
+    pending: "\u7B49\u5F85\u4E2D",
+    running: "\u5408\u6210\u4E2D",
+    completed: "\u5DF2\u5B8C\u6210",
+    failed: "\u5931\u8D25"
+  };
+  const elapsed = Math.round((Date.now() - task.startedAt.getTime()) / 1e3);
+  let output = `\u89C6\u9891\u5408\u6210\u4EFB\u52A1\u72B6\u6001
+
+`;
+  output += `\u4EFB\u52A1 ID: ${taskId}
+`;
+  output += `\u72B6\u6001: ${statusLabels[task.status] || task.status}
+`;
+  output += `\u8FDB\u5EA6: ${task.progress}%
+`;
+  output += `\u5DF2\u7528\u65F6: ${elapsed}\u79D2
+`;
+  if (task.status === "running") {
+    output += `
+\u9884\u8BA1\u5269\u4F59\u65F6\u95F4: \u7EA6 ${Math.round(elapsed / task.progress * (100 - task.progress))} \u79D2`;
+  }
+  if (task.outputPath) {
+    output += `
+
+\u8F93\u51FA\u6587\u4EF6: ${task.outputPath}`;
+  }
+  if (task.error) {
+    output += `
+
+\u9519\u8BEF\u4FE1\u606F: ${task.error}`;
+  }
+  return {
+    success: task.status === "completed",
+    output,
+    metadata: {
+      taskId,
+      status: task.status,
+      progress: task.progress,
+      outputPath: task.outputPath,
+      error: task.error
+    }
+  };
+}
 
 // server/contentPlatform.ts
 init_aiNodes();
 import { Router } from "express";
 import cron from "node-cron";
+
+// server/triadLoopIntegration.ts
+init_aiNodes();
+import { spawn } from "child_process";
+import { writeFileSync, unlinkSync, mkdtempSync } from "fs";
+import { join as join4 } from "path";
+import { tmpdir as tmpdir2 } from "os";
+var TRIAD_SCRIPT = join4(__dirname, "hyperagents/agent/triad_loop.py");
+async function executeTriadLoop(request) {
+  const { taskId, task, language = "python", mode = "fix", workspace, context = {} } = request;
+  console.log(`[TriadLoop] Starting task #${taskId}: ${task.substring(0, 50)}...`);
+  const tempDir = mkdtempSync(join4(tmpdir2(), "triad-"));
+  try {
+    const contextFile = join4(tempDir, "context.json");
+    writeFileSync(contextFile, JSON.stringify(context, null, 2));
+    const args = [
+      TRIAD_SCRIPT,
+      "--task",
+      task,
+      "--workspace",
+      workspace || tempDir,
+      "--language",
+      language,
+      "--mode",
+      mode,
+      "--max-iterations",
+      "5",
+      "--score-threshold",
+      "0.8",
+      // Phase 5 功能
+      "--no-rag",
+      // RAG 可选启用
+      "--no-atomic"
+      // 原子化模式可选
+    ];
+    const result = await executePython(args);
+    if (result.success) {
+      console.log(`[TriadLoop] Task #${taskId} completed successfully`);
+      await updateContentTask(taskId, {
+        status: "success",
+        result: {
+          finalCode: result.finalCode,
+          finalScore: result.finalScore,
+          totalRounds: result.totalRounds,
+          totalTime: result.totalTime,
+          mode: "triad_loop"
+        }
+      });
+      return {
+        success: true,
+        status: result.status,
+        finalCode: result.finalCode,
+        finalScore: result.finalScore,
+        totalRounds: result.totalRounds,
+        totalTime: result.totalTime,
+        feedback: result.feedback
+      };
+    } else {
+      console.error(`[TriadLoop] Task #${taskId} failed:`, result.errorMessage);
+      await updateContentTask(taskId, {
+        status: "failed",
+        errorMessage: result.errorMessage || "TriadLoop execution failed"
+      });
+      return {
+        success: false,
+        status: "error",
+        errorMessage: result.errorMessage
+      };
+    }
+  } catch (error) {
+    console.error(`[TriadLoop] Task #${taskId} exception:`, error);
+    await updateContentTask(taskId, {
+      status: "failed",
+      errorMessage: error?.message || String(error)
+    });
+    return {
+      success: false,
+      status: "error",
+      errorMessage: error?.message || String(error)
+    };
+  } finally {
+    try {
+      unlinkSync(join4(tempDir, "context.json"));
+    } catch {
+    }
+  }
+}
+function executePython(args) {
+  return new Promise((resolve3) => {
+    const proc = spawn("python3", args, {
+      cwd: tmpdir2(),
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 3e5
+      // 5分钟超时
+    });
+    let stdout = "";
+    let stderr = "";
+    proc.stdout?.on("data", (data) => {
+      stdout += data.toString();
+    });
+    proc.stderr?.on("data", (data) => {
+      stderr += data.toString();
+    });
+    proc.on("close", (code) => {
+      try {
+        const jsonMatches = stdout.match(/\{[\s\S]*?\}/g);
+        if (jsonMatches) {
+          const lastJson = jsonMatches[jsonMatches.length - 1];
+          const result = JSON.parse(lastJson);
+          const approved = stdout.includes("\u2713 \u5168\u90E8\u901A\u8FC7") || stdout.includes("\u4E09\u6743\u5206\u7ACB\u5168\u90E8\u901A\u8FC7");
+          resolve3({
+            success: approved || code === 0,
+            status: approved ? "approved" : "rejected",
+            finalCode: result.final_code || result.finalCode,
+            finalScore: result.final_score || result.finalScore || 0,
+            totalRounds: result.total_rounds || result.totalRounds,
+            totalTime: result.total_time || result.totalTime,
+            feedback: result.feedback
+          });
+        } else {
+          resolve3({
+            success: false,
+            status: "error",
+            errorMessage: stderr || `Process exited with code ${code}`
+          });
+        }
+      } catch {
+        resolve3({
+          success: false,
+          status: "error",
+          errorMessage: stderr || `Parse error, code: ${code}`
+        });
+      }
+    });
+    proc.on("error", (error) => {
+      resolve3({
+        success: false,
+        status: "error",
+        errorMessage: error.message
+      });
+    });
+    setTimeout(() => {
+      proc.kill();
+      resolve3({
+        success: false,
+        status: "error",
+        errorMessage: "TriadLoop execution timeout (5 minutes)"
+      });
+    }, 3e5);
+  });
+}
+
+// server/contentPlatform.ts
 var contentPlatformRouter = Router();
 var PLAN_RANK = {
   free: 0,
@@ -6395,7 +7426,7 @@ var PLAN_DEFAULTS = {
   // -1 = 不限
 };
 async function getUserSubscription(openId) {
-  const res = await dbFetch(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}&select=*&limit=1`);
+  const res = await dbFetch2(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}&select=*&limit=1`);
   const rows = res.data;
   return rows?.[0] ?? null;
 }
@@ -6407,7 +7438,7 @@ async function upsertUserSubscription(openId, userId, plan) {
   nextMonth.setHours(0, 0, 0, 0);
   const existing = await getUserSubscription(openId);
   if (existing) {
-    await dbFetch(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}`, {
+    await dbFetch2(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}`, {
       method: "PATCH",
       body: {
         plan,
@@ -6418,7 +7449,7 @@ async function upsertUserSubscription(openId, userId, plan) {
       }
     });
   } else {
-    await dbFetch("/user_subscriptions", {
+    await dbFetch2("/user_subscriptions", {
       method: "POST",
       body: {
         user_id: userId,
@@ -6436,7 +7467,7 @@ async function maybeResetQuota(sub) {
   const now = /* @__PURE__ */ new Date();
   const resetAt = new Date(sub.quota_reset_at);
   if (now >= resetAt) {
-    await dbFetch(`/user_subscriptions?open_id=eq.${encodeURIComponent(sub.open_id)}`, {
+    await dbFetch2(`/user_subscriptions?open_id=eq.${encodeURIComponent(sub.open_id)}`, {
       method: "PATCH",
       body: {
         content_used: 0,
@@ -6484,7 +7515,7 @@ async function checkSkillPermission(openId, userRole, skillRequiredPlan) {
           reason: `\u672C\u6708\u5185\u5BB9\u751F\u4EA7\u6B21\u6570\u5DF2\u7528\u5B8C\uFF08${sub.content_used}/${sub.content_quota}\uFF09\uFF0C\u8BF7\u5347\u7EA7\u5957\u9910\u6216\u7B49\u5F85\u4E0B\u6708\u91CD\u7F6E\u3002`
         };
       }
-      await dbFetch(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}`, {
+      await dbFetch2(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}`, {
         method: "PATCH",
         body: { content_used: sub.content_used + 1 }
       });
@@ -6509,7 +7540,7 @@ async function checkSkillPermission(openId, userRole, skillRequiredPlan) {
         reason: `\u672C\u6708\u5185\u5BB9\u751F\u4EA7\u6B21\u6570\u5DF2\u7528\u5B8C\uFF08${sub.content_used}/${sub.content_quota}\uFF09\uFF0C\u8BF7\u5347\u7EA7\u5957\u9910\u6216\u7B49\u5F85\u4E0B\u6708\u91CD\u7F6E\u3002`
       };
     }
-    await dbFetch(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}`, {
+    await dbFetch2(`/user_subscriptions?open_id=eq.${encodeURIComponent(openId)}`, {
       method: "PATCH",
       body: { content_used: sub.content_used + 1 }
     });
@@ -6517,7 +7548,7 @@ async function checkSkillPermission(openId, userRole, skillRequiredPlan) {
   return { allowed: true };
 }
 async function createContentTask(data) {
-  const res = await dbFetch("/content_tasks", {
+  const res = await dbFetch2("/content_tasks", {
     method: "POST",
     body: {
       skill_id: data.skillId,
@@ -6534,7 +7565,7 @@ async function createContentTask(data) {
   return rows?.[0] ?? null;
 }
 async function updateContentTask(taskId, update) {
-  await dbFetch(`/content_tasks?id=eq.${taskId}`, {
+  await dbFetch2(`/content_tasks?id=eq.${taskId}`, {
     method: "PATCH",
     body: {
       status: update.status,
@@ -6592,7 +7623,7 @@ contentPlatformRouter.get("/tasks", async (req, res) => {
   if (user.role !== "admin") {
     query += `&triggered_by=eq.${encodeURIComponent(user.openId)}`;
   }
-  const res2 = await dbFetch(query);
+  const res2 = await dbFetch2(query);
   return res.json({ tasks: res2.data ?? [], total: res2.data?.length ?? 0 });
 });
 contentPlatformRouter.post("/tasks", async (req, res) => {
@@ -6600,7 +7631,7 @@ contentPlatformRouter.post("/tasks", async (req, res) => {
   if (!user) return res.status(401).json({ error: "\u672A\u767B\u5F55" });
   const { skillId, params } = req.body;
   if (!skillId) return res.status(400).json({ error: "skillId \u4E0D\u80FD\u4E3A\u7A7A" });
-  const skillRes = await dbFetch(`/node_skills?skillId=eq.${encodeURIComponent(skillId)}&isActive=eq.true&select=*&limit=1`);
+  const skillRes = await dbFetch2(`/node_skills?skillId=eq.${encodeURIComponent(skillId)}&isActive=eq.true&select=*&limit=1`);
   const skill = skillRes.data?.[0];
   if (!skill) return res.status(404).json({ error: "Skill \u4E0D\u5B58\u5728\u6216\u672A\u6FC0\u6D3B" });
   const perm = await checkSkillPermission(user.openId, user.role, skill.required_plan ?? "free");
@@ -6622,7 +7653,7 @@ contentPlatformRouter.post("/tasks", async (req, res) => {
 contentPlatformRouter.get("/admin/jobs", async (req, res) => {
   const admin = await requireAdmin(req);
   if (!admin) return res.status(403).json({ error: "\u9700\u8981\u7BA1\u7406\u5458\u6743\u9650" });
-  const res2 = await dbFetch("/scheduled_skill_jobs?select=*&order=created_at.desc");
+  const res2 = await dbFetch2("/scheduled_skill_jobs?select=*&order=created_at.desc");
   return res.json({ jobs: res2.data ?? [] });
 });
 contentPlatformRouter.post("/admin/jobs", async (req, res) => {
@@ -6635,7 +7666,7 @@ contentPlatformRouter.post("/admin/jobs", async (req, res) => {
   if (!cron.validate(cronExpr)) {
     return res.status(400).json({ error: `\u65E0\u6548\u7684 cron \u8868\u8FBE\u5F0F: ${cronExpr}` });
   }
-  const res2 = await dbFetch("/scheduled_skill_jobs", {
+  const res2 = await dbFetch2("/scheduled_skill_jobs", {
     method: "POST",
     body: {
       name,
@@ -6666,7 +7697,7 @@ contentPlatformRouter.patch("/admin/jobs/:id", async (req, res) => {
   }
   if (req.body.isActive !== void 0) updates.is_active = req.body.isActive;
   if (req.body.params !== void 0) updates.params = req.body.params;
-  await dbFetch(`/scheduled_skill_jobs?id=eq.${id}`, { method: "PATCH", body: updates });
+  await dbFetch2(`/scheduled_skill_jobs?id=eq.${id}`, { method: "PATCH", body: updates });
   await reloadCronJob(parseInt(id));
   return res.json({ success: true });
 });
@@ -6674,7 +7705,7 @@ contentPlatformRouter.delete("/admin/jobs/:id", async (req, res) => {
   const admin = await requireAdmin(req);
   if (!admin) return res.status(403).json({ error: "\u9700\u8981\u7BA1\u7406\u5458\u6743\u9650" });
   const { id } = req.params;
-  await dbFetch(`/scheduled_skill_jobs?id=eq.${id}`, { method: "DELETE" });
+  await dbFetch2(`/scheduled_skill_jobs?id=eq.${id}`, { method: "DELETE" });
   stopCronJob(parseInt(id));
   return res.json({ success: true });
 });
@@ -6682,7 +7713,7 @@ contentPlatformRouter.post("/admin/jobs/:id/run", async (req, res) => {
   const admin = await requireAdmin(req);
   if (!admin) return res.status(403).json({ error: "\u9700\u8981\u7BA1\u7406\u5458\u6743\u9650" });
   const { id } = req.params;
-  const jobRes = await dbFetch(`/scheduled_skill_jobs?id=eq.${id}&select=*&limit=1`);
+  const jobRes = await dbFetch2(`/scheduled_skill_jobs?id=eq.${id}&select=*&limit=1`);
   const job = jobRes.data?.[0];
   if (!job) return res.status(404).json({ error: "\u4EFB\u52A1\u4E0D\u5B58\u5728" });
   runScheduledJob(job).catch((e) => console.error("[Scheduler] Manual run error:", e));
@@ -6691,7 +7722,7 @@ contentPlatformRouter.post("/admin/jobs/:id/run", async (req, res) => {
 contentPlatformRouter.get("/admin/subscriptions", async (req, res) => {
   const admin = await requireAdmin(req);
   if (!admin) return res.status(403).json({ error: "\u9700\u8981\u7BA1\u7406\u5458\u6743\u9650" });
-  const res2 = await dbFetch("/user_subscriptions?select=*&order=created_at.desc");
+  const res2 = await dbFetch2("/user_subscriptions?select=*&order=created_at.desc");
   return res.json({ subscriptions: res2.data ?? [] });
 });
 contentPlatformRouter.post("/admin/subscriptions", async (req, res) => {
@@ -6709,8 +7740,41 @@ contentPlatformRouter.post("/admin/subscriptions", async (req, res) => {
 });
 var activeCronJobs = /* @__PURE__ */ new Map();
 async function invokeSkillAsync(taskId, skill, params) {
+  if (skill.useTriadLoop || skill.invokeMode === "triad_loop") {
+    console.log(`[ContentTask] Task #${taskId} using TriadLoop mode`);
+    const taskDesc = params.task || params.description || `Execute skill: ${skill.skillId} with params: ${JSON.stringify(params).substring(0, 200)}`;
+    try {
+      const result = await executeTriadLoop({
+        taskId,
+        task: taskDesc,
+        language: params.language || "python",
+        mode: params.mode || "generate",
+        context: { skillId: skill.skillId, params, taskId }
+      });
+      if (result.success) {
+        await updateContentTask(taskId, {
+          status: "success",
+          result: {
+            triadResult: result,
+            mode: "triad_loop"
+          }
+        });
+      } else {
+        await updateContentTask(taskId, {
+          status: "failed",
+          errorMessage: result.errorMessage || "TriadLoop execution failed"
+        });
+      }
+    } catch (err) {
+      await updateContentTask(taskId, {
+        status: "failed",
+        errorMessage: err?.message ?? String(err)
+      });
+    }
+    return;
+  }
   try {
-    const nodeRes = await dbFetch(`/ai_nodes?id=eq.${skill.nodeId}&select=baseUrl,token&limit=1`);
+    const nodeRes = await dbFetch2(`/ai_nodes?id=eq.${skill.nodeId}&select=baseUrl,token&limit=1`);
     const node = nodeRes.data?.[0];
     if (!node) throw new Error(`Node ${skill.nodeId} not found`);
     const invokeRes = await fetch(`${node.baseUrl}/skill/invoke`, {
@@ -6743,13 +7807,13 @@ async function runScheduledJob(job) {
     params: job.params ?? {}
   });
   if (!task) return;
-  const skillRes = await dbFetch(`/node_skills?skillId=eq.${encodeURIComponent(job.skill_id)}&isActive=eq.true&select=*&limit=1`);
+  const skillRes = await dbFetch2(`/node_skills?skillId=eq.${encodeURIComponent(job.skill_id)}&isActive=eq.true&select=*&limit=1`);
   const skill = skillRes.data?.[0];
   if (!skill) {
     await updateContentTask(task.id, { status: "failed", errorMessage: "Skill \u4E0D\u5B58\u5728\u6216\u672A\u6FC0\u6D3B" });
     return;
   }
-  await dbFetch(`/scheduled_skill_jobs?id=eq.${job.id}`, {
+  await dbFetch2(`/scheduled_skill_jobs?id=eq.${job.id}`, {
     method: "PATCH",
     body: { last_run_at: (/* @__PURE__ */ new Date()).toISOString() }
   });
@@ -6772,7 +7836,7 @@ function stopCronJob(jobId) {
   }
 }
 async function reloadCronJob(jobId) {
-  const res = await dbFetch(`/scheduled_skill_jobs?id=eq.${jobId}&select=*&limit=1`);
+  const res = await dbFetch2(`/scheduled_skill_jobs?id=eq.${jobId}&select=*&limit=1`);
   const job = res.data?.[0];
   stopCronJob(jobId);
   if (job && job.is_active) registerCronJob(job);
@@ -6820,7 +7884,7 @@ contentPlatformRouter.post("/webhook", async (req, res) => {
     if (publishedUrls && Array.isArray(publishedUrls) && publishedUrls.length > 0) {
       patch.result = { ...typeof result === "object" && result ? result : {}, publishedUrls, platform };
     }
-    await dbFetch(`/content_tasks?id=eq.${resolvedTaskId}`, {
+    await dbFetch2(`/content_tasks?id=eq.${resolvedTaskId}`, {
       method: "PATCH",
       body: JSON.stringify(patch)
     });
@@ -6844,7 +7908,7 @@ contentPlatformRouter.get("/tasks/:id/status", async (req, res) => {
     const taskId = parseInt(req.params.id, 10);
     if (isNaN(taskId)) return res.status(400).json({ error: "Invalid task ID" });
     const filter = isAdmin ? `/content_tasks?id=eq.${taskId}&select=id,status,result,error_message,started_at,finished_at` : `/content_tasks?id=eq.${taskId}&user_open_id=eq.${user.openId}&select=id,status,result,error_message,started_at,finished_at`;
-    const r = await dbFetch(filter);
+    const r = await dbFetch2(filter);
     const task = r.data?.[0];
     if (!task) return res.status(404).json({ error: "Task not found" });
     return res.json(task);
@@ -7877,11 +8941,11 @@ async function streamFromNode(node, messages, res, model, sendNodeInfo) {
 }
 async function matchSkillForMessage(userMessage) {
   try {
-    const nodesRes = await dbFetch("/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id,name,baseUrl,token");
+    const nodesRes = await dbFetch2("/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id,name,baseUrl,token");
     const onlineNodes = nodesRes.data;
     if (!onlineNodes || onlineNodes.length === 0) return null;
     const nodeIds = onlineNodes.map((n) => n.id);
-    const skillsRes = await dbFetch(
+    const skillsRes = await dbFetch2(
       `/node_skills?nodeId=in.(${nodeIds.join(",")})&isActive=eq.true&select=*`
     );
     const skills = skillsRes.data;
@@ -8936,6 +10000,94 @@ aiStreamRouter.post("/upload", async (req, res) => {
     console.error("[Upload] Error:", err);
     res.status(500).json({ error: err.message || "\u6587\u4EF6\u89E3\u6790\u5931\u8D25" });
   }
+});
+aiStreamRouter.post("/agent/stream", async (req, res) => {
+  const { task, domain = "general", workspace = "." } = req.body;
+  if (!task || typeof task !== "string" || !task.trim()) {
+    res.status(400).json({ error: "Missing required field: task" });
+    return;
+  }
+  const admin = await getAdminUser(req);
+  if (!admin) {
+    res.status(403).json({ error: "\u4EC5\u9650\u7BA1\u7406\u5458\u4F7F\u7528 HyperAgents" });
+    return;
+  }
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+  const PYTHON_SCRIPT = `${__dirname}/hyperagents/generate_loop.py`;
+  const PYTHON_CMD = process.env.PYTHON3_PATH || "python3";
+  const pythonProcess = spawn2(PYTHON_CMD, [
+    PYTHON_SCRIPT,
+    "--task",
+    task.trim(),
+    "--domain",
+    domain,
+    "--workspace",
+    workspace
+  ], {
+    cwd: workspace,
+    env: {
+      ...process.env,
+      PYTHONIOENCODING: "utf-8"
+    },
+    timeout: 12e4
+  });
+  let hasErrored = false;
+  pythonProcess.stdout.on("data", (data) => {
+    const lines = data.toString("utf-8").split("\n");
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      try {
+        const logEntry = JSON.parse(line);
+        res.write(`data: ${JSON.stringify({ agentLog: logEntry })}
+
+`);
+      } catch {
+        console.log("[Python Raw stdout]:", line.substring(0, 200));
+        res.write(`data: ${JSON.stringify({ agentLog: { type: "raw", message: line.substring(0, 200), timestamp: Date.now() / 1e3 } })}
+
+`);
+      }
+    }
+  });
+  pythonProcess.stderr.on("data", (data) => {
+    if (hasErrored) return;
+    hasErrored = true;
+    const errMsg = data.toString("utf-8").trim();
+    console.warn("[HyperAgents stderr]:", errMsg.substring(0, 300));
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "env", message: errMsg.substring(0, 300), timestamp: Date.now() / 1e3 } })}
+
+`);
+  });
+  pythonProcess.on("close", (code) => {
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "done", exitCode: code, timestamp: Date.now() / 1e3 } })}
+
+`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  });
+  pythonProcess.on("error", (err) => {
+    console.error("[HyperAgents spawn error]:", err);
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "env", message: `\u542F\u52A8\u5931\u8D25: ${err.message}`, timestamp: Date.now() / 1e3 } })}
+
+`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  });
+  setTimeout(() => {
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "timeout", message: "\u6267\u884C\u8D85\u65F6\uFF085\u5206\u949F\uFF09", timestamp: Date.now() / 1e3 } })}
+
+`);
+      res.write("data: [DONE]\n\n");
+      res.end();
+      pythonProcess.kill("SIGTERM");
+    }
+  }, 5 * 60 * 1e3);
 });
 aiStreamRouter.get("/status", async (_req, res) => {
   const status = {};

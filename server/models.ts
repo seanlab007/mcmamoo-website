@@ -9,13 +9,15 @@
 export interface ModelConfig {
   name: string;
   badge: string;
-  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "zai" | "autoclaw";
+  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "zai" | "autoclaw" | "ollama";
   model: string;
   baseUrl: string;
   /** apiKey 为 getter，运行时动态读取环境变量，避免模块加载顺序问题 */
   readonly apiKey: string;
   maxTokens: number;
   supportsVision?: boolean;
+  /** 是否本地模型 */
+  isLocal?: boolean;
 }
 
 // ─── Provider Base URLs ───────────────────────────────────────────────────────
@@ -189,4 +191,17 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
   //   3. 通过 /api/ai/node/register 接口注册本地节点
   //   4. 注册成功后，AutoClaw 将作为 local:<nodeId> 模型出现在模型列表中
   // 注意：AutoClaw 本身不支持 function calling，其 Agent 能力通过 Skills 系统实现
+
+  // ── 本地 Ollama 模型 ─────────────────────────────────────────────────────────
+  // Ollama 本地运行，无需 API Key，baseUrl 固定为 localhost:11434
+  "ollama-local": {
+    name: "Ollama (Local)",
+    badge: "LOCAL",
+    provider: "ollama",
+    model: process.env.OLLAMA_MODEL || "llama3",
+    baseUrl: "http://localhost:11434/v1",
+    get apiKey() { return "ollama"; }, // 占位符，Ollama 不需要真实 API Key
+    maxTokens: 4096,
+    isLocal: true,
+  },
 };

@@ -1,6 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Loader2 } from "lucide-react";
+import { Loader2, Monitor } from "lucide-react";
 
 interface ModelSelectorProps {
   value: string;
@@ -30,8 +30,12 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
       <SelectContent>
         {availableModels.map(model => (
           <SelectItem key={model.id} value={model.id} className="text-xs">
-            <span className="mr-1.5">{model.badge}</span>
-            {model.name}
+            <span className="flex items-center gap-1">
+              {/* 本地模型显示图标 */}
+              {model.isLocal && <Monitor size={10} className="text-emerald-400" />}
+              <span className="mr-1.5">{model.badge}</span>
+              {model.name}
+            </span>
           </SelectItem>
         ))}
         {availableModels.length === 0 && (
