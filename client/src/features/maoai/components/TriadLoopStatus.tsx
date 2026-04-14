@@ -65,6 +65,8 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
 
   const isStrategicMode = modelId === "maoai-core-2";
 
+  const reconnectCountRef = useRef(0);
+
   const connect = useCallback(() => {
     if (!isStrategicMode || wsRef.current?.readyState === WebSocket.OPEN) return;
 
@@ -73,6 +75,7 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
 
       ws.onopen = () => {
         console.log("[TriadLoopStatus] WebSocket connected");
+        reconnectCountRef.current = 0;
         setState(prev => ({ ...prev, isConnected: true, error: undefined }));
         onStateChange?.({ ...state, isConnected: true });
       };
@@ -95,11 +98,14 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
         setState(prev => ({ ...prev, isConnected: false }));
         onStateChange?.({ ...state, isConnected: false });
 
-        // 自动重连（最多 3 次）
-        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (isStrategicMode) connect();
-        }, 3000);
+        const { maxAttempts, intervalMs } = MAOAI_CORE_2_CONFIG.reconnect;
+        if (reconnectCountRef.current < maxAttempts) {
+          reconnectCountRef.current += 1;
+          if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (isStrategicMode) connect();
+          }, intervalMs);
+        }
       };
 
       wsRef.current = ws;

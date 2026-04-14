@@ -3,11 +3,12 @@ import { trpc } from "@/lib/trpc";
 import { AgentModeSelector } from "../components/AgentModeSelector";
 import { AtomicModeToggle } from "../components/Phase5Status";
 import { TriadLoopStatus } from "../components/TriadLoopStatus";
+import { RedBlueAdversarialStatus } from "../components/RedBlueAdversarialStatus";
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
   Wand2, Image as ImageIcon, Crown, Zap, Paperclip, FileText, FileJson, Table2,
-  LayoutGrid, Lock, Search, BookOpen,
+  LayoutGrid, Lock, Search, BookOpen, Swords,
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -1487,6 +1488,13 @@ export default function MaoAIChat() {
                   onStateChange={setTriadLoopState}
                 />
               )}
+              {/* ─── MaoAI Core 2.0: 红蓝对抗模式触发按钮（Compact）────────── */}
+              {isStrategicMode && (
+                <RedBlueAdversarialStatus
+                  modelId={selectedId}
+                  compact
+                />
+              )}
               {/* Image mode badge */}
               {inputMode === "image" && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 border border-purple-500/30 text-purple-400/80 text-xs" style={{ fontFamily: "'DM Mono', monospace" }}>
@@ -1567,6 +1575,16 @@ export default function MaoAIChat() {
               <TriadLoopStatus
                 modelId={selectedId}
                 onStateChange={setTriadLoopState}
+              />
+            )}
+
+            {/* ─── MaoAI Core 2.0: 红蓝对抗（完整模式）────────────────────── */}
+            {isStrategicMode && (
+              <RedBlueAdversarialStatus
+                modelId={selectedId}
+                onComplete={(winner) => {
+                  console.log("[Chat] 红蓝对抗结束，胜者:", winner);
+                }}
               />
             )}
 

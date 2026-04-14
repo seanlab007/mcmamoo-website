@@ -74,6 +74,10 @@ class CodeRAG:
         v2 = np.array(v2)
         return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
+    def index_size(self) -> int:
+        """返回已索引的代码块数量（ws_server /api/chat/rag/status 调用）"""
+        return len(self.index_data)
+
     def build_index(self, corpus_dir: str):
         """构建索引并保存"""
         new_index = []
