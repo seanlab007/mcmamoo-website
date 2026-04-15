@@ -367,6 +367,11 @@ class TriadLoop:
             self.decision_ledger = DecisionLedger(workspace=self.workspace)
             self.stream_broker = StreamBroker()
             log_step("triad_init", "MaoAI Core 2.0 模块已加载", core_2_0=True)
+        
+        # ─── Phase 7: 实战验证配置 ─────────────────────────────────────────────
+        self.enable_reality_check = True  # 启用最终现实验证
+        self.reality_check_threshold = 0.8  # 现实验证通过阈值
+        self._reality_check_results = []  # 现实验证结果历史
 
     def _get_knowledge_graph_context(self, task: str) -> Dict[str, Any]:
         """
@@ -849,15 +854,46 @@ class TriadLoop:
             )
             round_results.append(round_result)
 
-            # 三权全部通过 → 结束
+            # 三权全部通过 → 进入 Phase 7: 最终现实验证
             if review_passed and validation_passed:
+                log_step("triad_approved", "✓ 三权分立全部通过！进入最终现实验证...",
+                        total_rounds=self.current_round,
+                        final_score=reviewer_result.overall_score)
+                
+                # ═══════════════════════════════════════════════════════════════════
+                # Phase 7: 最终怀疑 - 现实验证闭环
+                # ═══════════════════════════════════════════════════════════════════
+                reality_result = await self._run_reality_check(
+                    task=task,
+                    code=current_code,
+                    context=context
+                )
+                
+                # 现实验证失败 → 视为未通过，进入自愈
+                if not reality_result.get("success", True) and not reality_result.get("skipped"):
+                    log_step("reality_check_failed", "现实验证失败！代码在真实环境中未通过",
+                            score=reality_result.get("score", 0),
+                            issues=reality_result.get("issues", []))
+                    
+                    # 将现实验证问题加入反馈，继续迭代
+                    reality_issues = reality_result.get("issues", [])
+                    context["reality_check_issues"] = reality_issues
+                    
+                    # 继续循环，不返回
+                    current_mode = GenerationMode.FIX
+                    log_thought("coder", f"现实验证发现问题: {reality_issues[:2]}...", 
+                               round_num=self.current_round)
+                    continue
+                
+                # 现实验证通过或跳过 → 真正结束
                 total_time = time.time() - start_time
-                log_step("triad_approved", "✓ 三权分立全部通过！",
+                log_step("triad_complete", "✓ 现实验证通过！任务真正完成",
                         total_rounds=self.current_round,
                         final_score=reviewer_result.overall_score,
-                        total_time=total_time)
+                        total_time=total_time,
+                        reality_score=reality_result.get("score", 1.0))
 
-                return TriadLoopResult(
+                final_result = TriadLoopResult(
                     status=TriadStatus.APPROVED,
                     total_rounds=self.current_round,
                     total_time=total_time,
@@ -867,6 +903,11 @@ class TriadLoop:
                     validator_passed=True,
                     round_results=round_results
                 )
+                
+                # 记录到 DecisionLedger - 长记忆持久化
+                await self._record_to_ledger(task, round_results, final_result, reality_result)
+                
+                return final_result
 
             # ═══════════════════════════════════════════════════════════════════════════
             # B. 收敛检测：分数改进 + Patch 相似度
@@ -950,7 +991,7 @@ class TriadLoop:
             final_similarity = self._compute_patch_similarity(
                 self._code_history[0], self._code_history[-1])
 
-        return TriadLoopResult(
+        final_result = TriadLoopResult(
             status=TriadStatus.REJECTED,
             total_rounds=self.current_round,
             total_time=total_time,
@@ -960,6 +1001,11 @@ class TriadLoop:
             round_results=round_results,
             feedback=self._summarize_feedback(round_results)
         )
+        
+        # 记录到 DecisionLedger - 长记忆持久化（即使失败也记录）
+        await self._record_to_ledger(task, round_results, final_result)
+
+        return final_result
 
     def _build_feedback(self, round_results: List[RoundResult]) -> str:
         if not round_results:
@@ -981,6 +1027,260 @@ class TriadLoop:
             f"第 {i+1} 轮: score={r.score:.2f}, issues={len(r.reviewer_result.issues)}"
             for i, r in enumerate(round_results)
         ])
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Phase 7: 实战验证闭环 - 最终怀疑与现实检查
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    async def _run_reality_check(
+        self,
+        task: str,
+        code: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        运行现实验证 - "最终怀疑"机制
+        
+        当 Validator 通过后，强制让 browser_agent 去截图并检查
+        DOM 元素是否真的存在。这是防止"逻辑幻觉"的最后一道防线。
+        
+        Returns:
+            {
+                "success": bool,
+                "score": float,
+                "screenshot_path": str,
+                "issues": List[str],
+                "details": Dict
+            }
+        """
+        if not self.enable_reality_check or not self.browser_agent:
+            return {"success": True, "score": 1.0, "skipped": True}
+        
+        log_step("reality_check", "启动最终现实验证 - 怀疑论验证器", phase="final_skepticism")
+        
+        result = {
+            "success": False,
+            "score": 0.0,
+            "screenshot_path": None,
+            "issues": [],
+            "details": {}
+        }
+        
+        try:
+            # 1. 截图验证
+            screenshot_path = f"/tmp/maoai_reality_check_{int(time.time())}.png"
+            
+            if hasattr(self.browser_agent, 'screenshot'):
+                await self.browser_agent.screenshot(screenshot_path)
+                result["screenshot_path"] = screenshot_path
+                log_step("reality_check", f"截图已保存: {screenshot_path}")
+            
+            # 2. 如果是前端组件修改，检查关键 DOM 元素
+            if context.get("is_frontend") or self._is_frontend_task(task):
+                dom_check = await self._check_dom_elements(task, code)
+                result["details"]["dom_check"] = dom_check
+                
+                if not dom_check.get("exists", False):
+                    result["issues"].append(f"关键 DOM 元素未找到: {dom_check.get('missing_selectors', [])}")
+                    log_step("reality_check", "DOM 元素检查失败", issues=result["issues"])
+            
+            # 3. 如果是 API 修改，检查端点响应
+            if context.get("is_backend") or self._is_backend_task(task):
+                api_check = await self._check_api_endpoints(task, code)
+                result["details"]["api_check"] = api_check
+                
+                if not api_check.get("reachable", False):
+                    result["issues"].append(f"API 端点不可达: {api_check.get('failed_endpoints', [])}")
+                    log_step("reality_check", "API 检查失败", issues=result["issues"])
+            
+            # 4. 计算现实验证分数
+            checks_passed = sum([
+                result["screenshot_path"] is not None,
+                result["details"].get("dom_check", {}).get("exists", True),
+                result["details"].get("api_check", {}).get("reachable", True)
+            ])
+            total_checks = 1 + (1 if "dom_check" in result["details"] else 0) + (1 if "api_check" in result["details"] else 0)
+            
+            result["score"] = checks_passed / total_checks if total_checks > 0 else 0
+            result["success"] = result["score"] >= self.reality_check_threshold
+            
+            log_step("reality_check", 
+                    f"现实验证完成: score={result['score']:.2f}, success={result['success']}",
+                    score=result["score"],
+                    passed=checks_passed,
+                    total=total_checks)
+            
+        except Exception as e:
+            result["issues"].append(f"现实验证异常: {e}")
+            log_step("reality_check", f"现实验证异常: {e}", error=True)
+        
+        self._reality_check_results.append(result)
+        return result
+    
+    def _is_frontend_task(self, task: str) -> bool:
+        """判断是否为前端任务"""
+        frontend_keywords = [
+            "component", "页面", "UI", "界面", "前端", "react", "vue", "tsx", "jsx",
+            "css", "样式", "布局", "button", "modal", "form", "table", "card"
+        ]
+        task_lower = task.lower()
+        return any(kw in task_lower for kw in frontend_keywords)
+    
+    def _is_backend_task(self, task: str) -> bool:
+        """判断是否为后端任务"""
+        backend_keywords = [
+            "api", "endpoint", "路由", "接口", "后端", "server", "handler",
+            "controller", "service", "database", "model", "schema"
+        ]
+        task_lower = task.lower()
+        return any(kw in task_lower for kw in backend_keywords)
+    
+    async def _check_dom_elements(self, task: str, code: str) -> Dict[str, Any]:
+        """检查 DOM 元素是否存在"""
+        result = {"exists": True, "found_selectors": [], "missing_selectors": []}
+        
+        # 从代码中提取可能的选择器（简化版）
+        import re
+        selectors = []
+        
+        # 匹配 data-testid, id, className 等
+        patterns = [
+            r'data-testid=["\']([^"\']+)["\']',
+            r'id=["\']([^"\']+)["\']',
+            r'className=["\']([^"\']+)["\']',
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, code)
+            selectors.extend(matches)
+        
+        if not selectors:
+            return result
+        
+        # 使用 browser_agent 检查元素
+        if hasattr(self.browser_agent, 'find_element'):
+            for selector in selectors[:5]:  # 最多检查 5 个
+                try:
+                    element = await self.browser_agent.find_element(f"[data-testid='{selector}']")
+                    if element:
+                        result["found_selectors"].append(selector)
+                    else:
+                        result["missing_selectors"].append(selector)
+                except:
+                    result["missing_selectors"].append(selector)
+        
+        result["exists"] = len(result["missing_selectors"]) == 0
+        return result
+    
+    async def _check_api_endpoints(self, task: str, code: str) -> Dict[str, Any]:
+        """检查 API 端点是否可达"""
+        result = {"reachable": True, "tested_endpoints": [], "failed_endpoints": []}
+        
+        # 从代码中提取可能的端点
+        import re
+        endpoints = []
+        
+        # 匹配路由定义
+        patterns = [
+            r'["\'](GET|POST|PUT|DELETE)\s+([/\w]+)["\']',
+            r'@app\.(get|post|put|delete)\(["\']([^"\']+)["\']',
+            r'router\.(get|post|put|delete)\(["\']([^"\']+)["\']',
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, code, re.IGNORECASE)
+            for match in matches:
+                if isinstance(match, tuple):
+                    endpoints.append(f"{match[0].upper()} {match[1]}")
+                else:
+                    endpoints.append(match)
+        
+        if not endpoints:
+            return result
+        
+        # 使用 browser_agent 或 HTTP 检查端点
+        if hasattr(self.browser_agent, 'http_get'):
+            for endpoint in endpoints[:3]:  # 最多检查 3 个
+                try:
+                    response = await self.browser_agent.http_get(endpoint)
+                    if response and response.status < 500:
+                        result["tested_endpoints"].append(endpoint)
+                    else:
+                        result["failed_endpoints"].append(endpoint)
+                except:
+                    result["failed_endpoints"].append(endpoint)
+        
+        result["reachable"] = len(result["failed_endpoints"]) == 0
+        return result
+
+    async def _record_to_ledger(
+        self,
+        task: str,
+        round_results: List[RoundResult],
+        final_result: TriadLoopResult,
+        reality_check: Optional[Dict] = None
+    ):
+        """
+        记录博弈过程到 DecisionLedger - 长记忆持久化
+        
+        将每一轮的博弈过程正式存入"战略账本"，支持后续分析和复盘。
+        """
+        if not self.decision_ledger:
+            return
+        
+        try:
+            # 构建决策记录
+            record = {
+                "timestamp": time.time(),
+                "task": task,
+                "total_rounds": final_result.total_rounds,
+                "final_status": final_result.status.value,
+                "final_score": final_result.final_score,
+                "converged": final_result.converged,
+                "rounds": []
+            }
+            
+            # 记录每一轮的详细信息
+            for i, r in enumerate(round_results):
+                round_record = {
+                    "round": i + 1,
+                    "coder": {
+                        "mode": r.coder_result.mode.value if hasattr(r.coder_result.mode, 'value') else str(r.coder_result.mode),
+                        "code_length": len(r.coder_result.code),
+                        "output_mode": getattr(r.coder_result, 'output_mode', 'unknown')
+                    },
+                    "reviewer": {
+                        "score": r.reviewer_result.overall_score,
+                        "approved": r.reviewer_result.approved,
+                        "issues_count": len(r.reviewer_result.issues)
+                    },
+                    "validator": {
+                        "success": r.validator_result.success,
+                        "passed": r.validator_result.passed,
+                        "failed": r.validator_result.failed
+                    },
+                    "issues_remaining": r.issues_remaining
+                }
+                record["rounds"].append(round_record)
+            
+            # 添加现实验证结果
+            if reality_check:
+                record["reality_check"] = {
+                    "success": reality_check.get("success"),
+                    "score": reality_check.get("score"),
+                    "issues": reality_check.get("issues", [])
+                }
+            
+            # 记录到 DecisionLedger
+            if hasattr(self.decision_ledger, 'record'):
+                await self.decision_ledger.record(record)
+                log_step("ledger_record", "博弈过程已记录到 DecisionLedger")
+            elif hasattr(self.decision_ledger, 'log_decision'):
+                self.decision_ledger.log_decision("triad_loop", record)
+                log_step("ledger_record", "博弈过程已记录")
+            
+        except Exception as e:
+            log_step("ledger_record", f"记录到 DecisionLedger 失败: {e}", error=True)
 
 
 def create_triad_loop(**kwargs) -> TriadLoop:
