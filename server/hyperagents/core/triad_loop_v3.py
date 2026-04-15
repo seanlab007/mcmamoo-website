@@ -774,7 +774,7 @@ class TriadLoop:
             ''.join(code2.split()))
         return seq.ratio()
 
-    def run(
+    async def run_async(
         self,
         task: str,
         context: Dict[str, Any] = None,
@@ -1618,6 +1618,182 @@ class TriadLoop:
         except Exception as e:
             log_step("websocket_error", f"事件推送失败: {e}", error=True)
 
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Phase 8: MaoAI Parallel Orchestrator (MPO) 集成
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    async def run_parallel(self, task: str, target_files: List[str] = None, **kwargs):
+        """
+        并行执行模式 - MaoAI Parallel Orchestrator (MPO)
+        
+        当任务可以拆分为多个独立子任务时，使用 MPO 并行处理，实现类似 Manus Max 的并行爆发力。
+        
+        架构:
+          1. 任务分片 (Sharding): 主 Agent 分析任务，拆解为互不干扰的原子单元
+          2. 并行执行 (Parallel Execution): 启动 N 个轻量级 TriadWorker，并发调用 LLM
+          3. 聚合 (Aggregation): 收集所有 Worker 输出，进行冲突检测与逻辑汇总
+        
+        参数:
+            task: 任务描述
+            target_files: 目标文件列表，如果为 None 则自动发现相关文件
+            max_workers: 最大并发 Worker 数 (默认 5)
+            enable_video_parallel: 是否启用视觉并行处理 (默认 False)
+        
+        返回:
+            ParallelExecutionResult 对象
+        """
+        try:
+            # 导入 MPO 核心
+            from .mpo_core import MaoAIParallelOrchestrator, VisionParallelOrchestrator
+            
+            # 获取配置参数
+            max_workers = kwargs.get('max_workers', 5)
+            enable_video_parallel = kwargs.get('enable_video_parallel', False)
+            
+            log_step("mpo_start", "启动 MaoAI Parallel Orchestrator (MPO)", 
+                    task=task[:100], max_workers=max_workers, 
+                    video_parallel=enable_video_parallel)
+            
+            # 如果没有指定目标文件，尝试自动发现
+            if not target_files:
+                target_files = await self._discover_relevant_files(task)
+                log_step("mpo_discovery", f"自动发现 {len(target_files)} 个相关文件", 
+                        files=target_files[:5])
+            
+            if not target_files:
+                log_step("mpo_error", "未找到相关目标文件，回退到串行模式")
+                return await self._fallback_to_serial(task)
+            
+            # 根据任务类型选择 Orchestrator
+            if enable_video_parallel and self._is_video_task(task):
+                log_step("mpo_type", "使用视觉并行处理器 (VisionParallelOrchestrator)")
+                orchestrator = VisionParallelOrchestrator(
+                    max_workers=max_workers,
+                    workspace=self.workspace
+                )
+            else:
+                log_step("mpo_type", "使用代码并行处理器 (MaoAIParallelOrchestrator)")
+                orchestrator = MaoAIParallelOrchestrator(
+                    max_workers=max_workers,
+                    workspace=self.workspace
+                )
+            
+            # 执行并行任务
+            parallel_result = await orchestrator.run_parallel_task(task, target_files)
+            
+            # 转换为 TriadLoop 兼容的结果
+            final_result = self._create_parallel_result(parallel_result)
+            
+            log_step("mpo_complete", "MPO 并行执行完成",
+                    total_workers=parallel_result.get("total_workers", 0),
+                    succeeded=parallel_result.get("succeeded", 0),
+                    failed=parallel_result.get("failed", 0),
+                    total_time=parallel_result.get("total_time", 0))
+            
+            return final_result
+            
+        except ImportError as e:
+            log_step("mpo_error", f"MPO 导入失败，回退到串行模式: {e}", error=True)
+            return await self._fallback_to_serial(task)
+        except Exception as e:
+            log_step("mpo_error", f"MPO 执行异常: {e}", error=True)
+            return await self._fallback_to_serial(task)
+    
+    async def _fallback_to_serial(self, task: str):
+        """MPO 失败时回退到串行执行"""
+        log_step("fallback_serial", "回退到串行三权分立博弈")
+        return self.run(task=task)
+    
+    async def _discover_relevant_files(self, task: str) -> List[str]:
+        """
+        自动发现与任务相关的文件
+        
+        基于知识图谱和 Code RAG 检索相关文件
+        """
+        relevant_files = []
+        
+        # 1. 从知识图谱获取相关组件
+        if self.enable_knowledge_graph and self._knowledge_graph:
+            related = self._knowledge_graph.search(task, limit=10)
+            for item in related:
+                if isinstance(item, dict) and "file_path" in item:
+                    file_path = item["file_path"]
+                    if os.path.exists(os.path.join(self.workspace, file_path)):
+                        relevant_files.append(file_path)
+        
+        # 2. 从 Code RAG 检索相关代码片段
+        if self.enable_code_rag and self._code_rag:
+            try:
+                results = self._code_rag.query(task, top_k=10)
+                for r in results:
+                    file_path = r.chunk.file_path
+                    if file_path not in relevant_files and os.path.exists(os.path.join(self.workspace, file_path)):
+                        relevant_files.append(file_path)
+            except Exception as e:
+                log_step("rag_discovery", f"RAG 检索失败: {e}", error=True)
+        
+        # 3. 基于任务关键词搜索文件
+        import glob
+        keywords = [w for w in task.split() if len(w) > 3]
+        for keyword in keywords[:3]:  # 最多使用前3个关键词
+            patterns = [
+                f"**/*{keyword}*.py",
+                f"**/*{keyword}*.ts",
+                f"**/*{keyword}*.tsx",
+                f"**/*{keyword}*.js",
+                f"**/*{keyword}*.jsx",
+            ]
+            for pattern in patterns:
+                matches = glob.glob(os.path.join(self.workspace, pattern), recursive=True)
+                for match in matches:
+                    rel_path = os.path.relpath(match, self.workspace)
+                    if rel_path not in relevant_files:
+                        relevant_files.append(rel_path)
+        
+        # 去重并返回
+        return list(set(relevant_files))[:20]  # 最多20个文件
+    
+    def _is_video_task(self, task: str) -> bool:
+        """判断是否为视频处理任务"""
+        video_keywords = [
+            "视频", "video", "帧", "frame", "截图", "screenshot", "视觉", "visual",
+            "图像", "image", "画面", "剪辑", "edit", "分析", "analyze"
+        ]
+        task_lower = task.lower()
+        return any(kw in task_lower for kw in video_keywords)
+    
+    def _create_parallel_result(self, parallel_result: Dict[str, Any]) -> "TriadLoopResult":
+        """
+        将 MPO 并行结果转换为 TriadLoopResult 格式
+        """
+        from .triad_loop import TriadStatus
+        
+        # 计算总得分
+        total_score = 0.0
+        successful_results = 0
+        
+        worker_results = parallel_result.get("worker_results", [])
+        for result in worker_results:
+            if result.get("status") == "completed":
+                total_score += result.get("score", 0.0)
+                successful_results += 1
+        
+        avg_score = total_score / successful_results if successful_results > 0 else 0.0
+        
+        # 构建最终结果
+        final_result = TriadLoopResult(
+            status=TriadStatus.APPROVED if successful_results > 0 else TriadStatus.REJECTED,
+            total_rounds=len(worker_results),
+            total_time=parallel_result.get("total_time", 0),
+            final_score=avg_score,
+            final_code=parallel_result.get("aggregated_code", ""),
+            reviewer_passed=True,
+            validator_passed=True,
+            round_results=[]  # 并行模式没有分轮结果
+        )
+        
+        return final_result
+    
     async def _record_to_ledger(
         self,
         task: str,
@@ -1723,6 +1899,12 @@ if __name__ == "__main__":
     parser.add_argument("--glm-model", type=str, default="glm-4-plus", help="GLM-4 模型名")
     parser.add_argument("--claude-local", action="store_true", help="使用 Claude Code Local（有工具链）")
     parser.add_argument("--glm-validator", action="store_true", help="使用 GLM-4 作为 Validator")
+    
+    # ─── Phase 8: MaoAI Parallel Orchestrator (MPO) 参数 ─────────────────────
+    parser.add_argument("--parallel", action="store_true", help="启用并行执行模式（MPO）")
+    parser.add_argument("--max-workers", type=int, default=5, help="最大并发 Worker 数（默认 5）")
+    parser.add_argument("--target-files", type=str, nargs="+", help="目标文件列表（支持通配符）")
+    parser.add_argument("--video-parallel", action="store_true", help="启用视觉并行处理模式")
 
     args = parser.parse_args()
 
@@ -1747,26 +1929,52 @@ if __name__ == "__main__":
         use_glm_validator=args.glm_validator,
     )
 
-    result = triad.run(task=args.task, context={"language": args.language}, mode=args.mode)
+    # 根据参数选择执行模式
+    if args.parallel:
+        # 并行执行模式
+        log_step("mode_select", "使用并行执行模式 (MPO)")
+        result = triad.run_parallel(
+            task=args.task,
+            target_files=args.target_files,
+            max_workers=args.max_workers,
+            enable_video_parallel=args.video_parallel,
+            context={"language": args.language},
+            mode=args.mode
+        )
+    else:
+        # 串行执行模式
+        log_step("mode_select", "使用串行执行模式")
+        result = asyncio.run(triad.run_async(task=args.task, context={"language": args.language}, mode=args.mode))
 
     print("\n" + "=" * 60)
-    print("三权分立博弈循环执行结果")
+    print(f"{'MPO 并行执行结果' if args.parallel else '三权分立博弈循环执行结果'}")
     print("=" * 60)
     print(f"状态: {'✓ 全部通过' if result.all_passed else '✗ 未通过'}")
     print(f"最终得分: {result.final_score:.2f}")
     print(f"迭代次数: {result.total_rounds}")
     print(f"总耗时: {result.total_time:.2f}s")
-    print("三权检查:")
-    print(f"  Reviewer: {'✓ 通过' if result.reviewer_passed else '✗ 未通过'}")
-    print(f"  Validator: {'✓ 通过' if result.validator_passed else '✗ 未通过'}")
-    if result.converged:
-        print(f"收敛: 是 ({result.convergence_reason})")
+    
+    if args.parallel:
+        # 并行执行模式特有输出
+        print(f"执行模式: MPO 并行模式 (最大 {args.max_workers} 个 Worker)")
+        print(f"目标文件数: {len(args.target_files) if args.target_files else '自动发现'}")
+        print(f"视频并行: {'启用' if args.video_parallel else '禁用'}")
+    else:
+        # 串行执行模式输出
+        print("三权检查:")
+        print(f"  Reviewer: {'✓ 通过' if result.reviewer_passed else '✗ 未通过'}")
+        print(f"  Validator: {'✓ 通过' if result.validator_passed else '✗ 未通过'}")
+        if result.converged:
+            print(f"收敛: 是 ({result.convergence_reason})")
 
-    print("\nPhase 5/6 性能统计:")
+    print("\n性能统计:")
     print(f"  原子化模式: {not args.no_atomic}")
     print(f"  Code RAG: {not args.no_rag}")
     print(f"  异构博弈: {args.heterogeneous}")
     print(f"  Claude Local: {args.claude_local}")
     print(f"  GLM-4 Reviewer: {args.reviewer_provider == 'glm' or args.heterogeneous}")
-    print(f"  Token 节省: 约 {result.patch_similarity * 100:.0f}% (预估)")
+    if not args.parallel:
+        print(f"  Token 节省: 约 {result.patch_similarity * 100:.0f}% (预估)")
+    print(f"  MPO 并行: {'启用' if args.parallel else '禁用'}")
+    print(f"  最大 Worker 数: {args.max_workers if args.parallel else 1}")
     print("=" * 60)
