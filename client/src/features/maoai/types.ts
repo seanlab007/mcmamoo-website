@@ -64,12 +64,13 @@ export type CloudModel = {
 
 export type TriadAgentType = "strategist" | "coders" | "reviewer" | "validator";
 
-export type TriadPhase = 
+export type TriadPhase =
   | "idle"
   | "strategist_analyzing"
   | "coders_generating"
   | "reviewer_reviewing"
   | "validator_testing"
+  | "reality_checking"
   | "converging"
   | "completed"
   | "error";

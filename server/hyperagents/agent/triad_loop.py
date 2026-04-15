@@ -2,27 +2,34 @@
 """
 MaoAI HyperAgents — TriadLoop (三权分立博弈循环)
 ─────────────────────────────────────────────────────────────────────────────
-核心架构：Coder ↔ Reviewer ↔ Validator 三权分立
+核心架构：Coder ↔ Reviewer ↔ Validator ↔ Reality Check 四权分立
 
      ┌─────────────────────────────────────────────────────────────────────┐
-     │                        TRIAD LOOP                                   │
+     │                        TRIAD LOOP v3.0                              │
      │                                                                      │
      │   ┌────────┐     生成代码     ┌────────┐     审查反馈   ┌────────┐  │
      │   │ Coder  │ ─────────────→ │Reviewer│ ←─────────── │Validator│  │
-     │   │ (Claude)│               │  (GPT) │              │(Pytest) │  │
-     │   └────────┘               └────────┘              └────────┘  │
+     │   │(Claude)│               │  (GPT) │              │(Pytest) │  │
+     │   └────────┘               └────────┘              └────┬───┘  │
      │        ↑                        │                        │       │
-     │        │                        │                        │       │
-     │        └────────────────────────┴────────────────────────┘       │
+     │        │                        │                        ↓       │
+     │        │                        │                 ┌──────────┐  │
+     │        │                        │                 │ Reality  │  │
+     │        │                        │                 │  Check   │  │
+     │        └────────────────────────┴─────────────────┴──────────┘  │
      │                        循环直到全部通过                            │
      └─────────────────────────────────────────────────────────────────────┘
 
 核心特点：
   1. 异构模型：Coder 用 Claude，Reviewer 用 GPT，Validator 用 Pytest
-  2. 三权分立：执行权、审查权、验证权相互制衡
+  2. 四权分立：执行权、审查权、验证权、现实验证权相互制衡
   3. 思维链追踪：<thought> 标签实时展示 AI 推理过程
   4. 收敛检测：识别改进停滞 + Patch 相似度检测，避免无效迭代
   5. 项目全景感知：自动注入相关组件上下文
+  6. 异步并发验证：DOM检查与API探测并行执行
+  7. 视觉差异对比：截图前后对比检测UI变化
+  8. 动态工具发现：根据任务类型自动加载工具
+  9. 策略逃逸机制：停滞时切换模型或改变Prompt策略
 """
 
 import json
@@ -30,7 +37,9 @@ import time
 import os
 import hashlib
 import difflib
-from typing import Optional, List, Dict, Any
+import asyncio
+import aiohttp
+from typing import Optional, List, Dict, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -372,6 +381,171 @@ class TriadLoop:
         self.enable_reality_check = True  # 启用最终现实验证
         self.reality_check_threshold = 0.8  # 现实验证通过阈值
         self._reality_check_results = []  # 现实验证结果历史
+        
+        # ─── Phase 7.1: 异步并发验证配置 ─────────────────────────────────────────
+        self.enable_concurrent_checks = True  # 启用并发验证
+        self.concurrent_timeout = 30  # 并发验证超时时间
+        
+        # ─── Phase 7.2: 视觉差异对比配置 ─────────────────────────────────────────
+        self.enable_visual_diff = True  # 启用视觉差异对比
+        self._screenshot_history = []  # 截图历史（用于对比）
+        self.visual_diff_threshold = 0.05  # 视觉差异阈值（5%像素变化）
+        
+        # ─── Phase 7.3: 动态工具发现配置 ─────────────────────────────────────────
+        self.tool_registry = {}  # 工具注册表
+        self._register_default_tools()  # 注册默认工具
+        
+        # ─── Phase 7.4: 策略逃逸配置 ─────────────────────────────────────────────
+        self.strategy_escape_enabled = True  # 启用策略逃逸
+        self._coder_models = ["claude-3-5-sonnet", "gpt-4o", "deepseek-v3"]  # 逃逸模型列表
+        self._current_model_index = 0  # 当前模型索引
+        self._prompt_strategies = ["atomic", "rewrite", "decompose"]  # Prompt策略列表
+        self._current_strategy_index = 0  # 当前策略索引
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Phase 7.3: 动态工具发现
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    def _register_default_tools(self):
+        """注册默认工具到工具注册表"""
+        self.tool_registry = {
+            "browser_use": {
+                "keywords": ["订票", "搜索", "浏览", "网页", "点击", "填写"],
+                "loader": self._load_browser_use,
+                "loaded": False,
+                "instance": None
+            },
+            "mcp_client": {
+                "keywords": ["mcp", "工具调用", "外部服务", "api集成"],
+                "loader": self._load_mcp_client,
+                "loaded": False,
+                "instance": None
+            },
+            "vision_analyzer": {
+                "keywords": ["截图", "视觉", "图像", "UI检查", "样式"],
+                "loader": self._load_vision_analyzer,
+                "loaded": False,
+                "instance": None
+            },
+            "api_tester": {
+                "keywords": ["api测试", "接口测试", "postman", "curl"],
+                "loader": self._load_api_tester,
+                "loaded": False,
+                "instance": None
+            }
+        }
+    
+    def _load_browser_use(self):
+        """加载 browser_use 工具"""
+        try:
+            from browser_use import Agent as BrowserUseAgent
+            return BrowserUseAgent()
+        except ImportError:
+            log_step("tool_load", "browser_use 未安装，跳过加载")
+            return None
+    
+    def _load_mcp_client(self):
+        """加载 MCP Client 工具"""
+        try:
+            from mcp import ClientSession
+            return ClientSession()
+        except ImportError:
+            log_step("tool_load", "mcp client 未安装，跳过加载")
+            return None
+    
+    def _load_vision_analyzer(self):
+        """加载视觉分析工具"""
+        try:
+            if HAS_CORE_2_0:
+                from core import VisionStrategist
+                return VisionStrategist()
+        except ImportError:
+            pass
+        return None
+    
+    def _load_api_tester(self):
+        """加载 API 测试工具"""
+        return aiohttp.ClientSession()
+    
+    def discover_and_load_tools(self, task: str) -> List[str]:
+        """
+        根据任务描述动态发现并加载工具
+        
+        Returns:
+            已加载的工具名称列表
+        """
+        loaded_tools = []
+        task_lower = task.lower()
+        
+        for tool_name, tool_config in self.tool_registry.items():
+            # 检查任务是否匹配工具关键词
+            if any(kw in task_lower for kw in tool_config["keywords"]):
+                if not tool_config["loaded"]:
+                    log_step("tool_discovery", f"发现匹配工具: {tool_name}", task=task[:50])
+                    instance = tool_config["loader"]()
+                    if instance:
+                        tool_config["instance"] = instance
+                        tool_config["loaded"] = True
+                        loaded_tools.append(tool_name)
+                        log_step("tool_load", f"工具加载成功: {tool_name}")
+                else:
+                    loaded_tools.append(tool_name)
+        
+        return loaded_tools
+    
+    def get_tool(self, tool_name: str) -> Optional[Any]:
+        """获取已加载的工具实例"""
+        if tool_name in self.tool_registry:
+            return self.tool_registry[tool_name]["instance"]
+        return None
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Phase 7.4: 策略逃逸机制
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    def _should_escape_strategy(self) -> bool:
+        """判断是否需要策略逃逸"""
+        return (
+            self.strategy_escape_enabled and 
+            (self.consecutive_no_improvement >= 2 or self._consecutive_high_similarity >= 2)
+        )
+    
+    def _escape_strategy(self) -> Dict[str, Any]:
+        """
+        执行策略逃逸 - 切换模型或改变Prompt策略
+        
+        Returns:
+            逃逸后的配置
+        """
+        escape_config = {}
+        
+        # 策略1: 切换Coder模型
+        if self._current_model_index < len(self._coder_models) - 1:
+            self._current_model_index += 1
+            new_model = self._coder_models[self._current_model_index]
+            escape_config["coder_model"] = new_model
+            log_step("strategy_escape", 
+                    f"策略逃逸: 切换Coder模型到 {new_model}",
+                    reason="连续改进停滞",
+                    old_model=self.coder_model,
+                    new_model=new_model)
+            self.coder_model = new_model
+        
+        # 策略2: 改变Prompt策略
+        elif self._current_strategy_index < len(self._prompt_strategies) - 1:
+            self._current_strategy_index += 1
+            new_strategy = self._prompt_strategies[self._current_strategy_index]
+            escape_config["prompt_strategy"] = new_strategy
+            log_step("strategy_escape",
+                    f"策略逃逸: 切换Prompt策略到 {new_strategy}",
+                    reason="模型切换无效",
+                    strategy=new_strategy)
+        
+        # 重置计数器
+        self.consecutive_no_improvement = 0
+        self._consecutive_high_similarity = 0
+        
+        return escape_config
 
     def _get_knowledge_graph_context(self, task: str) -> Dict[str, Any]:
         """
@@ -646,6 +820,12 @@ class TriadLoop:
         if self.enable_atomic_mode:
             context = {**context, "atomic_mode": True, "auto_apply": self.auto_apply_patch}
             log_step("triad_mode", "原子化模式已激活", mode="atomic")
+        
+        # ─── Phase 7.3: 动态工具发现 ───────────────────────────────────────────
+        discovered_tools = self.discover_and_load_tools(task)
+        if discovered_tools:
+            log_step("tools_loaded", f"动态加载工具: {discovered_tools}", tools=discovered_tools)
+            context = {**context, "available_tools": discovered_tools}
 
         while self.current_round < self.max_iterations:
             self.current_round += 1
@@ -939,9 +1119,37 @@ class TriadLoop:
             else:
                 self._consecutive_high_similarity = 0
 
-            # 任一收敛条件触发 → 停止
+            # 任一收敛条件触发 → Phase 7.4: 策略逃逸
             if (self.consecutive_no_improvement >= 2 or
                 self._consecutive_high_similarity >= 2):
+                
+                # Phase 7.4: 尝试策略逃逸
+                if self._should_escape_strategy():
+                    escape_config = self._escape_strategy()
+                    
+                    # 应用逃逸配置
+                    if "coder_model" in escape_config:
+                        # 重新初始化 CoderAgent 使用新模型
+                        self.coder = CoderAgent(
+                            api_key=os.environ.get("ANTHROPIC_API_KEY"),
+                            model=escape_config["coder_model"],
+                            workspace=self.workspace,
+                            enable_thought_tracking=self.enable_thought_tracking,
+                            enable_atomic_mode=self.enable_atomic_mode,
+                            auto_apply_patch=self.auto_apply_patch
+                        )
+                        log_step("coder_reinit", f"CoderAgent 已重新初始化: {escape_config['coder_model']}")
+                    
+                    if "prompt_strategy" in escape_config:
+                        context["prompt_strategy"] = escape_config["prompt_strategy"]
+                        log_step("prompt_strategy", f"Prompt策略已切换: {escape_config['prompt_strategy']}")
+                    
+                    # 继续循环，不停止
+                    current_mode = GenerationMode.FIX
+                    log_thought("system", f"策略逃逸已执行，继续博弈...", round_num=self.current_round)
+                    continue
+                
+                # 策略逃逸无效 → 停止
                 total_time = time.time() - start_time
 
                 reason = (
@@ -954,7 +1162,7 @@ class TriadLoop:
                         similarity_converged=similarity_converged,
                         patch_similarity=patch_similarity)
 
-                return TriadLoopResult(
+                final_result = TriadLoopResult(
                     status=TriadStatus.REJECTED,
                     total_rounds=self.current_round,
                     total_time=total_time,
@@ -966,6 +1174,11 @@ class TriadLoop:
                     round_results=round_results,
                     feedback=self._summarize_feedback(round_results)
                 )
+                
+                # 记录到 DecisionLedger（即使失败也记录）
+                await self._record_to_ledger(task, round_results, final_result)
+                
+                return final_result
             else:
                 self.consecutive_no_improvement = 0
                 self._consecutive_high_similarity = 0
@@ -1039,10 +1252,15 @@ class TriadLoop:
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        运行现实验证 - "最终怀疑"机制
+        运行现实验证 - "最终怀疑"机制（Phase 7.1: 异步并发验证）
         
         当 Validator 通过后，强制让 browser_agent 去截图并检查
         DOM 元素是否真的存在。这是防止"逻辑幻觉"的最后一道防线。
+        
+        Phase 7.1 增强：
+        - 异步并发执行 DOM 检查和 API 探测
+        - 视觉差异对比（前后截图对比）
+        - WebSocket 实时推送验证进度
         
         Returns:
             {
@@ -1058,12 +1276,17 @@ class TriadLoop:
         
         log_step("reality_check", "启动最终现实验证 - 怀疑论验证器", phase="final_skepticism")
         
+        # 通过 WebSocket 推送开始事件
+        if self.stream_broker:
+            await self._emit_reality_check_event("started", {"task": task[:100]})
+        
         result = {
             "success": False,
             "score": 0.0,
             "screenshot_path": None,
             "issues": [],
-            "details": {}
+            "details": {},
+            "visual_diff": None
         }
         
         try:
@@ -1073,6 +1296,82 @@ class TriadLoop:
             if hasattr(self.browser_agent, 'screenshot'):
                 await self.browser_agent.screenshot(screenshot_path)
                 result["screenshot_path"] = screenshot_path
+                
+                # Phase 7.2: 视觉差异对比
+                if self.enable_visual_diff and self._screenshot_history:
+                    visual_diff = await self._compute_visual_diff(
+                        self._screenshot_history[-1], 
+                        screenshot_path
+                    )
+                    result["visual_diff"] = visual_diff
+                    log_step("visual_diff", 
+                            f"视觉差异: {visual_diff.get('diff_percentage', 0):.2%}",
+                            significant_change=visual_diff.get('significant_change', False))
+                
+                # 保存截图历史
+                self._screenshot_history.append(screenshot_path)
+                if len(self._screenshot_history) > 5:  # 只保留最近5张
+                    self._screenshot_history.pop(0)
+                
+                # 推送截图完成事件
+                if self.stream_broker:
+                    await self._emit_reality_check_event("screenshot_complete", 
+                                                         {"path": screenshot_path})
+            
+            # Phase 7.1: 异步并发验证
+            is_frontend = context.get("is_frontend") or self._is_frontend_task(task)
+            is_backend = context.get("is_backend") or self._is_backend_task(task)
+            
+            if self.enable_concurrent_checks and (is_frontend and is_backend):
+                # 并发执行 DOM 检查和 API 探测
+                log_step("reality_check", "启动并发验证 (DOM + API)")
+                
+                dom_task = self._check_dom_elements(task, code) if is_frontend else asyncio.sleep(0)
+                api_task = self._check_api_endpoints(task, code) if is_backend else asyncio.sleep(0)
+                
+                dom_result, api_result = await asyncio.gather(
+                    dom_task, 
+                    api_task,
+                    return_exceptions=True
+                )
+                
+                # 处理 DOM 检查结果
+                if isinstance(dom_result, Exception):
+                    result["issues"].append(f"DOM检查异常: {dom_result}")
+                    result["details"]["dom_check"] = {"exists": False, "error": str(dom_result)}
+                else:
+                    result["details"]["dom_check"] = dom_result
+                    if not dom_result.get("exists", True):
+                        result["issues"].append(f"关键 DOM 元素未找到: {dom_result.get('missing_selectors', [])}")
+                
+                # 处理 API 检查结果
+                if isinstance(api_result, Exception):
+                    result["issues"].append(f"API检查异常: {api_result}")
+                    result["details"]["api_check"] = {"reachable": False, "error": str(api_result)}
+                else:
+                    result["details"]["api_check"] = api_result
+                    if not api_result.get("reachable", True):
+                        result["issues"].append(f"API 端点不可达: {api_result.get('failed_endpoints', [])}")
+                
+                # 推送并发验证完成事件
+                if self.stream_broker:
+                    await self._emit_reality_check_event("concurrent_checks_complete", {
+                        "dom_exists": result["details"].get("dom_check", {}).get("exists", True),
+                        "api_reachable": result["details"].get("api_check", {}).get("reachable", True)
+                    })
+            else:
+                # 顺序执行（兼容旧逻辑）
+                if is_frontend:
+                    dom_check = await self._check_dom_elements(task, code)
+                    result["details"]["dom_check"] = dom_check
+                    if not dom_check.get("exists", False):
+                        result["issues"].append(f"关键 DOM 元素未找到: {dom_check.get('missing_selectors', [])}")
+                
+                if is_backend:
+                    api_check = await self._check_api_endpoints(task, code)
+                    result["details"]["api_check"] = api_check
+                    if not api_check.get("reachable", False):
+                        result["issues"].append(f"API 端点不可达: {api_check.get('failed_endpoints', [])}")
                 log_step("reality_check", f"截图已保存: {screenshot_path}")
             
             # 2. 如果是前端组件修改，检查关键 DOM 元素
@@ -1212,6 +1511,112 @@ class TriadLoop:
         
         result["reachable"] = len(result["failed_endpoints"]) == 0
         return result
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Phase 7.2: 视觉差异对比
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    async def _compute_visual_diff(self, screenshot_before: str, screenshot_after: str) -> Dict[str, Any]:
+        """
+        计算两张截图的视觉差异
+        
+        Returns:
+            {
+                "diff_percentage": float,  # 差异像素百分比
+                "diff_pixels": int,        # 差异像素数量
+                "total_pixels": int,       # 总像素数量
+                "significant_change": bool, # 是否显著变化（超过阈值）
+                "diff_image_path": str     # 差异可视化图片路径
+            }
+        """
+        result = {
+            "diff_percentage": 0.0,
+            "diff_pixels": 0,
+            "total_pixels": 0,
+            "significant_change": False,
+            "diff_image_path": None
+        }
+        
+        try:
+            from PIL import Image
+            import numpy as np
+            
+            # 加载图片
+            img1 = Image.open(screenshot_before).convert('RGB')
+            img2 = Image.open(screenshot_after).convert('RGB')
+            
+            # 确保尺寸一致
+            if img1.size != img2.size:
+                img2 = img2.resize(img1.size)
+            
+            # 转换为 numpy 数组
+            arr1 = np.array(img1)
+            arr2 = np.array(img2)
+            
+            # 计算差异
+            diff = np.abs(arr1.astype(float) - arr2.astype(float))
+            diff_mask = np.any(diff > 10, axis=2)  # 像素差异阈值
+            
+            result["diff_pixels"] = int(np.sum(diff_mask))
+            result["total_pixels"] = diff_mask.size
+            result["diff_percentage"] = result["diff_pixels"] / result["total_pixels"] if result["total_pixels"] > 0 else 0
+            result["significant_change"] = result["diff_percentage"] > self.visual_diff_threshold
+            
+            # 生成差异可视化图
+            if result["diff_pixels"] > 0:
+                diff_image = np.copy(arr2)
+                diff_image[diff_mask] = [255, 0, 0]  # 红色标记差异区域
+                diff_img = Image.fromarray(diff_image.astype(np.uint8))
+                diff_path = f"/tmp/maoai_visual_diff_{int(time.time())}.png"
+                diff_img.save(diff_path)
+                result["diff_image_path"] = diff_path
+            
+            log_step("visual_diff_computed",
+                    f"视觉差异: {result['diff_percentage']:.2%} ({result['diff_pixels']} pixels)",
+                    significant=result["significant_change"])
+            
+        except ImportError:
+            log_step("visual_diff", "PIL/numpy 未安装，跳过视觉差异计算")
+        except Exception as e:
+            log_step("visual_diff_error", f"视觉差异计算失败: {e}", error=True)
+        
+        return result
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Phase 7.5: WebSocket 实时推送
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    async def _emit_reality_check_event(self, event_type: str, data: Dict[str, Any]):
+        """
+        推送现实验证事件到前端
+        
+        事件类型:
+        - started: 验证开始
+        - screenshot_complete: 截图完成
+        - concurrent_checks_complete: 并发检查完成
+        - dom_check_complete: DOM检查完成
+        - api_check_complete: API检查完成
+        - visual_diff_complete: 视觉差异计算完成
+        - completed: 验证完成
+        """
+        if not self.stream_broker:
+            return
+        
+        event = {
+            "type": "reality_check",
+            "event": event_type,
+            "timestamp": time.time(),
+            "data": data
+        }
+        
+        try:
+            if hasattr(self.stream_broker, 'emit'):
+                await self.stream_broker.emit("triad_loop_event", event)
+            elif hasattr(self.stream_broker, 'broadcast'):
+                self.stream_broker.broadcast(event)
+            log_step("websocket_emit", f"推送事件: {event_type}", event=event_type)
+        except Exception as e:
+            log_step("websocket_error", f"事件推送失败: {e}", error=True)
 
     async def _record_to_ledger(
         self,

@@ -13,7 +13,8 @@ import { MAOAI_CORE_2_CONFIG } from "../constants";
 import type { TriadLoopState, TriadAgentType, TriadPhase, TriadMessage } from "../types";
 import {
   Wifi, WifiOff, Loader2, CheckCircle2, XCircle, AlertTriangle,
-  Bot, Eye, TestTube2, Target, ChevronDown, ChevronUp, RefreshCw
+  Bot, Eye, TestTube2, Target, ChevronDown, ChevronUp, RefreshCw,
+  Scan, ScanLine, Camera, Globe, Cpu
 } from "lucide-react";
 
 const AGENT_ICONS: Record<TriadAgentType, React.ReactNode> = {
@@ -36,10 +37,22 @@ const PHASE_LABELS: Record<TriadPhase, string> = {
   coders_generating: "代码生成中",
   reviewer_reviewing: "审查中",
   validator_testing: "测试中",
+  reality_checking: "现实验证中",
   converging: "收敛中",
   completed: "已完成",
   error: "错误",
 };
+
+// Phase 7: 现实验证状态
+interface RealityCheckState {
+  isActive: boolean;
+  stage: "idle" | "screenshot" | "dom_check" | "api_check" | "visual_diff" | "completed";
+  screenshotPath?: string;
+  domCheckResult?: { exists: boolean; found: number; missing: number };
+  apiCheckResult?: { reachable: boolean; tested: number; failed: number };
+  visualDiff?: { diffPercentage: number; significant: boolean };
+  progress: number;
+}
 
 interface TriadLoopStatusProps {
   modelId: string;
@@ -60,6 +73,11 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
     error: undefined,
   });
   const [expanded, setExpanded] = useState(!compact);
+  const [realityCheck, setRealityCheck] = useState<RealityCheckState>({
+    isActive: false,
+    stage: "idle",
+    progress: 0,
+  });
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -124,9 +142,68 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
     code?: string;
     error?: string;
     messages?: TriadMessage[];
+    event?: string;
+    data?: any;
   }) => {
+    // Phase 7: 处理现实验证事件
+    if (data.type === "reality_check") {
+      const eventData = data.data || {};
+      
+      switch (data.event) {
+        case "started":
+          setRealityCheck({
+            isActive: true,
+            stage: "screenshot",
+            progress: 10,
+          });
+          setState(prev => ({ ...prev, currentPhase: "reality_checking" }));
+          break;
+        case "screenshot_complete":
+          setRealityCheck(prev => ({
+            ...prev,
+            stage: "dom_check",
+            progress: 30,
+            screenshotPath: eventData.path,
+          }));
+          break;
+        case "concurrent_checks_complete":
+          setRealityCheck(prev => ({
+            ...prev,
+            stage: "visual_diff",
+            progress: 70,
+            domCheckResult: eventData.dom_exists !== undefined ? {
+              exists: eventData.dom_exists,
+              found: eventData.dom_found || 0,
+              missing: eventData.dom_missing || 0,
+            } : undefined,
+            apiCheckResult: eventData.api_reachable !== undefined ? {
+              reachable: eventData.api_reachable,
+              tested: eventData.api_tested || 0,
+              failed: eventData.api_failed || 0,
+            } : undefined,
+          }));
+          break;
+        case "visual_diff_complete":
+          setRealityCheck(prev => ({
+            ...prev,
+            stage: "completed",
+            progress: 100,
+            visualDiff: eventData.diff_percentage !== undefined ? {
+              diffPercentage: eventData.diff_percentage,
+              significant: eventData.significant_change,
+            } : undefined,
+          }));
+          break;
+        case "completed":
+          setRealityCheck(prev => ({ ...prev, isActive: false, stage: "idle" }));
+          break;
+      }
+      return;
+    }
+
     if (data.type === "session_started") {
       setState(prev => ({ ...prev, isRunning: true }));
+      setRealityCheck({ isActive: false, stage: "idle", progress: 0 });
       return;
     }
 
@@ -139,6 +216,7 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
         score: data.score ?? prev.score,
         finalCode: data.code,
       }));
+      setRealityCheck({ isActive: false, stage: "idle", progress: 0 });
       return;
     }
 
@@ -149,6 +227,7 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
         coders: "coders_generating",
         reviewer: "reviewer_reviewing",
         validator: "validator_testing",
+        reality_check: "reality_checking",
         converge: "converging",
       };
       const newPhase = phaseMap[data.phase] || "idle";
@@ -338,6 +417,21 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
           );
         })}
 
+        {/* Phase 7: 现实扫描仪状态 */}
+        {realityCheck.isActive && (
+          <div className="flex items-center gap-2 px-2 py-1 bg-emerald-500/10 border border-emerald-500/30 animate-pulse">
+            <Scan size={12} className="text-emerald-400" />
+            <span className="text-[10px] text-emerald-400 font-medium">现实扫描</span>
+            <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-emerald-400 transition-all duration-300"
+                style={{ width: `${realityCheck.progress}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-emerald-400/70">{realityCheck.progress}%</span>
+          </div>
+        )}
+
         {/* 当前轮次 */}
         {currentRound > 0 && (
           <div className="ml-auto text-[10px] text-white/40">
@@ -374,6 +468,108 @@ export function TriadLoopStatus({ modelId, onStateChange, compact = false }: Tri
                   </span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Phase 7: 现实验证详情面板 */}
+          {realityCheck.isActive && (
+            <div className="px-4 py-3 bg-emerald-950/20 border-t border-emerald-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <ScanLine size={12} className="text-emerald-400" />
+                <span className="text-[10px] text-emerald-400 font-medium">现实验证详情</span>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                {/* 截图状态 */}
+                <div className={`
+                  flex items-center gap-1.5 px-2 py-1 border text-[10px]
+                  ${realityCheck.stage !== "idle" 
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                    : "bg-white/5 border-white/10 text-white/30"}
+                `}>
+                  <Camera size={10} />
+                  <span>截图</span>
+                  {realityCheck.stage !== "idle" && realityCheck.stage !== "screenshot" && (
+                    <CheckCircle2 size={10} className="ml-auto" />
+                  )}
+                  {realityCheck.stage === "screenshot" && (
+                    <Loader2 size={10} className="ml-auto animate-spin" />
+                  )}
+                </div>
+
+                {/* DOM检查状态 */}
+                <div className={`
+                  flex items-center gap-1.5 px-2 py-1 border text-[10px]
+                  ${realityCheck.stage === "dom_check" || realityCheck.stage === "visual_diff" || realityCheck.stage === "completed"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                    : "bg-white/5 border-white/10 text-white/30"}
+                `}>
+                  <Globe size={10} />
+                  <span>DOM检查</span>
+                  {(realityCheck.stage === "visual_diff" || realityCheck.stage === "completed") && (
+                    <CheckCircle2 size={10} className="ml-auto" />
+                  )}
+                  {realityCheck.stage === "dom_check" && (
+                    <Loader2 size={10} className="ml-auto animate-spin" />
+                  )}
+                </div>
+
+                {/* API检查状态 */}
+                <div className={`
+                  flex items-center gap-1.5 px-2 py-1 border text-[10px]
+                  ${realityCheck.stage === "api_check" || realityCheck.stage === "visual_diff" || realityCheck.stage === "completed"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                    : "bg-white/5 border-white/10 text-white/30"}
+                `}>
+                  <Cpu size={10} />
+                  <span>API检查</span>
+                  {(realityCheck.stage === "visual_diff" || realityCheck.stage === "completed") && (
+                    <CheckCircle2 size={10} className="ml-auto" />
+                  )}
+                  {realityCheck.stage === "api_check" && (
+                    <Loader2 size={10} className="ml-auto animate-spin" />
+                  )}
+                </div>
+              </div>
+
+              {/* 检查结果详情 */}
+              {(realityCheck.domCheckResult || realityCheck.apiCheckResult) && (
+                <div className="mt-2 space-y-1 text-[10px]">
+                  {realityCheck.domCheckResult && (
+                    <div className="flex items-center gap-2 text-white/60">
+                      <span>DOM元素:</span>
+                      <span className={realityCheck.domCheckResult.exists ? "text-emerald-400" : "text-red-400"}>
+                        {realityCheck.domCheckResult.exists ? "✓ 通过" : "✗ 失败"}
+                      </span>
+                      <span className="text-white/40">
+                        (找到 {realityCheck.domCheckResult.found}, 缺失 {realityCheck.domCheckResult.missing})
+                      </span>
+                    </div>
+                  )}
+                  {realityCheck.apiCheckResult && (
+                    <div className="flex items-center gap-2 text-white/60">
+                      <span>API端点:</span>
+                      <span className={realityCheck.apiCheckResult.reachable ? "text-emerald-400" : "text-red-400"}>
+                        {realityCheck.apiCheckResult.reachable ? "✓ 可达" : "✗ 失败"}
+                      </span>
+                      <span className="text-white/40">
+                        (测试 {realityCheck.apiCheckResult.tested}, 失败 {realityCheck.apiCheckResult.failed})
+                      </span>
+                    </div>
+                  )}
+                  {realityCheck.visualDiff && (
+                    <div className="flex items-center gap-2 text-white/60">
+                      <span>视觉差异:</span>
+                      <span className={realityCheck.visualDiff.significant ? "text-amber-400" : "text-emerald-400"}>
+                        {(realityCheck.visualDiff.diffPercentage * 100).toFixed(1)}%
+                      </span>
+                      <span className="text-white/40">
+                        {realityCheck.visualDiff.significant ? "(显著变化)" : "(正常范围)"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
