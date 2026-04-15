@@ -18,6 +18,7 @@ import {
   boolean,
   timestamp,
   json,
+  bigint,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -178,3 +179,52 @@ export const outreachActivities = pgTable("outreach_activities", {
 
 export type OutreachActivity = typeof outreachActivities.$inferSelect;
 export type InsertOutreachActivity = typeof outreachActivities.$inferInsert;
+
+// ─── MPO (Multi-Party Orchestration) 执行记录 ────────────────────────────────
+
+export const mpoStatusEnum = pgEnum("mpo_status", [
+  "running", "completed", "failed", "cancelled",
+]);
+
+export const mpoModeEnum = pgEnum("mpo_mode", [
+  "auto", "serial", "parallel", "triad",
+]);
+
+export const mpoExecutions = pgTable("mpo_executions", {
+  id:           serial("id").primaryKey(),
+  executionId:  varchar("execution_id", { length: 64 }).notNull().unique(),
+  userId:       integer("user_id").notNull().references(() => users.id),
+  task:         text("task").notNull(),
+  mode:         mpoModeEnum("mode").default("auto").notNull(),
+  status:       mpoStatusEnum("status").default("running").notNull(),
+  result:       json("result"),
+  errorMessage: text("error_message"),
+  context:      json("context"),
+  durationMs:   bigint("duration_ms", { mode: "number" }),
+  startedAt:    timestamp("started_at").defaultNow().notNull(),
+  completedAt:  timestamp("completed_at"),
+  createdAt:    timestamp("created_at").defaultNow().notNull(),
+});
+
+export type MpoExecution = typeof mpoExecutions.$inferSelect;
+export type InsertMpoExecution = typeof mpoExecutions.$inferInsert;
+
+// ─── MPO DecisionLedger（博弈过程持久化）────────────────────────────────────
+
+export const mpoDecisionLedger = pgTable("mpo_decision_ledger", {
+  id:          serial("id").primaryKey(),
+  executionId: varchar("execution_id", { length: 64 }).notNull(),
+  userId:      integer("user_id").notNull().references(() => users.id),
+  round:       integer("round").default(0).notNull(),
+  agentRole:   varchar("agent_role", { length: 64 }).notNull(), // coder|reviewer|validator|reality_check
+  action:      varchar("action", { length: 128 }).notNull(),
+  decision:    text("decision").notNull(),
+  score:       integer("score"),        // 0–100
+  approved:    boolean("approved"),
+  metadata:    json("metadata"),
+  timestamp:   timestamp("timestamp").defaultNow().notNull(),
+});
+
+export type MpoDecisionEntry = typeof mpoDecisionLedger.$inferSelect;
+export type InsertMpoDecisionEntry = typeof mpoDecisionLedger.$inferInsert;
+

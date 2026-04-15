@@ -36,6 +36,7 @@ import { reportMcmamooOrder } from "./_core/maoyan-rewards";
 import { autoclipRouter } from "./autoclip";
 import { salesRouter } from "./sales";
 import { accountingRouter } from "./accounting";
+import { mpoRouter } from "./mpo-router";
 import {
   generateVideo,
   getVideoTaskStatus,
@@ -48,6 +49,7 @@ export const appRouter = router({
   autoclip: autoclipRouter,
   sales: salesRouter,
   accounting: accountingRouter,
+  mpo: mpoRouter,
   video: router({
     // 获取可用视频模型列表
     listModels: publicProcedure.query(() => {

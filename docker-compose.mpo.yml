@@ -1,0 +1,90 @@
+version: '3.9'
+
+# MaoAI MPO 生产部署配置
+# 使用：docker compose -f docker-compose.mpo.yml up -d
+
+networks:
+  maoai_net:
+    driver: bridge
+
+volumes:
+  mpo_data:
+    driver: local
+  mpo_ledger:
+    driver: local
+
+services:
+  # ─── Node.js 主服务（tRPC + 前端） ─────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: maoai_app
+    restart: unless-stopped
+    networks: [maoai_net]
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ZHIPU_API_KEY=${ZHIPU_API_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - MPO_PYTHON_BIN=/usr/bin/python3
+      - MPO_MAX_WORKERS=${MPO_MAX_WORKERS:-10}
+      - MPO_TIMEOUT_SEC=${MPO_TIMEOUT_SEC:-600}
+      - MPO_SCORE_THRESHOLD=${MPO_SCORE_THRESHOLD:-0.80}
+    volumes:
+      - mpo_data:/app/data
+      - mpo_ledger:/app/ledger
+    depends_on:
+      mpo_ws:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─── MPO WebSocket 实时推送服务 ─────────────────────────────────────────────
+  mpo_ws:
+    build:
+      context: ./server/hyperagents
+      dockerfile: ../../Dockerfile.ws
+    container_name: maoai_mpo_ws
+    restart: unless-stopped
+    networks: [maoai_net]
+    ports:
+      - "8765:8765"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ZHIPU_API_KEY=${ZHIPU_API_KEY}
+      - MPO_MAX_WORKERS=${MPO_MAX_WORKERS:-10}
+      - WS_HOST=0.0.0.0
+      - WS_PORT=8765
+      - LEDGER_DB_PATH=/data/decision_ledger.db
+    volumes:
+      - mpo_ledger:/data
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import websockets; print('ok')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─── Nginx 反向代理 ─────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: maoai_nginx
+    restart: unless-stopped
+    networks: [maoai_net]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./cloud-deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on: [app, mpo_ws]

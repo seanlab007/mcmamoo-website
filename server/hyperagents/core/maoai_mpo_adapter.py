@@ -656,4 +656,94 @@ async def demo():
 
 
 if __name__ == "__main__":
-    asyncio.run(demo())
+    import argparse as _argparse
+
+    _parser = _argparse.ArgumentParser(description="MaoAI MPO Adapter CLI")
+    _parser.add_argument("--json-mode", action="store_true",
+                         help="Read JSON command from stdin and write JSON result to stdout")
+    _args = _parser.parse_args()
+
+    if _args.json_mode:
+        # ── JSON 模式：供 Node.js mpo-router.ts 调用 ──────────────────────────
+        import json as _json
+
+        async def _json_main():
+            try:
+                raw = sys.stdin.readline().strip()
+                if not raw:
+                    print(_json.dumps({"success": False, "error": "empty input"}), flush=True)
+                    return
+
+                cmd = _json.loads(raw)
+                command = cmd.get("command", "execute")
+
+                adapter = MaoAIMPOrchestrator(MPOConfig(
+                    max_workers=cmd.get("max_workers", 5),
+                    enable_parallel=cmd.get("enable_parallel", True),
+                    worker_score_threshold=cmd.get("score_threshold", 0.8),
+                ))
+
+                if command == "health_check":
+                    print(_json.dumps({
+                        "success": True,
+                        "message": "MPO Adapter is operational",
+                        "has_mpo": HAS_MPO,
+                        "has_triad": HAS_TRIAD,
+                    }), flush=True)
+                    return
+
+                if command == "get_stats":
+                    stats = await adapter.get_stats()
+                    print(_json.dumps({"success": True, **stats}), flush=True)
+                    return
+
+                if command == "execute":
+                    execution_id = cmd.get("execution_id", f"cli-{time.time():.0f}")
+                    task = cmd.get("task", "")
+                    context = cmd.get("context", {})
+                    mode = cmd.get("mode", "auto")
+
+                    log_step("cli_execute", f"[{execution_id}] 开始执行: {task[:60]}")
+
+                    result = await adapter.execute(
+                        task=task,
+                        context=context,
+                        mode=mode if mode != "auto" else "fix",
+                        target_files=context.get("target_files"),
+                    )
+
+                    # 序列化结果
+                    if hasattr(result, "__dict__"):
+                        result_dict = result.__dict__
+                        # 枚举转字符串
+                        for k, v in result_dict.items():
+                            if hasattr(v, "value"):
+                                result_dict[k] = v.value
+                            elif not isinstance(v, (str, int, float, bool, list, dict, type(None))):
+                                result_dict[k] = str(v)
+                    elif isinstance(result, dict):
+                        result_dict = result
+                    else:
+                        result_dict = {"raw": str(result)}
+
+                    success = result_dict.get("success", False)
+                    if not isinstance(success, bool):
+                        # TriadStatus 判断
+                        status_val = str(result_dict.get("status", "")).lower()
+                        success = "approved" in status_val
+
+                    print(_json.dumps({
+                        "success": success,
+                        "execution_id": execution_id,
+                        **result_dict,
+                    }, ensure_ascii=False, default=str), flush=True)
+                    return
+
+                print(_json.dumps({"success": False, "error": f"Unknown command: {command}"}), flush=True)
+
+            except Exception as exc:
+                print(_json.dumps({"success": False, "error": str(exc)}), flush=True)
+
+        asyncio.run(_json_main())
+    else:
+        asyncio.run(demo())

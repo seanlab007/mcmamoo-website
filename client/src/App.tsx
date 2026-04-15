@@ -42,6 +42,7 @@ import MaoIndustry from "./components/sections/MaoIndustry";
 
 import ContentPlatform from "./features/maoai/pages/ContentPlatform";
 import MaoStrategy from "./pages/MaoStrategy";
+import { MPODashboard } from "./features/mpo/components/MPODashboard";
 
 // 代账功能
 import {
@@ -94,6 +95,10 @@ function Router() {
       
       {/* 毛战略决策部 - MaoAI 核心战略中枢 */}
       <Route path={"/strategy"} component={MaoStrategy} />
+
+      {/* MPO 监控仪表板 */}
+      <Route path={"/mpo"} component={MPODashboard} />
+      <Route path={"/mpo/dashboard"} component={MPODashboard} />
 
       {/* 代账功能 */}
       <Route path={"/accounting"} component={AccountingDashboard} />
