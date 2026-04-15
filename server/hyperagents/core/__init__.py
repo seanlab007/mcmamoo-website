@@ -15,6 +15,11 @@ MaoAI 3.0 "破壁者" 架构:
 - multimodal/: 多模态感知
 - sentinel/: 战略哨兵
 - adversarial/: 红蓝对抗
+
+MaoAI 3.0 Phase 8 "性能革命":
+- scheduler/: Map-Reduce 任务调度器 (异构并行集群)
+- streaming/enhanced_stream_broker.py: 增强版流式博弈引擎
+- speculative_executor.py: 推测性执行器 (空间换时间)
 """
 
 # ─── 3.0 新增核心模块 ─────────────────────────────────────────────────────────
@@ -50,6 +55,34 @@ from .multimodal import VisionStrategist, VisualData, StrategicAnalysis
 from .sentinel import StrategicSentinel, AlertLevel, MonitorEvent
 from .adversarial import RedBlueAdversarial, RedAgent, BlueAgent, Proposal
 
+# ─── Phase 8: 性能革命模块 ────────────────────────────────────────────────────
+from .scheduler import (
+    MapReduceScheduler,
+    TaskSplitter,
+    PatchMerger,
+    SubTask,
+    TaskResult,
+    create_map_reduce_scheduler,
+)
+from .streaming.enhanced_stream_broker import (
+    EnhancedStreamBroker,
+    StreamingCoder,
+    StreamingReviewer,
+    ValidatorWarming,
+    BackpressureController,
+    StreamChunk,
+    create_stream_broker,
+)
+from .speculative_executor import (
+    SpeculativeExecutor,
+    SpeculativeResult,
+    StrategySelector,
+    ResultCache,
+    AdaptiveCooling,
+    StrategyType,
+    create_speculative_executor,
+)
+
 __all__ = [
     # ─── 3.0 新增 ─────────────────────────────────────────────────────────────
     # Healing Agent (自愈)
@@ -73,8 +106,21 @@ __all__ = [
     "StrategicSentinel", "AlertLevel", "MonitorEvent",
     # 红蓝对抗
     "RedBlueAdversarial", "RedAgent", "BlueAgent", "Proposal",
+    # ─── Phase 8: 性能革命 ─────────────────────────────────────────────────────
+    # Map-Reduce 调度器
+    "MapReduceScheduler", "TaskSplitter", "PatchMerger", "SubTask", "TaskResult",
+    "create_map_reduce_scheduler",
+    # 流式博弈引擎
+    "EnhancedStreamBroker", "StreamingCoder", "StreamingReviewer",
+    "ValidatorWarming", "BackpressureController", "StreamChunk",
+    "create_stream_broker",
+    # 推测性执行器
+    "SpeculativeExecutor", "SpeculativeResult", "StrategySelector",
+    "ResultCache", "AdaptiveCooling", "StrategyType",
+    "create_speculative_executor",
 ]
 
-__version__ = "3.0.0"
-__codename__ = "破壁者"
+__version__ = "3.0.8"
+__codename__ = "性能革命"
 __author__ = "MaoAI"
+__phase__ = "Phase 8 - Map-Reduce + Streaming + Speculative Execution"
