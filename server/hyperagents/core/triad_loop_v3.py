@@ -7,8 +7,11 @@ MaoAI 3.0 "破壁者" 核心执行引擎
 - 每个执行阶段都有 @reality_check 保护
 - Validator 失败后自动触发 HealingAgent
 - 流式状态推送包含自愈过程
+- 元认知监控：停滞检测与策略重构
+- 环境状态锚点：断点续传与上下文保持
+- 怀疑论验证：逻辑幻觉检测与现实验证
 
-Author: MaoAI Core 2.0
+Author: MaoAI Core 3.0
 Version: 3.0.0 "破壁者"
 """
 
@@ -22,6 +25,24 @@ from typing import Any, Callable, Dict, List, Optional, AsyncGenerator
 from .healing_agent import HealingAgent, HealingReport, get_healing_agent
 from .skill_registry import SkillRegistry, get_skill_registry
 from .streaming import StreamBroker, AgentType, MessageType
+
+# 实战派人感逻辑组件
+from .metacognitive_monitor import (
+    StagnationDetector,
+    StagnationReport,
+    get_stagnation_detector,
+)
+from .state_snapshot import (
+    StateSnapshotManager,
+    TaskContext,
+    get_snapshot_manager,
+)
+from .skeptical_validator import (
+    SkepticalValidator,
+    SkepticalValidationReport,
+    ValidationStatus,
+    get_skeptical_validator,
+)
 
 
 # ───────────────────────────────────────────────────────────────────────────────
@@ -67,6 +88,13 @@ class TriadContext:
     started_at: datetime = field(default_factory=datetime.now)
     completed_at: Optional[datetime] = None
     
+    # 实战派人感逻辑组件状态
+    stagnation_reports: List[StagnationReport] = field(default_factory=list)
+    validation_reports: List[SkepticalValidationReport] = field(default_factory=list)
+    snapshots: List[str] = field(default_factory=list)
+    current_strategy: str = "default"
+    strategy_history: List[Dict] = field(default_factory=list)
+    
     def to_dict(self) -> Dict:
         """序列化为字典"""
         return {
@@ -76,6 +104,9 @@ class TriadContext:
             "status": self.status,
             "scores": self.scores,
             "healing_attempts": self.healing_attempts,
+            "stagnation_count": len(self.stagnation_reports),
+            "validation_count": len(self.validation_reports),
+            "current_strategy": self.current_strategy,
             "started_at": self.started_at.isoformat(),
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
         }
@@ -87,15 +118,21 @@ class TriadContext:
 
 class TriadLoopV3:
     """
-    三权分立博弈循环 V3 - 集成 HealingAgent
+    三权分立博弈循环 V3 - 集成 HealingAgent + 实战派人感逻辑
     
     核心流程：
     1. Strategist 战略定性
     2. Coder 代码生成 (@reality_check 保护)
     3. Reviewer 代码审查
-    4. Validator 验证测试 (@reality_check 保护)
-    5. 如果验证失败 → HealingAgent 自愈 → 回到步骤2
-    6. 博弈收敛
+    4. Validator 验证测试 (@reality_check 保护 + 怀疑论验证)
+    5. 元认知监控 - 检查停滞与策略重构
+    6. 如果验证失败 → HealingAgent 自愈 → 回到步骤2
+    7. 博弈收敛
+    
+    实战派人感逻辑：
+    - 停滞检测：连续多轮无进展时触发策略重构
+    - 状态锚点：每轮捕获快照，支持断点续传
+    - 怀疑验证：检测逻辑幻觉，以现实结果为准
     
     使用方式：
         loop = TriadLoopV3()
@@ -109,10 +146,20 @@ class TriadLoopV3:
         stream_broker: Optional[StreamBroker] = None,
         healing_agent: Optional[HealingAgent] = None,
         skill_registry: Optional[SkillRegistry] = None,
+        stagnation_detector: Optional[StagnationDetector] = None,
+        snapshot_manager: Optional[StateSnapshotManager] = None,
+        skeptical_validator: Optional[SkepticalValidator] = None,
+        browser_agent = None,
     ):
         self.stream_broker = stream_broker
         self.healing_agent = healing_agent or get_healing_agent()
         self.skill_registry = skill_registry or get_skill_registry()
+        
+        # 实战派人感逻辑组件
+        self.stagnation_detector = stagnation_detector or get_stagnation_detector()
+        self.snapshot_manager = snapshot_manager or get_snapshot_manager()
+        self.skeptical_validator = skeptical_validator or get_skeptical_validator(browser_agent)
+        self.browser_agent = browser_agent
         
         # 注册 BrowserUseSkill
         from ..skills.browser_use_skill import BrowserUseSkill
@@ -151,10 +198,16 @@ class TriadLoopV3:
             })
             
             # Phase 2-5: 循环直到收敛或达到最大自愈次数
-            while context.status == "running":
+            iteration = 0
+            while context.status == "running" and iteration < context.max_healing_attempts * 2:
+                iteration += 1
+                
+                # 捕获状态快照
+                await self._capture_snapshot(context)
+                
                 # Phase 2: Coder
                 context.current_phase = TriadPhase.CODER
-                yield self._create_message(context, "phase_start", "代码生成阶段")
+                yield self._create_message(context, "phase_start", f"第 {iteration} 轮 - 代码生成阶段")
                 
                 coder_result = await self._run_coder(context)
                 context.coder_output = coder_result
@@ -168,30 +221,77 @@ class TriadLoopV3:
                 
                 review_result = await self._run_reviewer(context)
                 context.reviewer_output = review_result
-                context.scores["reviewer"] = review_result.get("score", 0)
+                reviewer_score = review_result.get("score", 0)
+                context.scores["reviewer"] = reviewer_score
                 
                 yield self._create_message(context, "phase_complete", "代码审查完成", {
-                    "score": review_result.get("score"),
+                    "score": reviewer_score,
                     "issues": review_result.get("issues", []),
                 })
                 
-                # Phase 4: Validator
+                # Phase 4: Validator (怀疑论验证)
                 context.current_phase = TriadPhase.VALIDATOR
-                yield self._create_message(context, "phase_start", "验证测试阶段")
+                yield self._create_message(context, "phase_start", "怀疑论验证阶段")
                 
                 validation_result = await self._run_validator(context)
                 context.validator_output = validation_result
-                context.scores["validator"] = validation_result.get("score", 0)
+                validator_score = validation_result.get("score", 0)
+                context.scores["validator"] = validator_score
                 
-                if validation_result.get("success"):
+                # 记录验证报告
+                if isinstance(validation_result, dict):
+                    # 创建简化的验证报告
+                    from .skeptical_validator import SkepticalValidationReport, ValidationStatus
+                    report = SkepticalValidationReport(
+                        task_id=context.task_id,
+                        timestamp=datetime.now(),
+                        overall_status=ValidationStatus.PASSED if validation_result.get("success") else ValidationStatus.FAILED,
+                        overall_score=validator_score,
+                    )
+                    context.validation_reports.append(report)
+                
+                # 检查逻辑幻觉
+                if validation_result.get("is_hallucination"):
+                    yield self._create_message(context, "hallucination_detected", "🚨 检测到逻辑幻觉！", {
+                        "gap": validation_result.get("logic_reality_gap", ""),
+                    })
+                
+                # 元认知监控 - 检查停滞
+                stagnation_report = self.stagnation_detector.check(
+                    round_number=iteration,
+                    phase=context.current_phase.value,
+                    score=(reviewer_score + validator_score) / 2,
+                    error_message=validation_result.get("error"),
+                    strategy_signature=context.current_strategy,
+                )
+                
+                if stagnation_report.is_stagnant:
+                    context.stagnation_reports.append(stagnation_report)
+                    yield self._create_message(context, "stagnation_detected", stagnation_report.human_feedback, {
+                        "type": stagnation_report.stagnation_type.value,
+                        "confidence": stagnation_report.confidence,
+                        "primary_contradiction": stagnation_report.primary_contradiction,
+                    })
+                    
+                    # 策略重构
+                    if stagnation_report.suggested_action.value == "pivot_strategy":
+                        await self._switch_strategy(context, stagnation_report)
+                        yield self._create_message(context, "strategy_switch", f"策略切换: {context.current_strategy}")
+                
+                # 检查验证结果
+                if validation_result.get("success") and not validation_result.get("is_hallucination"):
                     # 验证通过，博弈收敛
                     context.status = "converged"
                     context.current_phase = TriadPhase.CONVERGED
                     context.completed_at = datetime.now()
                     
+                    final_score = sum(context.scores.values()) / len(context.scores) if context.scores else 0
+                    
                     yield self._create_message(context, "converged", "博弈收敛，任务完成", {
-                        "final_score": sum(context.scores.values()) / len(context.scores) if context.scores else 0,
+                        "final_score": final_score,
                         "healing_attempts": context.healing_attempts,
+                        "stagnation_count": len(context.stagnation_reports),
+                        "strategy_switches": len(context.strategy_history),
                     })
                     break
                 
@@ -350,12 +450,50 @@ class TriadLoopV3:
         """获取任务上下文"""
         return self.contexts.get(task_id)
     
+    async def _capture_snapshot(self, context: TriadContext):
+        """捕获状态快照"""
+        task_ctx = TaskContext(
+            task_id=context.task_id,
+            goal=context.goal,
+            current_phase=context.current_phase.value,
+            iteration=context.healing_attempts,
+            key_decisions=[s.get("reason", "") for s in context.strategy_history],
+            open_issues=[r.primary_contradiction for r in context.stagnation_reports],
+        )
+        
+        snapshot = await self.snapshot_manager.capture(
+            task_context=task_ctx,
+            capture_browser=(context.current_phase == TriadPhase.VALIDATOR),
+            browser_agent=self.browser_agent,
+            tags=["triad_loop", context.current_strategy],
+        )
+        
+        context.snapshots.append(snapshot.snapshot_id)
+    
+    async def _switch_strategy(self, context: TriadContext, stagnation_report: StagnationReport):
+        """切换策略"""
+        old_strategy = context.current_strategy
+        
+        # 简单的策略切换逻辑
+        strategies = ["default", "github_search", "decomposition", "brute_force"]
+        current_index = strategies.index(context.current_strategy) if context.current_strategy in strategies else 0
+        new_strategy = strategies[(current_index + 1) % len(strategies)]
+        
+        context.current_strategy = new_strategy
+        context.strategy_history.append({
+            "from": old_strategy,
+            "to": new_strategy,
+            "reason": stagnation_report.primary_contradiction,
+            "timestamp": datetime.now().isoformat(),
+        })
+    
     def get_stats(self) -> Dict:
         """获取统计信息"""
         total = len(self.contexts)
         converged = sum(1 for c in self.contexts.values() if c.status == "converged")
         failed = sum(1 for c in self.contexts.values() if c.status == "failed")
         total_healing = sum(c.healing_attempts for c in self.contexts.values())
+        total_stagnations = sum(len(c.stagnation_reports) for c in self.contexts.values())
         
         return {
             "total_tasks": total,
@@ -364,6 +502,8 @@ class TriadLoopV3:
             "success_rate": converged / total if total > 0 else 0,
             "total_healing_attempts": total_healing,
             "avg_healing_per_task": total_healing / total if total > 0 else 0,
+            "total_stagnations": total_stagnations,
+            "avg_stagnations_per_task": total_stagnations / total if total > 0 else 0,
         }
 
 
