@@ -31,10 +31,10 @@ SUPABASE_SERVICE_KEY=dummy_key_for_local_dev
 SUPABASE_ANON_KEY=dummy_key_for_local_dev
 
 # GitHub Token (从用户需求中获取)
-GITHUB_TOKEN=
+GITHUB_TOKEN=YOUR_GITHUB_TOKEN_HERE
 
 # 管理员 Token
-ADMIN_TOKEN=maoai_admin_2026
+ADMIN_TOKEN=YOUR_ADMIN_TOKEN_HERE
 
 # JWT Secret
 JWT_SECRET=a-very-secret-jwt-token-for-dev
