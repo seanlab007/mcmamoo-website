@@ -3,8 +3,10 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { aiNodesRouter } from "./aiNodes";
+import aiStreamRouter from "./aiStream";
 import { chatRouter } from "./chat";
 import { contentPlatformRouter, initScheduler } from "./contentPlatform";
+import { execFile } from "child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +27,37 @@ async function startServer() {
   // POST /api/ai/skill/invoke     技能调用转发
   // POST /api/ai/skill/match      技能关键词匹配
   app.use("/api/ai", aiNodesRouter);
+
+  // ── AI Stream & Skill Management API ────────────────────────────────────────
+  // POST /api/ai/chat/stream       SSE 聊天流（含 skill 匹配）
+  // GET  /api/ai/skill/status      技能缓存状态
+  // GET  /api/ai/status            服务状态
+  // POST /api/ai/node/skills/sync  技能同步（aiStreamRouter 版本，含 toggle）
+  // POST /api/ai/v1/chat/completions  OpenAI 兼容接口
+  // ...more endpoints in aiStream.ts
+  app.use("/api/ai", aiStreamRouter);
+
+  // ── Skill Bridge Sync Endpoint ─────────────────────────────────────────────
+  // POST /api/skill-bridge  — 触发 skill-bridge.mjs 同步脚本
+  app.post("/api/skill-bridge", async (_req, res) => {
+    try {
+      const scriptPath = path.resolve(__dirname, "..", "scripts", "skill-bridge.mjs");
+      execFile("node", [scriptPath], { timeout: 60_000 }, (err, stdout, stderr) => {
+        if (err) {
+          console.error("[SkillBridge] Sync error:", stderr);
+          res.status(500).json({ success: false, error: stderr?.slice(0, 500) || err.message });
+          return;
+        }
+        console.log("[SkillBridge] Sync output:", stdout?.slice(0, 200));
+        // Extract count from output if possible
+        const countMatch = stdout?.match(/(\d+)\s*(?:skills|技能)/i);
+        res.json({ success: true, output: stdout?.slice(0, 1000), count: countMatch?.[1] || "completed" });
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // MaoAI Chat API
   app.use("/api/chat", chatRouter);
   // 猫眼内容平台协调 API

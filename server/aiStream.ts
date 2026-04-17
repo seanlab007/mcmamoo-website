@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { MODEL_CONFIGS } from "./routers";
-import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog, getNodeSkills, getAllNodeSkills, upsertNodeSkill, deleteNodeSkill, deleteAllNodeSkills, setNodeSkillEnabled } from "./db";
 import { dbFetch } from "./aiNodes";
+import { refreshSkillCache, getSkillCacheSnapshot, matchSkillForMessage } from "./skillMatcher";
 import { sdk } from "./_core/sdk";
 import mammoth from "mammoth";
 // pdf-parse is loaded dynamically to avoid DOMMatrix crash at startup
@@ -10,6 +10,95 @@ import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
 
 const aiStreamRouter = Router();
+
+// ─── DB Helpers (Supabase REST via dbFetch) ──────────────────────────────────
+// These replace the non-existent functions that were previously imported from db.ts.
+
+async function getAiNodes(onlineOnly?: boolean): Promise<any[]> {
+  const query = onlineOnly ? "?isOnline=eq.true" : "";
+  const select = "id,name,baseUrl,type,modelId,isLocal,isPaid,isOnline,isActive,priority,apiKey,lastPingAt,token,skillsChecksum,lastHeartbeatAt";
+  const res = await dbFetch(`/ai_nodes?select=${select}${onlineOnly ? "&isOnline=eq.true" : ""}`);
+  return (res.data as any[]) ?? [];
+}
+
+async function getAiNodeById(id: number): Promise<any> {
+  const res = await dbFetch(`/ai_nodes?id=eq.${id}&select=*`);
+  const rows = (res.data as any[]) ?? [];
+  return rows[0] ?? null;
+}
+
+async function createAiNode(data: Record<string, unknown>): Promise<any> {
+  const res = await dbFetch("/ai_nodes", { method: "POST", body: JSON.stringify(data) }, "return=representation");
+  const rows = (res.data as any[]) ?? [];
+  return rows[0] ?? null;
+}
+
+async function updateAiNode(id: number, data: Record<string, unknown>): Promise<void> {
+  await dbFetch(`/ai_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+async function updateNodePingStatus(id: number, isOnline: boolean, _pingMs?: number): Promise<void> {
+  await dbFetch(`/ai_nodes?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ isOnline, lastPingAt: new Date().toISOString() }),
+  });
+}
+
+async function getRoutingRules(): Promise<any[]> {
+  try {
+    const res = await dbFetch("/routing_rules?isActive=eq.true&select=*");
+    return (res.data as any[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function createNodeLog(data: { nodeId: number; model: string; status: string; latencyMs: number; errorMessage?: string }): Promise<void> {
+  try {
+    await dbFetch("/node_logs", {
+      method: "POST",
+      body: JSON.stringify({ ...data, createdAt: new Date().toISOString() }),
+    });
+  } catch {
+    // non-critical, ignore
+  }
+}
+
+async function getNodeSkills(nodeId: number): Promise<any[]> {
+  const res = await dbFetch(`/node_skills?nodeId=eq.${nodeId}&select=*`);
+  return (res.data as any[]) ?? [];
+}
+
+async function getAllNodeSkills(): Promise<any[]> {
+  const res = await dbFetch("/node_skills?select=*");
+  return (res.data as any[]) ?? [];
+}
+
+async function upsertNodeSkill(data: Record<string, unknown>): Promise<void> {
+  const { nodeId, skillId } = data;
+  const existing = await dbFetch(`/node_skills?nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId as string)}&select=id`);
+  const rows = (existing.data as any[]) ?? [];
+  if (rows.length > 0) {
+    await dbFetch(`/node_skills?id=eq.${rows[0].id}`, { method: "PATCH", body: JSON.stringify(data) });
+  } else {
+    await dbFetch("/node_skills", { method: "POST", body: JSON.stringify(data) });
+  }
+}
+
+async function deleteNodeSkill(nodeId: number, skillId: string): Promise<void> {
+  await dbFetch(`/node_skills?nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`, { method: "DELETE" });
+}
+
+async function deleteAllNodeSkills(nodeId: number): Promise<void> {
+  await dbFetch(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
+}
+
+async function setNodeSkillEnabled(nodeId: number, skillId: string, isEnabled: boolean): Promise<void> {
+  await dbFetch(
+    `/node_skills?nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`,
+    { method: "PATCH", body: JSON.stringify({ isActive: isEnabled, updatedAt: new Date().toISOString() }) }
+  );
+}
 
 // ─── Admin Auth Helper ────────────────────────────────────────────────────────
 // Returns the user if authenticated AND role === "admin", else null
@@ -132,79 +221,28 @@ async function streamFromNode(
   }
 }
 
-// ─── Skill Match Helper ───────────────────────────────────────────────────────
-// Finds the best matching skill for a user message from online local nodes.
-// Returns the matched skill row (with nodeId, skillId, invokeMode, systemPrompt, etc.)
-// or null if no match / no online nodes.
-async function matchSkillForMessage(userMessage: string): Promise<{
-  nodeId: number;
-  skillId: string;
-  name: string;
-  description: string | null;
-  invokeMode: string;        // 'prompt' | 'invoke'
-  systemPrompt: string | null;
-  inputSchema: Record<string, unknown> | null;
-  requiredPlan: string;      // 'free' | 'content' | 'strategic' | 'admin'
-  node: { baseUrl: string; token: string; name: string } | null;
-} | null> {
+// ─── GET /api/ai/skill/status — Skill Proxy health check ────────────────────
+aiStreamRouter.get("/skill/status", async (_req: Request, res: Response) => {
   try {
-    // Get all online local nodes
-    const nodesRes = await dbFetch("/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id,name,baseUrl,token");
-    const onlineNodes = nodesRes.data as { id: number; name: string; baseUrl: string; token: string }[] | [];
-    if (!onlineNodes || onlineNodes.length === 0) return null;
-
-    const nodeIds = onlineNodes.map((n) => n.id);
-    const skillsRes = await dbFetch(
-      `/node_skills?nodeId=in.(${nodeIds.join(",")})&isActive=eq.true&select=*`
-    );
-    const skills = skillsRes.data as Array<{
-      nodeId: number;
-      skillId: string;
-      name: string;
-      triggers: string[] | null;
-      description: string | null;
-      invokeMode: string | null;
-      systemPrompt: string | null;
-      inputSchema: Record<string, unknown> | null;
-      required_plan: string | null;
-    }> | [];
-
-    if (!skills || skills.length === 0) return null;
-
-    // Keyword matching (same logic as skill/match endpoint)
-    const msgLower = userMessage.toLowerCase();
-    const matched = skills.filter((skill) => {
-      const triggers = skill.triggers ?? [];
-      return triggers.some((t: string) => msgLower.includes(t.toLowerCase()));
+    await refreshSkillCache(true);
+    const { skills, nodes, loadedAt } = getSkillCacheSnapshot();
+    res.json({
+      success: true,
+      cachedSkills: skills.length,
+      onlineNodes: nodes.length,
+      topModes: Object.entries(
+        skills.reduce((acc, s) => {
+          const mode = s.invokeMode || "unknown";
+          acc[mode] = (acc[mode] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>)
+      ).sort(([, a], [, b]) => b - a).slice(0, 10),
+      loadedAt: new Date(loadedAt).toISOString(),
     });
-
-    if (matched.length === 0) return null;
-
-    // Pick highest-priority match (first matched, or refine by trigger specificity)
-    const best = matched.sort((a, b) => {
-      const aMaxLen = Math.max(...(a.triggers ?? [""]).map((t) => t.length));
-      const bMaxLen = Math.max(...(b.triggers ?? [""]).map((t) => t.length));
-      return bMaxLen - aMaxLen; // prefer longer (more specific) trigger
-    })[0];
-
-    const node = onlineNodes.find((n) => n.id === best.nodeId) || null;
-
-    return {
-      nodeId: best.nodeId,
-      skillId: best.skillId,
-      name: best.name,
-      description: best.description ?? null,
-      invokeMode: best.invokeMode ?? "prompt",
-      systemPrompt: best.systemPrompt ?? null,
-      inputSchema: best.inputSchema ?? null,
-      requiredPlan: best.required_plan ?? "free",
-      node: node ? { baseUrl: node.baseUrl, token: node.token, name: node.name } : null,
-    };
   } catch (err) {
-    console.warn("[SkillMatch] Error during skill matching:", err);
-    return null;
+    res.status(500).json({ success: false, error: String(err) });
   }
-}
+});
 
 // ─── Main Chat Stream ─────────────────────────────────────────────────────────
 // model: cloud model ID (e.g. "deepseek-chat") or "local:<nodeId>" for local node
@@ -263,8 +301,6 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     if (userText.trim()) {
       matchedSkill = await matchSkillForMessage(userText);
       if (matchedSkill) {
-        console.log(`[SkillMatch] Matched skill "${matchedSkill.skillId}" (mode=${matchedSkill.invokeMode}, requiredPlan=${matchedSkill.requiredPlan}) on node ${matchedSkill.nodeId}`);
-
         // ── 权限校验 ────────────────────────────────────────────────────────
         if (matchedSkill.requiredPlan && matchedSkill.requiredPlan !== "free") {
           const perm = await checkSkillPermission(callerOpenId, callerRole, matchedSkill.requiredPlan);
@@ -827,8 +863,7 @@ aiStreamRouter.post("/node/heartbeat", async (req: Request, res: Response) => {
     await updateNodePingStatus(nodeId, true, undefined);
     // Update skillsChecksum if provided
     if (skillsChecksum !== undefined) {
-      const { updateAiNode } = await import("./db");
-      await updateAiNode(nodeId, { skillsChecksum } as any);
+      await updateAiNode(nodeId, { skillsChecksum });
     }
     // Check if server's skill checksum differs from client's
     const serverChecksum = (node as any).skillsChecksum;

@@ -1,0 +1,54 @@
+name: Skill Bridge Auto Sync
+
+on:
+  schedule:
+    # Every 6 hours: 0:00, 6:00, 12:00, 18:00 UTC (8:00, 14:00, 20:00, 2:00 CST)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Allow manual trigger
+    inputs:
+      trigger_url:
+        description: 'MaoAI API base URL (e.g. https://api.mcmamoo.com)'
+        required: false
+        default: ''
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    name: Trigger Skill Bridge Sync
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger sync via REST API
+        env:
+          MAOAI_API_URL: ${{ github.event.inputs.trigger_url || secrets.MAOAI_API_URL || 'https://api.mcmamoo.com' }}
+          MAOAI_API_KEY: ${{ secrets.MAOAI_API_KEY }}
+        run: |
+          echo "🚀 Triggering skill-bridge sync at $(date -u)"
+
+          # Build the URL (default to production, allow override)
+          SYNC_URL="${MAOAI_API_URL}/api/skill-bridge"
+
+          # Optional: Add auth header if API key is configured
+          AUTH_HEADER=""
+          if [ -n "$MAOAI_API_KEY" ]; then
+            AUTH_HEADER="-H \"Authorization: Bearer ${MAOAI_API_KEY}\""
+          fi
+
+          # Send the request
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$SYNC_URL" \
+            -H "Content-Type: application/json" \
+            $([ -n "$MAOAI_API_KEY" ] && echo "-H \"Authorization: Bearer $MAOAI_API_KEY\"" || true) \
+            --max-time 60)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Skill bridge sync completed successfully"
+          else
+            echo "⚠️ Sync returned non-2xx status. The server may not have skill-bridge configured."
+            exit 1
+          fi

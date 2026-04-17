@@ -193,6 +193,9 @@ interface SkillMeta {
   triggers?: string[];
   category?: string;
   isActive?: boolean;
+  systemPrompt?: string;    // WorkBuddy Bridge: 注入到对话的 system prompt
+  invokeMode?: string;      // 'prompt' (default) | 'invoke'
+  inputSchema?: Record<string, unknown>;  // JSON Schema for invoke mode
 }
 
 interface RegisterBody {
@@ -256,6 +259,9 @@ function toSkillRow(nodeId: number, s: SkillMeta) {
     triggers: s.triggers ?? [],
     category: s.category ?? "custom",
     isActive: s.isActive !== false,
+    invokeMode: s.invokeMode ?? "prompt",          // 默认 prompt 模式
+    systemPrompt: s.systemPrompt ?? null,           // SKILL.md 正文作为 system prompt
+    inputSchema: s.inputSchema ?? null,             // 可选的参数 schema
   };
 }
 
@@ -569,6 +575,7 @@ aiNodesRouter.post("/skill/invoke", async (req: Request, res: Response) => {
 });
 
 // ─── POST /api/ai/skill/match ────────────────────────────────────────────────
+// Uses shared skillMatcher engine (P1) for consistent multi-strategy matching.
 
 aiNodesRouter.post("/skill/match", async (req: Request, res: Response) => {
   const { message } = req.body as { message: string };
@@ -579,38 +586,23 @@ aiNodesRouter.post("/skill/match", async (req: Request, res: Response) => {
   }
 
   try {
-    // 获取所有在线本地节点的 id
-    const nodesRes = await dbFetch(
-      "/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id"
-    );
-    const onlineNodes = nodesRes.data as { id: number }[] | [];
+    const { matchSkillForMessage } = await import("./skillMatcher");
+    const result = await matchSkillForMessage(message);
 
-    if (onlineNodes.length === 0) {
-      res.json({ matched: [] });
-      return;
+    if (result) {
+      res.json({
+        success: true,
+        matched: [{
+          skillId: result.skillId,
+          name: result.name,
+          invokeMode: result.invokeMode,
+          matchScore: result.matchScore,
+          matchStrategy: result.matchStrategy,
+        }],
+      });
+    } else {
+      res.json({ success: true, matched: [] });
     }
-
-    const nodeIds = onlineNodes.map((n) => n.id);
-    const skillsRes = await dbFetch(
-      `/node_skills?nodeId=in.(${nodeIds.join(",")})&isActive=eq.true&select=*`
-    );
-    const skills = skillsRes.data as Array<{
-      nodeId: number;
-      skillId: string;
-      name: string;
-      triggers: string[] | null;
-      category: string;
-      description: string | null;
-    }> | [];
-
-    // 关键词匹配
-    const msgLower = message.toLowerCase();
-    const matched = skills.filter((skill) => {
-      const triggers = skill.triggers ?? [];
-      return triggers.some((t: string) => msgLower.includes(t.toLowerCase()));
-    });
-
-    res.json({ matched });
   } catch (error) {
     console.error("[aiNodes] skill/match error:", error);
     res.status(500).json({ success: false, error: String(error) });

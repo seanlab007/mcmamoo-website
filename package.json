@@ -12,7 +12,10 @@
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "build:server": "esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "skill:install-marketing-claw": "node scripts/install-marketing-claw.mjs"
+    "skill:install-marketing-claw": "node scripts/install-marketing-claw.mjs",
+    "skill:bridge": "node scripts/skill-bridge.mjs",
+    "skill:bridge:watch": "node scripts/skill-bridge.mjs --watch",
+    "skill:bridge:dry": "node scripts/skill-bridge.mjs --dry-run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

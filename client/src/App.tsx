@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
+import NotFound from "./pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -27,26 +27,16 @@ import MaoAIPricing from "./pages/MaoAIPricing";
 import OpenClaw from "./pages/OpenClaw";
 import MillenniumClock from "./pages/MillenniumClock";
 import WhalePictures from "./pages/WhalePictures";
+import MaoIndustry from "./pages/MaoIndustry";
 import AdminInquiries from "./pages/AdminInquiries";
 import AdminLogs from "./pages/AdminLogs";
 import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
+import AdminSkills from "./pages/AdminSkills";
 import ContentDashboard from "./pages/ContentDashboard";
 import AdminContentJobs from "./pages/AdminContentJobs";
 import AutoClip from "./pages/AutoClip";
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import MaoIndustry from "./pages/MaoIndustry";
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-import MaoIndustry from "./pages/MaoIndustry";
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-import MaoIndustry from "./pages/MaoIndustry";
->>>>>>> origin/deploy/trigger-build-1774631965
 
 function Router() {
   return (
@@ -57,29 +47,13 @@ function Router() {
       <Route path={"/cases/jiangzhong"} component={CaseJiangzhong} />
       <Route path={"/cases/xiaoguan"} component={CaseXiaoguan} />
       <Route path={"/cases/pangge"} component={CasePangge} />
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      <Route path={"/maothink"} component={MaoThinkTank} />
-=======
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
-      
+
       {/* 旗下子公司路由 */}
       <Route path={"/mao-think-tank"} component={MaoThinkTank} />
       <Route path={"/maothink"} component={MaoThinkTank} /> {/* 兼容旧路由 */}
       <Route path={"/whale-pictures"} component={WhalePictures} />
       <Route path={"/mao-industry"} component={MaoIndustry} />
 
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />
       <Route path={"/admin/ai-nodes" } component={AdminAiNodes} />
@@ -92,61 +66,24 @@ function Router() {
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       <Route path={"/maoai/sales"} component={MaoAISales} />
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      {/* 猫眼内容平台 */}
+
+      {/* 猫眼增长引擎 (Mc&Mamoo Growth Engine) 内容平台 */}
       <Route path={"/content"} component={ContentDashboard} />
       <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
-      {/* 其他功能页面 */}
-      <Route path={"/openclaw"} component={OpenClaw} />
-      <Route path={"/millennium-clock"} component={MillenniumClock} />
-      <Route path={"/whale-pictures"} component={WhalePictures} />
-      <Route path={"/autoclip"} component={AutoClip} />
-=======
-      
-      {/* 猫眼内容平台 */}
-=======
-      
-      {/* 猫眼增长引擎 (Mc&Mamoo Growth Engine)内容平台 */}
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-      
-      {/* 猫眼增长引擎 (Mc&Mamoo Growth Engine)内容平台 */}
->>>>>>> origin/deploy/trigger-build-1774631965
-      <Route path={"/content"} component={ContentDashboard} />
-      <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
-      
+
       {/* 其他功能页面 */}
       <Route path={"/openclaw"} component={OpenClaw} />
       <Route path={"/millennium-clock"} component={MillenniumClock} />
       <Route path={"/autoclip"} component={AutoClip} />
-      
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
+
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
       <Route path={"/admin/logs"} component={AdminLogs} />
       <Route path={"/admin/millennium-clock"} component={AdminMillenniumClock} />
       <Route path={"/admin/nodes"} component={AdminNodes} />
+      <Route path={"/admin/skills"} component={AdminSkills} />
       <Route path={"/admin/routing"} component={AdminRouting} />
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-      
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-      
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-      
->>>>>>> origin/deploy/trigger-build-1774631965
+
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
