@@ -9,13 +9,15 @@
 export interface ModelConfig {
   name: string;
   badge: string;
-  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "zai" | "autoclaw";
+  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "google-ai-studio" | "zai" | "autoclaw";
   model: string;
   baseUrl: string;
   /** apiKey 为 getter，运行时动态读取环境变量，避免模块加载顺序问题 */
   readonly apiKey: string;
   maxTokens: number;
   supportsVision?: boolean;
+  supportsAudio?: boolean;
+  supportsVideo?: boolean;
 }
 
 // ─── Provider Base URLs ───────────────────────────────────────────────────────
@@ -24,6 +26,7 @@ const ZHIPU_BASE    = "https://open.bigmodel.cn/api/paas/v4";
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 const GROQ_BASE     = "https://api.groq.com/openai/v1";
 const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1beta/openai";
+const GOOGLE_AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const ZAI_BASE      = "https://api.z.ai/api/paas/v4";
 
 // ─── Model Config Map ─────────────────────────────────────────────────────────
@@ -158,6 +161,56 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     get apiKey() { return process.env.ZHIPU_API_KEY || ""; },
     maxTokens: 8192,
     supportsVision: true,
+  },
+
+  // ── Google AI Studio (Gemma 4) ─────────────────────────────────────────────
+  "gemma-4-e2b-it": {
+    name: "Gemma 4 E2B",
+    badge: "MOBILE",
+    provider: "google-ai-studio",
+    model: "gemma-4-e2b-it",
+    baseUrl: GOOGLE_AI_STUDIO_BASE,
+    get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
+    maxTokens: 128000,
+    supportsVision: true,
+    supportsAudio: true,
+    supportsVideo: true,
+  },
+  "gemma-4-e4b-it": {
+    name: "Gemma 4 E4B",
+    badge: "EDGE",
+    provider: "google-ai-studio",
+    model: "gemma-4-e4b-it",
+    baseUrl: GOOGLE_AI_STUDIO_BASE,
+    get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
+    maxTokens: 128000,
+    supportsVision: true,
+    supportsAudio: true,
+    supportsVideo: true,
+  },
+  "gemma-4-26b-it": {
+    name: "Gemma 4 26B",
+    badge: "PRO",
+    provider: "google-ai-studio",
+    model: "gemma-4-26b-it",
+    baseUrl: GOOGLE_AI_STUDIO_BASE,
+    get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
+    maxTokens: 256000,
+    supportsVision: true,
+    supportsAudio: true,
+    supportsVideo: true,
+  },
+  "gemma-4-31b-it": {
+    name: "Gemma 4 31B",
+    badge: "MAX",
+    provider: "google-ai-studio",
+    model: "gemma-4-31b-it",
+    baseUrl: GOOGLE_AI_STUDIO_BASE,
+    get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
+    maxTokens: 256000,
+    supportsVision: true,
+    supportsAudio: true,
+    supportsVideo: true,
   },
 
   // ── Z.ai 平台（GLM-5 / GLM-4.7）────────────────────────────────────────────

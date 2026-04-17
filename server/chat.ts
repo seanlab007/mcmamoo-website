@@ -356,6 +356,66 @@ chatRouter.post("/send", async (req: Request, res: Response) => {
     // 告诉前端用的哪个模型
     sendEvent("model", { provider: modelCfg.provider, label: modelCfg.label });
 
+    // ── Google AI Studio 特殊处理（使用 generateContent API）────────────────
+    if (modelCfg.provider === "google-ai-studio") {
+      const googleUrl = `${base}/models/${modelCfg.apiModel}:generateContent?key=${key}`;
+      
+      // 将 OpenAI 格式的消息转换为 Gemini 格式
+      const contents = messages
+        .filter((m: any) => m.role !== "system")
+        .map((m: any) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        }));
+
+      const systemInstruction = messages.find((m: any) => m.role === "system");
+      const requestBody: any = {
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: modelCfg.maxTokens,
+        },
+      };
+      if (systemInstruction) {
+        requestBody.systemInstruction = { parts: [{ text: systemInstruction.content }] };
+      }
+
+      try {
+        const googleRes = await fetch(googleUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!googleRes.ok) {
+          const errText = await googleRes.text();
+          sendEvent("error", { text: `Gemma 调用失败: ${errText}` });
+          return res.end();
+        }
+
+        const googleData: any = await googleRes.json();
+        // 过滤掉思维链(thought) parts，只取纯文本回复
+        const parts = googleData.candidates?.[0]?.content?.parts || [];
+        const geminiText = parts
+          .filter((p: any) => !p.thought)
+          .map((p: any) => p.text)
+          .join("") || "无回复";
+        
+        // 流式返回（Google AI Studio 不支持 SSE 流，这里一次性返回）
+        const words = geminiText.split("");
+        for (const word of words) {
+          sendEvent("delta", { text: word });
+          await new Promise(r => setTimeout(r, 5)); // 模拟打字效果
+        }
+        sendEvent("done", {});
+        return res.end();
+      } catch (e: any) {
+        sendEvent("error", { text: `Gemma 调用异常: ${e.message}` });
+        return res.end();
+      }
+    }
+
+    // ── 标准 OpenAI 兼容 API ───────────────────────────────────────────────
     const llmRes = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: {
