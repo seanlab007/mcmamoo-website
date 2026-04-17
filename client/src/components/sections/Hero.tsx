@@ -137,6 +137,22 @@ export default function Hero() {
               </span>
             </h1>
 
+            {/* Tagline */}
+            <p
+              className={`font-['Noto_Serif_SC'] text-[#C9A84C] text-xl md:text-2xl font-semibold mb-3 transition-all duration-700 delay-500 ${
+                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              }`}
+            >
+              让品牌显贵，让利润倍增，让增长全域
+            </p>
+            <p
+              className={`text-white/50 text-sm md:text-base tracking-wide mb-10 transition-all duration-700 delay-600 ${
+                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+              }`}
+            >
+              Make Brands Premium · Multiply Profits · Grow Across All Channels
+            </p>
+
             {/* CTAs */}
             <div
               className={`flex flex-wrap gap-4 transition-all duration-700 delay-700 ${
