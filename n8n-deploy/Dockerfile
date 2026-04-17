@@ -1,4 +1,4 @@
-FROM n8nio/n8n:latest
+FROM n8nio/n8n:0.181
 
 ENV GENERIC_TIMEZONE=Asia/Shanghai
 ENV N8N_PROTOCOL=http
