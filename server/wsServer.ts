@@ -25,12 +25,12 @@ export interface WSMessage {
 
 export interface TaskUpdatePayload {
   type: "task_update";
-  task_id: string;
-  status: string;
+  task_id?: string;
+  status?: string;
   progress?: number;
   message?: string;
   error?: string;
-  timestamp: string;
+  timestamp?: string;
 }
 
 export interface TaskProgressPayload {
@@ -293,7 +293,7 @@ class WSServer {
   /**
    * 广播消息给所有订阅了指定任务的客户端
    */
-  broadcastTaskUpdate(taskId: string, payload: Omit<TaskUpdatePayload, "type" | "timestamp">): void {
+  broadcastTaskUpdate(taskId: string, payload: Omit<TaskUpdatePayload, "type" | "timestamp" | "task_id">): void {
     const message: TaskUpdatePayload = {
       type: "task_update",
       task_id: taskId,
