@@ -9,6 +9,7 @@ import mammoth from "mammoth";
 import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
+import { searchCorpus, formatForPrompt } from "./maoRagServer";
 
 const aiStreamRouter = Router();
 
@@ -450,6 +451,30 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         mode: "prompt",
       }
     })}\n\n`);
+}
+
+  // ── MaoAI 语料库 RAG 引用注入 ───────────────────────────────────────────
+  // 当有用户消息时，检索相关语料并追加到 system prompt（非阻塞执行）
+  const userTextForRag = (() => {
+    const lastUserMsg = [...(messages ?? [])].reverse().find((m: any) => m.role === "user");
+    if (!lastUserMsg) return "";
+    return typeof lastUserMsg.content === "string"
+      ? lastUserMsg.content
+      : Array.isArray(lastUserMsg.content)
+        ? lastUserMsg.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
+        : "";
+  })();
+  if (userTextForRag.trim() && userTextForRag.length > 2) {
+    try {
+      const ragResults = await searchCorpus(userTextForRag, 3);
+      if (ragResults.length > 0) {
+        const refs = formatForPrompt(ragResults);
+        if (refs) {
+          res.write(`data: ${JSON.stringify({ ragReferences: { count: ragResults.length, preview: refs.slice(0, 100) + "..." } })}\n\n`);
+          effectiveSystemPrompt = (effectiveSystemPrompt ? effectiveSystemPrompt + "\n\n" : "") + refs;
+        }
+      }
+    } catch (_) { /* RAG 失败不影响主流程 */ }
   }
 
   const rawMessages = effectiveSystemPrompt ? [{ role: "system", content: effectiveSystemPrompt }, ...messages] : messages;
