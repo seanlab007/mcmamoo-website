@@ -266,7 +266,12 @@ export default function MaoAIChat() {
   const [streamingContent, setStreamingContent] = useState("");
   const [activeNodeInfo, setActiveNodeInfo] = useState<ActiveNodeInfo | null>(null);
   const [pendingImages, setPendingImages] = useState<string[]>([]);
-  const [selectedId, setSelectedId] = useState<string>("deepseek-chat");
+  const [selectedId, setSelectedId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("maoai_selected_model") || "deepseek-chat";
+    }
+    return "deepseek-chat";
+  });
   const [showPicker, setShowPicker] = useState(false);
   const [localNodes, setLocalNodes] = useState<LocalNode[]>([]);
   const [loadingNodes, setLoadingNodes] = useState(false);
@@ -1336,7 +1341,7 @@ export default function MaoAIChat() {
                         </div>
                       </div>
                       {CLOUD_MODELS.map(m => (
-                        <button key={m.id} onClick={() => { if (m.available !== false) { setSelectedId(m.id); setShowPicker(false); } }}
+                        <button key={m.id} onClick={() => { if (m.available !== false) { localStorage.setItem("maoai_selected_model", m.id); setSelectedId(m.id); setShowPicker(false); } }}
                           disabled={m.available === false}
                           className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-colors ${m.available === false ? "opacity-40 cursor-not-allowed" : "hover:bg-[#C9A84C]/5"} ${m.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}>
                           <span className="text-sm mt-0.5 shrink-0">{m.badge}</span>
@@ -1365,7 +1370,7 @@ export default function MaoAIChat() {
                           {loadingNodes && <div className="px-4 py-3 text-white/30 text-xs flex items-center gap-2"><Loader2 size={12} className="animate-spin" /><span>{chat.loadingNodes}</span></div>}
                           {!loadingNodes && localNodes.length === 0 && <div className="px-4 py-3 text-white/25 text-xs">{chat.noLocalNodes}<div className="text-white/15 text-[11px] mt-0.5">{chat.ollamaHint}</div></div>}
                           {localNodes.map(n => (
-                            <button key={n.id} onClick={() => { setSelectedId(n.id); setShowPicker(false); }}
+                            <button key={n.id} onClick={() => { localStorage.setItem("maoai_selected_model", n.id); setSelectedId(n.id); setShowPicker(false); }}
                               className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-[#C9A84C]/5 transition-colors ${n.id === selectedId ? "bg-[#C9A84C]/10" : ""}`}>
                               <span className="text-sm mt-0.5 shrink-0">{n.badge}</span>
                               <div className="min-w-0">
