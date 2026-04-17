@@ -1,4 +1,5 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import { createServer } from "http";
 import net from "net";
@@ -13,6 +14,7 @@ import { chatRouter } from "../chat";
 import { notesRouter } from "../notes";
 import { fetchAllDigests } from "../research-digest";
 import { mcpServerRouter } from "../mcp-server";
+import { registerMaoRagRouter } from "../maoRagServer";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -108,6 +110,8 @@ async function startServer() {
   app.use("/api/chat", chatRouter);
   // MaoAI MCP Server — HTTP SSE，让外部 AI Agent 通过 MCP 协议调用 MaoAI 工具
   app.use("/api/mcp", mcpServerRouter);
+  // MaoAI 语料库 RAG 检索（毛泽东选集向量引用）
+  registerMaoRagRouter(app);
   // tRPC API
   app.use(
     "/api/trpc",
