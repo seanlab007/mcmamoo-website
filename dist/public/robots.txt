@@ -1,0 +1,64 @@
+# ═══════════════════════════════════════════
+# Robots.txt for mcmamoo.com
+# 猫眼咨询官网搜索引擎爬虫规则
+# ═══════════════════════════════════════════
+
+User-agent: *
+Allow: /
+
+# ═══════════════════════════════════════════
+# 禁止爬虫访问的页面
+# ═══════════════════════════════════════════
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /404
+
+# ═══════════════════════════════════════════
+# 爬虫访问频率限制
+# ═══════════════════════════════════════════
+Crawl-delay: 1
+
+# ═══════════════════════════════════════════
+# 网站地图
+# ═══════════════════════════════════════════
+Sitemap: https://www.mcmamoo.com/sitemap.xml
+
+# ═══════════════════════════════════════════
+# 主要搜索引擎专用规则
+# ═══════════════════════════════════════════
+
+# Google
+User-agent: Googlebot
+Allow: /
+
+# 百度
+User-agent: Baiduspider
+Allow: /
+
+# Bing
+User-agent: Bingbot
+Allow: /
+
+# 搜狗
+User-agent: Sogou spider
+Allow: /
+
+# 360搜索
+User-agent: 360Spider
+Allow: /
+
+# ═══════════════════════════════════════════
+# 禁止非搜索引擎爬虫
+# ═══════════════════════════════════════════
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /

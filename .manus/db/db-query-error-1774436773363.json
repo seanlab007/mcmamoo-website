@@ -1,0 +1,8 @@
+{
+  "query": "\nALTER TABLE consulting_inquiries \nADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'signed', 'dropped')),\nADD COLUMN IF NOT EXISTS notes TEXT DEFAULT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1DMtBSituR1Li7R.71ac05825895 --database V3i2B4simdfhuwmzceY7AV --execute \nALTER TABLE consulting_inquiries \nADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'signed', 'dropped')),\nADD COLUMN IF NOT EXISTS notes TEXT DEFAULT NULL;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 2: Table 'v3i2b4simdfhuwmzcey7av.consulting_inquiries' doesn't exist"
+  ]
+}

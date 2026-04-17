@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1773088422941,
+      "tag": "0000_outgoing_susan_delgado",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1773088483521,
+      "tag": "0001_awesome_stardust",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1773114743138,
+      "tag": "0002_redundant_tony_stark",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1773118522732,
+      "tag": "0003_special_mimic",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1774485879308,
+      "tag": "0004_ancient_roxanne_simpson",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1774486142149,
+      "tag": "0005_striped_red_skull",
+      "breakpoints": true
+    }
+  ]
+}

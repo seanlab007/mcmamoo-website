@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "home": "Strona główna",
+    "about": "O nas",
+    "kol": "KOL",
+    "services": "Usługi",
+    "cases": "Przypadki",
+    "awards": "Nagrody",
+    "contact": "Kontakt",
+    "bookConsultation": "Zarezerwuj konsultację",
+    "maoIndustry": "Mao Industry",
+    "maoIndustryHome": "Strona główna przemysłu",
+    "millenniumClock": "Zegar Tysiąclecia",
+    "cooperation": "Partnerstwo"
+  },
+  "hero": {
+    "label": "Globalne Premium Zarządzanie Marką",
+    "subtitle": "Zwielokrotnij Zyski Swojej Marki",
+    "brandName": "Mc&Mamoo Growth Engine",
+    "tagline": "Podnieś markę · Zwielokrotnij zyski · Rozwijaj się we wszystkich kanałach",
+    "taglineEn": "Make Brands Premium · Multiply Profits · Grow Across All Channels",
+    "cta1": "Zarezerwuj Diagnozę Marki",
+    "cta2": "Zobacz Globalne Przypadki",
+    "ipBadge": "Partner Strategiczny ABG · 15+ Globalnych Licencji IP",
+    "whaleBadge": "Whale Pictures · Produkcja Filmowa"
+  },
+  "about": {
+    "title": "O nas",
+    "subtitle": "Mc&Mamoo Growth Engine",
+    "description": "Mc&Mamoo to międzynarodowa firma premium zarządzania marką, z siedzibą w Chicago i Szanghaju, wspierana przez Dark Matter Capital.",
+    "mission": "Misja",
+    "missionText": "Sprawić, by każda wartościowa marka była widoczna dla większej liczby osób",
+    "vision": "Wizja",
+    "visionText": "Stać się najbardziej zaufanym partnerem wzrostu marki na świecie",
+    "values": "Wartości",
+    "valuesText": "Uczciwość · Innowacja · Wspólny sukces"
+  },
+  "services": {
+    "title": "Główne Usługi",
+    "subtitle": "Rozwiązania Wzrostu Omnichannel",
+    "brand": "Strategia Marki",
+    "brandDesc": "Od pozycjonowania do systemu wizualnego, budowanie zróżnicowanych aktywów marki",
+    "digital": "Marketing Cyfrowy",
+    "digitalDesc": "Zintegrowany marketing omnichannel dla precyzyjnego dotarcia do grup docelowych",
+    "kol": "Marketing KOL",
+    "kolDesc": "Matryca top influencerów ze zintegrowaną dystrybucją treści i konwersją",
+    "growth": "Doradztwo Wzrostu",
+    "growthDesc": "Strategie wzrostu oparte na danych dla ciągłych przełomów GMV"
+  },
+  "maoIndustry": {
+    "title": "Mao Industry",
+    "subtitle": "Dywizja Technologii Przemysłowej",
+    "description": "Portfolio technologii przemysłowej zorientowane na przyszłość — od energii księżycowej do produkcji obronnej.",
+    "helium3": "Energia Helu-3 z Księżyca",
+    "helium3Desc": "Lider w eksploracji i wydobyciu He-3 z Księżyca dla czystej energii fuzji dla Ziemi",
+    "tokamak": "B+R Urządzenie Tokamak",
+    "tokamakDesc": "Niezależny rozwój urządzeń fuzji magnetycznej nowej generacji",
+    "military": "Produkcja Obronna",
+    "militaryDesc": "Wysokoprecyzyjna produkcja komponentów obronnych i integracja systemów",
+    "partners": "Partnerzy Strategiczni",
+    "cooperationTitle": "Wniosek o Partnerstwo Strategiczne",
+    "cooperationDesc": "Jeśli jesteś zainteresowany współpracą strategiczną z Mao Industry, wypełnij poniższe informacje."
+  },
+  "millenniumClock": {
+    "title": "Zegar Tysiąclecia",
+    "subtitle": "Jedno tykanie co 10 000 lat",
+    "description": "Wynaleziony przez myśliciela Sean DAI, zegar zaprojektowany, aby przypominać ludzkości o myśleniu w ultra-długich skalach czasu.",
+    "inventor": "Wynalazca",
+    "inventorName": "Sean DAI",
+    "reserve": "Rezerwacja / Zapytanie o zakup",
+    "reserveDesc": "Wypełnij swoje dane, a my się z Tobą skontaktujemy"
+  },
+  "contact": {
+    "title": "Skontaktuj się z nami",
+    "subtitle": "Rozpocznij swoją podróż wzrostu marki",
+    "name": "Imię",
+    "email": "E-mail",
+    "company": "Firma",
+    "message": "Wiadomość",
+    "submit": "Wyślij",
+    "phone": "Telefon",
+    "address": "Adres"
+  },
+  "footer": {
+    "rights": "Wszelkie prawa zastrzeżone",
+    "privacy": "Polityka prywatności",
+    "terms": "Warunki korzystania"
+  },
+  "common": {
+    "learnMore": "Dowiedz się więcej",
+    "contactUs": "Skontaktuj się",
+    "viewAll": "Zobacz wszystko",
+    "back": "Wstecz",
+    "submit": "Wyślij",
+    "cancel": "Anuluj",
+    "loading": "Ładowanie...",
+    "success": "Wysłano pomyślnie",
+    "error": "Wysyłanie nie powiodło się, spróbuj ponownie"
+  }
+}
