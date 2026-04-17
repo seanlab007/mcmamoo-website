@@ -111,7 +111,6 @@ class TaskQueue {
 
     // 广播队列状态
     wsServer.broadcastTaskUpdate(taskId, {
-      task_id: taskId,
       status: "queued",
       progress: 0,
       message: "任务已加入队列",
@@ -425,10 +424,7 @@ class TaskQueue {
     taskId: string,
     payload: { status: string; progress?: number; message?: string; error?: string }
   ): void {
-    wsServer.broadcastTaskUpdate(taskId, {
-      task_id: taskId,
-      ...payload,
-    });
+    wsServer.broadcastTaskUpdate(taskId, payload);
   }
 
   /**
@@ -441,7 +437,6 @@ class TaskQueue {
   ): void {
     wsServer.broadcastProgressUpdate(taskId, {
       task_id: taskId,
-      project_id: taskId,
       ...payload,
     });
   }
