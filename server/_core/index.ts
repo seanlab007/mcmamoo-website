@@ -1,5 +1,7 @@
+// dotenv 必须在所有 import 之前加载！ES 模块 import 会被提升
 import dotenv from "dotenv";
 dotenv.config();
+
 import express from "express";
 import { createServer } from "http";
 import net from "net";
@@ -15,6 +17,12 @@ import { notesRouter } from "../notes";
 import { fetchAllDigests } from "../research-digest";
 import { mcpServerRouter } from "../mcp-server";
 import { registerMaoRagRouter } from "../maoRagServer";
+
+// ── 内容平台 & 任务调度 ───────────────────────────────────────────────────
+import { contentPlatformRouter, initScheduler } from "../contentPlatform";
+
+// ── WebSocket 服务器 ────────────────────────────────────────────────────────
+import { wsServer } from "../wsServer";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -54,6 +62,10 @@ async function startServer() {
       return;
     }
     try {
+      console.log("[email-login] Attempting login for:", email);
+      console.log("[email-login] Using SUPABASE_URL:", process.env.SUPABASE_URL);
+      console.log("[email-login] ANON_KEY prefix:", (process.env.SUPABASE_ANON_KEY || "").substring(0, 20) + "...");
+      
       const authResp = await fetch(
         `${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`,
         {
@@ -110,6 +122,8 @@ async function startServer() {
   app.use("/api/chat", chatRouter);
   // MaoAI MCP Server — HTTP SSE，让外部 AI Agent 通过 MCP 协议调用 MaoAI 工具
   app.use("/api/mcp", mcpServerRouter);
+  // 猫眼内容平台协调 API（订阅/任务调度/定时任务）
+  app.use("/api/content", contentPlatformRouter);
   // MaoAI 语料库 RAG 检索（毛泽东选集向量引用）
   registerMaoRagRouter(app);
   // tRPC API
@@ -140,6 +154,18 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+
+    // ─── 初始化 WebSocket 服务器 ────────────────────────────────────────────
+    // 监听 8000 端口，支持多端连接（手机/云端/本地）
+    try {
+      wsServer.init(server);
+      console.log("[Init] WebSocket server initialized on port 8000");
+    } catch (err) {
+      console.error("[Init] Failed to initialize WebSocket server:", err);
+    }
+
+    // ─── 初始化内容平台定时调度器 ───────────────────────────────────────────
+    initScheduler().catch((e) => console.warn("[Scheduler] Init failed:", e));
 
     // ─── 研究摘要定时任务 ────────────────────────────────────────────────────
     // 每天早上 8:00 自动预热缓存（背景抓取，不阻塞启动）
