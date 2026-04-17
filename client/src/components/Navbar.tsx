@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { MAOAI_ROUTES } from "@/features/maoai";
 
@@ -10,6 +10,20 @@ import { MAOAI_ROUTES } from "@/features/maoai";
 const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
   ? "/content"
   : "http://localhost:3001/content";
+
+// 导航链接配置 - 优先级分组
+const primaryLinks = [
+  { name: "MaoAI", href: MAOAI_ROUTES.CHAT },
+  { name: "Whale Pictures", href: "/whale-pictures" },
+  { name: "猫眼工业", href: "/mao-industry" },
+  { name: "IP Licensing", href: "/ip-licensing" },
+];
+
+const secondaryLinks = [
+  { name: "Consulting", href: "/pricing" },
+  { name: "Press", href: "/press" },
+  { name: "毛智库", href: "/mao-think-tank" },
+];
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -22,192 +36,154 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinksRow1 = [
-    { name: "MaoAI", href: MAOAI_ROUTES.CHAT },
-    { name: "猫眼内容平台", href: CONTENT_PLATFORM_URL, external: true },
-    { name: "Whale Pictures", href: "/whale-pictures" },
-    { name: "猫眼工业", href: "/mao-industry" },
-    { name: "IP Licensing", href: "/ip-licensing" },
-  ];
-
-  const navLinksRow2 = [
-    { name: "小龙虾 AI", href: "/openclaw" },
-    { name: "毛智库", href: "/mao-think-tank" },
-  ];
-
-  const rightLinks = [
-    { name: "Consulting", href: "/pricing" },
-    { name: "Press", href: "/press" },
-  ];
+  // 监听移动端菜单关闭（路由变化时）
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location]);
 
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b",
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         isScrolled
-          ? "bg-[#0A0A0A]/95 backdrop-blur-md border-white/5 py-2"
-          : "bg-transparent border-transparent py-4"
+          ? "bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 shadow-lg"
+          : "bg-transparent"
       )}
     >
-      <div className="container mx-auto px-8">
-        {/* Desktop Navigation - Double Row */}
-        <div className="hidden lg:flex flex-col gap-5">
-          {/* Row 1: Logo + Main Links */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-16">
-              <Link href="/" className="flex items-center gap-4 group flex-shrink-0">
-                <div className="relative w-10 h-10 overflow-hidden">
-                  <img 
-                    src="/logo-gold.png" 
-                    alt="Mc&Mamoo Logo" 
-                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-white font-['Noto_Serif_SC'] text-lg font-bold tracking-wider leading-tight">
-                    Mc&Mamoo <span className="text-[#C9A84C] text-xs align-top ml-1">AI</span>
-                  </span>
-                  <span className="text-white/40 text-[0.6rem] font-['DM_Mono'] tracking-[0.3em] uppercase leading-none">
-                    Growth Engine Products
-                  </span>
-                </div>
-              </Link>
-
-              <div className="flex items-center gap-12 flex-1">
-                {navLinksRow1.map((link) => (
-                  link.external ? (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={cn(
-                        "flex items-center gap-1 text-[0.75rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
-                        "text-white/60"
-                      )}
-                    >
-                      {link.name}
-                    </a>
-                  ) : (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "text-[0.75rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
-                        location === link.href ? "text-[#C9A84C]" : "text-white/60"
-                      )}
-                    >
-                      {link.name}
-                    </Link>
-                  )
-                ))}
-              </div>
+      <div className="container mx-auto px-4 lg:px-6">
+        {/* Desktop Navigation - Single Row */}
+        <div className="hidden lg:flex items-center justify-between h-14">
+          {/* Left: Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0 mr-4">
+            <img 
+              src="/logo-gold.png" 
+              alt="Mc&Mamoo Logo" 
+              className="w-8 h-8 object-contain transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="flex flex-col">
+              <span className="text-white font-['Noto_Serif_SC'] text-sm font-bold tracking-wide leading-tight">
+                Mc&Mamoo <span className="text-[#C9A84C] text-[0.6rem] align-top ml-0.5">AI</span>
+              </span>
+              <span className="text-white/25 text-[0.5rem] font-['DM_Mono'] tracking-[0.2em] uppercase leading-none">
+                Growth Engine
+              </span>
             </div>
+          </Link>
 
-            <div className="flex items-center gap-8 flex-shrink-0">
-              <LanguageSwitcher />
-              <Button
-                asChild
-                className="bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866] rounded-none px-6 py-5 text-[0.7rem] font-bold tracking-[0.2em] uppercase transition-all duration-300 flex-shrink-0"
+          {/* Center-Left: Primary Navigation */}
+          <div className="flex items-center gap-0.5">
+            {primaryLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "px-2.5 py-1.5 text-[0.65rem] font-medium tracking-[0.06em] uppercase transition-all duration-200 hover:text-[#C9A84C] whitespace-nowrap rounded hover:bg-white/5",
+                  location === link.href ? "text-[#C9A84C]" : "text-white/50"
+                )}
               >
-                <Link href="/pricing">预约咨询</Link>
-              </Button>
-            </div>
+                {link.name}
+              </Link>
+            ))}
+            {/* 分隔线 */}
+            <div className="w-px h-4 bg-white/10 mx-1" />
+            {secondaryLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "px-2.5 py-1.5 text-[0.65rem] font-medium tracking-[0.06em] uppercase transition-all duration-200 hover:text-[#C9A84C] whitespace-nowrap rounded hover:bg-white/5",
+                  location === link.href ? "text-[#C9A84C]" : "text-white/40"
+                )}
+              >
+                {link.name}
+              </Link>
+            ))}
           </div>
 
-          {/* Row 2: Secondary Links + Right Actions */}
-          <div className="flex items-center justify-between border-t border-white/5 pt-4">
-            <div className="flex items-center gap-14">
-              {navLinksRow2.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
-                    location === link.href ? "text-[#C9A84C]" : "text-white/40"
-                  )}
-                >
-                  {link.name}
-                </Link>
-              ))}
+          {/* Right: Platform Link + Language + CTA */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* 猫眼内容平台 - 带图标 */}
+            <a
+              href={CONTENT_PLATFORM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 border border-[#C9A84C]/25 bg-[#C9A84C]/8 text-[#C9A84C] text-[0.6rem] font-semibold tracking-[0.1em] uppercase hover:bg-[#C9A84C]/15 transition-all whitespace-nowrap rounded"
+            >
+              <LayoutDashboard size={11} />
+              <span>内容平台</span>
+            </a>
+            
+            {/* Language Switcher */}
+            <div className="relative">
+              <LanguageSwitcher />
             </div>
-
-            <div className="flex items-center gap-10">
-              {rightLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-all duration-300 hover:text-[#C9A84C] whitespace-nowrap",
-                    location === link.href ? "text-[#C9A84C]" : "text-white/40"
-                  )}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <a
-                href={CONTENT_PLATFORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-1 border border-[#C9A84C]/30 bg-[#C9A84C]/5 text-[#C9A84C] text-[0.65rem] font-bold tracking-[0.2em] uppercase hover:bg-[#C9A84C]/10 transition-all whitespace-nowrap flex-shrink-0"
-              >
-                <LayoutDashboard size={10} />
-                内容平台
-              </a>
-            </div>
+            
+            {/* CTA Button */}
+            <Button
+              asChild
+              className="bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#D4B866] rounded-none px-4 py-4 text-[0.6rem] font-bold tracking-[0.12em] uppercase transition-all duration-300 flex-shrink-0 h-auto"
+            >
+              <Link href="/pricing">预约咨询</Link>
+            </Button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        <div className="lg:hidden flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img src="/logo-gold.png" alt="Logo" className="w-8 h-8 object-contain" />
+        <div className="lg:hidden flex items-center justify-between h-14">
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/logo-gold.png" alt="Logo" className="w-7 h-7 object-contain" />
             <span className="text-white font-['Noto_Serif_SC'] text-sm font-bold tracking-wider">Mc&Mamoo</span>
           </Link>
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="text-white p-2"
+            className="text-white p-2 hover:bg-white/10 rounded-md transition-colors"
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-[72px] bg-[#0A0A0A] z-40 flex flex-col p-8 gap-6 overflow-y-auto">
-          {[...navLinksRow1, ...navLinksRow2, ...rightLinks].map((link) => (
-            link.external ? (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-white/70 text-lg font-medium tracking-widest hover:text-[#C9A84C]"
-              >
-                {link.name}
-              </a>
-            ) : (
+        <div className="lg:hidden fixed inset-0 top-14 bg-[#0A0A0A]/98 backdrop-blur-lg z-40 flex flex-col p-5 gap-1 overflow-y-auto">
+          {/* 主导航链接 */}
+          <div className="space-y-0.5">
+            {[...primaryLinks, ...secondaryLinks].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-white/70 text-lg font-medium tracking-widest hover:text-[#C9A84C]"
+                className={cn(
+                  "flex items-center px-4 py-3 text-sm font-medium tracking-wide rounded-lg transition-colors",
+                  location === link.href ? "text-[#C9A84C] bg-[#C9A84C]/10" : "text-white/70 hover:text-[#C9A84C] hover:bg-white/5"
+                )}
               >
                 {link.name}
               </Link>
-            )
-          ))}
-          <Button
-            asChild
-            className="bg-[#C9A84C] text-[#0A0A0A] w-full py-6 rounded-none mt-4"
-          >
-            <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)}>
-              预约咨询
-            </Link>
-          </Button>
+            ))}
+          </div>
+          
+          {/* 分隔线和功能按钮 */}
+          <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+            <a
+              href={CONTENT_PLATFORM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-3 border border-[#C9A84C]/30 bg-[#C9A84C]/5 text-[#C9A84C] text-sm font-bold tracking-wide rounded-lg"
+            >
+              <LayoutDashboard size={16} />
+              猫眼内容平台
+            </a>
+            <Button
+              asChild
+              className="w-full bg-[#C9A84C] text-[#0A0A0A] py-5 rounded-lg text-sm font-bold tracking-wider"
+            >
+              <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)}>
+                预约咨询
+              </Link>
+            </Button>
+          </div>
         </div>
       )}
     </nav>
