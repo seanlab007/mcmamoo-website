@@ -125,47 +125,17 @@ export default function Hero() {
 
             {/* Main title */}
             <h1
-              className={`font-['Cormorant_Garamond'] text-white leading-[1.05] mb-4 transition-all duration-700 delay-300 ${
+              className={`font-['Cormorant_Garamond'] text-white leading-[1.05] mb-6 transition-all duration-700 delay-300 ${
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
               }`}
             >
               <span className="block text-5xl md:text-7xl lg:text-8xl font-semibold tracking-tight">
-                Mc&amp;Mamoo
+                Mc&amp;Mamoo Growth Engine
               </span>
-              <span className="block text-3xl md:text-4xl lg:text-5xl font-light text-[#C9A84C] mt-1 tracking-wide">
-                Mc&amp;Mamoo Inc.
+              <span className="block text-2xl md:text-3xl lg:text-4xl font-light text-white/80 mt-2 tracking-widest font-['Noto_Serif_SC']">
+                猫眼增长引擎
               </span>
             </h1>
-
-            {/* Chinese title */}
-            <div
-              className={`transition-all duration-700 delay-400 ${
-                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-              }`}
-            >
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-px w-12 bg-[#C9A84C]" />
-                <span className="font-['Noto_Serif_SC'] text-white/80 text-lg md:text-xl tracking-widest">
-                  猫眼增长引擎 Mc&Mamoo Growth Engine
-                </span>
-              </div>
-            </div>
-
-            {/* Tagline */}
-            <p
-              className={`font-['Noto_Serif_SC'] text-[#C9A84C] text-xl md:text-2xl font-semibold mb-3 transition-all duration-700 delay-500 ${
-                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-              }`}
-            >
-              让品牌显贵，让利润倍增，让增长全域
-            </p>
-            <p
-              className={`text-white/50 text-sm md:text-base tracking-wide mb-10 transition-all duration-700 delay-600 ${
-                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-              }`}
-            >
-              Make Brands Premium · Multiply Profits · Grow Across All Channels
-            </p>
 
             {/* CTAs */}
             <div
