@@ -1,93 +1,82 @@
 #!/bin/bash
-# MaoAI 3.0 「破壁者」一键启动脚本 (Manus Sandbox v3.0)
-# --------------------------------------------------
+# ============================================================
+# MaoAI 3.0 自动清理并启动脚本（非阻塞版本）
+# ============================================================
+# 解决问题：端口被僵尸进程占用导致天天手动 kill -9
+# 策略：启动前自动清理所有相关端口，后台启动服务后立即退出
+# 用法：
+#   ./start-maoai.sh        # 启动
+#   ./stop-maoai.sh         # 停止
+# ============================================================
 
-PROJECT_DIR="/home/ubuntu/mcmamoo-website"
-FRONTEND_PORT=3000
-BACKEND_PORT=5000
+cd "$(dirname "$0")"
 
-cd $PROJECT_DIR || exit
+# ── 端口配置 ──
+PORTS=(3000 3001 5000 8000 8765)
 
-echo "🚀 [MaoAI] 正在启动系统..."
+# ── 颜色 ──
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
-# 1. 清理旧进程
-echo "🧹 [1/5] 清理旧进程 (端口 $FRONTEND_PORT, $BACKEND_PORT)..."
-lsof -ti :$FRONTEND_PORT,:$BACKEND_PORT | xargs kill -9 2>/dev/null || true
-sleep 2
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}  MaoAI 3.0 — 自动清理并启动${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-# 2. 创建/验证 .env 文件
-echo "📄 [2/5] 检查 .env 配置文件..."
-if [ ! -f ".env" ]; then
-    echo "  -> .env 文件不存在，正在从模板创建..."
-    cat > .env << EOF
-# 自动生成的 .env 文件 for MaoAI Sandbox
+# ── [1/3] 清理端口 ──
+echo ""
+echo -e "${YELLOW}🧹 [1/3] 扫描并清理端口...${NC}"
 
-# 后端服务端口
-PORT=$BACKEND_PORT
-
-# Supabase (使用本地模拟值)
-SUPABASE_URL=http://localhost:54321
-SUPABASE_SERVICE_KEY=dummy_key_for_local_dev
-SUPABASE_ANON_KEY=dummy_key_for_local_dev
-
-# GitHub Token (从用户需求中获取)
-GITHUB_TOKEN=YOUR_GITHUB_TOKEN_HERE
-
-# 管理员 Token
-ADMIN_TOKEN=YOUR_ADMIN_TOKEN_HERE
-
-# JWT Secret
-JWT_SECRET=a-very-secret-jwt-token-for-dev
-
-# Vite 前端环境变量
-VITE_BACKEND_URL=http://localhost:$BACKEND_PORT
-VITE_SUPABASE_URL=http://localhost:54321
-VITE_SUPABASE_ANON_KEY=dummy_key_for_local_dev
-EOF
-    echo "  -> ✅ .env 已创建。"
-else
-    echo "  -> ✅ .env 文件已存在。"
-fi
-
-# 3. 检查并安装依赖
-echo "📦 [3/5] 检查依赖..."
-if [ ! -d "node_modules" ]; then
-    echo "  -> 正在安装 pnpm 依赖..."
-    pnpm install
-else
-    echo "  -> ✅ pnpm 依赖已安装。"
-fi
-
-# 4. 启动后端和前端服务
-echo "🚀 [4/5] 启动后端 (Express) 和前端 (Vite)..."
-nohup pnpm dev > backend.log 2>&1 &
-BACKEND_PID=$!
-nohup pnpm dev:frontend > frontend.log 2>&1 &
-FRONTEND_PID=$!
-
-echo "  -> 后端 PID: $BACKEND_PID"
-echo "  -> 前端 PID: $FRONTEND_PID"
-
-# 5. 等待并验证服务
-echo "⏳ [5/5] 等待服务就绪 (最多30秒)..."
-MAX_RETRIES=30
-COUNT=0
-while ! netstat -tuln | grep -q ":$FRONTEND_PORT" || ! netstat -tuln | grep -q ":$BACKEND_PORT"; do
-    sleep 1
-    COUNT=$((COUNT+1))
-    printf "\r⏳ %ds..." "$COUNT"
-    if [ $COUNT -ge $MAX_RETRIES ]; then
-        echo "\n❌ [错误] 服务启动超时！"
-        echo "--- 后端日志 (backend.log) ---"
-        tail -n 20 backend.log
-        echo "--- 前端日志 (frontend.log) ---"
-        tail -n 20 frontend.log
-        exit 1
+for PORT in "${PORTS[@]}"; do
+  PID=$(lsof -ti :${PORT} -sTCP:LISTEN 2>/dev/null)
+  if [ -n "$PID" ]; then
+    echo -e "  ${RED}✗ 端口 ${PORT} 被占用 PID=${PID}，正在清理...${NC}"
+    kill -9 $PID 2>/dev/null
+    # 二次确认，fuser 兜底
+    sleep 0.3
+    PID_CHECK=$(lsof -ti :${PORT} -sTCP:LISTEN 2>/dev/null)
+    if [ -n "$PID_CHECK" ]; then
+      fuser -k ${PORT}/tcp 2>/dev/null
     fi
+  else
+    echo -e "  ${GREEN}✓ 端口 ${PORT} 空闲${NC}"
+  fi
 done
 
-echo "\n✅ [成功] MaoAI 3.0 已就绪！"
-echo "--------------------------------------------------"
-echo "  - 前端访问 -> http://localhost:$FRONTEND_PORT"
-echo "  - 后端 API -> http://localhost:$BACKEND_PORT"
-echo "--------------------------------------------------"
+# 清理残留 tsx/vite 进程（仅本项目相关）
+pkill -f "tsx.*server/_core" 2>/dev/null && echo -e "  ${GREEN}✓ 已清理 tsx server 进程${NC}"
+pkill -f "node.*vite" 2>/dev/null && echo -e "  ${GREEN}✓ 已清理 vite dev 进程${NC}"
+
+sleep 1
+
+# ── [2/3] 启动后端服务 ──
+echo ""
+echo -e "${YELLOW}🚀 [2/3] 启动 MaoAI 后端服务...${NC}"
+nohup npx tsx --require ./server/_core/preload.cjs server/_core/index.ts > /tmp/maoai.log 2>&1 &
+BACKEND_PID=$!
+echo -e "  后端 PID: ${CYAN}${BACKEND_PID}${NC}"
+
+# ── [3/3] 启动前端开发服务器 ──
+echo ""
+echo -e "${YELLOW}🚀 [3/3] 启动前端开发服务器...${NC}"
+nohup npx vite --port 3000 > /tmp/maoai-frontend.log 2>&1 &
+FRONTEND_PID=$!
+echo -e "  前端 PID: ${CYAN}${FRONTEND_PID}${NC}"
+
+# 保存 PID 到文件，方便 stop 脚本使用
+echo "${BACKEND_PID} ${FRONTEND_PID}" > /tmp/maoai-pids
+
+# ── 完成 ──
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}  ✅ MaoAI 3.0 已后台启动${NC}"
+echo -e "  🌐 前端: ${CYAN}http://localhost:3000${NC}"
+echo -e "  🔧 后端: ${CYAN}http://localhost:8000${NC}"
+echo -e "  📋 后端日志: ${CYAN}tail -f /tmp/maoai.log${NC}"
+echo -e "  📋 前端日志: ${CYAN}tail -f /tmp/maoai-frontend.log${NC}"
+echo -e "  🛑 停止服务: ${CYAN}./stop-maoai.sh${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
