@@ -88,6 +88,7 @@ export default function Contact() {
             {/* Business card QR code */}
             <div className="mb-8">
               <div className="inline-flex items-center gap-6 p-5 border border-[#C9A84C]/25 bg-[#C9A84C]/5 hover:border-[#C9A84C]/50 transition-all duration-300">
+<<<<<<< HEAD
                 {/* QR code with gold frame */}
                 <div className="relative flex-shrink-0">
                   <div className="absolute -inset-1 border border-[#C9A84C]/40" />
@@ -108,6 +109,33 @@ export default function Contact() {
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-px bg-[#C9A84C]/50" />
                     <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">MCMAMOO.COM</span>
+=======
+                {92	                <div className="relative flex-shrink-0">
+                  {/* 外层金边框 */}
+                  <div className="absolute -inset-1 border border-[#C9A84C]/60" />
+                  <div className="absolute -inset-2 border border-[#C9A84C]/20" />
+                  {/* 二维码容器 - 物理性切除白边 */}
+                  <div className="relative flex-shrink-0 w-20 h-20 overflow-hidden bg-[#0A0A0A]">
+                    <img
+                      src="https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/mao_qr_code_81db722a.png"
+                      alt="微信二维码"
+                      className="w-full h-full object-cover block"
+                      style={{
+                        filter: "invert(1) brightness(1.1) contrast(1.2)",
+                        clipPath: "inset(8% 8% 8% 8%)",
+                      }}
+                    />
+                  </div>
+                </div>        </div>
+104	                </div>            {/* Info */}
+                <div>
+                  <div className="text-[#C9A84C]/60 text-[0.6rem] font-['DM_Mono'] tracking-[0.2em] uppercase mb-2">SCAN TO ADD WECHAT</div>
+                  <div className="text-white font-['Noto_Serif_SC'] text-base font-bold mb-1">Sean DAI</div>
+                  <div className="text-white/50 text-xs mb-2">首席战略专家 · 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-px bg-[#C9A84C]/50" />
+                    <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">Mc&Mamoo Growth Engine.COM</span>
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
                   </div>
                 </div>
               </div>

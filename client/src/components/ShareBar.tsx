@@ -15,7 +15,11 @@ export default function ShareBar({ title, description }: ShareBarProps) {
   const [showQR, setShowQR] = useState(false);
 
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+<<<<<<< HEAD
   const shareText = `${title} — 猫眼咨询标杆案例 | ${description || ""}`;
+=======
+  const shareText = `${title} — 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)标杆案例 | ${description || ""}`;
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
 
   const handleCopyLink = async () => {
     try {

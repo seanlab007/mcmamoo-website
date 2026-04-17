@@ -67,12 +67,21 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 
 export default function CaseJiangzhong() {
   useSEO({
+<<<<<<< HEAD
     title: "江中猴姑饼干 · 上市第一年17亿销售额 · 养胃食品品类创新 | 猫眼咨询",
     description: "猫眼咨询操盘江中猴姑饼干，洞察养胃需求，跨界错位OTC领域进入快消品，上市第一年销售额达17亿元，开创养胃食品新品类，成为天猫养胃食品第一品牌。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp",
     url: "https://www.mcmamoo.com/cases/jiangzhong",
     type: "article",
     keywords: "江中猴姑饼干,养胃食品,品类创新,新消费品牌营销,OTC跨界,猫眼咨询案例,功能性食品,健康食品品牌",
+=======
+    title: "江中猴姑饼干 · 上市第一年17亿销售额 · 养胃食品品类创新 | 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)",
+    description: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)操盘江中猴姑饼干，洞察养胃需求，跨界错位OTC领域进入快消品，上市第一年销售额达17亿元，开创养胃食品新品类，成为天猫养胃食品第一品牌。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp",
+    url: "https://www.mcmamoo.com/cases/jiangzhong",
+    type: "article",
+    keywords: "江中猴姑饼干,养胃食品,品类创新,新消费品牌营销,OTC跨界,猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)案例,功能性食品,健康食品品牌",
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
     breadcrumbs: [
       { name: "首页", url: "/" },
       { name: "标杆案例", url: "/#cases" },
@@ -83,7 +92,11 @@ export default function CaseJiangzhong() {
         "@context": "https://schema.org",
         "@type": "Article",
         "headline": "江中猴姑饼干 · 上市第一年17亿销售额 · 养胃食品品类开创案例",
+<<<<<<< HEAD
         "description": "猫眼咨询操盘江中猴姑饼干，从用户体验出发，错位OTC领域，进入快消品赛道，上市第一年销售额达17亿元。",
+=======
+        "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)操盘江中猴姑饼干，从用户体验出发，错位OTC领域，进入快消品赛道，上市第一年销售额达17亿元。",
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
         "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/jiangzhong-hero-KXANLzXFb4CfE2Wse65obd.webp",
         "url": "https://www.mcmamoo.com/cases/jiangzhong",
         "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
@@ -152,11 +165,19 @@ export default function CaseJiangzhong() {
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
                 2013年，中国有超过<strong style={{ color: "#C9A84C" }}>1.2亿慢性胃病患者</strong>，
                 他们长期面临一个痛点：市面上没有专门针对养胃需求的日常零食。
+<<<<<<< HEAD
                 猫眼咨询发现了这个被忽视的巨大市场空白。
               </p>
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
                 战略核心：<strong style={{ color: "#F5F0E8" }}>错位OTC领域，跨界进入快消品</strong>。
                 江中集团拥有猴头菇胃药的研发背书，猫眼咨询建议将这一医药级成分
+=======
+                猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)发现了这个被忽视的巨大市场空白。
+              </p>
+              <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
+                战略核心：<strong style={{ color: "#F5F0E8" }}>错位OTC领域，跨界进入快消品</strong>。
+                江中集团拥有猴头菇胃药的研发背书，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)建议将这一医药级成分
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
                 转化为日常消费品，以饼干这一高频消费品类为载体，
                 与奥利奥等快消品巨头在完全不同的维度竞争。
               </p>
@@ -194,7 +215,11 @@ export default function CaseJiangzhong() {
           <SectionHeader en="Growth Timeline" zh="增长时间轴" />
           <div className="space-y-0">
             {[
+<<<<<<< HEAD
               { year: "2013 Q1", event: "猫眼咨询提出猴姑饼干战略方案", detail: "洞察慢性胃病患者养胃需求，提出「功能性饼干」品类创新方向，确定错位竞争核心战略。" },
+=======
+              { year: "2013 Q1", event: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)提出猴姑饼干战略方案", detail: "洞察慢性胃病患者养胃需求，提出「功能性饼干」品类创新方向，确定错位竞争核心战略。" },
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
               { year: "2013 Q3", event: "产品研发与包装设计完成", detail: "将猴头菇提取物融入饼干配方，设计高端健康感包装，定价锚定功能性食品价格带。" },
               { year: "2013 Q4", event: "央视广告投放，全国上市", detail: "大规模央视广告投放，配合明星代言，快速建立「猴姑饼干=养胃」的品类认知。" },
               { year: "2014", event: "上市第一年销售额破17亿元", detail: "成为中国快消品史上增速最快的新品之一，超越众多传统饼干品牌，成为功能性食品标杆案例。" },
@@ -237,7 +262,11 @@ export default function CaseJiangzhong() {
           </Link>
         </div>
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(245,240,232,0.2)", letterSpacing: "0.1em", marginTop: 24 }}>
+<<<<<<< HEAD
           © 2024 Mc&Mamoo Brand Management Inc. · 猫眼和询 · 江中猴姑案例
+=======
+          © 2024 Mc&Mamoo Brand Management Inc. · 猫眼增长引擎 (Mc&Mamoo Growth Engine)和询 · 江中猴姑案例
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
         </p>
       </div>
     </div>

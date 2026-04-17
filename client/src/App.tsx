@@ -36,9 +36,13 @@ import ContentDashboard from "./pages/ContentDashboard";
 import AdminContentJobs from "./pages/AdminContentJobs";
 import AutoClip from "./pages/AutoClip";
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import MaoIndustry from "./pages/MaoIndustry";
 >>>>>>> origin/fix/navbar-dropdown-interaction
+=======
+import MaoIndustry from "./pages/MaoIndustry";
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
 
 function Router() {
   return (
@@ -50,8 +54,11 @@ function Router() {
       <Route path={"/cases/xiaoguan"} component={CaseXiaoguan} />
       <Route path={"/cases/pangge"} component={CasePangge} />
 <<<<<<< HEAD
+<<<<<<< HEAD
       <Route path={"/maothink"} component={MaoThinkTank} />
 =======
+=======
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
       
       {/* 旗下子公司路由 */}
       <Route path={"/mao-think-tank"} component={MaoThinkTank} />
@@ -59,7 +66,10 @@ function Router() {
       <Route path={"/whale-pictures"} component={WhalePictures} />
       <Route path={"/mao-industry"} component={MaoIndustry} />
 
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
+=======
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
       <Route path={"/admin/mao-applications"} component={AdminMaoApplications} />
       <Route path={"/admin/subscribers"} component={AdminSubscribers} />
       <Route path={"/admin/ai-nodes" } component={AdminAiNodes} />
@@ -73,6 +83,7 @@ function Router() {
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       <Route path={"/maoai/sales"} component={MaoAISales} />
 <<<<<<< HEAD
+<<<<<<< HEAD
       {/* 猫眼内容平台 */}
       <Route path={"/content"} component={ContentDashboard} />
       <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
@@ -84,6 +95,10 @@ function Router() {
 =======
       
       {/* 猫眼内容平台 */}
+=======
+      
+      {/* 猫眼增长引擎 (Mc&Mamoo Growth Engine)内容平台 */}
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
       <Route path={"/content"} component={ContentDashboard} />
       <Route path={"/admin/content-jobs"} component={AdminContentJobs} />
       
@@ -92,7 +107,10 @@ function Router() {
       <Route path={"/millennium-clock"} component={MillenniumClock} />
       <Route path={"/autoclip"} component={AutoClip} />
       
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
+=======
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
       <Route path={"/admin/logs"} component={AdminLogs} />
@@ -100,9 +118,13 @@ function Router() {
       <Route path={"/admin/nodes"} component={AdminNodes} />
       <Route path={"/admin/routing"} component={AdminRouting} />
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
       
 >>>>>>> origin/fix/navbar-dropdown-interaction
+=======
+      
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -125,12 +125,21 @@ function BattleCard({ num, title, desc }: { num: string; title: string; desc: st
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function CasePangge() {
   useSEO({
+<<<<<<< HEAD
     title: "湖南胖哥食品 · 槟榔行业领袖品牌战略升级 | 猫眼咨询",
     description: "猫眼咨询助力湖南胖哥食品完成品牌战略升级，打响四大战役，成为槟榔行业洗牌期领先品牌。100万+终端网点，400+经销商，覆盖全国主要地级市。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
     url: "https://www.mcmamoo.com/cases/pangge",
     type: "article",
     keywords: "胖哥食品,槟榔品牌营销,快消品战略,品牌战略升级,渠道扩张,终端网点,经销商管理,猫眼咨询案例,湖南品牌",
+=======
+    title: "湖南胖哥食品 · 槟榔行业领袖品牌战略升级 | 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)",
+    description: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)助力湖南胖哥食品完成品牌战略升级，打响四大战役，成为槟榔行业洗牌期领先品牌。100万+终端网点，400+经销商，覆盖全国主要地级市。",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
+    url: "https://www.mcmamoo.com/cases/pangge",
+    type: "article",
+    keywords: "胖哥食品,槟榔品牌营销,快消品战略,品牌战略升级,渠道扩张,终端网点,经销商管理,猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)案例,湖南品牌",
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
     breadcrumbs: [
       { name: "首页", url: "/" },
       { name: "标杆案例", url: "/#cases" },
@@ -141,7 +150,11 @@ export default function CasePangge() {
         "@context": "https://schema.org",
         "@type": "Article",
         "headline": "湖南胖哥食品 · 槟榔行业领袖品牌战略升级案例",
+<<<<<<< HEAD
         "description": "猫眼咨询助力湖南胖哥食品完成品牌战略升级，打响四大战役，成为槟榔行业洗牌期领先品牌，100万+终端网点覆盖全国。",
+=======
+        "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)助力湖南胖哥食品完成品牌战略升级，打响四大战役，成为槟榔行业洗牌期领先品牌，100万+终端网点覆盖全国。",
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
         "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/800511093070b2f8324e764a335e8869_94eff669.jpg",
         "url": "https://www.mcmamoo.com/cases/pangge",
         "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
@@ -243,7 +256,11 @@ export default function CasePangge() {
                 className="absolute bottom-3 left-3 text-xs px-3 py-1"
                 style={{ background: "#C9A84C", color: "#0A0A0A", fontWeight: 700 }}
               >
+<<<<<<< HEAD
                 猫眼咨询 × 胖哥食品
+=======
+                猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine) × 胖哥食品
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
               </div>
             </div>
           </div>
@@ -354,7 +371,11 @@ export default function CasePangge() {
 
         {/* Studio photo */}
         <div className="mb-20 relative overflow-hidden" style={{ border: "1px solid rgba(201,168,76,0.2)" }}>
+<<<<<<< HEAD
           <img src={IMGS.studio} alt="猫眼咨询合作现场" className="w-full h-72 md:h-96 object-cover object-center" />
+=======
+          <img src={IMGS.studio} alt="猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)合作现场" className="w-full h-72 md:h-96 object-cover object-center" />
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
           <div
             className="absolute inset-0"
             style={{ background: "linear-gradient(to right, rgba(10,10,10,0.8) 0%, rgba(10,10,10,0.2) 60%, transparent 100%)" }}
@@ -371,7 +392,11 @@ export default function CasePangge() {
                 深度战略合伙，<br />不只是提供报告
               </p>
               <p className="text-sm mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
+<<<<<<< HEAD
                 猫眼咨询团队深度驻场，全程陪跑品牌升级落地
+=======
+                猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)团队深度驻场，全程陪跑品牌升级落地
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
               </p>
             </div>
           </div>
@@ -421,7 +446,11 @@ export default function CasePangge() {
           </p>
           <div className="w-12 h-0.5 mx-auto mb-4" style={{ background: "#C9A84C" }} />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'DM Mono', monospace" }}>
+<<<<<<< HEAD
             — Sean DAI，猫眼咨询创始人
+=======
+            — Sean DAI，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)创始人
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
           </p>
         </div>
 
@@ -433,7 +462,11 @@ export default function CasePangge() {
           <InlineContactTrigger />
         </div>
 
+<<<<<<< HEAD
         <ShareBar title="湖南胖哥食品品牌战略升级案例 | 猫眼咨询" />
+=======
+        <ShareBar title="湖南胖哥食品品牌战略升级案例 | 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)" />
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
         <RelatedCases current="pangge" />
       </div>
     </div>

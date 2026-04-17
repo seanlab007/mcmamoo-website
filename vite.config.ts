@@ -183,11 +183,14 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+<<<<<<< HEAD
     proxy: {
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
       },
     },
+=======
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
   },
 });

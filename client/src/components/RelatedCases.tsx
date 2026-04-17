@@ -2,9 +2,13 @@
  * RelatedCases — 相关案例推荐组件
  * 在每个案例详情页底部展示 2-3 个相关案例卡片
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
  * ⚠️  PROTECTED FILE — 由 Manus 统一维护
 >>>>>>> origin/fix/navbar-dropdown-interaction
+=======
+ * ⚠️  PROTECTED FILE — 由 Manus 统一维护
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
  */
 import { Link } from "wouter";
 
@@ -46,11 +50,14 @@ const ALL_CASES: Record<string, RelatedCase> = {
     accent: "#C9A84C",
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
 };
 
 interface Props {
   current: keyof typeof ALL_CASES;
 =======
+=======
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
   pangge: {
     brand: "胖哥食品",
     category: "休闲食品 / 槟榔",
@@ -62,7 +69,10 @@ interface Props {
 
 interface Props {
   current: string;
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
+=======
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
   bg?: string;
   borderColor?: string;
 }
@@ -99,6 +109,7 @@ export default function RelatedCases({ current, bg = "#080C14", borderColor = "r
                   transition: "border-color 0.25s, background 0.25s",
                 }}
 <<<<<<< HEAD
+<<<<<<< HEAD
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLElement).style.borderColor = "rgba(201,168,76,0.4)";
                   (e.currentTarget as HTMLElement).style.background = "rgba(201,168,76,0.06)";
@@ -109,6 +120,8 @@ export default function RelatedCases({ current, bg = "#080C14", borderColor = "r
                 }}
 =======
 >>>>>>> origin/fix/navbar-dropdown-interaction
+=======
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
               >
                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.12em", marginBottom: 8 }}>
                   {c.category}
@@ -136,11 +149,15 @@ export default function RelatedCases({ current, bg = "#080C14", borderColor = "r
           <Link href="/#cases">
             <a style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.2s" }}
 <<<<<<< HEAD
+<<<<<<< HEAD
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#C9A84C"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "rgba(245,240,232,0.35)"}
 =======
               className="hover:text-[#C9A84C]"
 >>>>>>> origin/fix/navbar-dropdown-interaction
+=======
+              className="hover:text-[#C9A84C]"
+>>>>>>> origin/fix/final-navbar-restructure-1774631973
             >
               ← 返回全部案例
             </a>
