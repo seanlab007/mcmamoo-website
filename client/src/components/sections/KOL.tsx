@@ -15,10 +15,14 @@ const DOMESTIC_KOLS = [
     gmv: "单场带货破50亿",
     tag: "带货女王",
 <<<<<<< HEAD
+<<<<<<< HEAD
     desc: "中国直播电商开创者，与猫眼咨询深度合作品牌孵化，多个品牌实现从0到10亿的跨越式增长。",
 =======
     desc: "中国直播电商开创者，与猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)深度合作品牌孵化，多个品牌实现从0到10亿的跨越式增长。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    desc: "中国直播电商开创者，与猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)深度合作品牌孵化，多个品牌实现从0到10亿的跨越式增长。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/weiya_baf88932.jpg",
   },
   {
@@ -29,10 +33,14 @@ const DOMESTIC_KOLS = [
     gmv: "年带货超300亿",
     tag: "口红一哥",
 <<<<<<< HEAD
+<<<<<<< HEAD
     desc: "美妆类目绝对头部，猫眼咨询为其合作品牌提供品牌溢价策略，助力多品牌实现高端化转型。",
 =======
     desc: "美妆类目绝对头部，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)为其合作品牌提供品牌溢价策略，助力多品牌实现高端化转型。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    desc: "美妆类目绝对头部，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)为其合作品牌提供品牌溢价策略，助力多品牌实现高端化转型。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/lijiaqi_dbabdd8a.jpg",
   },
   {
@@ -43,10 +51,14 @@ const DOMESTIC_KOLS = [
     gmv: "单场带货近70亿",
     tag: "快手一哥",
 <<<<<<< HEAD
+<<<<<<< HEAD
     desc: "下沉市场绝对王者，猫眼咨询协助其生态品牌构建品牌护城河，实现从流量到品牌的价值升级。",
 =======
     desc: "下沉市场绝对王者，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)协助其生态品牌构建品牌护城河，实现从流量到品牌的价值升级。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    desc: "下沉市场绝对王者，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)协助其生态品牌构建品牌护城河，实现从流量到品牌的价值升级。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xinba_ede0de7d.webp",
   },
   {
@@ -57,10 +69,14 @@ const DOMESTIC_KOLS = [
     gmv: "年带货超200亿",
     tag: "抖音带货王",
 <<<<<<< HEAD
+<<<<<<< HEAD
     desc: "三只羊网络创始人，猫眼咨询为其合作品牌提供全域增长策略，实现品效合一的高速增长。",
 =======
     desc: "三只羊网络创始人，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)为其合作品牌提供全域增长策略，实现品效合一的高速增长。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    desc: "三只羊网络创始人，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)为其合作品牌提供全域增长策略，实现品效合一的高速增长。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoyangg_994663bc.jpg",
   },
   {
@@ -71,10 +87,14 @@ const DOMESTIC_KOLS = [
     gmv: "单场带货破亿",
     tag: "三只羊核心主播",
 <<<<<<< HEAD
+<<<<<<< HEAD
     desc: "三只羊旗下头部主播，以亲和力和专业度著称，猫眼咨询助力其合作品牌实现精准人群渗透。",
 =======
     desc: "三只羊旗下头部主播，以亲和力和专业度著称，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)助力其合作品牌实现精准人群渗透。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    desc: "三只羊旗下头部主播，以亲和力和专业度著称，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)助力其合作品牌实现精准人群渗透。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xinba_live_b1916f8b.jpg",
   },
 ];
@@ -88,10 +108,14 @@ const GLOBAL_KOLS = [
     gmv: "全球最具影响力达人",
     tag: "TikTok No.1",
 <<<<<<< HEAD
+<<<<<<< HEAD
     desc: "TikTok全球粉丝量第一，猫眼咨询协助中国品牌借助其影响力实现北美市场品牌溢价突破。",
 =======
     desc: "TikTok全球粉丝量第一，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)协助中国品牌借助其影响力实现北美市场品牌溢价突破。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    desc: "TikTok全球粉丝量第一，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)协助中国品牌借助其影响力实现北美市场品牌溢价突破。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/charli_bc1435dc.jpg",
   },
   {
@@ -102,10 +126,14 @@ const GLOBAL_KOLS = [
     gmv: "全球最高商业价值",
     tag: "TikTok全球第二",
 <<<<<<< HEAD
+<<<<<<< HEAD
     desc: "无语言障碍的全球化内容创作者，猫眼咨询借助其跨文化影响力为品牌打通欧非市场。",
 =======
     desc: "无语言障碍的全球化内容创作者，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)借助其跨文化影响力为品牌打通欧非市场。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    desc: "无语言障碍的全球化内容创作者，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)借助其跨文化影响力为品牌打通欧非市场。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/tiktok_stars_9b180303.jpg",
   },
   {
@@ -116,10 +144,14 @@ const GLOBAL_KOLS = [
     gmv: "全球最高商业回报",
     tag: "YouTube之王",
 <<<<<<< HEAD
+<<<<<<< HEAD
     desc: "全球最大YouTube频道主理人，猫眼咨询协助品牌通过其渠道实现全球范围内的爆发式增长。",
 =======
     desc: "全球最大YouTube频道主理人，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)协助品牌通过其渠道实现全球范围内的爆发式增长。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    desc: "全球最大YouTube频道主理人，猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)协助品牌通过其渠道实现全球范围内的爆发式增长。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/tiktok_stars_9b180303.jpg",
   },
 ];
@@ -150,10 +182,14 @@ export default function KOL() {
           </h2>
           <p className="text-white/50 max-w-2xl text-base leading-relaxed">
 <<<<<<< HEAD
+<<<<<<< HEAD
             猫眼咨询深度整合全球 <span className="text-[#C9A84C] font-semibold">500+头部KOL战略资源</span>，
 =======
             猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)深度整合全球 <span className="text-[#C9A84C] font-semibold">500+头部KOL战略资源</span>，
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+            猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)深度整合全球 <span className="text-[#C9A84C] font-semibold">500+头部KOL战略资源</span>，
+>>>>>>> origin/deploy/trigger-build-1774631965
             国内覆盖抖音、快手、淘宝、小红书，海外覆盖TikTok、YouTube、Instagram，
             为品牌构建从种草到转化的完整增长链路。
           </p>

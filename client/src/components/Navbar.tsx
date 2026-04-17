@@ -1,6 +1,7 @@
 /*
  * ============================================================
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Navbar Component — 导航栏重构
  * ============================================================
  * 逻辑变更：
@@ -15,6 +16,8 @@ import { useLocation } from "wouter";
 =======
  * 4. 修正毛智库 (MaoThinkTank) 路由为 /mao-think-tank
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
  * Navbar Component — 终极简洁版本 (双排平铺导航，无下拉菜单)
  * ============================================================
  * 设计理念：
@@ -23,11 +26,15 @@ import { useLocation } from "wouter";
  * 3. 第二排：咨询、新闻稿、语言切换、预约按钮
  * 4. 所有链接直接可点击，绝无交互问题
  * 5. 更换金色眼睛 Logo，提升品牌质感
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
  * ============================================================
  */
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
+<<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
 import { useTranslation } from "react-i18next";
@@ -36,6 +43,10 @@ import { ChevronDown, Menu, X, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Menu, X, Zap } from "lucide-react";
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+import { useTranslation } from "react-i18next";
+import { Menu, X, Zap } from "lucide-react";
+>>>>>>> origin/deploy/trigger-build-1774631965
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
@@ -44,10 +55,13 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 <<<<<<< HEAD
+<<<<<<< HEAD
   const [isAiDropdownOpen, setIsAiDropdownOpen] = useState(false);
   const [isSubDropdownOpen, setIsSubDropdownOpen] = useState(false);
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   const [showContent, setShowContent] = useState(false);
   const [, setLocation] = useLocation();
   const { t, i18n } = useTranslation();
@@ -58,9 +72,12 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     
 <<<<<<< HEAD
+<<<<<<< HEAD
     // 检查内容平台访问权限 (付费用户逻辑)
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     fetch(`${BACKEND_URL}/api/content/subscription`, { credentials: "include" })
       .then(res => {
         if (res.ok) setShowContent(true);
@@ -81,6 +98,7 @@ export default function Navbar() {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const aiProducts = [
     { label: "MaoAI (大脑)", href: "/mao-ai", color: "#C9A84C", dot: "circle", glow: true, desc: "战略决策与市场洞察" },
     { label: "内容平台 (执行)", href: "/platform", color: "#40d090", dot: "diamond", desc: "含 AutoClip 视频自动化" },
@@ -97,6 +115,8 @@ export default function Navbar() {
     { label: "毛智库", href: "/mao-think-tank", color: "#E53E3E" },
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   // AI 产品列表
   const aiProducts = [
     { label: "MaoAI (大脑)", href: "/mao-ai" },
@@ -110,11 +130,15 @@ export default function Navbar() {
     { label: "Whale Pictures", href: "/whale-pictures" },
     { label: "猫眼工业", href: "/mao-industry" },
     { label: "毛智库", href: "/mao-think-tank" },
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   ];
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+<<<<<<< HEAD
 <<<<<<< HEAD
       isScrolled ? "bg-[#0A0A0A]/90 backdrop-blur-md border-b border-white/5 py-4" : "bg-transparent py-8"
     }`}>
@@ -248,6 +272,8 @@ export default function Navbar() {
           
           <button onClick={() => handleNav("#contact")} className="px-6 py-2.5 bg-[#C9A84C] text-[#0A0A0A] text-[10px] font-bold tracking-widest uppercase hover:bg-[#D4B866] transition-all">
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
       isScrolled ? "bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5" : "bg-transparent"
     }`}>
       {/* 第一排：Logo + 导航 */}
@@ -323,7 +349,10 @@ export default function Navbar() {
 
           {/* 预约按钮 */}
           <button onClick={() => handleNav("#contact")} className="px-6 py-2 bg-[#C9A84C] text-[#0A0A0A] text-[10px] font-bold tracking-widest uppercase hover:bg-[#D4B866] transition-all font-['Noto_Serif_SC']">
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
             {t("nav.bookConsultation")}
           </button>
         </div>
@@ -334,6 +363,7 @@ export default function Navbar() {
         </button>
       </div>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 bg-[#0A0A0A] z-40 transition-transform duration-500 lg:hidden ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
@@ -372,6 +402,8 @@ export default function Navbar() {
             {t("nav.bookConsultation")}
           </button>
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
       {/* 第二排：更多导航 (仅桌面端) */}
       <div className="hidden lg:block border-t border-white/5 bg-[#0A0A0A]/50">
         <div className="container py-3 flex items-center justify-between">
@@ -475,7 +507,10 @@ export default function Navbar() {
             {t("nav.bookConsultation")}
           </button>
 
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
           <div className="mt-4 scale-125">
             <LanguageSwitcher />
           </div>
@@ -485,6 +520,9 @@ export default function Navbar() {
   );
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 // Last updated: Fri Mar 27 13:19:33 EDT 2026
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965

@@ -24,6 +24,7 @@ function useReveal(threshold = 0.1) {
 const FAQS = [
   {
 <<<<<<< HEAD
+<<<<<<< HEAD
     question: "猫眼咨询的核心服务是什么？",
     answer: "猫眼咨询提供四大核心服务：新消费第一品牌全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货。我们独创错位竞争理论，帮助品牌避开正面竞争，通过品类错位、场景错位、人群错位等方式找到市场空白，实现快速成为细分品类第一。",
   },
@@ -46,6 +47,8 @@ const FAQS = [
   {
     question: "猫眼咨询的合作流程是怎样的？",
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     question: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)的核心服务是什么？",
     answer: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)提供四大核心服务：新消费第一品牌全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货。我们独创错位竞争理论，帮助品牌避开正面竞争，通过品类错位、场景错位、人群错位等方式找到市场空白，实现快速成为细分品类第一。",
   },
@@ -67,7 +70,10 @@ const FAQS = [
   },
   {
     question: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)的合作流程是怎样的？",
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     answer: "合作流程分为四个阶段：第一阶段是战略诊断，深入了解企业现状和市场机会；第二阶段是战略规划，制定错位竞争战略和品类定位；第三阶段是执行落地，包括爆品策划、视觉锤设计、营销传播等；第四阶段是持续优化，跟踪数据表现，持续迭代优化。",
   },
 ];
@@ -120,10 +126,14 @@ export default function FAQ() {
           </h2>
           <p className="mt-4 text-white/50 max-w-2xl">
 <<<<<<< HEAD
+<<<<<<< HEAD
             了解猫眼咨询如何帮助新消费品牌实现错位竞争、品类第一的战略目标
 =======
             了解猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)如何帮助新消费品牌实现错位竞争、品类第一的战略目标
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+            了解猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)如何帮助新消费品牌实现错位竞争、品类第一的战略目标
+>>>>>>> origin/deploy/trigger-build-1774631965
           </p>
         </div>
 

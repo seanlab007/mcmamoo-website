@@ -185,6 +185,7 @@ function TimelineItem({ year, title, desc, isLast }: { year: string; title: stri
 export default function CaseXieTaitai() {
   useSEO({
 <<<<<<< HEAD
+<<<<<<< HEAD
     title: "蟹太太大闸蟹 · 从0到8亿营收 · 明星直播第一 | 猫眼咨询标杆案例",
     description: "猫眼咨询操盘蟹太太大闸蟹品牌，从0孵化到年营收8亿，签约黄晓明代言，500+明星网红合作矩阵，贾乃亮单场5700万，小杨哥单场2000万，全网蟹券销量连续多年第一。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
@@ -192,13 +193,18 @@ export default function CaseXieTaitai() {
     type: "article",
     keywords: "蟹太太大闸蟹,大闸蟹品牌,生鲜品牌营销,明星直播带货,黄晓明代言,猫眼咨询案例,品牌从0到1,大闸蟹电商,错位竞争案例",
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     title: "蟹太太大闸蟹 · 从0到8亿营收 · 明星直播第一 | 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)标杆案例",
     description: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)操盘蟹太太大闸蟹品牌，从0孵化到年营收8亿，签约黄晓明代言，500+明星网红合作矩阵，贾乃亮单场5700万，小杨哥单场2000万，全网蟹券销量连续多年第一。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
     url: "https://www.mcmamoo.com/cases/xietaitai",
     type: "article",
     keywords: "蟹太太大闸蟹,大闸蟹品牌,生鲜品牌营销,明星直播带货,黄晓明代言,猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)案例,品牌从0到1,大闸蟹电商,错位竞争案例",
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     breadcrumbs: [
       { name: "首页", url: "/" },
       { name: "标杆案例", url: "/#cases" },
@@ -210,10 +216,14 @@ export default function CaseXieTaitai() {
         "@type": "Article",
         "headline": "蟹太太大闸蟹 · 从0孵化到年营收8亿 · 大闸蟹行业品牌化第一案例",
 <<<<<<< HEAD
+<<<<<<< HEAD
         "description": "猫眼咨询操盘蟹太太大闸蟹，填补行业品牌化空白，签约黄晓明担任品牌代言，构建500+明星网红合作矩阵，全网蟹券销量连续多年第一。",
 =======
         "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)操盘蟹太太大闸蟹，填补行业品牌化空白，签约黄晓明担任品牌代言，构建500+明星网红合作矩阵，全网蟹券销量连续多年第一。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+        "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)操盘蟹太太大闸蟹，填补行业品牌化空白，签约黄晓明担任品牌代言，构建500+明星网红合作矩阵，全网蟹券销量连续多年第一。",
+>>>>>>> origin/deploy/trigger-build-1774631965
         "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-video-frame1-9AHtkPtKZTrG9N5GhnTvLQ.png",
         "url": "https://www.mcmamoo.com/cases/xietaitai",
         "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
@@ -310,10 +320,14 @@ export default function CaseXieTaitai() {
               </p>
               <p className="text-base leading-relaxed mb-6" style={{ color: "rgba(255,255,255,0.7)" }}>
 <<<<<<< HEAD
+<<<<<<< HEAD
                 猫眼咨询介入后，提出"错位竞争"核心战略：在竞争对手还在打价格战时，
 =======
                 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)介入后，提出"错位竞争"核心战略：在竞争对手还在打价格战时，
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+                猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)介入后，提出"错位竞争"核心战略：在竞争对手还在打价格战时，
+>>>>>>> origin/deploy/trigger-build-1774631965
                 率先以一线明星代言人构建品牌壁垒，填补行业品牌化空白。
               </p>
               <p className="text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
@@ -348,10 +362,14 @@ export default function CaseXieTaitai() {
           <SectionHeader en="Star Power" zh="明星网红都爱吃的大闸蟹" />
           <p className="text-base leading-relaxed mb-8 max-w-3xl" style={{ color: "rgba(255,255,255,0.65)" }}>
 <<<<<<< HEAD
+<<<<<<< HEAD
             通过猫眼咨询构建的全渠道明星矩阵，蟹太太汇聚了黄晓明、刘嘉玲、王宝强、
 =======
             通过猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)构建的全渠道明星矩阵，蟹太太汇聚了黄晓明、刘嘉玲、王宝强、
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+            通过猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)构建的全渠道明星矩阵，蟹太太汇聚了黄晓明、刘嘉玲、王宝强、
+>>>>>>> origin/deploy/trigger-build-1774631965
             汤镇业、郑浩南、胡可、温碧霞、黄奕等数十位一线明星，以及爱尔兰总理、
             新西兰总理等国际政要的自发推荐，形成强大的品牌背书体系。
           </p>
@@ -402,19 +420,27 @@ export default function CaseXieTaitai() {
       <div className="py-12" style={{ background: "rgba(201,168,76,0.03)", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
         <div className="px-8 md:px-20 max-w-4xl mx-auto">
 <<<<<<< HEAD
+<<<<<<< HEAD
           <SectionHeader en="Strategic Journey" zh="猫眼咨询操盘历程" />
 =======
           <SectionHeader en="Strategic Journey" zh="猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)操盘历程" />
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+          <SectionHeader en="Strategic Journey" zh="猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)操盘历程" />
+>>>>>>> origin/deploy/trigger-build-1774631965
           <div>
             <TimelineItem
               year="2016"
               title="品牌0到1 — 赛道切入"
 <<<<<<< HEAD
+<<<<<<< HEAD
               desc="猫眼咨询完成市场调研，发现大闸蟹行业品牌化空白，制定差异化竞争战略，协助苏州西风阁完成品牌定位与视觉体系搭建。"
 =======
               desc="猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)完成市场调研，发现大闸蟹行业品牌化空白，制定差异化竞争战略，协助苏州西风阁完成品牌定位与视觉体系搭建。"
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+              desc="猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)完成市场调研，发现大闸蟹行业品牌化空白，制定差异化竞争战略，协助苏州西风阁完成品牌定位与视觉体系搭建。"
+>>>>>>> origin/deploy/trigger-build-1774631965
             />
             <TimelineItem
               year="2018"
@@ -474,10 +500,14 @@ export default function CaseXieTaitai() {
               style={{ color: "rgba(201,168,76,0.5)", fontFamily: "'DM Mono', monospace" }}
             >
 <<<<<<< HEAD
+<<<<<<< HEAD
               猫眼咨询核心贡献
 =======
               猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)核心贡献
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+              猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)核心贡献
+>>>>>>> origin/deploy/trigger-build-1774631965
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               {[
@@ -529,10 +559,14 @@ export default function CaseXieTaitai() {
         style={{ borderTop: "1px solid rgba(201,168,76,0.1)", color: "rgba(255,255,255,0.2)" }}
       >
 <<<<<<< HEAD
+<<<<<<< HEAD
         © 2024 Mc&Mamoo Brand Management Inc. · 猫眼和询 · 蟹太太案例
 =======
         © 2024 Mc&Mamoo Brand Management Inc. · 猫眼增长引擎 (Mc&Mamoo Growth Engine)和询 · 蟹太太案例
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+        © 2024 Mc&Mamoo Brand Management Inc. · 猫眼增长引擎 (Mc&Mamoo Growth Engine)和询 · 蟹太太案例
+>>>>>>> origin/deploy/trigger-build-1774631965
       </div>
     </div>
   );

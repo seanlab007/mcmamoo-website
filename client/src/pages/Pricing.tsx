@@ -1,6 +1,7 @@
 /*
  * ============================================================
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Pricing Page — 猫眼增长引擎服务体系与定价
  * ============================================================
  * 定价策略：
@@ -17,6 +18,8 @@
 >>>>>>> origin/fix/navbar-dropdown-interaction
  * ============================================================
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
  * Pricing Page — 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎全线业务定价体系
  * ============================================================
  * 定价架构：6 大业务板块 × 6 级定价梯度（3 AI + 3 专家）
@@ -28,12 +31,16 @@
  * 6. 毛智库（军事战略、兵棋推演、国防思路）
  * ============================================================
  * ⚠️  PROTECTED FILE — 由 Manus 统一维护
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
  */
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 import { Check, ShieldCheck, Zap, Brain, Sparkles, Flame } from "lucide-react";
@@ -43,10 +50,14 @@ import { Check, ShieldCheck, Zap, Brain, Sparkles, Flame, Star, TrendingUp, Glob
 =======
 import { Check, Zap, Brain, Sparkles } from "lucide-react";
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+import { Check, Zap, Brain, Sparkles } from "lucide-react";
+>>>>>>> origin/deploy/trigger-build-1774631965
 
 // ─── 定价数据定义 ────────────────────────────────────────────────────────────
 
 const pricingData_zh = {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   // 1. 设计类服务
@@ -56,11 +67,15 @@ const pricingData_zh = {
 =======
   // 1. 设计服务：6 级定价
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+  // 1. 设计服务：6 级定价
+>>>>>>> origin/deploy/trigger-build-1774631965
   designServices: {
     id: "design-services",
     badge: "设计类",
     badgeColor: "#E53E3E",
     title: "品牌视觉设计",
+<<<<<<< HEAD
 <<<<<<< HEAD
     subtitle: "Brand Design & Visual Identity",
 <<<<<<< HEAD
@@ -72,10 +87,15 @@ const pricingData_zh = {
     subtitle: "单项设计 / 官网设计 / 爆品设计",
     desc: "从极致性价比的 AI 设计到顶级专家团队的高端定制，满足全阶段视觉需求。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+    subtitle: "单项设计 / 官网设计 / 爆品设计",
+    desc: "从极致性价比的 AI 设计到顶级专家团队的高端定制，满足全阶段视觉需求。",
+>>>>>>> origin/deploy/trigger-build-1774631965
     groups: [
       {
         name: "AI 组 (AI-Powered)",
         icon: <Sparkles className="text-[#40d090]" size={20} />,
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         desc: "AI 辅助的极速设计方案，经济高效",
@@ -139,17 +159,23 @@ const pricingData_zh = {
             href: "#contact"
           }
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         desc: "AI 驱动的高效设计方案",
         plans: [
           { name: "单项设计尝鲜", period: "单次", price: "9.8", unit: "元", features: ["单次 AI Logo 尝试", "3 套方案", "基础反馈"] },
           { name: "AI 官网设计", period: "单次", price: "198", unit: "元", features: ["AI 生成官网模板", "5 页面设计", "响应式优化"] },
           { name: "AI 爆品视觉包", period: "单次", price: "1980", unit: "元", highlight: true, features: ["完整爆品视觉系统", "包装 + 海报 + 主图", "AI 迭代优化"] }
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         ]
       },
       {
         name: "专家组 (Expert-Led)",
         icon: <Brain className="text-[#C9A84C]" size={20} />,
+<<<<<<< HEAD
 <<<<<<< HEAD
         desc: "专家设计师主导的高端品牌塑造",
         plans: [
@@ -211,17 +237,23 @@ const pricingData_zh = {
             href: "#contact"
           }
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         desc: "顶级设计师团队操刀",
         plans: [
           { name: "专家设计诊断", period: "单次", price: "3800", unit: "元", features: ["品牌视觉审计", "竞品分析", "改进方案"] },
           { name: "专家官网设计", period: "单次", price: "28000", unit: "元", features: ["创意官网设计", "交互原型", "前端开发指导"] },
           { name: "专家爆品全案", period: "单次", price: "98000", unit: "元", highlight: true, features: ["爆品视觉系统设计", "全域物料设计", "品牌指导手册"] }
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         ]
       }
     ]
   },
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   // 2. 内容类服务
@@ -233,6 +265,8 @@ const pricingData_zh = {
     subtitle: "Content Automation & Production",
     desc: "从 AI 自动化内容到专家策划执行，满足全域内容需求。",
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   // 2. 官网建设：6 级定价
   websiteServices: {
     id: "website-services",
@@ -241,11 +275,15 @@ const pricingData_zh = {
     title: "官网建设与优化",
     subtitle: "展示官网 / 商城官网 / 定制官网",
     desc: "从快速上线的 AI 官网到高端定制的品牌官网，助力品牌全域转化。",
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     groups: [
       {
         name: "AI 组 (AI-Powered)",
         icon: <Sparkles className="text-[#40d090]" size={20} />,
+<<<<<<< HEAD
 <<<<<<< HEAD
         desc: "AI 驱动的全自动内容生产，高效且经济",
         plans: [
@@ -280,16 +318,22 @@ const pricingData_zh = {
             href: "/platform"
           }
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         desc: "AI 快速建站方案",
         plans: [
           { name: "AI 官网尝鲜", period: "单次", price: "38", unit: "元", features: ["AI 生成官网框架", "3 套模板选择", "基础 SEO 优化"] },
           { name: "AI 商城官网", period: "单次", price: "1980", unit: "元", features: ["AI 电商模板", "产品管理系统", "支付集成"] },
           { name: "AI 定制官网", period: "单次", price: "9800", unit: "元", highlight: true, features: ["AI 定制化设计", "完整功能开发", "3 个月运维"] }
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         ]
       },
       {
         name: "专家组 (Expert-Led)",
+<<<<<<< HEAD
 <<<<<<< HEAD
         icon: <Zap className="text-[#C9A84C]" size={20} />,
         desc: "专家策划师主导的人工内容生产与审核",
@@ -325,18 +369,24 @@ const pricingData_zh = {
             href: "#contact"
           }
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         icon: <Brain className="text-[#C9A84C]" size={20} />,
         desc: "顶级官网设计与开发",
         plans: [
           { name: "专家官网诊断", period: "单次", price: "8800", unit: "元", features: ["官网体验审计", "转化漏斗分析", "优化建议"] },
           { name: "专家商城官网", period: "单次", price: "68000", unit: "元", features: ["高端商城设计", "完整电商功能", "营销工具集成"] },
           { name: "专家定制官网", period: "单次", price: "280000", unit: "元", highlight: true, features: ["顶级品牌官网", "全定制开发", "年度运维支持"] }
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         ]
       }
     ]
   },
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   // 3. 战略类服务
 =======
@@ -354,6 +404,8 @@ const pricingData_zh = {
     desc: "从数字增长引擎到 5000 万级顶层战略咨询，为企业提供全生命周期护航。",
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   // 3. 爆品打造：6 级定价
   explosiveProductServices: {
     id: "explosive-product-services",
@@ -426,11 +478,15 @@ const pricingData_zh = {
     title: "战略咨询与定位",
     subtitle: "数字增长 / 战略定位 / 顶级合伙",
     desc: "从数字增长引擎到 3 年 5000 万的顶级合伙，重新定义品牌增长。",
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     groups: [
       {
         name: "AI 组 (AI-Powered)",
         icon: <Sparkles className="text-[#40d090]" size={20} />,
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         desc: "MaoAI 驱动的智能战略模型，高效且经济",
@@ -492,17 +548,23 @@ const pricingData_zh = {
             href: "/mao-ai"
           }
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         desc: "AI 战略方案",
         plans: [
           { name: "AI 增长诊断", period: "单次", price: "98", unit: "元", features: ["AI 增长分析", "机会识别", "行动建议"] },
           { name: "AI 数字增长", period: "3 个月", price: "19800", unit: "元", features: ["AI 增长方案", "数据优化", "月度报告"] },
           { name: "AI 战略定位", period: "6 个月", price: "98000", unit: "元", highlight: true, features: ["完整战略规划", "执行指导", "季度评审"] }
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         ]
       },
       {
         name: "专家组 (Expert-Led)",
         icon: <Brain className="text-[#C9A84C]" size={20} />,
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         desc: "代言先生及核心专家团队亲自操刀的战略护航",
@@ -568,6 +630,8 @@ const pricingData_zh = {
             href: "#contact"
           }
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         desc: "顶级战略咨询",
         plans: [
           { name: "专家增长诊断", period: "单次", price: "38000", unit: "元", features: ["深度战略诊断", "市场机会分析", "3 年规划"] },
@@ -605,13 +669,17 @@ const pricingData_zh = {
           { name: "专家战略咨询", period: "单次", price: "68000", unit: "元", features: ["深度战略分析", "专家评估", "建议方案"] },
           { name: "专家兵棋推演", period: "单次", price: "200000", unit: "元", features: ["完整兵棋推演", "多方案模拟", "详细报告"] },
           { name: "顶级国防合伙", period: "1 年", price: "2000000", unit: "元", highlight: true, features: ["年度战略护航", "定期推演", "专家陪跑"] }
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         ]
       }
     ]
   }
 };
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 // ─── 页面组件 ─────────────────────────────────────────────────────────────────
 
@@ -764,6 +832,8 @@ export default function Pricing() {
                 </div>
               </div>
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
 // ─── 组件定义 ────────────────────────────────────────────────────────────
 
 interface PricingPlan {
@@ -835,12 +905,16 @@ export default function Pricing() {
                 <div className="text-xs font-bold tracking-widest uppercase mb-1">{service.badge}</div>
                 <div className="text-sm font-semibold">{service.title}</div>
               </button>
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
             ))}
           </div>
         </div>
       </section>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
       {/* 底部 CTA */}
       <section className="py-24 border-t border-white/5 bg-[#C9A84C]/5">
@@ -871,6 +945,8 @@ export default function Pricing() {
             </a>
           </div>
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
       {/* Pricing Section */}
       {currentService && (
         <section className="pb-24 px-8 md:px-20">
@@ -954,7 +1030,10 @@ export default function Pricing() {
           <button className="px-8 py-3 bg-[#C9A84C] text-[#0A0A0A] text-sm font-bold tracking-widest uppercase hover:bg-[#D4B866] transition-all rounded-sm">
             预约专家咨询
           </button>
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         </div>
       </section>
 

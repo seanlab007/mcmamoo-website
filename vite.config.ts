@@ -184,6 +184,7 @@ export default defineConfig({
       deny: ["**/.*"],
     },
 <<<<<<< HEAD
+<<<<<<< HEAD
     proxy: {
       "/api": {
         target: "http://localhost:8080",
@@ -192,5 +193,7 @@ export default defineConfig({
     },
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   },
 });

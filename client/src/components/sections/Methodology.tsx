@@ -54,10 +54,14 @@ const THINKERS = [
   { name: "杰克·特劳特", theory: "定位理论" },
   { name: "约瑟夫·熊彼特", theory: "创新理论" },
 <<<<<<< HEAD
+<<<<<<< HEAD
   { name: "Sean DAI", theory: "猫眼方法论" },
 =======
   { name: "Sean DAI", theory: "猫眼增长引擎 (Mc&Mamoo Growth Engine)方法论" },
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+  { name: "Sean DAI", theory: "猫眼增长引擎 (Mc&Mamoo Growth Engine)方法论" },
+>>>>>>> origin/deploy/trigger-build-1774631965
 ];
 
 export default function Methodology() {
@@ -82,10 +86,14 @@ export default function Methodology() {
           <div className="section-label mb-4">02 — Core Methodology</div>
           <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold mb-4">
 <<<<<<< HEAD
+<<<<<<< HEAD
             猫眼方法论
 =======
             猫眼增长引擎 (Mc&Mamoo Growth Engine)方法论
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+            猫眼增长引擎 (Mc&Mamoo Growth Engine)方法论
+>>>>>>> origin/deploy/trigger-build-1774631965
           </h2>
           <p className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl italic mb-4">
             让品牌显贵，让利润倍增，让增长全域

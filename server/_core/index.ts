@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { registerSupabaseAuthRoutes } from "./supabaseAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -22,6 +23,8 @@ import { setupTriadLoopWS } from "../triadLoopWS";
 =======
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -29,9 +32,12 @@ import { aiNodesRouter } from "../aiNodes";
 import { chatRouter } from "../chat";
 import { notesRouter } from "../notes";
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -60,6 +66,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   // Supabase 邮箱+密码登录（管理员）
@@ -131,10 +138,15 @@ async function startServer() {
   // AI 节点协同 API（OpenClaw × MaoAI 协同架构）
   app.use("/api/ai", aiNodesRouter);
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+  // AI 节点协同 API（OpenClaw × MaoAI 协同架构）
+  app.use("/api/ai", aiNodesRouter);
+>>>>>>> origin/deploy/trigger-build-1774631965
   // 私密云笔记 API（管理员专属）
   app.use("/api/notes", notesRouter);
   // MaoAI Chat API（对话历史 + 联网搜索 + 图片生成）
   app.use("/api/chat", chatRouter);
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   // MaoAI MCP Server — HTTP SSE，让外部 AI Agent 通过 MCP 协议调用 MaoAI 工具
@@ -147,6 +159,8 @@ async function startServer() {
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   // tRPC API
   app.use(
     "/api/trpc",
@@ -157,6 +171,7 @@ async function startServer() {
   );
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Health check endpoint (before Vite middleware)
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -165,6 +180,8 @@ async function startServer() {
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
@@ -179,6 +196,7 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   // 初始化 TriadLoop WebSocket 服务
@@ -233,6 +251,10 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+  server.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}/`);
+>>>>>>> origin/deploy/trigger-build-1774631965
   });
 }
 

@@ -1,6 +1,7 @@
 /*
  * ============================================================
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Whale Pictures Page — 鲸达影业业务重构
  * ============================================================
  * 定价策略：
@@ -346,6 +347,8 @@ export default function WhalePictures() {
               </div>
             ))}
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
  * WhalePictures Page — 鲸达影业影视内容与模特经纪
  * ============================================================
  * 定价架构：6 级定价梯度（3 AI + 3 专家）
@@ -751,11 +754,15 @@ export default function WhalePictures() {
                 ))}
               </div>
             </div>
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
           </div>
         </div>
       </section>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
       {/* 底部 CTA */}
       <section className="py-24 border-t border-white/5 bg-[#F59E0B]/5">
@@ -775,6 +782,8 @@ export default function WhalePictures() {
             </a>
           </div>
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
       {/* CTA Section */}
       <section className="py-16 px-8 md:px-20 bg-[#111]">
         <div className="max-w-4xl mx-auto text-center">
@@ -787,7 +796,10 @@ export default function WhalePictures() {
           <button className="px-8 py-3 bg-[#F59E0B] text-[#0A0A0A] text-sm font-bold tracking-widest uppercase hover:bg-[#D97706] transition-all rounded-sm">
             预约专家咨询
           </button>
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         </div>
       </section>
 

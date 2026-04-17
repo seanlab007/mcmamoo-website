@@ -1,9 +1,13 @@
 /*
 <<<<<<< HEAD
+<<<<<<< HEAD
  * About Section — 关于猫眼咨询
 =======
  * About Section — 关于猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+ * About Section — 关于猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)
+>>>>>>> origin/deploy/trigger-build-1774631965
  * Design: 白底左右分栏，左文右数据，金色竖线点缀
  * Theme: 品牌显贵 · 利润倍增 · 全域增长
  */
@@ -82,10 +86,14 @@ export default function About() {
           <div className="flex items-end gap-6">
             <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold leading-tight">
 <<<<<<< HEAD
+<<<<<<< HEAD
               关于猫眼咨询
 =======
               关于猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+              关于猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)
+>>>>>>> origin/deploy/trigger-build-1774631965
             </h2>
             <div className="hidden md:block h-px flex-1 bg-white/10 mb-3" />
           </div>
@@ -113,10 +121,14 @@ export default function About() {
           <div ref={ref2 as React.RefObject<HTMLDivElement>} className="reveal">
             <p className="text-white/70 text-base leading-relaxed mb-6">
 <<<<<<< HEAD
+<<<<<<< HEAD
               <strong className="text-white font-semibold">Mc&amp;Mamoo Brand Management Inc.</strong>（猫眼咨询）是一家发源于美国芝加哥、根植中国上海的国际顶级品牌管理公司，由<span className="text-[#C9A84C]">暗物质资本（Dark Matter Capital）</span>投资创立。
 =======
               <strong className="text-white font-semibold">Mc&amp;Mamoo Brand Management Inc.</strong>（猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)）是一家发源于美国芝加哥、根植中国上海的国际顶级品牌管理公司，由<span className="text-[#C9A84C]">暗物质资本（Dark Matter Capital）</span>投资创立。
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+              <strong className="text-white font-semibold">Mc&amp;Mamoo Brand Management Inc.</strong>（猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)）是一家发源于美国芝加哥、根植中国上海的国际顶级品牌管理公司，由<span className="text-[#C9A84C]">暗物质资本（Dark Matter Capital）</span>投资创立。
+>>>>>>> origin/deploy/trigger-build-1774631965
             </p>
             <p className="text-white/70 text-base leading-relaxed mb-6">
               公司团队汇聚来自麦肯锡（McKinsey）、波士顿咨询（BCG）、贝恩咨询（Bain）及德勤咨询（Deloitte）等全球顶尖机构的精英人才，专注于帮助品牌实现<span className="text-[#C9A84C] font-semibold">显贵化升级、利润倍增与全域增长</span>。
@@ -129,10 +141,14 @@ export default function About() {
             <div className="space-y-0">
               <div className="text-white/40 text-xs tracking-widest uppercase mb-4 font-['DM_Mono']">
 <<<<<<< HEAD
+<<<<<<< HEAD
                 猫眼咨询 vs 传统咨询
 =======
                 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine) vs 传统咨询
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+                猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine) vs 传统咨询
+>>>>>>> origin/deploy/trigger-build-1774631965
               </div>
               {differentiators.map((d) => (
                 <div

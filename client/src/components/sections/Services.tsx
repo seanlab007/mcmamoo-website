@@ -2,6 +2,7 @@
  * ============================================================
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Services Section — 首页服务与定价局部展示
  * ============================================================
  * 逻辑：突出展示极具竞争力的入门价格（9.8/38/98/198）
@@ -14,6 +15,8 @@ import { Brain, Zap, ArrowRight, Check, Sparkles, Flame } from "lucide-react";
 =======
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
  * Services Section — 首页业务与定价展示
  * ============================================================
  * 逻辑：
@@ -70,13 +73,17 @@ const services = [
   }
 ];
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
 
 export default function Services() {
   const { i18n } = useTranslation();
   const isEn = i18n.language !== "zh";
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   const sectionRef = useRef<HTMLElement>(null);
@@ -240,6 +247,8 @@ export default function Services() {
 =======
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
 
   return (
     <section id="services" className="py-24 bg-[#0A0A0A] border-t border-white/5">
@@ -287,13 +296,17 @@ export default function Services() {
                 </a>
               </Link>
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
             </div>
           ))}
         </div>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         {/* Bottom Link to Full Pricing */}
@@ -317,6 +330,8 @@ export default function Services() {
 =======
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         {/* 子公司跳转链接 */}
         <div className="mt-20 p-10 border border-[#C9A84C]/20 bg-[#C9A84C]/5 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-6">
@@ -334,9 +349,12 @@ export default function Services() {
             </a>
           </Link>
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         </div>
       </div>
     </section>

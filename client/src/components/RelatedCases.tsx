@@ -3,12 +3,16 @@
  * 在每个案例详情页底部展示 2-3 个相关案例卡片
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
  * ⚠️  PROTECTED FILE — 由 Manus 统一维护
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
  * ⚠️  PROTECTED FILE — 由 Manus 统一维护
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+ * ⚠️  PROTECTED FILE — 由 Manus 统一维护
+>>>>>>> origin/deploy/trigger-build-1774631965
  */
 import { Link } from "wouter";
 
@@ -51,6 +55,7 @@ const ALL_CASES: Record<string, RelatedCase> = {
   },
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 };
 
 interface Props {
@@ -58,6 +63,8 @@ interface Props {
 =======
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   pangge: {
     brand: "胖哥食品",
     category: "休闲食品 / 槟榔",
@@ -70,9 +77,12 @@ interface Props {
 interface Props {
   current: string;
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
   bg?: string;
   borderColor?: string;
 }
@@ -110,6 +120,7 @@ export default function RelatedCases({ current, bg = "#080C14", borderColor = "r
                 }}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLElement).style.borderColor = "rgba(201,168,76,0.4)";
                   (e.currentTarget as HTMLElement).style.background = "rgba(201,168,76,0.06)";
@@ -122,6 +133,8 @@ export default function RelatedCases({ current, bg = "#080C14", borderColor = "r
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
               >
                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.12em", marginBottom: 8 }}>
                   {c.category}
@@ -150,6 +163,7 @@ export default function RelatedCases({ current, bg = "#080C14", borderColor = "r
             <a style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", color: "rgba(245,240,232,0.35)", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.2s" }}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#C9A84C"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "rgba(245,240,232,0.35)"}
 =======
@@ -158,6 +172,9 @@ export default function RelatedCases({ current, bg = "#080C14", borderColor = "r
 =======
               className="hover:text-[#C9A84C]"
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+              className="hover:text-[#C9A84C]"
+>>>>>>> origin/deploy/trigger-build-1774631965
             >
               ← 返回全部案例
             </a>

@@ -68,6 +68,7 @@ function RevealBlock({ children, delay = 0 }: { children: React.ReactNode; delay
 export default function CaseXiaoguan() {
   useSEO({
 <<<<<<< HEAD
+<<<<<<< HEAD
     title: "小罐茶 · 重塑中国高端礼品茶 · 大师作品牌壁垒 | 猫眼咨询",
     description: "猫眼咨询助力小罐茶重定义中国高端茶礼，聚焦送礼场景，辐射原点人群，聚合八大产地大师作，2亿营收，天猫茶叶礼品市场第一。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoguan-hero-VMo5tD5EjgTVTXUiupePuQ.webp",
@@ -75,13 +76,18 @@ export default function CaseXiaoguan() {
     type: "article",
     keywords: "小罐茶,高端礼品茶,茶叶品牌营销,送礼场景,大师作茶,品类创新,茶礼品牌,天猫茶叶第一,猫眼咨询案例",
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     title: "小罐茶 · 重塑中国高端礼品茶 · 大师作品牌壁垒 | 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)",
     description: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)助力小罐茶重定义中国高端茶礼，聚焦送礼场景，辐射原点人群，聚合八大产地大师作，2亿营收，天猫茶叶礼品市场第一。",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoguan-hero-VMo5tD5EjgTVTXUiupePuQ.webp",
     url: "https://www.mcmamoo.com/cases/xiaoguan",
     type: "article",
     keywords: "小罐茶,高端礼品茶,茶叶品牌营销,送礼场景,大师作茶,品类创新,茶礼品牌,天猫茶叶第一,猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)案例",
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     breadcrumbs: [
       { name: "首页", url: "/" },
       { name: "标杆案例", url: "/#cases" },
@@ -93,10 +99,14 @@ export default function CaseXiaoguan() {
         "@type": "Article",
         "headline": "小罐茶 · 重新定义中国高端茶礼 · 天猫茶叶礼品市场第一",
 <<<<<<< HEAD
+<<<<<<< HEAD
         "description": "猫眼咨询助力小罐茶，聚焦送礼场景，辐射原点人群，用小罐品相进行品类创新，聚合八大产地大师作，建立竞争壁垒。",
 =======
         "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)助力小罐茶，聚焦送礼场景，辐射原点人群，用小罐品相进行品类创新，聚合八大产地大师作，建立竞争壁垒。",
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+        "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)助力小罐茶，聚焦送礼场景，辐射原点人群，用小罐品相进行品类创新，聚合八大产地大师作，建立竞争壁垒。",
+>>>>>>> origin/deploy/trigger-build-1774631965
         "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/xiaoguan-hero-VMo5tD5EjgTVTXUiupePuQ.webp",
         "url": "https://www.mcmamoo.com/cases/xiaoguan",
         "publisher": { "@id": "https://www.mcmamoo.com/#organization" },
@@ -166,10 +176,14 @@ export default function CaseXiaoguan() {
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
                 中国茶叶市场长期存在一个悖论：茶叶是中国最古老的奢侈品，
 <<<<<<< HEAD
+<<<<<<< HEAD
                 却没有一个真正意义上的高端茶叶品牌。猫眼咨询洞察到这一矛盾，
 =======
                 却没有一个真正意义上的高端茶叶品牌。猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)洞察到这一矛盾，
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+                却没有一个真正意义上的高端茶叶品牌。猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)洞察到这一矛盾，
+>>>>>>> origin/deploy/trigger-build-1774631965
                 提出了<strong style={{ color: "#C9A84C" }}>「场景重构 + 品相创新」</strong>的核心战略。
               </p>
               <p style={{ color: "rgba(245,240,232,0.75)", lineHeight: 1.9, fontSize: "0.95rem", marginBottom: 20 }}>
@@ -285,10 +299,14 @@ export default function CaseXiaoguan() {
         </div>
         <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", color: "rgba(245,240,232,0.2)", letterSpacing: "0.1em", marginTop: 24 }}>
 <<<<<<< HEAD
+<<<<<<< HEAD
           © 2024 Mc&Mamoo Brand Management Inc. · 猫眼和询 · 小罐茶案例
 =======
           © 2024 Mc&Mamoo Brand Management Inc. · 猫眼增长引擎 (Mc&Mamoo Growth Engine)和询 · 小罐茶案例
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+          © 2024 Mc&Mamoo Brand Management Inc. · 猫眼增长引擎 (Mc&Mamoo Growth Engine)和询 · 小罐茶案例
+>>>>>>> origin/deploy/trigger-build-1774631965
         </p>
       </div>
     </div>

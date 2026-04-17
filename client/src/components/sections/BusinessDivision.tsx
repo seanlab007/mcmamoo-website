@@ -199,10 +199,14 @@ export default function BusinessDivision() {
           title="品牌全案"
           subtitle="Make Brands Premium"
 <<<<<<< HEAD
+<<<<<<< HEAD
           desc="运用猫眼「错位竞争」方法论，从品牌定位、KOL矩阵到全域营销一体化操盘，帮助品牌在竞争红海中找到高溢价增长路径。"
 =======
           desc="运用猫眼增长引擎 (Mc&Mamoo Growth Engine)「错位竞争」方法论，从品牌定位、KOL矩阵到全域营销一体化操盘，帮助品牌在竞争红海中找到高溢价增长路径。"
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+          desc="运用猫眼增长引擎 (Mc&Mamoo Growth Engine)「错位竞争」方法论，从品牌定位、KOL矩阵到全域营销一体化操盘，帮助品牌在竞争红海中找到高溢价增长路径。"
+>>>>>>> origin/deploy/trigger-build-1774631965
           metrics={[
             { val: "8亿+", label: "蟹太太年营收" },
             { val: "20亿", label: "小仙炖5年营收" },

@@ -60,10 +60,14 @@ export default function IPAndWhale() {
             {isEn
               ? "Mc&Mamoo curates the world's most iconic IP resources — from Hollywood legends to global cultural icons — offering brands exclusive licensing partnerships through our strategic alliance with Authentic Brands Group (ABG) and global IP management agencies."
 <<<<<<< HEAD
+<<<<<<< HEAD
               : "猫眼增长引擎精选全球最具影响力的 IP 资源——从好莱坞传奇到全球文化符号——通过与 ABG 集团及全球 IP 管理机构的战略联盟，为品牌提供独家授权合作。"}
 =======
               : "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎精选全球最具影响力的 IP 资源——从好莱坞传奇到全球文化符号——通过与 ABG 集团及全球 IP 管理机构的战略联盟，为品牌提供独家授权合作。"}
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+              : "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎精选全球最具影响力的 IP 资源——从好莱坞传奇到全球文化符号——通过与 ABG 集团及全球 IP 管理机构的战略联盟，为品牌提供独家授权合作。"}
+>>>>>>> origin/deploy/trigger-build-1774631965
           </p>
 
           {/* IP Grid */}

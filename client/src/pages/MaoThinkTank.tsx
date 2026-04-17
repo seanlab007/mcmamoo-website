@@ -1,6 +1,7 @@
 /*
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
  * 毛智库 — Mao Strategic Think Tank
  * Design: 军事战略风格 · 深红+暗金+哑黑 · 兵棋推演地图美学
  * Typography: Playfair Display (titles) + DM Mono (labels) + Noto Serif SC (Chinese)
@@ -749,6 +750,8 @@ function MaoThinkTankPricing({ isEn }: { isEn: boolean }) {
                           <span style={{ color: plan.highlight ? "#8B1A1A" : "#C9A84C", fontSize: "0.7rem", flexShrink: 0, marginTop: 3 }}>✓</span>
                           {f}
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
  * ============================================================
  * MaoThinkTank Page — 毛智库军事战略与兵棋推演
  * ============================================================
@@ -987,11 +990,15 @@ export default function MaoThinkTank() {
                         <li key={featureIdx} className="flex items-start gap-2 text-sm text-white/70">
                           <Check size={16} className="text-[#40d090] flex-shrink-0 mt-0.5" />
                           <span>{feature}</span>
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
                         </li>
                       ))}
                     </ul>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
                     {/* CTA */}
                     <a
@@ -1031,10 +1038,16 @@ export default function MaoThinkTank() {
                       立即咨询
                     </button>
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+                    <button className="w-full py-2 px-4 bg-[#40d090] text-[#0A0A0A] text-xs font-bold tracking-widest uppercase hover:bg-[#3ac87d] transition-all rounded-sm">
+                      立即咨询
+                    </button>
+>>>>>>> origin/deploy/trigger-build-1774631965
                   </div>
                 ))}
               </div>
             </div>
+<<<<<<< HEAD
 <<<<<<< HEAD
           ))}
         </div>
@@ -1835,6 +1848,8 @@ export default function MaoThinkTank() {
               </div>
             ))}
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
 
             {/* Expert Group */}
             <div>
@@ -1884,11 +1899,15 @@ export default function MaoThinkTank() {
                 ))}
               </div>
             </div>
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
           </div>
         </div>
       </section>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
       {/* 历史验证 Timeline */}
       <section className="py-24 bg-white/[0.01]">
@@ -1933,6 +1952,8 @@ export default function MaoThinkTank() {
             </div>
           </div>
 =======
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
       {/* CTA Section */}
       <section className="py-16 px-8 md:px-20 bg-[#111]">
         <div className="max-w-4xl mx-auto text-center">
@@ -1945,15 +1966,21 @@ export default function MaoThinkTank() {
           <button className="px-8 py-3 bg-[#EF4444] text-white text-sm font-bold tracking-widest uppercase hover:bg-[#DC2626] transition-all rounded-sm">
             预约专家咨询
           </button>
+<<<<<<< HEAD
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
         </div>
       </section>
 
       <Footer />
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> origin/fix/navbar-dropdown-interaction
 =======
 >>>>>>> origin/fix/final-navbar-restructure-1774631973
+=======
+>>>>>>> origin/deploy/trigger-build-1774631965
     </div>
   );
 }
