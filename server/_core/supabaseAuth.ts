@@ -3,12 +3,20 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY ?? "";
+// ⚠️ 注意：不要在模块顶层读取 process.env！
+// tsx 执行时 ES 模块 import 会先于 dotenv.config() 执行，导致环境变量为空
+// 所有需要环境变量的地方都通过 getSupabaseConfig() 函数动态获取
 
-function getApiKey() {
-  return SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
+function getSupabaseConfig() {
+  return {
+    url: process.env.SUPABASE_URL ?? "",
+    anonKey: process.env.SUPABASE_ANON_KEY ?? "",
+    serviceKey: process.env.SUPABASE_SERVICE_KEY ?? "",
+  };
+}
+
+function getApiKey(cfg: ReturnType<typeof getSupabaseConfig>) {
+  return cfg.serviceKey || cfg.anonKey;
 }
 
 /**
@@ -16,9 +24,10 @@ function getApiKey() {
  * 避免直接 PostgreSQL 连接（pooler 在 Railway 环境中不可用）
  */
 async function getUserByOpenId(openId: string): Promise<Record<string, unknown> | null> {
-  const key = getApiKey();
+  const cfg = getSupabaseConfig();
+  const key = getApiKey(cfg);
   const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
+    `${cfg.url}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
     {
       headers: {
         apikey: key,
@@ -40,9 +49,10 @@ async function getUserByOpenId(openId: string): Promise<Record<string, unknown> 
  * 查询邮箱对应的用户（处理 PENDING_FIRST_LOGIN 情况）
  */
 async function getUserByEmail(email: string): Promise<Record<string, unknown> | null> {
-  const key = getApiKey();
+  const cfg = getSupabaseConfig();
+  const key = getApiKey(cfg);
   const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
+    `${cfg.url}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
     {
       headers: {
         apikey: key,
@@ -60,9 +70,10 @@ async function getUserByEmail(email: string): Promise<Record<string, unknown> | 
  * 更新用户的 openId（处理 PENDING_FIRST_LOGIN → 实际 openId）
  */
 async function updateUserOpenId(id: number, openId: string, lastSignedIn: string): Promise<void> {
-  const key = getApiKey();
+  const cfg = getSupabaseConfig();
+  const key = getApiKey(cfg);
   const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?id=eq.${id}`,
+    `${cfg.url}/rest/v1/users?id=eq.${id}`,
     {
       method: "PATCH",
       headers: {
@@ -90,9 +101,10 @@ async function upsertUser(user: {
   role: string;
   lastSignedIn: string;
 }): Promise<void> {
-  const key = getApiKey();
+  const cfg = getSupabaseConfig();
+  const key = getApiKey(cfg);
   const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users`,
+    `${cfg.url}/rest/v1/users`,
     {
       method: "POST",
       headers: {
@@ -125,7 +137,9 @@ export function registerSupabaseAuthRoutes(app: Express) {
       return;
     }
 
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    const cfg = getSupabaseConfig();
+    if (!cfg.url || !cfg.anonKey) {
+      console.error("[SupabaseAuth] Missing env: SUPABASE_URL or SUPABASE_ANON_KEY");
       res.status(500).json({ error: "Supabase not configured" });
       return;
     }
@@ -133,12 +147,12 @@ export function registerSupabaseAuthRoutes(app: Express) {
     try {
       // 1. 调用 Supabase Auth 验证邮箱密码
       const authResp = await fetch(
-        `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+        `${cfg.url}/auth/v1/token?grant_type=password`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            apikey: SUPABASE_ANON_KEY,
+            apikey: cfg.anonKey,
           },
           body: JSON.stringify({ email, password }),
         }
@@ -195,9 +209,9 @@ export function registerSupabaseAuthRoutes(app: Express) {
       } else {
         role = (existingUser.role as "admin" | "user") ?? "user";
         // 更新 lastSignedIn
-        const key = getApiKey();
+        const key = getApiKey(cfg);
         await fetch(
-          `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
+          `${cfg.url}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
           {
             method: "PATCH",
             headers: {
