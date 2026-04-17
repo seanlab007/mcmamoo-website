@@ -111,3 +111,4 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 .vercel
+n8n-deploy/*.railway

@@ -1,0 +1,91 @@
+{
+  "name": "猫眼内容平台 - Webhook 回调",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "maoyan-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "maoyan-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WEBHOOK_URL }}/api/content/webhook",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.CONTENT_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.body.taskId }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $json.body.status }}"
+            },
+            {
+              "name": "result",
+              "value": "={{ $json.body.result }}"
+            },
+            {
+              "name": "publishedUrls",
+              "value": "={{ $json.body.publishedUrls }}"
+            },
+            {
+              "name": "platform",
+              "value": "={{ $json.body.platform }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "content-webhook",
+      "name": "回写内容平台状态",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"received\": true, \"taskId\": $json.body.taskId } }}"
+      },
+      "id": "respond-200",
+      "name": "返回 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "回写内容平台状态", "type": "main", "index": 0 }]]
+    },
+    "回写内容平台状态": {
+      "main": [[{ "node": "返回 200", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
