@@ -15,6 +15,7 @@
 
 import { Router, Request, Response } from "express";
 import { AGENTS, getAgent, getAgentSystemPrompt, AGENTS_BY_CATEGORY, CATEGORY_INFO } from "./agents";
+import { guardMessage } from "./_core/guardrails";
 
 export const chatRouter = Router();
 
@@ -313,6 +314,38 @@ chatRouter.post("/send", async (req: Request, res: Response) => {
       `/messages?conversation_id=eq.${conversationId}&order=created_at.asc&limit=20&select=role,content`
     );
     const history: { role: string; content: string }[] = Array.isArray(historyR.data) ? historyR.data : [];
+
+    // 1.5 安全围栏检查 🛡️
+    const guardResult = guardMessage(message, { history });
+    if (guardResult.blocked && guardResult.response) {
+      // 发送安全围栏响应（流式模拟）
+      const blockedResponse = guardResult.response;
+      let index = 0;
+      const streamInterval = setInterval(() => {
+        if (index < blockedResponse.length) {
+          const chunk = blockedResponse.slice(index, index + 10);
+          sendEvent("delta", { text: chunk });
+          index += 10;
+        } else {
+          clearInterval(streamInterval);
+          // 保存拦截回复到数据库
+          sbPost("/messages", {
+            conversation_id: conversationId,
+            role: "assistant",
+            content: blockedResponse,
+            metadata: { 
+              type: "guardrail_blocked",
+              ruleId: guardResult.ruleId,
+              threatLevel: guardResult.threatLevel,
+            },
+          }).then(() => {
+            sendEvent("done", { text: "" });
+            res.end();
+          });
+        }
+      }, 20);
+      return;
+    }
 
     // 2. 联网搜索（按需）
     let searchContext = "";
