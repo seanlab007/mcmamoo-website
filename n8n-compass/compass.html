@@ -525,6 +525,81 @@
     transition: width 0.5s ease;
   }
 
+  /* ===== SYSTEM HEALTH PANEL ===== */
+  .health-section {
+    padding: 20px 32px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .health-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .health-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .health-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  .health-card:hover { border-color: rgba(99,102,241,0.35); }
+  .health-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .health-card[data-status="healthy"]::before { background: var(--success); }
+  .health-card[data-status="stuck"]::before { background: var(--warning); }
+  .health-card[data-status="danger"]::before { background: var(--danger); animation: wb-pulse 1s infinite; }
+  .health-card[data-status="offline"]::before { background: var(--muted); }
+
+  .health-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .health-icon {
+    width: 36px; height: 36px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0;
+  }
+  .icon-healthy { background: rgba(16,185,129,0.15); color: var(--success); }
+  .icon-stuck   { background: rgba(245,158,11,0.15); color: var(--warning); }
+  .icon-danger  { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .icon-offline { background: rgba(100,116,139,0.15); color: var(--muted); }
+
+  .health-name-row { flex: 1; }
+  .health-machine-name { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+  .health-status-tag {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 2px 8px; border-radius: 8px; display: inline-block; margin-top: 2px;
+  }
+  .tag-healthy { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.25); }
+  .tag-stuck   { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.25); }
+  .tag-danger  { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
+  .tag-offline { background: rgba(100,116,139,0.12); color: var(--muted); border: 1px solid rgba(100,116,139,0.25); }
+
+  .health-task-info {
+    font-size: 11.5px; color: var(--muted); background: var(--surface);
+    border-radius: 7px; padding: 8px 10px; line-height: 1.4;
+  }
+  .health-task-title { font-weight: 600; color: #cbd5e1; }
+  .health-meta {
+    display: flex; gap: 12px; margin-top: 8px; font-size: 10px; color: var(--muted);
+  }
+  .health-meta span { display: flex; align-items: center; gap: 3px; }
+
   /* Responsive */
   @media (max-width: 720px) {
     .compass-container { width: 260px; height: 260px; }
@@ -599,6 +674,15 @@
     <span class="wb-badge" id="wbCount">-- 个任务</span>
   </div>
   <div class="wb-grid" id="wbTaskGrid"></div>
+</div>
+
+<!-- ========== SYSTEM HEALTH (多机状态) ========== -->
+<div class="health-section" id="healthSection">
+  <div class="health-header">
+    <span class="health-title">🏥 系统健康 — 多机状态监控</span>
+    <span class="wb-badge" id="healthCount">-- 台设备</span>
+  </div>
+  <div class="health-grid" id="healthGrid"></div>
 </div>
 
 <!-- ========== FOOTER ========== -->
@@ -1116,6 +1200,89 @@ function renderOverview() {
 }
 
 // ============================================================
+// 🏥 SYSTEM HEALTH PANEL — 多机状态监控
+// ============================================================
+function renderHealthPanel() {
+  const grid = document.getElementById("healthGrid");
+  const countEl = document.getElementById("healthCount");
+
+  // 默认数据（可被 window.__HEALTH_INJECTED__ 覆盖）
+  const healthData = window.__HEALTH_INJECTED__ || {
+    machines: [
+      {
+        id: "macbook-pro",
+        name: "MacBook Pro (主力机)",
+        status: "healthy",
+        lastHeartbeatAgo: "刚刚",
+        currentTask: { id: "wb_005", title: "OKR 罗盘数据更新", progress: 80, step: "正在更新 3 板块进度" },
+        uptime: "45min",
+        ip: "192.168.1.100"
+      }
+    ],
+    alerts: [],
+    lastUpdated: new Date().toISOString()
+  };
+
+  const machines = healthData.machines || [];
+  countEl.textContent = machines.length + " 台设备";
+
+  grid.innerHTML = "";
+  if (machines.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted);font-size:13px">暂无设备在线<br><span style="font-size:11px">启动 Health Monitor 后自动显示</span></div>';
+    return;
+  }
+
+  machines.forEach(m => {
+    const card = document.createElement("div");
+    card.className = "health-card";
+    card.dataset.status = m.status;
+
+    let icon, iconCls, tagCls;
+    switch (m.status) {
+      case "healthy": icon = "✅"; iconCls = "icon-healthy"; tagCls = "tag-healthy"; break;
+      case "stuck":   icon = "⚠️"; iconCls = "icon-stuck";   tagCls = "tag-stuck";   break;
+      case "danger":  icon = "🔴"; iconCls = "icon-danger";  tagCls = "tag-danger";  break;
+      default:         icon = "💨"; iconCls = "icon-offline"; tagCls = "tag-offline";
+    }
+
+    const taskInfo = m.currentTask
+      ? `<div class="health-task-info">
+           <div class="health-task-title">${m.currentTask.title}</div>
+           ${m.currentTask.step ? '<div>' + m.currentTask.step + '</div>' : ''}
+         </div>`
+      : '<div class="health-task-info" style="color:var(--muted)">无活跃任务</div>';
+
+    card.innerHTML = `
+      <div class="health-top">
+        <div class="health-icon ${iconCls}">${icon}</div>
+        <div class="health-name-row">
+          <div class="health-machine-name">${m.name}</div>
+          <span class="health-status-tag ${tagCls}">${m.status}</span>
+        </div>
+      </div>
+      ${taskInfo}
+      <div class="health-meta">
+        <span>🕐 ${m.lastHeartbeatAgo}</span>
+        <span>⏱️ ${m.uptime}</span>
+        <span>🌐 ${m.ip || '--'}</span>
+      </div>`;
+
+    grid.appendChild(card);
+  });
+
+  // 告警列表（如果有）
+  if (healthData.alerts && healthData.alerts.length > 0) {
+    const alertDiv = document.createElement("div");
+    alertDiv.style.cssText = "grid-column:1/-1;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px;font-size:12px;margin-top:4px";
+    alertDiv.innerHTML = "<strong>🚨 告警</strong>" +
+      healthData.alerts.slice(-3).map(a =>
+        `<div style="margin-top:4px;color:${a.level==='error'?'#f87171':'#fbbf24'}">[${a.level.toUpperCase()}] ${a.message} (${new Date(a.timestamp).toLocaleTimeString('zh-CN')})</div>`
+      ).join("");
+    grid.appendChild(alertDiv);
+  }
+}
+
+// ============================================================
 // 🤖 WORKBUDDY TASKS PANEL
 // ============================================================
 function formatAgo(isoStr) {
@@ -1200,6 +1367,7 @@ function renderWorkbuddyTasks() {
   renderOverview();
   renderBusinessCards();
   renderWorkbuddyTasks();
+  renderHealthPanel();
 
   // 4. 渲染完成，恢复滚动位置 + 移除 loading 状态
   requestAnimationFrame(function() {
