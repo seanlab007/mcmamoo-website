@@ -6,17 +6,21 @@
 
 ---
 
-## ✅ 能做的（推荐）
+## ✅ 能做的（推荐）— 真正的算力工作
 
-| 功能 | 内存占用 | 说明 |
-|------|---------|------|
-| `sync-checker.js audit` | ~30MB | 检查本机同步状态 |
-| `sync-checker.js status` | ~30MB | 查看全局同步矩阵 |
-| `task-fleet-bridge.js demo` | ~50MB | 生成本地演示数据 |
-| Git pull/push | ~40MB | 同步代码 |
-| 编辑文本文件 | ~5MB | 记录笔记/任务 |
+| 功能 | 内存占用 | 说明 | 算力价值 |
+|------|---------|------|---------|
+| **`compute-worker.js start`** | ~5MB 空闲 / ~150MB 工作 | **启动算力节点服务** | ⭐⭐⭐ 核心功能 |
+| 文本批量处理 (替换/正则/提取) | ~30MB/次 | 批量改代码、清洗数据 | ⭐⭐ |
+| 数据格式转换 (CSV↔JSON↔MD) | ~20MB/次 | 报表数据整理 | ⭐⭐ |
+| HTTP API 代理转发 | ~40MB | 中转到 OpenAI/Claude (带缓存) | ⭐⭐⭐ |
+| 批量数值统计 (sum/avg/stddev) | ~15ms | 数据分析预处理 | ⭐⭐ |
+| 文件 gzip 压缩/解压 | ~20MB | 日志归档、文件传输优化 | ⭐ |
+| Git 自动操作 (commit/push) | ~40MB | 代码自动提交 | ⭐⭐ |
+| 基准测试 (bench) | ~50MB | 检测本机真实性能 | 📊 诊断工具 |
 
-**总计同时运行: < 150MB** — 完全在 3.78G 可用内存范围内。
+**使用方式**: Mac Pro 把任务分发过来 → 戴尔执行 → 结果回传
+**总计同时运行: < 300MB** — 完全在 3.78G 可用内存范围内。
 
 ## ❌ 不能做的
 
@@ -24,7 +28,7 @@
 |------|------|
 | 运行 MaoAI 后端 (Vite+Express) | 需要 2GB+ 常驻内存 |
 | 运行 n8n | 需要 Node 18+, 至少 1GB |
-| 运行 Python AI 模型 | 内存完全不够 |
+| 运行本地 AI 模型 (Ollama/Python) | 内存完全不够 |
 | Docker | Win7 支持极差 |
 
 ---
@@ -91,8 +95,8 @@ color 0A
 
 echo.
 echo ═══════════════════════════════════════════════
-echo   🖥️  WorkBuddy 轻量节点 - Windows 7
-echo   戴尔电脑 | 仅运行 CLI 采集工具
+echo   🖥️  WorkBuddy 轻量算力节点 - Windows 7
+echo   戴尔电脑 | 算力 Worker (不是看板!)
 echo ═══════════════════════════════════════════════
 echo.
 
@@ -115,25 +119,45 @@ cd /d C:\workbuddy\mcmamoo-website\n8n-bridge
 echo ============================================
 echo   选择操作:
 echo ====================================
-echo   [1] 🔍 审计同步状态 (sync-checker audit)
-echo   [2] 🖥️ 查看全局矩阵 (sync-checker status)
-echo   [3] 🚀 生成演示数据 (task-fleet-bridge demo)
-echo   [4] 🔄 拉取最新代码 (git pull)
-echo   [5] ✓ 标记已同步
-echo   [6] 📊 完整检查 (全部执行一遍)
+echo   [1] ⚡  启动算力节点服务 (HTTP API + 任务队列)
+echo   [2] 🔍 审计同步状态 (sync-checker audit)
+echo   [3] 🖥️ 查看全局矩阵 (sync-checker status)
+echo   [4] 🧪 跑基准测试 (检测本机算力)
+echo   [5] 🔄 拉取最新代码 (git pull)
+echo   [6] ✓ 标记已同步
+echo   [7] 📊 完整检查 (全部执行一遍)
 echo   [0] 退出
 echo ============================================
-set /p choice=请输入选项 (0-6):
+set /p choice=请输入选项 (0-7):
 
-if "%choice%"=="1" goto AUDIT
-if "%choice%"=="2" goto STATUS
-if "%choice%"=="3" goto DEMO
-if "%choice%"=="4" goto PULL
-if "%choice%"=="5" goto MARK
-if "%choice%"=="6" goto FULL
+if "%choice%"=="1" goto START_WORKER
+if "%choice%"=="2" goto AUDIT
+if "%choice%"=="3" goto STATUS
+if "%choice%"=="4" goto BENCH
+if "%choice%"=="5" goto PULL
+if "%choice%"=="6" goto MARK
+if "%choice%"=="7" goto FULL
 if "%choice%"=="0" goto END
 
 echo 无效选项
+goto END
+
+:: ────────────── ⚡ 启动算力服务 ──────────────
+:START_WORKER
+echo.
+echo --- ⚡ 启动 Compute Worker 服务 ---
+echo.
+echo 服务地址: http://localhost:3897
+echo Mac Pro 可以通过这个地址分发任务给戴尔
+echo 按 Ctrl+C 停止
+echo.
+node compute-worker.js start
+goto END
+
+:BENCH
+echo.
+echo --- 🧪 基准测试 ---
+node compute-worker.js bench
 goto END
 
 :AUDIT
