@@ -631,9 +631,9 @@ const OKR_DATA = {
       title: "OKR罗盘仪表盘 + 异构同步协议",
       status: "completed",
       progress: 100,
-      step: "已推送到 GitHub (commit 0d57924)",
+      step: "已推送到 GitHub (commit c9ef386)",
       startedAt: "2026-04-18T18:09:00Z",
-      updatedAt: "2026-04-18T18:27:00Z",
+      updatedAt: "2026-04-18T18:49:00Z",
       session: "当前会话"
     },
     {
@@ -665,6 +665,26 @@ const OKR_DATA = {
       startedAt: null,
       updatedAt: "2026-04-18T01:07:00Z",
       session: "排队中"
+    },
+    {
+      id: "wb_005",
+      title: "OKR 罗盘数据更新（mintQX/daiizen/maoyan 上线）",
+      status: "running",
+      progress: 80,
+      step: "正在更新：3 板块进度调整 + maoyan 新增 O3 目标",
+      startedAt: "2026-04-18T18:58:00Z",
+      updatedAt: "2026-04-18T18:58:00Z",
+      session: "当前会话"
+    },
+    {
+      id: "wb_006",
+      title: "微信/支付宝登录接入（maoyan.vip + daiizen）",
+      status: "pending",
+      progress: 0,
+      step: "待启动：OAuth 接入方案确认后开始",
+      startedAt: null,
+      updatedAt: "2026-04-18T18:58:00Z",
+      session: "待规划"
     }
   ],
 
@@ -741,27 +761,27 @@ const OKR_DATA = {
       name: "mintQX",
       emoji: "📈",
       badge: { text: "Growth", cls: "badge-growth" },
-      desc: "股市做市商 / 股票发行 — Cloudflare Pages 前端站点",
-      overallProgress: 15,
+      desc: "股市做市商 / 股票发行 — mintQX.com ✅ 已上线",
+      overallProgress: 40,
       objectives: [
         {
           title: "O1: 前端站点上线",
           keyResults: [
-            { text: "mintqx-website 代码仓库初始化", progress: 80 },
-            { text: "Cloudflare Pages 部署配置", progress: 0 },
-            { text: "做市商品牌视觉设计", progress: 10 },
+            { text: "mintqx-website 代码仓库初始化", progress: 100 },
+            { text: "Cloudflare Pages 部署配置", progress: 100 },
+            { text: "做市商品牌视觉设计", progress: 80 },
           ]
         },
         {
           title: "O2: 股票发行流程设计",
           keyResults: [
-            { text: "发行法律框架研究", progress: 5 },
-            { text: "投资者 KYC/AML 流程", progress: 0 },
+            { text: "发行法律框架研究", progress: 15 },
+            { text: "投资者 KYC/AML 流程", progress: 5 },
             { text: "与 DMB 结算系统集成方案", progress: 0 },
           ]
         }
       ],
-      stats: { okrs: 2, krs: 6, completedKRs: 0 }
+      stats: { okrs: 2, krs: 6, completedKRs: 2 }
     },
 
     // ────────────── 4. USDD Stablecoin ──────────────
@@ -791,19 +811,27 @@ const OKR_DATA = {
       name: "daiizen",
       emoji: "🛒",
       badge: { text: "Growth", cls: "badge-growth" },
-      desc: "跨境电商平台 — 全球商品 × AI 推荐",
-      overallProgress: 5,
+      desc: "跨境电商平台 — 全球商品 × AI 推荐 — daiizen.com ✅ 已上线",
+      overallProgress: 30,
       objectives: [
         {
-          title: "O1: 平台 MVP 规划",
+          title: "O1: 平台 MVP 上线",
           keyResults: [
-            { text: "技术栈选型确认", progress: 20 },
-            { text: "数据库 Schema 设计", progress: 0 },
-            { text: "支付对接方案（多币种）", progress: 0 },
+            { text: "技术栈选型确认", progress: 100 },
+            { text: "数据库 Schema 设计", progress: 80 },
+            { text: "daiizen.com 域名站点部署", progress: 100 },
+          ]
+        },
+        {
+          title: "O2: 支付对接（多币种）",
+          keyResults: [
+            { text: "微信/支付宝接入", progress: 0 },
+            { text: "Stripe 国际支付", progress: 10 },
+            { text: "多币种结算系统", progress: 0 },
           ]
         }
       ],
-      stats: { okrs: 1, krs: 3, completedKRs: 0 }
+      stats: { okrs: 2, krs: 6, completedKRs: 2 }
     },
 
     // ────────────── 6. maoyan.vip ──────────────
@@ -812,27 +840,35 @@ const OKR_DATA = {
       name: "maoyan.vip",
       emoji: "🔮",
       badge: { text: "Revenue", cls: "badge-revenue" },
-      desc: "积分网红社区 / 命理服务变现（八字·塔罗·紫微斗数）— Vercel 部署",
-      overallProgress: 55,
+      desc: "积分网红社区 / 命理服务变现（八字·塔罗·紫微斗数）— maoyan.vip ✅ 已上线（Vercel）",
+      overallProgress: 65,
       objectives: [
         {
           title: "O1: 命理服务产品化",
           keyResults: [
-            { text: "八字/塔罗/紫微服务页面上线", progress: 90 },
-            { text: "积分系统 + 网红等级体系", progress: 65 },
-            { text: "微信支付/支付宝接入", progress: 40 },
+            { text: "八字/塔罗/紫微服务页面上线", progress: 100 },
+            { text: "积分系统 + 网红等级体系", progress: 80 },
+            { text: "微信/支付宝接入", progress: 0 },
           ]
         },
         {
-          title: "O2: zhengyuanzhiyin 新站迁移",
+          title: "O2: zhengyuanzhiyin 命理小馆同步",
           keyResults: [
-            { text: "命理小馆代码部署到 Vercel", progress: 70 },
-            { text: "SEO 优化 + 百度收录", progress: 30 },
-            { text: "日活用户突破 100", progress: 0 },
+            { text: "命理小馆核心功能迁移到 maoyan.vip", progress: 30 },
+            { text: "客户数据同步（订单/咨询记录）", progress: 10 },
+            { text: "zhengyuanzhiyin.com 流量引导至 maoyan.vip", progress: 5 },
+          ]
+        },
+        {
+          title: "O3: 用户增长",
+          keyResults: [
+            { text: "SEO 优化 + 百度/Google 收录", progress: 40 },
+            { text: "日活用户突破 100", progress: 10 },
+            { text: "微信小程序入口", progress: 0 },
           ]
         }
       ],
-      stats: { okrs: 2, krs: 6, completedKRs: 0 }
+      stats: { okrs: 3, krs: 9, completedKRs: 1 }
     },
 
     // ────────────── 7. 猫眼内容平台 ──────────────
