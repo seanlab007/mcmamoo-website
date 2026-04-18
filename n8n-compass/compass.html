@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧭 Mc&Mamoo OKR 罗盘 — 2026 全年进度</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card: #1a2332;
+    --border: #2d3a4f;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59,130,246,0.25);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    /* 防止渲染期间跳动 */
+    scroll-behavior: auto !important;
+  }
+  /* 隐藏渲染前的空白闪烁 */
+  body.loading { visibility: hidden; }
+
+  /* ===== HEADER ===== */
+  .header {
+    text-align: center;
+    padding: 32px 20px 16px;
+    background: linear-gradient(180deg, rgba(59,130,246,0.08) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .header .last-updated {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ===== COMPASS RING ===== */
+  .compass-section {
+    display: flex;
+    justify-content: center;
+    padding: 36px 20px 16px;
+  }
+  .compass-container {
+    position: relative;
+    width: 320px;
+    height: 320px;
+  }
+  /* Outer glow ring */
+  .compass-glow {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      rgba(59,130,246,0.15),
+      rgba(167,139,250,0.10),
+      rgba(52,211,153,0.08),
+      rgba(245,158,11,0.06),
+      rgba(239,68,68,0.04),
+      rgba(59,130,246,0.15)
+    );
+    filter: blur(20px);
+    /* 移除旋转动画，改为静态渐变 — 消除持续重绘导致的跳闪 */
+  }
+  
+  .compass-ring {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+  }
+  /* SVG progress ring */
+  .ring-svg {
+    position: absolute;
+    inset: 8px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+  }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 18; }
+  .ring-progress { fill: none; stroke-width: 18; stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease, stroke 0.3s ease; }
+  .ring-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .ring-percent {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .ring-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .ring-sublabel { font-size: 11px; color: var(--muted); opacity: 0.7; }
+
+  /* Quarter markers */
+  .q-markers { position: absolute; inset: 0; }
+  .q-marker {
+    position: absolute;
+    width: 44px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .q-marker.active { color: var(--accent); }
+
+  /* ===== PHASE BAR ===== */
+  .phase-bar-section { padding: 0 40px 20px; max-width: 900px; margin: 0 auto; }
+  .phase-bar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .phase-step {
+    flex: 1;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: default;
+    position: relative;
+  }
+  .phase-step.done {
+    background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.08));
+    border: 1px solid rgba(16,185,129,0.35);
+    color: var(--success);
+  }
+  .phase-step.current {
+    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.08));
+    border: 1px solid rgba(59,130,246,0.45);
+    color: var(--accent);
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+  .phase-step.future {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .phase-arrow { color: var(--muted); font-size: 14px; flex-shrink: 0; }
+
+  /* ===== BUSINESS CARDS GRID ===== */
+  .grid-section {
+    padding: 16px 32px 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+  }
+  .biz-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .biz-card:hover {
+    border-color: rgba(59,130,246,0.4);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(59,130,246,0.1);
+    transform: translateY(-2px);
+  }
+  .biz-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .biz-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .biz-name { font-size: 17px; font-weight: 700; }
+  .biz-emoji { font-size: 22px; margin-right: 8px; vertical-align: middle; }
+  .biz-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-core { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-growth { background: rgba(52,211,153,0.12); color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
+  .badge-infra { background: rgba(99,102,241,0.13); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); }
+  .badge-revenue { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
+
+  .biz-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  /* Objective */
+  .objective {
+    background: var(--surface);
+    border-radius: 9px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    border-left: 3px solid var(--accent);
+  }
+  .obj-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+  }
+  .kr-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .kr-row:last-child { margin-bottom: 0; }
+  .kr-text {
+    font-size: 11.5px;
+    color: var(--muted);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kr-bar-wrap { flex: 0 0 72px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .kr-bar { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .kr-pct { font-size: 10px; font-weight: 600; flex: 0 0 30px; text-align: right; }
+
+  /* Card summary bar */
+  .card-summary { display: flex; gap: 10px; margin-top: 12px; }
+  .summary-stat {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 10px;
+  }
+  .summary-val { font-size: 16px; font-weight: 800; display: block; }
+  .summary-lbl { color: var(--muted); margin-top: 2px; }
+
+  /* Color classes for bars */
+  .c-blue { background: var(--accent); }
+  .c-green { background: var(--success); }
+  .c-yellow { background: var(--warning); }
+  .c-red { background: var(--danger); }
+  .c-purple { background: #a78bfa; }
+  .c-cyan { background: #22d3ee; }
+  .c-orange { background: #fb923c; }
+
+  /* Card accent colors per business */
+  .biz-card[data-biz="maoai"]::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+  .biz-card[data-biz="dmb"]::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+  .biz-card[data-biz="mintqx"]::before { background: linear-gradient(90deg, #10b981, #34d399); }
+  .biz-card[data-biz="usdd"]::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .biz-card[data-biz="daiizen"]::before { background: linear-gradient(90deg, #ec4899, #f472b6); }
+  .biz-card[data-biz="maoyan"]::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+  .biz-card[data-biz="content"]::before { background: linear-gradient(90deg, #06b6d4, #22d3ee); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .compass-container { width: 260px; height: 260px; }
+    .ring-percent { font-size: 38px; }
+    .grid-section { padding: 16px 16px 40px; grid-template-columns: 1fr; }
+    .phase-bar-section { padding: 0 16px 16px; }
+  }
+</style>
+</head>
+<body class="loading">
+
+<!-- ========== HEADER ========== -->
+<div class="header">
+  <h1>🧭 Mc&Mamoo OKR 罗盘</h1>
+  <div class="subtitle">2026 全年工作进度 · 七大业务板块对齐</div>
+  <div class="last-updated">🕐 最后更新：<span id="updateTime"></span></div>
+</div>
+
+<!-- ========== COMPASS RING ========== -->
+<div class="compass-section">
+  <div class="compass-container">
+    <div class="compass-glow"></div>
+    <div class="compass-ring">
+      <!-- Quarter markers -->
+      <div class="q-markers">
+        <span class="q-marker active" style="top:4px;left:50%;transform:translateX(-50%);">Q1</span>
+        <span class="q-marker" style="top:50%;right:-6px;transform:translateY(-50%);">Q2</span>
+        <span class="q-marker" style="bottom:4px;left:50%;transform:translateX(-50%);">Q3</span>
+        <span class="q-marker" style="top:50%;left:-6px;transform:translateY(-50%);">Q4</span>
+      </div>
+
+      <!-- Progress Ring SVG -->
+      <svg class="ring-svg" viewBox="0 0 160 160" id="compassRing">
+        <!-- Background ring -->
+        <circle cx="80" cy="80" r="68" class="ring-bg" />
+        <!-- Q segments -->
+        <g id="ringSegments" transform="rotate(-90 80 80)"></g>
+      </svg>
+
+      <!-- Center -->
+      <div class="ring-center">
+        <div class="ring-percent" id="totalPercent">--%</div>
+        <div class="ring-label">年度总进度</div>
+        <div class="ring-sublabel" id="quarterLabel">Q1 进行中</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PHASE BAR ========== -->
+<div class="phase-bar-section">
+  <div class="phase-bar" id="phaseBar"></div>
+</div>
+
+<!-- ========== BUSINESS CARDS ========== -->
+<div class="grid-section" id="businessGrid"></div>
+
+<!-- ========== FOOTER ========== -->
+<div class="footer">
+  Mc&Mamoo Brand Management · Powered by n8n Workflow · Auto-generated
+</div>
+
+<script>
+// ============================================================
+// 📊 DATA — OKR 数据源（可被 n8n 注入覆盖）
+// ============================================================
+const OKR_DATA = {
+  meta: {
+    year: 2026,
+    currentQuarter: "Q1",
+    lastUpdated: null,
+    phases: [
+      { id: "p0", name: "Phase 0", desc: "基础加固", status: "done" },
+      { id: "p1", name: "Phase 1", desc: "服务拆分", status: "current" },
+      { id: "p2", name: "Phase 2", desc: "n8n 接入", status: "future" },
+      { id: "p3", name: "Phase 3", desc: "Internal 全功能", status: "future" },
+      { id: "p4", name: "Phase 4", desc: "跨业务联动", status: "future" },
+    ]
+  },
+
+  businesses: [
+    // ────────────── 1. MaoAI ──────────────
+    {
+      id: "maoai",
+      name: "MaoAI",
+      emoji: "🧠",
+      badge: { text: "Core", cls: "badge-core" },
+      desc: "Digital OS — 双模平台（Internal 对内工作台 / External 对外 SaaS）",
+      overallProgress: 42,
+      objectives: [
+        {
+          title: "O1: Railway 部署上线",
+          keyResults: [
+            { text: "修复全部 merge conflict + 语法错误", progress: 100 },
+            { text: "Railway Trial → Hobby 升级绑卡", progress: 0 },
+            { text: "生产环境稳定运行 7 天", progress: 0 },
+          ]
+        },
+        {
+          title: "O2: Pro 订阅 $19.9/月",
+          keyResults: [
+            { text: "支付网关接入（Stripe/支付宝）", progress: 20 },
+            { text: "Pro 功能差异化（模型额度/历史）", progress: 55 },
+            { text: "首批 100 个付费用户", progress: 0 },
+          ]
+        },
+        {
+          title: "O3: Internal 工作台全功能",
+          keyResults: [
+            { text: "TriadLoop v3 验证闭环", progress: 85 },
+            { text: "Skill Registry + MCP Tool Bus", progress: 70 },
+            { text: "BrowserUse 智能体集成", progress: 40 },
+          ]
+        }
+      ],
+      stats: { okrs: 3, krs: 9, completedKRs: 2 }
+    },
+
+    // ────────────── 2. DMB ──────────────
+    {
+      id: "dmb",
+      name: "Dark Matter Bank",
+      emoji: "🏦",
+      badge: { text: "Finance", cls: "badge-infra" },
+      desc: "AI 金融银行 / Agent Pay 激励网关 — tRPC + Drizzle ORM 架构",
+      overallProgress: 35,
+      objectives: [
+        {
+          title: "O1: 订单簿引擎生产就绪",
+          keyResults: [
+            { text: "Phase 1+2 代码推送到 GitHub", progress: 0 },
+            { text: "WebSocket L2/L4 深度推送", progress: 95 },
+            { text: "高级订单（OCO/TWAP/Iceberg）", progress: 90 },
+          ]
+        },
+        {
+          title: "O2: Agent Pay 激励网关",
+          keyResults: [
+            { text: "API Key 权限体系上线", progress: 70 },
+            { text: "交易钱包双账户结算", progress: 65 },
+            { text: "价格预言机实时行情", progress: 75 },
+          ]
+        }
+      ],
+      stats: { okrs: 2, krs: 6, completedKRs: 0 }
+    },
+
+    // ────────────── 3. mintQX ──────────────
+    {
+      id: "mintqx",
+      name: "mintQX",
+      emoji: "📈",
+      badge: { text: "Growth", cls: "badge-growth" },
+      desc: "股市做市商 / 股票发行 — Cloudflare Pages 前端站点",
+      overallProgress: 15,
+      objectives: [
+        {
+          title: "O1: 前端站点上线",
+          keyResults: [
+            { text: "mintqx-website 代码仓库初始化", progress: 80 },
+            { text: "Cloudflare Pages 部署配置", progress: 0 },
+            { text: "做市商品牌视觉设计", progress: 10 },
+          ]
+        },
+        {
+          title: "O2: 股票发行流程设计",
+          keyResults: [
+            { text: "发行法律框架研究", progress: 5 },
+            { text: "投资者 KYC/AML 流程", progress: 0 },
+            { text: "与 DMB 结算系统集成方案", progress: 0 },
+          ]
+        }
+      ],
+      stats: { okrs: 2, krs: 6, completedKRs: 0 }
+    },
+
+    // ────────────── 4. USDD Stablecoin ──────────────
+    {
+      id: "usdd",
+      name: "USDD Stablecoin",
+      emoji: "💰",
+      badge: { text: "Revenue", cls: "badge-revenue" },
+      desc: "稳定币发行机构 — usddstablecoin.com.cn",
+      overallProgress: 8,
+      objectives: [
+        {
+          title: "O1: 站点基础建设",
+          keyResults: [
+            { text: "域名 DNS 配置完成", progress: 60 },
+            { text: "合规披露页面框架", progress: 10 },
+            { text: "储备金证明机制设计", progress: 0 },
+          ]
+        }
+      ],
+      stats: { okrs: 1, krs: 3, completedKRs: 0 }
+    },
+
+    // ────────────── 5. daiizen ──────────────
+    {
+      id: "daiizen",
+      name: "daiizen",
+      emoji: "🛒",
+      badge: { text: "Growth", cls: "badge-growth" },
+      desc: "跨境电商平台 — 全球商品 × AI 推荐",
+      overallProgress: 5,
+      objectives: [
+        {
+          title: "O1: 平台 MVP 规划",
+          keyResults: [
+            { text: "技术栈选型确认", progress: 20 },
+            { text: "数据库 Schema 设计", progress: 0 },
+            { text: "支付对接方案（多币种）", progress: 0 },
+          ]
+        }
+      ],
+      stats: { okrs: 1, krs: 3, completedKRs: 0 }
+    },
+
+    // ────────────── 6. maoyan.vip ──────────────
+    {
+      id: "maoyan",
+      name: "maoyan.vip",
+      emoji: "🔮",
+      badge: { text: "Revenue", cls: "badge-revenue" },
+      desc: "积分网红社区 / 命理服务变现（八字·塔罗·紫微斗数）— Vercel 部署",
+      overallProgress: 55,
+      objectives: [
+        {
+          title: "O1: 命理服务产品化",
+          keyResults: [
+            { text: "八字/塔罗/紫微服务页面上线", progress: 90 },
+            { text: "积分系统 + 网红等级体系", progress: 65 },
+            { text: "微信支付/支付宝接入", progress: 40 },
+          ]
+        },
+        {
+          title: "O2: zhengyuanzhiyin 新站迁移",
+          keyResults: [
+            { text: "命理小馆代码部署到 Vercel", progress: 70 },
+            { text: "SEO 优化 + 百度收录", progress: 30 },
+            { text: "日活用户突破 100", progress: 0 },
+          ]
+        }
+      ],
+      stats: { okrs: 2, krs: 6, completedKRs: 0 }
+    },
+
+    // ────────────── 7. 猫眼内容平台 ──────────────
+    {
+      id: "content",
+      name: "猫眼内容平台",
+      emoji: "🎬",
+      badge: { text: "Infra", cls: "badge-infra" },
+      desc: "内容工厂 × 分发网络（嵌入 MaoAI Internal）— Supabase 后端",
+      overallProgress: 25,
+      objectives: [
+        {
+          title: "O1: 内容生产流水线",
+          keyResults: [
+            { text: "Supabase Storage + CDN 方案落地", progress: 80 },
+            { text: "Cinema 视频批量上传脚本", progress: 70 },
+            { text: "AI 辅助内容生成 workflow", progress: 15 },
+          ]
+        },
+        {
+          title: "O2: 分发网络搭建",
+          keyResults: [
+            { text: "多平台同步发布（抖音/小红书/B站）", progress: 10 },
+            { text: "n8n 自动化调度 workflow", progress: 5 },
+            { text: "数据看板（播放量/转化率）", progress: 0 },
+          ]
+        }
+      ],
+      stats: { okrs: 2, krs: 6, completedKRs: 0 }
+    }
+  ]
+};
+
+// ============================================================
+// 🎨 RENDER ENGINE
+// ============================================================
+
+const KR_COLORS = ["c-blue", "c-green", "c-yellow", "c-red", "c-purple", "c-cyan", "c-orange"];
+
+function getProgressColor(pct) {
+  if (pct >= 80) return "#10b981";
+  if (pct >= 50) return "#3b82f6";
+  if (pct >= 25) return "#f59e0b";
+  return "#ef4444";
+}
+
+function renderCompassRing() {
+  const businesses = OKR_DATA.businesses;
+  let totalPct = 0;
+  businesses.forEach(b => totalPct += b.overallProgress);
+  totalPct = Math.round(totalPct / businesses.length);
+
+  document.getElementById("totalPercent").textContent = totalPct + "%";
+  document.getElementById("quarterLabel").textContent = OKR_DATA.meta.currentQuarter + " 进行中";
+
+  // Draw quarter segments on the SVG ring
+  const g = document.getElementById("ringSegments");
+  const cx = 80, cy = 80, r = 68;
+  const circumference = 2 * Math.PI * r;
+
+  businesses.forEach((biz, i) => {
+    const startAngle = (i / businesses.length) * 360 - 90;
+    const endAngle = ((i + 1) / businesses.length) * 360 - 90;
+    const gap = 3; // degrees
+    const pct = biz.overallProgress / 100;
+
+    const startRad = ((startAngle + gap) * Math.PI) / 180;
+    const endRadBase = ((endAngle - gap) * Math.PI) / 180;
+    const endRad = startRad + (endRadBase - startRad) * pct;
+
+    const x1 = cx + r * Math.cos(startRad);
+    const y1 = cy + r * Math.sin(startRad);
+    const x2 = cx + r * Math.cos(endRad);
+    const y2 = cy + r * Math.sin(endRad);
+    
+    // Background arc (full segment, faint)
+    const xBgEnd = cx + r * Math.cos(endRadBase);
+    const yBgEnd = cy + r * Math.sin(endRadBase);
+    const largeArcBg = endRadBase - startRad > Math.PI ? 1 : 0;
+
+    const bgArc = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    bgArc.setAttribute("d", `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArcBg} 1 ${xBgEnd} ${yBgEnd} Z`);
+    bgArc.setAttribute("fill", "rgba(45,58,79,0.5)");
+    bgArc.setAttribute("stroke", "none");
+    g.appendChild(bgArc);
+
+    // Progress arc (colored portion)
+    if (pct > 0.02) {
+      const largeArc = endRad - startRad > Math.PI ? 1 : 0;
+      const arc = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      arc.setAttribute("d", `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`);
+      arc.setAttribute("fill", getProgressColor(biz.overallProgress));
+      arc.setAttribute("opacity", "0.85");
+      g.appendChild(arc);
+    }
+  });
+}
+
+function renderPhaseBar() {
+  const container = document.getElementById("phaseBar");
+  container.innerHTML = "";
+  OKR_DATA.meta.phases.forEach((phase, i) => {
+    const step = document.createElement("div");
+    step.className = `phase-step ${phase.status}`;
+    step.innerHTML = `<strong>${phase.name}</strong><br><small>${phase.desc}</small>`;
+    container.appendChild(step);
+    if (i < OKR_DATA.meta.phases.length - 1) {
+      const arrow = document.createElement("span");
+      arrow.className = "phase-arrow";
+      arrow.textContent = "▸";
+      container.appendChild(arrow);
+    }
+  });
+}
+
+function renderBusinessCards() {
+  const grid = document.getElementById("businessGrid");
+  grid.innerHTML = "";
+
+  OKR_DATA.businesses.forEach(biz => {
+    const card = document.createElement("div");
+    card.className = "biz-card";
+    card.dataset.biz = biz.id;
+
+    let objectivesHtml = "";
+    biz.objectives.forEach((obj, oi) => {
+      let krRows = "";
+      obj.keyResults.forEach((kr, ki) => {
+        const colorCls = KR_COLORS[(oi * 3 + ki) % KR_COLORS.length];
+        krRows += `
+          <div class="kr-row">
+            <span class="kr-text">${kr.text}</span>
+            <div class="kr-bar-wrap"><div class="kr-bar ${colorCls}" style="width:${kr.progress}%"></div></div>
+            <span class="kr-pct" style="color:${getProgressColor(kr.progress)}">${kr.progress}%</span>
+          </div>`;
+      });
+
+      objectivesHtml += `
+        <div class="objective">
+          <div class="obj-title">${obj.title}</div>
+          ${krRows}
+        </div>`;
+    });
+
+    card.innerHTML = `
+      <div class="biz-header">
+        <div><span class="biz-emoji">${biz.emoji}</span><span class="biz-name">${biz.name}</span></div>
+        <span class="biz-badge ${biz.badge.cls}">${biz.badge.text}</span>
+      </div>
+      <div class="biz-desc">${biz.desc}</div>
+      ${objectivesHtml}
+      <div class="card-summary">
+        <div class="summary-stat">
+          <span class="summary-val" style="color:${getProgressColor(biz.overallProgress)}">${biz.overallProgress}%</span>
+          <span class="summary-lbl">总进度</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-val">${biz.stats.okrs}</span>
+          <span class="summary-lbl">目标数</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-val">${biz.stats.krs}</span>
+          <span class="summary-lbl">关键结果</span>
+        </div>
+      </div>`;
+
+    grid.appendChild(card);
+  });
+}
+
+function setUpdateTime() {
+  const now = new Date();
+  document.getElementById("updateTime").textContent = now.toLocaleString("zh-CN", {
+    month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"
+  });
+}
+
+// ============================================================
+// 🔧 INIT — 防跳闪：先锁定滚动 → 渲染 → 解锁
+// ============================================================
+(function init() {
+  // 1. 锁定当前滚动位置
+  var scrollY = window.scrollY || window.pageYOffset || 0;
+  
+  // 2. 允许 n8n 注入数据覆盖
+  if (window.__OKR_INJECTED__) {
+    Object.assign(OKR_DATA, window.__OKR_INJECTED__);
+  }
+
+  // 3. 执行所有渲染（DOM 操作期间不可见）
+  setUpdateTime();
+  renderCompassRing();
+  renderPhaseBar();
+  renderBusinessCards();
+
+  // 4. 渲染完成，恢复滚动位置 + 移除 loading 状态
+  requestAnimationFrame(function() {
+    window.scrollTo(0, scrollY);
+    document.body.classList.remove('loading');
+  });
+})();
+</script>
+
+</body>
+</html>
