@@ -1,8 +1,5 @@
 /*
  * ============================================================
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
  * Services Section — 首页服务与定价局部展示
  * ============================================================
  * 逻辑：突出展示极具竞争力的入门价格（9.8/38/98/198）
@@ -12,11 +9,6 @@
 import { useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Brain, Zap, ArrowRight, Check, Sparkles, Flame } from "lucide-react";
-=======
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
  * Services Section — 首页业务与定价展示
  * ============================================================
  * 逻辑：
@@ -72,20 +64,10 @@ const services = [
     icon: <Shield className="text-[#8B1A1A]" size={24} />
   }
 ];
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
 
 export default function Services() {
   const { i18n } = useTranslation();
   const isEn = i18n.language !== "zh";
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -244,11 +226,6 @@ export default function Services() {
                   </a>
                 </div>
               </div>
-=======
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
 
   return (
     <section id="services" className="py-24 bg-[#0A0A0A] border-t border-white/5">
@@ -295,20 +272,10 @@ export default function Services() {
                   {isEn ? "View Details" : "查看详情"} <ArrowRight size={14} />
                 </a>
               </Link>
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
             </div>
           ))}
         </div>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         {/* Bottom Link to Full Pricing */}
         <div className="reveal flex flex-col md:flex-row items-center justify-between gap-8 p-8 border border-[#C9A84C]/20 bg-[#C9A84C]/5 rounded-lg">
           <div className="flex items-center gap-6">
@@ -327,11 +294,6 @@ export default function Services() {
             {isEn ? "Full Pricing" : "完整定价"}
             <ArrowRight size={18} />
           </a>
-=======
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
         {/* 子公司跳转链接 */}
         <div className="mt-20 p-10 border border-[#C9A84C]/20 bg-[#C9A84C]/5 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-6">
@@ -348,13 +310,6 @@ export default function Services() {
               访问鲸达影业官网
             </a>
           </Link>
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
         </div>
       </div>
     </section>

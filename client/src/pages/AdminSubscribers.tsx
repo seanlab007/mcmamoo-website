@@ -369,15 +369,7 @@ export default function AdminSubscribers() {
                     type="text"
                     value={emailSubject}
                     onChange={e => setEmailSubject(e.target.value)}
-<<<<<<< HEAD
-<<<<<<< HEAD
                     placeholder="例：猫眼战略简报 · 2025年Q1全球市场洞察"
-=======
-                    placeholder="例：猫眼增长引擎 (Mc&Mamoo Growth Engine)战略简报 · 2025年Q1全球市场洞察"
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-                    placeholder="例：猫眼增长引擎 (Mc&Mamoo Growth Engine)战略简报 · 2025年Q1全球市场洞察"
->>>>>>> origin/deploy/trigger-build-1774631965
                     disabled={sending}
                     style={{
                       width: "100%", boxSizing: "border-box",

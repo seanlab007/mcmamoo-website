@@ -3,9 +3,6 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 // ⚠️ 注意：不要在模块顶层读取 process.env！
 // tsx 执行时 ES 模块 import 会先于 dotenv.config() 执行，导致环境变量为空
 // 所有需要环境变量的地方都通过 getSupabaseConfig() 函数动态获取
@@ -20,24 +17,6 @@ function getSupabaseConfig() {
 
 function getApiKey(cfg: ReturnType<typeof getSupabaseConfig>) {
   return cfg.serviceKey || cfg.anonKey;
-=======
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ?? "";
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY ?? "";
-
-function getApiKey() {
-  return SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
 }
 
 /**
@@ -45,28 +24,10 @@ function getApiKey() {
  * 避免直接 PostgreSQL 连接（pooler 在 Railway 环境中不可用）
  */
 async function getUserByOpenId(openId: string): Promise<Record<string, unknown> | null> {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   const cfg = getSupabaseConfig();
   const key = getApiKey(cfg);
   const resp = await fetch(
     `${cfg.url}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}&limit=1`,
->>>>>>> origin/deploy/trigger-build-1774631965
     {
       headers: {
         apikey: key,
@@ -88,28 +49,10 @@ async function getUserByOpenId(openId: string): Promise<Record<string, unknown> 
  * 查询邮箱对应的用户（处理 PENDING_FIRST_LOGIN 情况）
  */
 async function getUserByEmail(email: string): Promise<Record<string, unknown> | null> {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   const cfg = getSupabaseConfig();
   const key = getApiKey(cfg);
   const resp = await fetch(
     `${cfg.url}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&limit=1`,
->>>>>>> origin/deploy/trigger-build-1774631965
     {
       headers: {
         apikey: key,
@@ -127,28 +70,10 @@ async function getUserByEmail(email: string): Promise<Record<string, unknown> | 
  * 更新用户的 openId（处理 PENDING_FIRST_LOGIN → 实际 openId）
  */
 async function updateUserOpenId(id: number, openId: string, lastSignedIn: string): Promise<void> {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   const cfg = getSupabaseConfig();
   const key = getApiKey(cfg);
   const resp = await fetch(
     `${cfg.url}/rest/v1/users?id=eq.${id}`,
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?id=eq.${id}`,
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?id=eq.${id}`,
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?id=eq.${id}`,
->>>>>>> origin/deploy/trigger-build-1774631965
     {
       method: "PATCH",
       headers: {
@@ -176,28 +101,10 @@ async function upsertUser(user: {
   role: string;
   lastSignedIn: string;
 }): Promise<void> {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   const cfg = getSupabaseConfig();
   const key = getApiKey(cfg);
   const resp = await fetch(
     `${cfg.url}/rest/v1/users`,
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users`,
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users`,
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-  const key = getApiKey();
-  const resp = await fetch(
-    `${SUPABASE_URL}/rest/v1/users`,
->>>>>>> origin/deploy/trigger-build-1774631965
     {
       method: "POST",
       headers: {
@@ -230,21 +137,9 @@ export function registerSupabaseAuthRoutes(app: Express) {
       return;
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     const cfg = getSupabaseConfig();
     if (!cfg.url || !cfg.anonKey) {
       console.error("[SupabaseAuth] Missing env: SUPABASE_URL or SUPABASE_ANON_KEY");
-=======
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
->>>>>>> origin/deploy/trigger-build-1774631965
       res.status(500).json({ error: "Supabase not configured" });
       return;
     }
@@ -252,36 +147,12 @@ export function registerSupabaseAuthRoutes(app: Express) {
     try {
       // 1. 调用 Supabase Auth 验证邮箱密码
       const authResp = await fetch(
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         `${cfg.url}/auth/v1/token?grant_type=password`,
-=======
-        `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-        `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-        `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
->>>>>>> origin/deploy/trigger-build-1774631965
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
             apikey: cfg.anonKey,
-=======
-            apikey: SUPABASE_ANON_KEY,
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-            apikey: SUPABASE_ANON_KEY,
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-            apikey: SUPABASE_ANON_KEY,
->>>>>>> origin/deploy/trigger-build-1774631965
           },
           body: JSON.stringify({ email, password }),
         }
@@ -338,27 +209,9 @@ export function registerSupabaseAuthRoutes(app: Express) {
       } else {
         role = (existingUser.role as "admin" | "user") ?? "user";
         // 更新 lastSignedIn
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         const key = getApiKey(cfg);
         await fetch(
           `${cfg.url}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
-=======
-        const key = getApiKey();
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
->>>>>>> origin/fix/navbar-dropdown-interaction
-=======
-        const key = getApiKey();
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-        const key = getApiKey();
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
->>>>>>> origin/deploy/trigger-build-1774631965
           {
             method: "PATCH",
             headers: {

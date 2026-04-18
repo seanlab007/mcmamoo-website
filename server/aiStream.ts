@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { MODEL_CONFIGS } from "./routers";
+import { MODEL_CONFIGS } from "./models";
 import { dbFetch } from "./aiNodes";
 import { refreshSkillCache, getSkillCacheSnapshot, matchSkillForMessage } from "./skillMatcher";
 import { sdk } from "./_core/sdk";

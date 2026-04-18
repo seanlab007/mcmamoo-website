@@ -88,8 +88,6 @@ export default function Contact() {
             {/* Business card QR code */}
             <div className="mb-8">
               <div className="inline-flex items-center gap-6 p-5 border border-[#C9A84C]/25 bg-[#C9A84C]/5 hover:border-[#C9A84C]/50 transition-all duration-300">
-<<<<<<< HEAD
-<<<<<<< HEAD
                 {/* QR code with gold frame */}
                 <div className="relative flex-shrink-0">
                   <div className="absolute -inset-1 border border-[#C9A84C]/40" />
@@ -110,9 +108,6 @@ export default function Contact() {
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-px bg-[#C9A84C]/50" />
                     <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">MCMAMOO.COM</span>
-=======
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
                 {92	                <div className="relative flex-shrink-0">
                   {/* 外层金边框 */}
                   <div className="absolute -inset-1 border border-[#C9A84C]/60" />
@@ -138,10 +133,6 @@ export default function Contact() {
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-px bg-[#C9A84C]/50" />
                     <span className="text-[#C9A84C]/70 text-[0.6rem] font-['DM_Mono'] tracking-widest">Mc&Mamoo Growth Engine.COM</span>
-<<<<<<< HEAD
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
                   </div>
                 </div>
               </div>

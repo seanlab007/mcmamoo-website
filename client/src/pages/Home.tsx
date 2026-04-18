@@ -1,20 +1,8 @@
 /*
  * ============================================================
-<<<<<<< HEAD
-<<<<<<< HEAD
  * Home Page — 猫眼增长引擎官网首页
  * ============================================================
  * Design : 暗夜金融极简主义 — 深黑底色 + 猫眼金点缀
-=======
- * Home Page — 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎官网首页
- * ============================================================
- * Design : 暗夜金融极简主义 — 深黑底色 + 猫眼增长引擎 (Mc&Mamoo Growth Engine)金点缀
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
- * Home Page — 猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎官网首页
- * ============================================================
- * Design : 暗夜金融极简主义 — 深黑底色 + 猫眼增长引擎 (Mc&Mamoo Growth Engine)金点缀
->>>>>>> origin/deploy/trigger-build-1774631965
  * Theme  : 品牌显贵 · 利润倍增 · 全域增长
  *
  * Sections（顺序）:
@@ -22,15 +10,7 @@
  *   → Hero → InternationalRecognition → BusinessDivision
  *   → About → Awards → KOL → Services（含分级定价）
  *   → Cases → GlobalCases → Methodology
-<<<<<<< HEAD
-<<<<<<< HEAD
  *   → Team → MaoIndustry（猫眼工业，置底）
-=======
- *   → Team → MaoIndustry（猫眼增长引擎 (Mc&Mamoo Growth Engine)工业，置底）
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
- *   → Team → MaoIndustry（猫眼增长引擎 (Mc&Mamoo Growth Engine)工业，置底）
->>>>>>> origin/deploy/trigger-build-1774631965
  *   → FAQ → Contact → Footer
  *
  * ⚠️  PROTECTED FILE — 由 Manus 统一维护
@@ -62,18 +42,8 @@ const HOME_JSON_LD = [
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
     "@id": "https://www.mcmamoo.com/#service",
-<<<<<<< HEAD
-<<<<<<< HEAD
     "name": "猫眼咨询品牌战略服务",
     "description": "猫眼咨询为新消费品牌提供全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货四大核心服务。",
-=======
-    "name": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)品牌战略服务",
-    "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)为新消费品牌提供全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货四大核心服务。",
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-    "name": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)品牌战略服务",
-    "description": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)为新消费品牌提供全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货四大核心服务。",
->>>>>>> origin/deploy/trigger-build-1774631965
     "provider": { "@id": "https://www.mcmamoo.com/#organization" },
     "areaServed": "CN",
     "serviceType": "品牌战略咨询",
@@ -85,44 +55,26 @@ const HOME_JSON_LD = [
     "mainEntity": [
       {
         "@type": "Question",
-<<<<<<< HEAD
-<<<<<<< HEAD
         "name": "猫眼咨询的核心服务是什么？",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "猫眼咨询提供四大核心服务：新消费第一品牌全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货。独创错位竞争理论，帮助品牌实现品类第一。"
-=======
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
         "name": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)的核心服务是什么？",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)提供四大核心服务：新消费第一品牌全案战略咨询、爆品营销策划、天猫流量池构建、整合营销带货。独创错位竞争理论，帮助品牌实现品类第一。"
-<<<<<<< HEAD
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
         }
       },
       {
         "@type": "Question",
-<<<<<<< HEAD
-<<<<<<< HEAD
         "name": "猫眼咨询服务过哪些知名品牌？",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "猫眼咨询服务过江中猴姑饼干（上市第一年17亿销售额）、小仙炖鲜炖燕窝（5年20亿在线营收、天猫品类第一）、小罐茶、蟹太太大闸蟹（全网蟹券销量连续多年第一）、胖哥食品等10亿级大单品品牌。"
-=======
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
         "name": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)服务过哪些知名品牌？",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)服务过江中猴姑饼干（上市第一年17亿销售额）、小仙炖鲜炖燕窝（5年20亿在线营收、天猫品类第一）、小罐茶、蟹太太大闸蟹（全网蟹券销量连续多年第一）、胖哥食品等10亿级大单品品牌。"
-<<<<<<< HEAD
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
         }
       },
       {
@@ -130,36 +82,19 @@ const HOME_JSON_LD = [
         "name": "什么是错位竞争理论？",
         "acceptedAnswer": {
           "@type": "Answer",
-<<<<<<< HEAD
-<<<<<<< HEAD
           "text": "错位竞争是猫眼咨询独创的品牌战略理论，核心是帮助品牌避开正面竞争，通过品类错位、场景错位、人群错位等方式找到市场空白，实现快速成为细分品类第一。"
-=======
-          "text": "错位竞争是猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)独创的品牌战略理论，核心是帮助品牌避开正面竞争，通过品类错位、场景错位、人群错位等方式找到市场空白，实现快速成为细分品类第一。"
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-          "text": "错位竞争是猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)独创的品牌战略理论，核心是帮助品牌避开正面竞争，通过品类错位、场景错位、人群错位等方式找到市场空白，实现快速成为细分品类第一。"
->>>>>>> origin/deploy/trigger-build-1774631965
         }
       },
       {
         "@type": "Question",
-<<<<<<< HEAD
-<<<<<<< HEAD
         "name": "猫眼咨询与麦肯锡等传统咨询公司有什么区别？",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "猫眼咨询不提供研究报告，而是打造爆品使利润倍增；不是传统甲乙关系，而是深度战略合伙人；不只给建议，而是全域增长打爆天猫；不做短期项目指导，而是品牌显贵长期护航。"
-=======
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
         "name": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)与麦肯锡等传统咨询公司有什么区别？",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)不提供研究报告，而是打造爆品使利润倍增；不是传统甲乙关系，而是深度战略合伙人；不只给建议，而是全域增长打爆天猫；不做短期项目指导，而是品牌显贵长期护航。"
-<<<<<<< HEAD
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
         }
       }
     ]
@@ -168,25 +103,16 @@ const HOME_JSON_LD = [
 
 export default function Home() {
   useSEO({
-<<<<<<< HEAD
-<<<<<<< HEAD
     title: "猫眼咨询 · Mc&Mamoo Brand Management Inc. | 中国新消费第一品牌战略咨询公司",
     description: "猫眼咨询（Mc&Mamoo Brand Management Inc.）独创错位竞争理论，服务江中猴姑、小仙炖、小罐茶、蟹太太等10亿级大单品。品牌显贵·利润倍增·全域增长，成为您的深度战略合伙人。",
     url: "https://www.mcmamoo.com/",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-bg-d7eizqgBbqatPTyug6Apqv.webp",
     keywords: "猫眼咨询,Mc&Mamoo,品牌战略咨询,新消费品牌,错位竞争,品牌定位,爆品策划,天猫运营,品牌管理公司,战略咨询,消费品牌升级,品类战略",
-=======
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
     title: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine) · Mc&Mamoo Brand Management Inc. | 中国新消费第一品牌战略咨询公司",
     description: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine)（Mc&Mamoo Brand Management Inc.）独创错位竞争理论，服务江中猴姑、小仙炖、小罐茶、蟹太太等10亿级大单品。品牌显贵·利润倍增·全域增长，成为您的深度战略合伙人。",
     url: "https://www.mcmamoo.com/",
     image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/hero-bg-d7eizqgBbqatPTyug6Apqv.webp",
     keywords: "猫眼增长引擎 (Mc&Mamoo Growth Engine)增长引擎 (Mc&Mamoo Growth Engine),Mc&Mamoo,品牌战略咨询,新消费品牌,错位竞争,品牌定位,爆品策划,天猫运营,品牌管理公司,战略咨询,消费品牌升级,品类战略",
-<<<<<<< HEAD
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
     jsonLd: HOME_JSON_LD,
     breadcrumbs: [{ name: "首页", url: "/" }],
   });
@@ -219,15 +145,7 @@ export default function Home() {
         <Methodology />
         {/* ── 12 团队 ── */}
         <Team />
-<<<<<<< HEAD
-<<<<<<< HEAD
         {/* ── 13 猫眼工业（置底） ── */}
-=======
-        {/* ── 13 猫眼增长引擎 (Mc&Mamoo Growth Engine)工业（置底） ── */}
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
-        {/* ── 13 猫眼增长引擎 (Mc&Mamoo Growth Engine)工业（置底） ── */}
->>>>>>> origin/deploy/trigger-build-1774631965
         <MaoIndustry />
         {/* ── 14 常见问题 ── */}
         <FAQ />

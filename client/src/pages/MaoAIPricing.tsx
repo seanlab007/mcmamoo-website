@@ -325,23 +325,14 @@ export default function MaoAIPricing() {
                     {
                       icon: <LayoutGrid size={12} />,
                       text: limits.contentQuota === 0
-<<<<<<< HEAD
-<<<<<<< HEAD
                         ? t("猫眼内容平台（不含）", "Content platform (not included)", currency)
                         : limits.contentQuota === -1
                         ? t("猫眼内容平台 · 无限生产 · 全平台", "Content platform · Unlimited · All channels", currency)
                         : t(`猫眼内容平台 · ${limits.contentQuota}篇/月 · ${limits.contentPlatforms.length}个平台`, `Content platform · ${limits.contentQuota}/mo · ${limits.contentPlatforms.length} channels`, currency),
-=======
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
                         ? t("猫眼增长引擎 (Mc&Mamoo Growth Engine)内容平台（不含）", "Content platform (not included)", currency)
                         : limits.contentQuota === -1
                         ? t("猫眼增长引擎 (Mc&Mamoo Growth Engine)内容平台 · 无限生产 · 全平台", "Content platform · Unlimited · All channels", currency)
                         : t(`猫眼增长引擎 (Mc&Mamoo Growth Engine)内容平台 · ${limits.contentQuota}篇/月 · ${limits.contentPlatforms.length}个平台`, `Content platform · ${limits.contentQuota}/mo · ${limits.contentPlatforms.length} channels`, currency),
-<<<<<<< HEAD
->>>>>>> origin/fix/final-navbar-restructure-1774631973
-=======
->>>>>>> origin/deploy/trigger-build-1774631965
                       ok: limits.contentPlatform,
                       highlight: limits.contentPlatform,
                     },

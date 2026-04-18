@@ -265,8 +265,6 @@ export const appRouter = router({
       }),
   }),
 
-  // Sales automation router
-  sales: salesRouter,
 });
 
 export type AppRouter = typeof appRouter;

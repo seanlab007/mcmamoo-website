@@ -1,0 +1,14 @@
+{
+  "name": "n8n-railway",
+  "version": "1.0.0",
+  "description": "n8n on Railway via Nixpacks",
+  "scripts": {
+    "start": "n8n start"
+  },
+  "dependencies": {
+    "n8n": "^1.80.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
