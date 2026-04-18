@@ -614,6 +614,79 @@
 .al-error { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
 .al-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
 
+/* ===== SYNC STATUS PANEL (跨设备同步状态) ===== */
+.sync-section {
+  padding: 20px 32px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.sync-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.sync-title { font-size: 17px; font-weight: 700; color: #e2e8f0; }
+.sync-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.sync-badge {
+  font-size: 10px; padding: 3px 10px; border-radius: 12px; font-weight: 700;
+}
+.sync-badge-all-ok { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.25); }
+.sync-badge-pending { background: rgba(245,158,11,0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.25); }
+
+/* Protocol Hint */
+.sync-protocol-hint {
+  background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(139,92,246,0.06));
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: #c7d2fe;
+}
+.sync-protocol-hint code {
+  background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 5px;
+  font-size: 11px; color: #a5b4fc; font-family: 'SF Mono', Monaco, monospace;
+}
+
+/* Sync Matrix Table */
+.sync-matrix-wrap { overflow-x: auto; margin-bottom: 14px; border-radius: 12px; border: 1px solid var(--border); }
+.sync-matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.sync-matrix-table thead { background: var(--surface); position: sticky; top: 0; z-index: 2; }
+.sync-matrix-table th {
+  padding: 9px 12px; text-align: left; font-weight: 700; color: #94a3b8;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+  white-space: nowrap; border-bottom: 1px solid var(--border);
+}
+.sync-matrix-table td {
+  padding: 9px 12px; border-bottom: 1px solid rgba(45,58,79,0.6);
+  vertical-align: middle;
+}
+.sync-matrix-table tbody tr:hover { background: rgba(59,130,246,0.04); }
+.sync-matrix-table tbody tr:last-child td { border-bottom: none; }
+
+.sync-cell-machine { font-weight: 700; color: #e2e8f0; min-width: 150px; }
+.sync-cell-synced { color: var(--success); font-weight: 800; text-align: center; font-size: 14px; }
+.sync-cell-pending { color: var(--warning); font-weight: 800; text-align: center; font-size: 14px; }
+.sync-cell-time { color: var(--muted); font-size: 10px; white-space: nowrap; }
+.sync-severity-high { color: var(--danger); font-weight: 600; font-size: 9px; }
+
+/* Pending Actions */
+.sync-pending-actions { display: none; }
+.sync-pending-actions.show { display: block; }
+.sync-action-card {
+  background: rgba(245,158,11,0.04); border: 1px solid rgba(245,158,11,0.15);
+  border-radius: 10px; padding: 14px 16px; margin-top: 10px;
+}
+.sync-action-title { font-size: 12px; font-weight: 700; color: var(--warning); margin-bottom: 6px; }
+.sync-action-cmd {
+  background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 8px;
+  font-family: 'SF Mono', Monaco, monospace; font-size: 11px; color: #d1d5db;
+  word-break: break-all; line-height: 1.5;
+}
+
 /* Footer */
 .footer {
   text-align: center;
@@ -908,6 +981,27 @@
   <div id="fleetAlertBar"></div>
   <!-- Account Groups (one per account) -->
   <div id="fleetAccountGrid"></div>
+</div>
+
+<!-- ========== SYNC STATUS PANEL (跨设备同步状态) ========== -->
+<div class="sync-section" id="syncSection">
+  <div class="sync-header">
+    <span class="sync-title">🔄 跨设备同步状态 — 修复版本追踪</span>
+    <div class="sync-badges" id="syncBadges"></div>
+  </div>
+  <!-- AI Protocol Hint -->
+  <div class="sync-protocol-hint" id="syncProtocolHint">
+    <strong>🤖 AI 入场协议：</strong>任何 AI 进入此工作区后，请先运行 <code>node n8n-bridge/sync-checker.js audit</code> 检查同步状态
+  </div>
+  <!-- Sync Matrix -->
+  <div class="sync-matrix-wrap">
+    <table class="sync-matrix-table" id="syncMatrixTable">
+      <thead id="syncMatrixHead"></thead>
+      <tbody id="syncMatrixBody"></tbody>
+    </table>
+  </div>
+  <!-- Pending Actions -->
+  <div id="syncPendingActions" class="sync-pending-actions"></div>
 </div>
 
 <!-- ========== SYSTEM HEALTH (多机状态) ========== -->
@@ -1891,6 +1985,174 @@ function renderFleetPanel() {
   document.getElementById("fleetSection").style.display = "";
 }
 
+// ═══════════════════════════════════════════════════════
+// 🔄 SYNC STATUS PANEL — 跨设备同步状态渲染
+// ═══════════════════════════════════════════════════════
+
+/**
+ * 同步面板数据: 可以通过 window.__SYNC_INJECTED__ 注入真实数据，
+ * 否则使用内置的演示数据（模拟5台机器的同步状态）
+ */
+function getSyncData() {
+  if (window.__SYNC_INJECTED__) return window.__SYNC_INJECTED__;
+
+  // 内置演示数据 — 展示真实的同步场景
+  // 实际部署时由 sync-checker.js 的数据或 n8n 注入
+  var now = new Date().toISOString();
+  return {
+    version: "1.0.0",
+    lastUpdated: now,
+    fixes: [
+      { id: "F-001", title: "罗盘渲染防跳转（scrollY 锁定）", files: ["n8n-compass/compass.html"], severity: "high" },
+      { id: "FEAT-001", title: "任务舰队面板（多账号/多设备任务展示）", files: ["compass.html","task-fleet-bridge.js"], severity: "medium" },
+      { id: "F-002", title: "并发控制（每设备2个/全局5个上限）", files: ["task-fleet-bridge.js"], severity: "high" },
+    ],
+    machines: {
+      "mbp-pro": {
+        name: "MacBook Pro 主力机", hostname: "daiyandeMacBook-Pro.local",
+        status: "synced", syncedAt: now, syncedFixIds: ["F-001","FEAT-001","F-002"],
+        pendingCount: 0
+      },
+      "imac-home": {
+        name: "iMac 家庭机", hostname: "Daiyans-iMac.local",
+        status: "partial", syncedAt: null, syncedFixIds: ["F-001"],
+        pendingCount: 2
+      },
+      "mba-travel": {
+        name: "MacBook Air 出差机", hostname: "Daiyans-MBA.local",
+        status: "pending", syncedAt: null, syncedFixIds: [],
+        pendingCount: 3
+      },
+      "vps-01": {
+        name: "Ubuntu VPS", hostname: "203.0.113.50",
+        status: "stale", syncedAt: new Date(Date.now()-172800000).toISOString(),
+        syncedFixIds: [], pendingCount: 3,
+        note: "2天未连接"
+      },
+      "remote-dev": {
+        name: "Remote Dev", hostname: "N/A",
+        status: "offline", syncedAt: null, syncedFixIds: [],
+        pendingCount: 3, note: "离线"
+      }
+    }
+  };
+}
+
+/** 获取严重度显示 */
+function severityBadge(severity) {
+  if (severity === "high") return '<span class="sync-severity-high">🔴 高</span>';
+  if (severity === "medium") return '<span style="color:var(--warning);font-weight:600;font-size:9px">🟡 中</span>';
+  return '<span style="color:var(--muted);font-weight:600;font-size:9px">🟢 低</span>';
+}
+
+function renderSyncPanel() {
+  var data = getSyncData();
+  var fixes = data.fixes || [];
+  var machines = data.machines || {};
+
+  // ── Badges ──
+  var totalMachines = Object.keys(machines).length;
+  var fullySynced = 0;
+  var hasPending = 0;
+  for (var mid in machines) {
+    var m = machines[mid];
+    if (m.status === "synced") fullySynced++;
+    if (m.pendingCount > 0 || m.status !== "synced") hasPending++;
+  }
+
+  var badgesEl = document.getElementById("syncBadges");
+  badgesEl.innerHTML =
+    '<span class="sync-badge ' + (hasPending === 0 ? 'sync-badge-all-ok' : 'sync-badge-pending') + '">' +
+    (fullySynced + '/' + totalMachines + ' 机器已同步') +
+    '</span>' +
+    '<span class="sync-badge sync-badge-pending">' +
+    fixes.length + ' 个修复条目' +
+    '</span>';
+
+  // ── Matrix Table Header ──
+  var thead = document.getElementById("syncMatrixHead");
+  var headerRow = "<tr><th>🖥️ 设备</th>";
+  fixes.forEach(function(f) {
+    headerRow += "<th>" + f.id + "<br><small style='font-weight:400'>" + severityBadge(f.severity) + "</small></th>";
+  });
+  headerRow += "<th>状态</th><th>最后同步</th></tr>";
+  thead.innerHTML = headerRow;
+
+  // ── Matrix Table Body ──
+  var tbody = document.getElementById("syncMatrixBody");
+  tbody.innerHTML = "";
+
+  var machineOrder = { synced:0, partial:1, stale:2, pending:3, offline:4 };
+  var sortedMachines = Object.keys(machines).sort(function(a,b){
+    return (machineOrder[machines[a].status]||99) - (machineOrder[machines[b].status]||99);
+  });
+
+  sortedMachines.forEach(function(mid) {
+    var m = machines[mid];
+    var row = document.createElement("tr");
+
+    // Machine name column
+    var statusIcon = "";
+    if (m.status === "synced") statusIcon = '<span style="color:var(--success)">●</span>';
+    else if (m.status === "partial") statusIcon = '<span style="color:var(--warning)">◐</span>';
+    else if (m.status === "stale") statusIcon = '<span style="color:var(--warning)">⚠</span>';
+    else if (m.status === "offline") statusIcon = '<span style="color:var(--muted);opacity:0.4">○</span>';
+    else statusIcon = '<span style="color:var(--warning)">○</span>';
+
+    var machineCell = "<div class='sync-cell-machine'>" + statusIcon + " " + m.name;
+    machineCell += "<br><small style='font-weight:400;color:var(--muted);font-size:9px'>" + m.hostname + "</small></div>";
+    row.innerHTML += "<td>" + machineCell + "</td>";
+
+    // Fix columns
+    var syncedSet = {};
+    (m.syncedFixIds||[]).forEach(function(id){ syncedSet[id] = true; });
+
+    fixes.forEach(function(f) {
+      if (syncedSet[f.id]) {
+        row.innerHTML += "<td class='sync-cell-synced'>✅</td>";
+      } else {
+        row.innerHTML += "<td class='sync-cell-pending'>⬜</td>";
+      }
+    });
+
+    // Status column
+    var statusText = "";
+    if (m.status === "synced") statusText = '<span style="color:var(--success);font-weight:700">✓ 全部同步</span>';
+    else if (m.status === "partial") statusText = '<span style="color:var(--warning);font-weight:600">⚠️ 部分同步 (' + m.pendingCount+')</span>';
+    else if (m.status === "stale") statusText = '<span style="color:var(--warning);font-weight:600">⏰ 数据过期 ' + (m.note||'') + '</span>';
+    else if (m.status === "offline") statusText = '<span style="color:var(--muted)">💤 ' + (m.note||'离线') + '</span>';
+    else statusText = '<span style="color:var(--warning)">⏳ 待同步 (' + (m.pendingCount||fixes.length)+')</span>';
+    row.innerHTML += "<td>" + statusText + "</td>";
+
+    // Time column
+    var timeStr = m.syncedAt ? formatAgo(m.syncedAt) : "—";
+    row.innerHTML += "<td class='sync-cell-time'>" + timeStr + "</td>";
+
+    tbody.appendChild(row);
+  });
+
+  // ── Pending Actions (if any machine needs sync) ──
+  var actionsEl = document.getElementById("syncPendingActions");
+  if (hasPending > 0 && hasPending < totalMachines) {
+    actionsEl.className = "sync-pending-actions show";
+    var pendingMachines = sortedMachines.filter(function(mid){ return machines[mid].status !== "synced"; });
+    var cmdHtml = '<div class="sync-action-card">';
+    cmdHtml += '<div class="sync-action-title">⚡ ' + pendingMachines.length + ' 台设备需要同步</div>';
+    cmdHtml += '<div class="sync-action-cmd"># 在待同步的机器上执行：<br>';
+    cmdHtml += 'cd /你的项目路径 &amp;&amp; git pull origin main<br><br>';
+    cmdHtml += '# 验证文件后标记同步：<br>';
+    cmdHtml += 'node n8n-bridge/sync-checker.js mark-synced \\';
+    cmdHtml += '<br>&nbsp;&nbsp;--fix-ids "' + fixes.map(function(f){return f.id}).join(',') + '" \\';
+    cmdHtml += '<br>&nbsp;&nbsp;--machine "$(hostname)"</div></div>';
+    actionsEl.innerHTML = cmdHtml;
+  } else {
+    actionsEl.className = "sync-pending-actions";
+    actionsEl.innerHTML = "";
+  }
+
+  document.getElementById("syncSection").style.display = "";
+}
+
 (function init() {
   // 1. 锁定当前滚动位置
   var scrollY = window.scrollY || window.pageYOffset || 0;
@@ -1909,6 +2171,7 @@ function renderFleetPanel() {
   renderWorkbuddyTasks();
   renderHealthPanel();
   renderFleetPanel();  // ← 新增：任务舰队面板
+  renderSyncPanel();   // ← 新增：跨设备同步状态面板
 
   // 4. 渲染完成，恢复滚动
   requestAnimationFrame(function() {
