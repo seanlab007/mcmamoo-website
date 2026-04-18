@@ -1,5 +1,6 @@
 // dotenv 必须在所有 import 之前加载！
 import dotenv from "dotenv";
+
 dotenv.config();
 
 import express from "express";
@@ -17,6 +18,9 @@ import { notesRouter } from "../notes";
 import { fetchAllDigests } from "../research-digest";
 import { mcpServerRouter } from "../mcp-server";
 import { registerMaoRagRouter } from "../maoRagServer";
+import { setupTriadLoopWS } from "../triadLoopWS";
+import { getMaoAIRouter } from "../hybridTaskRouter";
+import { maoCorpusRouter } from "../maoCorpusRouter";
 
 // ── 内容平台 & 任务调度 ───────────────────────────────────────────────────
 import { contentPlatformRouter, initScheduler } from "../contentPlatform";
@@ -72,6 +76,9 @@ async function startServer() {
   app.use("/api/content", contentPlatformRouter);
   // MaoAI 语料库 RAG 检索（毛泽东选集向量引用）
   registerMaoRagRouter(app);
+  // MaoAI MaoCorpus RAG API (毛泽东思想向量库)
+  app.use("/api/mao-corpus", maoCorpusRouter);
+
   // tRPC API
   app.use(
     "/api/trpc",
