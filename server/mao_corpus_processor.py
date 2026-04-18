@@ -6,18 +6,106 @@
 2. 按 500 字以内的粒度进行智能切割
 3. 为每个 Chunk 生成向量（Embedding）
 4. 更新 RAG 索引文件 .code_rag_index.json
+5. 同步上传到 Supabase Storage 云端
 
 使用方法：
     python3 mao_corpus_processor.py --corpus-dir ./server/mao_corpus --output-index .code_rag_index.json
+    python3 mao_corpus_processor.py --sync-cloud  # 仅同步到云端
 """
 
 import os
 import json
 import argparse
 import hashlib
+import requests
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import re
+
+
+# Supabase 配置
+SUPABASE_URL = "https://fczherphuixpdjuevzsh.supabase.co"
+SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjemhlcnBodWl4cGRqdWV2enNoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzY0MzQ5MSwiZXhwIjoyMDg5MjE5NDkxfQ.XgyphQNQtmOPx1hFl5WyL5W_FCLOW8iX6k5ryf9KNIg"
+BUCKET_NAME = "mao-corpus"
+
+
+class CloudUploader:
+    """Supabase Storage 上传器"""
+    
+    def __init__(self):
+        self.url = SUPABASE_URL
+        self.headers = {
+            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Content-Type": "application/json"
+        }
+    
+    def upload_file(self, local_path: str, remote_name: str) -> bool:
+        """上传文件到 Supabase Storage"""
+        try:
+            url = f"{self.url}/storage/v1/object/{BUCKET_NAME}/{remote_name}"
+            
+            with open(local_path, 'rb') as f:
+                data = f.read()
+            
+            response = requests.post(url, headers={
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "apikey": SUPABASE_SERVICE_KEY,
+            }, data=data)
+            
+            if response.status_code in [200, 201]:
+                print(f"✅ 上传成功: {remote_name}")
+                return True
+            else:
+                print(f"❌ 上传失败: {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ 上传异常: {e}")
+            return False
+    
+    def verify_upload(self, remote_name: str) -> bool:
+        """验证文件是否上传成功"""
+        try:
+            url = f"{self.url}/storage/v1/object/public/{BUCKET_NAME}/{remote_name}"
+            response = requests.head(url, timeout=10)
+            return response.status_code == 200
+        except:
+            return False
+    
+    def sync_to_cloud(self, local_index_path: str, local_backup_path: str = None) -> Dict[str, bool]:
+        """同步本地文件到云端"""
+        results = {}
+        
+        print("=" * 60)
+        print("☁️  同步到 Supabase Storage")
+        print("=" * 60)
+        print(f"📤 Bucket: {BUCKET_NAME}")
+        print(f"📁 索引文件: {local_index_path}")
+        print("=" * 60)
+        
+        # 上传向量索引
+        if os.path.exists(local_index_path):
+            results['index'] = self.upload_file(
+                local_index_path, 
+                'code_rag_index.json'
+            )
+        
+        # 上传备份压缩包
+        if local_backup_path and os.path.exists(local_backup_path):
+            results['backup'] = self.upload_file(
+                local_backup_path,
+                'mao_corpus_backup.tar.gz'
+            )
+        
+        print("=" * 60)
+        print("📊 上传结果:")
+        for name, success in results.items():
+            status = "✅" if success else "❌"
+            print(f"   {status} {name}")
+        print("=" * 60)
+        
+        return results
 
 class MaoCorpusProcessor:
     def __init__(self, corpus_dir: str, output_index: str, chunk_size: int = 500):
@@ -205,8 +293,38 @@ def main():
     parser.add_argument("--corpus-dir", default="./server/mao_corpus", help="语料库目录")
     parser.add_argument("--output-index", default=".code_rag_index.json", help="输出索引文件")
     parser.add_argument("--chunk-size", type=int, default=500, help="Chunk 大小（字数）")
+    parser.add_argument("--sync-cloud", action="store_true", help="同步到 Supabase 云端")
+    parser.add_argument("--cloud-only", action="store_true", help="仅同步云端，不处理语料")
     
     args = parser.parse_args()
+    
+    # 仅同步云端模式
+    if args.cloud_only:
+        print("🚀 同步 MaoCorpus 到 Supabase 云端...")
+        print("=" * 60)
+        
+        uploader = CloudUploader()
+        
+        # 索引文件
+        index_path = os.path.join(args.corpus_dir, ".code_rag_index.json")
+        
+        # 创建备份压缩包
+        backup_path = os.path.join(args.corpus_dir, "mao_corpus_backup.tar.gz")
+        full_text = os.path.join(args.corpus_dir, "毛泽东选集第1-5卷.txt")
+        gen_script = os.path.join(args.corpus_dir, "generate_vectors.py")
+        
+        if os.path.exists(full_text) and os.path.exists(gen_script):
+            os.system(f"cd {args.corpus_dir} && tar -czf mao_corpus_backup.tar.gz '毛泽东选集第1-5卷.txt' generate_vectors.py")
+        
+        results = uploader.sync_to_cloud(index_path, backup_path if os.path.exists(backup_path) else None)
+        
+        # 验证
+        if results.get('index'):
+            print("\n🔗 云端访问地址:")
+            print(f"   索引: {SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/code_rag_index.json")
+            print(f"   备份: {SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/mao_corpus_backup.tar.gz")
+        
+        return
     
     print("🚀 《毛泽东选集》语料库处理开始...")
     print("=" * 60)
@@ -216,12 +334,34 @@ def main():
     processor.update_index()
     processor.generate_embedding_script()
     
+    # 同步到云端
+    if args.sync_cloud:
+        print("\n☁️  自动同步到 Supabase...")
+        uploader = CloudUploader()
+        index_path = os.path.join(args.corpus_dir, ".code_rag_index.json")
+        
+        # 创建备份
+        backup_path = os.path.join(args.corpus_dir, "mao_corpus_backup.tar.gz")
+        full_text = os.path.join(args.corpus_dir, "毛泽东选集第1-5卷.txt")
+        gen_script = os.path.join(args.corpus_dir, "generate_vectors.py")
+        
+        if os.path.exists(full_text) and os.path.exists(gen_script):
+            import subprocess
+            subprocess.run(
+                f"cd {args.corpus_dir} && tar -czf mao_corpus_backup.tar.gz '毛泽东选集第1-5卷.txt' generate_vectors.py",
+                shell=True, capture_output=True
+            )
+        
+        uploader.sync_to_cloud(index_path, backup_path if os.path.exists(backup_path) else None)
+    
     print("=" * 60)
     print("✅ 处理完成！")
     print("\n📋 下一步操作:")
     print("1. 运行向量化脚本: python3 server/generate_embeddings.py")
     print("2. 重启 MaoAI 服务: pnpm dev")
     print("3. 在对话框中测试新的语料检索")
+    print("\n☁️  云端访问:")
+    print(f"   https://{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/")
 
 if __name__ == "__main__":
     main()
