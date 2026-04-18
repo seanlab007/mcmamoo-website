@@ -307,6 +307,128 @@
     color: var(--muted);
   }
 
+  /* ===== WORKBUDDY TASKS PANEL ===== */
+  .wb-section {
+    padding: 20px 32px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .wb-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .wb-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wb-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(99,102,241,0.15);
+    color: #818cf8;
+    border: 1px solid rgba(99,102,241,0.25);
+    font-weight: 600;
+  }
+  .wb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 12px;
+  }
+  .wb-task {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .wb-task:hover { border-color: rgba(99,102,241,0.35); }
+  .wb-task::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px;
+    border-radius: 11px 0 0 11px;
+  }
+  .wb-task[data-status="running"]::before { background: var(--accent); animation: wb-pulse 2s ease-in-out infinite; }
+  .wb-task[data-status="completed"]::before { background: var(--success); }
+  .wb-task[data-status="stuck"]::before { background: var(--danger); }
+  .wb-task[data-status="pending"]::before { background: var(--muted); }
+
+  @keyframes wb-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .wb-status-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .status-running { background: rgba(59,130,246,0.15); color: var(--accent); }
+  .status-completed { background: rgba(16,185,129,0.15); color: var(--success); }
+  .status-stuck { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .status-pending { background: rgba(100,116,139,0.15); color: var(--muted); }
+
+  .wb-info { flex: 1; min-width: 0; }
+  .wb-task-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+  .wb-task-step {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .wb-progress-wrap { flex-shrink: 0; width: 48px; text-align: right; }
+  .wb-pct {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .wb-time {
+    font-size: 9.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .wb-mini-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .wb-mini-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
   /* Responsive */
   @media (max-width: 720px) {
     .compass-container { width: 260px; height: 260px; }
@@ -364,6 +486,15 @@
 <!-- ========== BUSINESS CARDS ========== -->
 <div class="grid-section" id="businessGrid"></div>
 
+<!-- ========== WORKBUDDY TASKS PANEL ========== -->
+<div class="wb-section" id="wbSection">
+  <div class="wb-section-header">
+    <span class="wb-title">⚡ WorkBuddy 活跃任务</span>
+    <span class="wb-badge" id="wbCount">-- 个任务</span>
+  </div>
+  <div class="wb-grid" id="wbTaskGrid"></div>
+</div>
+
 <!-- ========== FOOTER ========== -->
 <div class="footer">
   Mc&Mamoo Brand Management · Powered by n8n Workflow · Auto-generated
@@ -386,6 +517,50 @@ const OKR_DATA = {
       { id: "p4", name: "Phase 4", desc: "跨业务联动", status: "future" },
     ]
   },
+
+  // ── WorkBuddy 活跃任务（由 workbuddy-bridge.js 实时推送）──
+  workbuddyTasks: [
+    {
+      id: "wb_001",
+      title: "OKR罗盘仪表盘 + 异构同步协议",
+      status: "completed",
+      progress: 100,
+      step: "已推送到 GitHub (commit 0d57924)",
+      startedAt: "2026-04-18T18:09:00Z",
+      updatedAt: "2026-04-18T18:27:00Z",
+      session: "当前会话"
+    },
+    {
+      id: "wb_002",
+      title: "Railway 部署修复（36 merge conflicts + 3 syntax errors）",
+      status: "stuck",
+      progress: 85,
+      step: "⛔ 阻塞：等待 Railway Trial → Hobby 绑卡升级",
+      startedAt: "2026-04-17T23:00:00Z",
+      updatedAt: "2026-04-18T01:07:00Z",
+      session: "上一会话"
+    },
+    {
+      id: "wb_003",
+      title: "DMB Phase 1+2 代码推送到 GitHub",
+      status: "pending",
+      progress: 0,
+      step: "待启动：14 个 server 文件待推送",
+      startedAt: null,
+      updatedAt: "2026-04-15T20:00:00Z",
+      session: "排队中"
+    },
+    {
+      id: "wb_004",
+      title: "n8n 云端部署到 Railway",
+      status: "pending",
+      progress: 0,
+      step: "依赖 Railway 升级后执行",
+      startedAt: null,
+      updatedAt: "2026-04-18T01:07:00Z",
+      session: "排队中"
+    }
+  ],
 
   businesses: [
     // ────────────── 1. MaoAI ──────────────
@@ -730,6 +905,72 @@ function setUpdateTime() {
 }
 
 // ============================================================
+// 🤖 WORKBUDDY TASKS PANEL
+// ============================================================
+function formatAgo(isoStr) {
+  if (!isoStr) return "--";
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "刚刚";
+  if (mins < 60) return mins + "分钟前";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "小时前";
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return days + "天前";
+  return Math.floor(days / 30) + "月前";
+}
+
+function renderWorkbuddyTasks() {
+  const grid = document.getElementById("wbTaskGrid");
+  const countEl = document.getElementById("wbCount");
+  const tasks = OKR_DATA.workbuddyTasks || [];
+
+  // Sort: running > stuck > completed > pending
+  const statusOrder = { running: 0, stuck: 1, pending: 2, completed: 3 };
+  tasks.sort((a, b) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99));
+
+  countEl.textContent = tasks.length + " 个任务";
+
+  grid.innerHTML = "";
+  tasks.forEach(task => {
+    const el = document.createElement("div");
+    el.className = "wb-task";
+    el.dataset.status = task.status;
+
+    // Status icon
+    let icon, statusCls;
+    switch (task.status) {
+      case "running":   icon = "▶"; statusCls = "status-running"; break;
+      case "completed": icon = "✓"; statusCls = "status-completed"; break;
+      case "stuck":     icon = "⛔"; statusCls = "status-stuck"; break;
+      default:          icon = "○"; statusCls = "status-pending"; break;
+    }
+
+    const pctColor = getProgressColor(task.progress);
+
+    el.innerHTML = `
+      <div class="wb-status-icon ${statusCls}">${icon}</div>
+      <div class="wb-info">
+        <div class="wb-task-title">${task.title}</div>
+        <div class="wb-task-step">
+          ${task.step || ""}
+        </div>
+        <div class="wb-mini-bar"><div class="wb-mini-bar-fill" style="width:${task.progress}%;background:${pctColor}"></div></div>
+      </div>
+      <div class="wb-progress-wrap">
+        <span class="wb-pct" style="color:${pctColor}">${task.progress}%</span>
+        <span class="wb-time">${formatAgo(task.updatedAt)}</span>
+      </div>`;
+
+    grid.appendChild(el);
+  });
+
+  // Hide section if no tasks
+  const section = document.getElementById("wbSection");
+  section.style.display = tasks.length === 0 ? "none" : "";
+}
+
+// ============================================================
 // 🔧 INIT — 防跳闪：先锁定滚动 → 渲染 → 解锁
 // ============================================================
 (function init() {
@@ -746,6 +987,7 @@ function setUpdateTime() {
   renderCompassRing();
   renderPhaseBar();
   renderBusinessCards();
+  renderWorkbuddyTasks();
 
   // 4. 渲染完成，恢复滚动位置 + 移除 loading 状态
   requestAnimationFrame(function() {
