@@ -1534,8 +1534,17 @@ function renderHealthPanel() {
   const grid = document.getElementById("healthGrid");
   const countEl = document.getElementById("healthCount");
 
+  // 安全的数据注入（过滤掉错误响应）
+  function getHealthData() {
+    const injected = window.__HEALTH_INJECTED__;
+    if (injected && typeof injected === 'object' && !injected.error && !injected.message?.includes('Unauthorized')) {
+      return injected;
+    }
+    return null;
+  }
+
   // 默认数据（可被 window.__HEALTH_INJECTED__ 覆盖）
-  const healthData = window.__HEALTH_INJECTED__ || {
+  const healthData = getHealthData() || {
     machines: [
       {
         id: "macbook-pro",
@@ -1688,8 +1697,10 @@ function renderWorkbuddyTasks() {
  */
 function getFleetData() {
   // 如果有外部注入的真实数据（通过 window.__FLEET_INJECTED__），使用它
-  if (window.__FLEET_INJECTED__) {
-    return window.__FLEET_INJECTED__;
+  // 安全检查：过滤掉错误响应
+  const injected = window.__FLEET_INJECTED__;
+  if (injected && typeof injected === 'object' && !injected.error && !injected.message?.includes('Unauthorized')) {
+    return injected;
   }
 
   // 内置的演示数据 — 展示 5 个账号在 5 台设备上的真实场景
@@ -1994,7 +2005,11 @@ function renderFleetPanel() {
  * 否则使用内置的演示数据（模拟5台机器的同步状态）
  */
 function getSyncData() {
-  if (window.__SYNC_INJECTED__) return window.__SYNC_INJECTED__;
+  // 安全检查：过滤掉错误响应
+  const injected = window.__SYNC_INJECTED__;
+  if (injected && typeof injected === 'object' && !injected.error && !injected.message?.includes('Unauthorized')) {
+    return injected;
+  }
 
   // 内置演示数据 — 展示真实的同步场景
   // 实际部署时由 sync-checker.js 的数据或 n8n 注入
@@ -2153,12 +2168,27 @@ function renderSyncPanel() {
   document.getElementById("syncSection").style.display = "";
 }
 
+// ── 安全的数据注入检查 ──────────────────────────────────────────
+function safeInject(windowKey, defaultData) {
+  try {
+    const injected = window[windowKey];
+    // 检查是否是有效数据对象（不是错误响应）
+    if (injected && 
+        typeof injected === 'object' && 
+        !injected.error && 
+        !injected.message?.includes('Unauthorized')) {
+      return injected;
+    }
+  } catch (e) { /* ignore */ }
+  return defaultData;
+}
+
 (function init() {
   // 1. 锁定当前滚动位置
   var scrollY = window.scrollY || window.pageYOffset || 0;
 
-  // 2. 允许外部注入覆盖
-  if (window.__OKR_INJECTED__) {
+  // 2. 允许外部注入覆盖（安全检查）
+  if (window.__OKR_INJECTED__ && !window.__OKR_INJECTED__.error) {
     Object.assign(OKR_DATA, window.__OKR_INJECTED__);
   }
 
