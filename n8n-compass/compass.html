@@ -141,6 +141,41 @@
   }
   .q-marker.active { color: var(--accent); }
 
+  /* Business labels around the compass ring */
+  .biz-labels { position: absolute; inset: -20px; pointer-events: none; }
+  .biz-label {
+    position: absolute;
+    font-size: 9.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: rgba(17,24,39,0.9);
+    border: 1px solid var(--border);
+    color: #cbd5e1;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+    pointer-events: auto;
+    cursor: default;
+  }
+  .biz-label:hover {
+    transform: scale(1.08);
+    z-index: 10;
+    border-color: rgba(99,102,241,0.4);
+  }
+  .biz-label .lbl-pct {
+    font-weight: 800;
+    margin-left: 3px;
+  }
+  .biz-label .lbl-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
   /* ===== PHASE BAR ===== */
   .phase-bar-section { padding: 0 40px 20px; max-width: 900px; margin: 0 auto; }
   .phase-bar {
@@ -297,6 +332,67 @@
   .biz-card[data-biz="daiizen"]::before { background: linear-gradient(90deg, #ec4899, #f472b6); }
   .biz-card[data-biz="maoyan"]::before { background: linear-gradient(90deg, #ef4444, #f87171); }
   .biz-card[data-biz="content"]::before { background: linear-gradient(90deg, #06b6d4, #22d3ee); }
+
+  /* ===== OVERVIEW SUMMARY (总任务概览) ===== */
+  .overview-section {
+    padding: 20px 32px 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .overview-header {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .overview-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  .overview-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-1px); }
+  .ov-emoji { font-size: 22px; margin-bottom: 4px; }
+  .ov-name {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-bottom: 6px;
+  }
+  .ov-pct {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .ov-bar-wrap {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 7px;
+  }
+  .ov-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  .ov-detail {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 5px;
+  }
 
   /* Footer */
   .footer {
@@ -473,7 +569,11 @@
         <div class="ring-percent" id="totalPercent">--%</div>
         <div class="ring-label">年度总进度</div>
         <div class="ring-sublabel" id="quarterLabel">Q1 进行中</div>
+        <div style="margin-top:8px;font-size:9.5px;color:var(--muted);opacity:0.7" id="formulaHint"></div>
       </div>
+
+      <!-- Business labels around the ring -->
+      <div class="biz-labels" id="bizLabels"></div>
     </div>
   </div>
 </div>
@@ -481,6 +581,12 @@
 <!-- ========== PHASE BAR ========== -->
 <div class="phase-bar-section">
   <div class="phase-bar" id="phaseBar"></div>
+</div>
+
+<!-- ========== OVERVIEW SUMMARY (总任务一屏概览) ========== -->
+<div class="overview-section" id="overviewSection">
+  <div class="overview-header">📋 七大业务板块总览</div>
+  <div class="overview-grid" id="overviewGrid"></div>
 </div>
 
 <!-- ========== BUSINESS CARDS ========== -->
@@ -776,11 +882,20 @@ function getProgressColor(pct) {
 function renderCompassRing() {
   const businesses = OKR_DATA.businesses;
   let totalPct = 0;
-  businesses.forEach(b => totalPct += b.overallProgress);
+  let totalKRs = 0, completedKRs = 0;
+  businesses.forEach(b => {
+    totalPct += b.overallProgress;
+    if (b.stats) { totalKRs += b.stats.krs || 0; completedKRs += b.stats.completedKRs || 0; }
+  });
   totalPct = Math.round(totalPct / businesses.length);
 
   document.getElementById("totalPercent").textContent = totalPct + "%";
   document.getElementById("quarterLabel").textContent = OKR_DATA.meta.currentQuarter + " 进行中";
+
+  // Formula hint: explain how the number is calculated
+  const formulaEl = document.getElementById("formulaHint");
+  const krRate = totalKRs > 0 ? Math.round(completedKRs / totalKRs * 100) : 0;
+  formulaEl.textContent = `${businesses.length} 板块均 · ${totalKRs} KR · ${completedKRs} 完成 (${krRate}%)`;
 
   // Draw quarter segments on the SVG ring
   const g = document.getElementById("ringSegments");
@@ -822,6 +937,33 @@ function renderCompassRing() {
       arc.setAttribute("opacity", "0.85");
       g.appendChild(arc);
     }
+  });
+
+  // ── Render business labels around the ring ──
+  const labelsContainer = document.getElementById("bizLabels");
+  labelsContainer.innerHTML = "";
+  const containerSize = 320; // matches .compass-container width
+  const labelRadius = containerSize / 2 + 18; // just outside the ring
+
+  businesses.forEach((biz, i) => {
+    const midAngle = ((i + 0.5) / businesses.length) * 360 - 90;
+    const midRad = (midAngle * Math.PI) / 180;
+
+    const lx = containerSize / 2 + labelRadius * Math.cos(midRad);
+    const ly = containerSize / 2 + labelRadius * Math.sin(midRad);
+
+    const label = document.createElement("div");
+    label.className = "biz-label";
+    const dotColor = getProgressColor(biz.overallProgress);
+
+    // Position: center on the point
+    label.style.left = lx + "px";
+    label.style.top = ly + "px";
+    label.style.transform = "translate(-50%, -50%)";
+
+    label.innerHTML = `<span class="lbl-dot" style="background:${dotColor}"></span>${biz.emoji} <span class="lbl-pct" style="color:${dotColor}">${biz.overallProgress}%</span>`;
+
+    labelsContainer.appendChild(label);
   });
 }
 
@@ -901,6 +1043,39 @@ function setUpdateTime() {
   const now = new Date();
   document.getElementById("updateTime").textContent = now.toLocaleString("zh-CN", {
     month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"
+  });
+}
+
+// ============================================================
+// 📋 OVERVIEW SUMMARY — 总任务概览（一屏看懂 7 板块）
+// ============================================================
+function renderOverview() {
+  const grid = document.getElementById("overviewGrid");
+  const businesses = OKR_DATA.businesses;
+
+  grid.innerHTML = "";
+  businesses.forEach(biz => {
+    const card = document.createElement("div");
+    card.className = "overview-card";
+    const pctColor = getProgressColor(biz.overallProgress);
+
+    // Count total KR progress for detail line
+    let krTotal = 0, krDone = 0;
+    if (biz.objectives) {
+      biz.objectives.forEach(o => {
+        if (o.keyResults) o.keyResults.forEach(kr => { krTotal++; if (kr.progress >= 100) krDone++; });
+      });
+    }
+
+    card.innerHTML = `
+      <div class="ov-emoji">${biz.emoji}</div>
+      <div class="ov-name">${biz.name}</div>
+      <div class="ov-pct" style="color:${pctColor}">${biz.overallProgress}%</div>
+      <div class="ov-bar-wrap"><div class="ov-bar-fill" style="width:${biz.overallProgress}%;background:${pctColor}"></div></div>
+      <div class="ov-detail">${krDone}/${krTotal} KR 完成 · ${biz.stats ? biz.stats.okrs : 0} 目标</div>
+    `;
+
+    grid.appendChild(card);
   });
 }
 
@@ -986,6 +1161,7 @@ function renderWorkbuddyTasks() {
   setUpdateTime();
   renderCompassRing();
   renderPhaseBar();
+  renderOverview();
   renderBusinessCards();
   renderWorkbuddyTasks();
 
