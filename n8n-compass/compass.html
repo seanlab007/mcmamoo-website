@@ -394,14 +394,234 @@
     margin-top: 5px;
   }
 
-  /* Footer */
-  .footer {
-    text-align: center;
-    padding: 20px;
-    border-top: 1px solid var(--border);
-    font-size: 11px;
-    color: var(--muted);
-  }
+/* ===== TASK FLEET PANEL (任务舰队 — 多账号/多设备) ===== */
+.fleet-section {
+  padding: 20px 32px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.fleet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.fleet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fleet-stats-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fleet-stat-pill {
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pill-running { background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.25); }
+.pill-stuck { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
+.pill-done { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.25); }
+.pill-queue { background: rgba(100,116,139,0.12); color: var(--muted); border: 1px solid rgba(100,116,139,0.2); }
+.pill-concurrency {
+  background: rgba(245,158,11,0.1);
+  color: var(--warning);
+  border: 1px solid rgba(245,158,11,0.25);
+}
+.pill-concurrency.over-limit { background: rgba(239,68,68,0.12); color: var(--danger); border-color: rgba(239,68,68,0.3); animation: wb-pulse 1s infinite; }
+
+/* Account Group Card */
+.fleet-account-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  transition: all 0.2s ease;
+}
+.fleet-account-group:hover { border-color: rgba(99,102,241,0.35); }
+.fleet-acct-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.fleet-acct-header::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+}
+.fleet-account-group[data-fleet-status="online"] .fleet-acct-header::before { background: var(--success); }
+.fleet-account-group[data-fleet-status="stuck"] .fleet-acct-header::before { background: var(--warning); }
+.fleet-account-group[data-fleet-status="danger"] .fleet-acct-header::before { background: var(--danger); }
+.fleet-account-group[data-fleet-status="idle"] .fleet-acct-header::before { background: var(--muted); }
+.fleet-account-group[data-fleet-status="offline"] .fleet-acct-header::before { background: var(--muted); opacity: 0.5; }
+
+.fleet-acct-info { display: flex; align-items: center; gap: 10px; }
+.fleet-acct-avatar {
+  width: 32px; height: 32px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+  font-weight: 800; color: #fff;
+}
+.avatar-mbp { background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+.avatar-imac { background: linear-gradient(135deg, #10b981, #06b6d4); }
+.avatar-mba { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+.avatar-server { background: linear-gradient(135deg, #ec4899, #a78bfa); }
+.avatar-default { background: linear-gradient(135deg, #64748b, #94a3b8); }
+
+.fleet-acct-name-area { }
+.fleet-acct-name { font-size: 13px; font-weight: 700; color: #e2e8f0; }
+.fleet-acct-meta { font-size: 9.5px; color: var(--muted); margin-top: 2px; }
+
+.fleet-acct-badges { display: flex; gap: 6px; align-items: center; }
+.fleet-status-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.dot-online { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+.dot-stuck { background: var(--warning); box-shadow: 0 0 6px rgba(245,158,11,0.5); }
+.dot-danger { background: var(--danger); animation: wb-pulse 1s infinite; box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+.dot-idle { background: var(--muted); }
+.dot-offline { background: var(--muted); opacity: 0.4; }
+
+.fleet-acct-task-count {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 8px; background: var(--card); color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+/* Fleet Task Item (inside account group) */
+.fleet-tasks-body {
+  padding: 8px 16px 14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.fleet-task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.fleet-task-item:hover { border-color: rgba(99,102,241,0.25); background: rgba(30,41,59,0.8); }
+.fleet-task-item[data-ft-status="running"] { border-left: 3px solid var(--accent); }
+.fleet-task-item[data-ft-status="completed"] { border-left: 3px solid var(--success); }
+.fleet-task-item[data-ft-status="stuck"] { border-left: 3px solid var(--warning); }
+.fleet-task-item[data-ft-status="cancelled"] { border-left: 3px solid var(--danger); opacity: 0.7; }
+.fleet-task-item[data-ft-status="pending"] { border-left: 3px solid var(--muted); }
+
+.ft-icon {
+  flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.ft-icon-running { background: rgba(59,130,246,0.15); color: var(--accent); }
+.ft-icon-completed { background: rgba(16,185,129,0.15); color: var(--success); }
+.ft-icon-stuck { background: rgba(245,158,11,0.15); color: var(--warning); }
+.ft-icon-cancelled { background: rgba(239,68,68,0.12); color: var(--danger); }
+.ft-icon-pending { background: rgba(100,116,139,0.12); color: var(--muted); }
+
+.ft-content { flex: 1; min-width: 0; }
+.ft-title {
+  font-size: 12px; font-weight: 600; color: #e2e8f0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ft-step {
+  font-size: 10px; color: var(--muted); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ft-right { flex-shrink: 0; text-align: right; }
+.ft-progress {
+  font-size: 14px; font-weight: 800; line-height: 1;
+}
+.ft-time { font-size: 9px; color: var(--muted); margin-top: 1px; }
+.ft-okr-tag {
+  font-size: 8px; padding: 1px 6px; border-radius: 6px;
+  font-weight: 600; margin-top: 3px; display: inline-block;
+}
+
+/* Machine Summary Bar */
+.machine-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.machine-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+.machine-card:hover { border-color: rgba(99,102,241,0.3); }
+.machine-card[data-mstatus="healthy"] { border-left: 3px solid var(--success); }
+.machine-card[data-mstatus="stuck"] { border-left: 3px solid var(--warning); }
+.machine-card[data-mstatus="danger"] { border-left: 3px solid var(--danger); }
+.machine-card[data-mstatus="idle"] { border-left: 3px solid var(--muted); }
+.machine-card[data-mstatus="offline"] { border-left: 3px solid var(--muted); opacity: 0.6; }
+
+.mc-icon {
+  width: 32px; height: 32px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+}
+.mc-info { flex: 1; min-width: 0; }
+.mc-name { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+.mc-detail { font-size: 9.5px; color: var(--muted); margin-top: 2px; }
+.mc-tasks { text-align: right; flex-shrink: 0; }
+.mc-task-count { font-size: 16px; font-weight: 800; }
+.mc-task-label { font-size: 8.5px; color: var(--muted); }
+
+/* Fleet Alerts */
+.fleet-alert-bar {
+  grid-column: 1 / -1;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.15);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 4px;
+}
+.fleet-alert-item {
+  font-size: 11px; padding: 3px 0; display: flex; gap: 6px; align-items: flex-start;
+}
+.fleet-alert-level {
+  font-weight: 800; font-size: 9px; padding: 1px 6px; border-radius: 4px;
+  flex-shrink: 0; margin-top: 1px;
+}
+.al-critical { background: #ef4444; color: #fff; }
+.al-error { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+.al-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+}
 
   /* ===== WORKBUDDY TASKS PANEL ===== */
   .wb-section {
@@ -674,6 +894,20 @@
     <span class="wb-badge" id="wbCount">-- 个任务</span>
   </div>
   <div class="wb-grid" id="wbTaskGrid"></div>
+</div>
+
+<!-- ========== TASK FLEET PANEL (多账号任务舰队) ========== -->
+<div class="fleet-section" id="fleetSection">
+  <div class="fleet-header">
+    <span class="fleet-title">🚀 任务舰队 — 多账号实时状态</span>
+    <div class="fleet-stats-row" id="fleetStatsRow"></div>
+  </div>
+  <!-- Machine Summary Bar -->
+  <div class="machine-summary-bar" id="machineSummaryBar"></div>
+  <!-- Fleet Alerts -->
+  <div id="fleetAlertBar"></div>
+  <!-- Account Groups (one per account) -->
+  <div id="fleetAccountGrid"></div>
 </div>
 
 <!-- ========== SYSTEM HEALTH (多机状态) ========== -->
@@ -1351,16 +1585,322 @@ function renderWorkbuddyTasks() {
 // ============================================================
 // 🔧 INIT — 防跳闪：先锁定滚动 → 渲染 → 解锁
 // ============================================================
+// ═══════════════════════════════════════════════════════
+// 🚀 TASK FLEET PANEL — 多账号任务舰队渲染
+// ═══════════════════════════════════════════════════════
+
+/**
+ * 获取舰队数据（优先从注入数据获取，否则用内置演示数据）
+ */
+function getFleetData() {
+  // 如果有外部注入的真实数据（通过 window.__FLEET_INJECTED__），使用它
+  if (window.__FLEET_INJECTED__) {
+    return window.__FLEET_INJECTED__;
+  }
+
+  // 内置的演示数据 — 展示 5 个账号在 5 台设备上的真实场景
+  // 在实际部署中，这些数据由 task-fleet-bridge.js 实时采集写入 fleet-state.json，
+  // 再由 n8n 或静态服务器注入到 compass.html 中
+  const now = new Date().toISOString();
+  return {
+    version: "1.0.0",
+    lastUpdated: now,
+    accounts: {
+      "acc-mbp-main": {
+        id: "acc-mbp-main", name: "主力开发",
+        machine: "MacBook Pro", machineId: "mbp-pro",
+        workspace: "/Users/daiyan/WorkBuddy/20260417234313",
+        status: "online", activeTaskCount: 3, completedToday: 2,
+        lastHeartbeat: now,
+        tasks: [
+          { id:"ft1", title:"🧭 OKR罗盘改造 — 多账号任务舰队系统", status:"running", progress:70, step:"编写 task-fleet-bridge.js + 改造罗盘面板", updatedAt:now, okrLinked:{businessId:"maoai"} },
+          { id:"ft2", title:"Railway 部署修复（36 merge conflicts + 3 syntax errors）", status:"stuck", progress:85, step:"⛔ 阻塞：等待 Trial → Hobby 绑卡升级", updatedAt:new Date(Date.now()-300000).toISOString(), okrLinked:{businessId:"maoai"} },
+          { id:"ft3", title:"DMB Phase 1+2 推送到 GitHub", status:"pending", progress:0, step:"待启动：14个server文件含高级订单/TWAP/OCO代码", updatedAt:now, okrLinked:{businessId:"dmb"} },
+          { id:"ft4", title:"微信/支付宝登录接入（maoyan.vip + daiizen）", status:"pending", progress:0, step:"OAuth 方案确认后开始：微信开放平台 / 支付宝小程序", updatedAt:now, okrLinked:{businessId:"maoyan"} },
+          { id:"ft5", title:"LACELLE Cinema 视频上传方案", status:"completed", progress:100, step:"✅ Supabase Storage + CDN 方案已确认，脚本已写好", updatedAt:new Date(Date.now()-86400000).toISOString(), okrLinked:{businessId:"content"} },
+        ],
+      },
+      "acc-imac-home": {
+        id: "acc-imac-home", name: "家庭 iMac",
+        machine: "iMac 2021", machineId: "imac-home",
+        workspace: "/Users/daiyan/WorkBuddy/home-session",
+        status: "stuck", activeTaskCount: 2, completedToday: 1,
+        lastHeartbeat:new Date(Date.now()-240000).toISOString(),
+        tasks: [
+          { id:"ft6", title:"OpenClaw 本地 AI 引擎调优（GPU OOM 问题）", status:"stuck", progress:45, step:"⚠️ 阻塞：RTX 4090 显存不足导致 OOM，需调整 batch_size", updatedAt:new Date(Date.now()-240000).toISOString(), okrLinked:{businessId:"maoai"} },
+          { id:"ft7", title:"mintQX.com 做市商页面 K线图表组件", status:"running", progress:30, step:"正在用 lightweight-charts 库绘制 K 线图", updatedAt:now, okrLinked:{businessId:"mintqx"} },
+          { id:"ft8", title:"MaoAI 3.0 TriadLoop v3 验证闭环测试", status:"completed", progress:100, step:"✅ 四权分立架构验证通过（Coder↔Reviewer↔Validator↔Reality）", updatedAt:new Date(Date.now()-3600000).toISOString(), okrLinked:{businessId:"maoai"} },
+        ],
+      },
+      "acc-mba-travel": {
+        id: "acc-mba-travel", name: "出差 MacBook Air",
+        machine: "MacBook Air M2", machineId: "mba-travel",
+        workspace: "/Users/daiyan/WorkBuddy/travel-session",
+        status: "idle", activeTaskCount: 0, completedToday: 3,
+        lastHeartbeat:new Date(Date.now()-3600000).toISOString(),
+        tasks: [
+          { id:"ft9", title:"daiizen 商品数据库 Schema 设计（PostgreSQL）", status:"completed", progress:100, step:"✅ 已完成并推送到 GitHub (commit a3f7c2)", updatedAt:new Date(Date.now()-7200000).toISOString(), okrLinked:{businessId:"daiizen"} },
+          { id:"ft10", title:"USDD Stablecoin 合规披露页面框架", status:"completed", progress:100, step:"✅ 基础页面已上线 usddstablecoin.com.cn", updatedAt:new Date(Date.now()-7200000).toISOString(), okrLinked:{businessId:"usdd"} },
+          { id:"ft11", title:"n8n workflow 自动化调度配置（7类30+工作流）", status:"pending", progress:10, step:"⏸️ 暂停：回到主力机后继续配置 n8n webhook 触发器", updatedAt:new Date(Date.now()-3600000).toISOString(), okrLinked:{businessId:"content"} },
+        ],
+      },
+      "acc-server-node": {
+        id: "acc-server-node", name: "Linux 生产服务器",
+        machine: "Ubuntu VPS", machineId: "vps-01",
+        workspace: "/root/workbuddy/prod",
+        status: "online", activeTaskCount: 2, completedToday: 4,
+        lastHeartbeat: now,
+        tasks: [
+          { id:"ft12", title:"生产环境 n8n 监控部署 + Webhook 配置", status:"running", progress:60, step:"正在配置 Railway → n8n 的健康检查 webhook", updatedAt:now, okrLinked:{businessId:"maoai"} },
+          { id:"ft13", title:"Supabase 数据库自动备份（pg_dump 定时任务）", status:"running", progress:90, step:"设置 cron job 每天 03:00 UTC 备份", updatedAt:now, okrLinked:{businessId:"dmb"} },
+          { id:"ft14", title:"Cloudflare CDN 缓存优化（Page Rules）", status:"completed", progress:100, step:"✅ 缓存规则已配置：静态资源 30天 / API 5分钟", updatedAt:new Date(Date.now()-1800000).toISOString() },
+          { id:"ft15", title:"zhengyuanzhiyin.com IIS 日志分析", status:"completed", progress:100, step:"✅ 日志已归档，流量引导方案已确认", updatedAt:new Date(Date.now()-7200000).toISOString() },
+        ],
+      },
+      "acc-collab-dev": {
+        id: "acc-collab-dev", name: "协作开发账号",
+        machine: "Remote Dev Server", machineId: "remote-dev",
+        workspace: "/workspace/collab",
+        status: "danger", activeTaskCount: 1, completedToday: 0,
+        lastHeartbeat:new Date(Date.now()-600000).toISOString(),
+        tasks: [
+          { id:"ft16", title:"🧟 zhengyuanzhiyin 功能迁移到 maoyan.vip 命理小馆", status:"cancelled", progress:35, step:"💀 僵尸进程 — 无响应超过10分钟 | 核心：命理服务页/积分系统/客户数据同步", updatedAt:new Date(Date.now()-600000).toISOString(), okrLinked:{businessId:"maoyan"} },
+        ],
+      }
+    },
+    machines: {
+      "mbp-pro": { name:"MacBook Pro 主力机", status:"online", accountIds:["acc-mbp-main"], totalTasks:5, runningTasks:1, stuckTasks:1, ip:"192.168.1.100" },
+      "imac-home": { name:"iMac 家庭机", status:"stuck", accountIds:["acc-imac-home"], totalTasks:3, runningTasks:1, stuckTasks:1, ip:"192.168.1.101" },
+      "mba-travel": { name:"MacBook Air 出差机", status:"idle", accountIds:["acc-mba-travel"], totalTasks:3, runningTasks:0, stuckTasks:0, ip:"10.0.0.5" },
+      "vps-01": { name:"Ubuntu VPS", status:"online", accountIds:["acc-server-node"], totalTasks:4, runningTasks:2, stuckTasks:0, ip:"203.0.113.50" },
+      "remote-dev": { name:"Remote Dev", status:"danger", accountIds:["acc-collab-dev"], totalTasks:1, runningTasks:0, stuckTasks:1, ip:"N/A" },
+    },
+    concurrency: {
+      maxPerMachine: 2,
+      globalMax: 5,
+      currentGlobal: 5,
+    },
+    globalAlerts: [
+      { level:"critical", accountId:"acc-collab-dev", message:"🧟 僵尸进程检测: zhengyuanzhiyin 迁移任务无响应超过10分钟，已自动终止", timestamp:new Date(Date.now()-600000).toISOString(), action:"建议手动重启该任务或分配给其他账号执行" },
+      { level:"error", accountId:"acc-mbp-main", message:"🔴 阻塞警告: Railway 部署修复任务卡住5分钟 — 等待 Trial→Hobby 升级绑卡", timestamp:new Date(Date.now()-300000).toISOString(), action:"需要人工去 Railway 后台操作绑卡" },
+      { level:"warning", accountId:"acc-imac-home", message:"⚠️ 可能阻塞: OpenClaw GPU OOM — RTX 4090 显存不足", timestamp:new Date(Date.now()-240000).toISOString(), action:"考虑降低模型参数量或启用 CPU offload" },
+    ]
+  };
+}
+
+/** OKR 板块名称映射 */
+const OKR_BIZ_NAMES = {
+  maoai: '🧠 MaoAI', dmb: '🏦 DMB', mintqx: '📈 mintQX',
+  usdd: '💰 USDD', daiizen: '🛒 daiizen', maoyan: '🔮 maoyan.vip',
+  content: '🎬 内容平台'
+};
+const OKR_BIZ_COLORS = {
+  maoai: '#3b82f6', dmb: '#8b5cf6', mintqx: '#10b981',
+  usdd: '#f59e0b', daiizen: '#ec4899', maoyan: '#ef4444',
+  content: '#06b6d4'
+};
+
+/** 获取设备 avatar CSS class */
+function getAvatarClass(machineId) {
+  if (machineId && machineId.includes('mbp')) return 'avatar-mbp';
+  if (machineId && machineId.includes('imac')) return 'avatar-imac';
+  if (machineId && machineId.includes('mba')) return 'avatar-mba';
+  if (machineId && (machineId.includes('vps') || machineId.includes('server'))) return 'avatar-server';
+  return 'avatar-default';
+}
+
+/** 获取设备 emoji */
+function getMachineEmoji(machineId) {
+  if (!machineId) return '💻';
+  if (machineId.includes('mbp') || machineId.includes('pro')) return '💻';
+  if (machineId.includes('imac')) return '🖥️';
+  if (machineId.includes('mba') || machineId.includes('air')) return '💼';
+  if (machineId.includes('vps') || machineId.includes('server')) return '🖧';
+  if (machineId.includes('remote')) return '☁️';
+  return '📱';
+}
+
+function renderFleetPanel() {
+  const data = getFleetData();
+  const accounts = data.accounts || {};
+  const machines = data.machines || {};
+  const alerts = data.globalAlerts || [];
+
+  // ── Stats Pills ──
+  let totalRunning=0, totalStuck=0, totalDone=0, totalQueue=0;
+  for (const acc of Object.values(accounts)) {
+    for (const t of (acc.tasks||[])) {
+      if (t.status==='running') totalRunning++;
+      else if (t.status==='stuck'||t.status==='cancelled') totalStuck++;
+      else if (t.status==='completed') totalDone++;
+      else totalQueue++;
+    }
+  }
+
+  const statsEl = document.getElementById("fleetStatsRow");
+  const cc = data.concurrency || {};
+  const overLimit = cc.currentGlobal >= cc.globalMax;
+  statsEl.innerHTML = `
+    <span class="fleet-stat-pill pill-running">▶ ${totalRunning} 运行</span>
+    <span class="fleet-stat-pill pill-stuck">${totalStuck} 阻塞/异常</span>
+    <span class="fleet-stat-pill pill-done">✓ ${totalDone} 完成</span>
+    <span class="fleet-stat-pill pill-queue">○ ${totalQueue} 排队</span>
+    <span class="fleet-stat-pill pill-concurrency ${overLimit?'over-limit':''}">
+      ⚡ 并发 ${cc.currentGlobal||0}/${cc.globalMax||'∞'}
+    </span>
+  `;
+
+  // ── Machine Summary Bar ──
+  const mbar = document.getElementById("machineSummaryBar");
+  mbar.innerHTML = "";
+  const mEntries = Object.entries(machines);
+  if (mEntries.length === 0) {
+    mbar.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--muted);font-size:12px">暂无设备数据<br><span style="font-size:10px">运行 node task-fleet-bridge.js demo 生成演示数据</span></div>';
+  } else {
+    mEntries.forEach(([mid, m]) => {
+      const card = document.createElement("div");
+      card.className = "machine-card";
+      card.dataset.mstatus = m.status;
+      const statusColor = m.status==="healthy"?"var(--success)":m.status==="stuck"?"var(--warning)":m.status==="danger"?"var(--danger)":"var(--muted)";
+      card.innerHTML = `
+        <div class="mc-icon">${getMachineEmoji(mid)}</div>
+        <div class="mc-info">
+          <div class="mc-name">${m.name}</div>
+          <div class="mc-detail">
+            ${m.accountIds?.length||0} 账号 · ${m.runningTasks||0} 运行 · ${m.stuckTasks||0} 阻塞
+            ${m.ip && m.ip!=='N/A' ? '· '+m.ip : ''}
+          </div>
+        </div>
+        <div class="mc-tasks">
+          <div class="mc-task-count" style="color:${statusColor}">${m.totalTasks||0}</div>
+          <div class="mc-task-label">个任务</div>
+        </div>`;
+      mbar.appendChild(card);
+    });
+  }
+
+  // ── Alerts Bar ──
+  const alertBar = document.getElementById("fleetAlertBar");
+  alertBar.innerHTML = "";
+  if (alerts.length > 0) {
+    const alertDiv = document.createElement("div");
+    alertDiv.className = "fleet-alert-bar";
+    alertDiv.innerHTML = "<div style='font-size:11px;font-weight:700;margin-bottom:6px;color:#f87171'>🚨 最近告警</div>" +
+      alerts.slice(-5).map(a => {
+        const cls = a.level==='critical'?'al-critical':a.level==='error'?'al-error':'al-warning';
+        const label = a.level==='critical'?'严重':a.level==='error'?'错误':'警告';
+        return `<div class="fleet-alert-item"><span class="fleet-alert-level ${cls}">${label.toUpperCase()}</span><span>${a.message}</span></div>`;
+      }).join("");
+    alertBar.appendChild(alertDiv);
+  }
+
+  // ── Account Groups ──
+  const grid = document.getElementById("fleetAccountGrid");
+  grid.innerHTML = "";
+
+  // Sort accounts: online > stuck > danger > idle > offline
+  const acctOrder = { online:0, stuck:1, danger:2, idle:3, offline:4 };
+  const sortedAccounts = Object.values(accounts).sort((a,b) =>
+    (acctOrder[a.status]||99) - (acctOrder[b.status]||99)
+  );
+
+  if (sortedAccounts.length === 0) {
+    grid.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:12px">暂无账号数据<br><span style="font-size:10px">运行 node task-fleet-bridge.js start --account-id xxx 启动采集器</span></div>';
+    document.getElementById("fleetSection").style.display = "";
+    return;
+  }
+
+  sortedAccounts.forEach(acc => {
+    const group = document.createElement("div");
+    group.className = "fleet-account-group";
+    group.dataset.fleetStatus = acc.status;
+
+    // Status dot
+    let dotCls = 'dot-offline';
+    if (acc.status === 'online') dotCls = 'dot-online';
+    else if (acc.status === 'stuck') dotCls = 'dot-stuck';
+    else if (acc.status === 'danger') dotCls = 'dot-danger';
+    else if (acc.status === 'idle') dotCls = 'dot-idle';
+
+    // Account header
+    const idleMin = acc.lastHeartbeat ? Math.floor((Date.now() - new Date(acc.lastHeartbeat).getTime()) / 60000) : null;
+    const header = document.createElement("div");
+    header.className = "fleet-acct-header";
+    header.innerHTML = `
+      <div class="fleet-acct-info">
+        <div class="fleet-acct-avatar ${getAvatarClass(acc.machineId)}">${getMachineEmoji(acc.machineId)}</div>
+        <div class="fleet-acct-name-area">
+          <div class="fleet-acct-name">${acc.name} <span style="font-weight:400;font-size:11px;color:var(--muted)">@${acc.machine}</span></div>
+          <div class="fleet-acct-meta">
+            工作区: ${acc.workspace.split('/').pop() || '--'}
+            ${idleMin !== null ? `· 心跳 ${idleMin<1?'刚刚':idleMin+'分钟前'}` : ''}
+            ${acc.completedToday > 0 ? `· 今日完成 ${acc.completedToday} 项` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="fleet-acct-badges">
+        <span class="fleet-status-dot ${dotCls}" title="${acc.status}"></span>
+        <span class="fleet-acct-task-count">${(acc.tasks||[]).length} 任务</span>
+      </div>`;
+    group.appendChild(header);
+
+    // Task list body
+    const body = document.createElement("div");
+    body.className = "fleet-tasks-body";
+
+    // Sort tasks within account: running > stuck > pending > completed > cancelled
+    const taskOrder = { running:0, stuck:1, pending:2, completed:3, cancelled:4 };
+    const sortedTasks = [...(acc.tasks || [])].sort((a,b) =>
+      (taskOrder[a.status]||99) - (taskOrder[b.status]||99)
+    );
+
+    sortedTasks.forEach(task => {
+      const item = document.createElement("div");
+      item.className = "fleet-task-item";
+      item.dataset.ftStatus = task.status;
+
+      // Task icon
+      let icon='○', iconCls='ft-icon-pending';
+      if (task.status==='running') { icon='▶'; iconCls='ft-icon-running'; }
+      else if (task.status==='completed') { icon='✓'; iconCls='ft-icon-completed'; }
+      else if (task.status==='stuck') { icon='⚠'; iconCls='ft-icon-stuck'; }
+      else if (task.status==='cancelled') { icon='💀'; iconCls='ft-icon-cancelled'; }
+
+      const pctColor = getProgressColor(task.progress);
+      const bizTag = task.okrLinked && OKR_BIZ_NAMES[task.okrLinked.businessId]
+        ? `<span class="ft-okr-tag" style="background:${OKR_BIZ_COLORS[task.okrLinked.businessId]}15;color:${OKR_BIZ_COLORS[task.okrLinked.businessId]};border:1px solid ${OKR_BIZ_COLORS[task.okrLinked.businessId]}30">${OKR_BIZ_NAMES[task.okrLinked.businessId]}</span>`
+        : '';
+
+      item.innerHTML = `
+        <div class="ft-icon ${iconCls}">${icon}</div>
+        <div class="ft-content">
+          <div class="ft-title">${task.title}</div>
+          <div class="ft-step">${task.step || ''}${bizTag}</div>
+        </div>
+        <div class="ft-right">
+          <div class="ft-progress" style="color:${pctColor}">${task.progress}%</div>
+          <div class="ft-time">${formatAgo(task.updatedAt)}</div>
+        </div>`;
+      body.appendChild(item);
+    });
+
+    group.appendChild(body);
+    grid.appendChild(group);
+  });
+
+  document.getElementById("fleetSection").style.display = "";
+}
+
 (function init() {
   // 1. 锁定当前滚动位置
   var scrollY = window.scrollY || window.pageYOffset || 0;
-  
-  // 2. 允许 n8n 注入数据覆盖
+
+  // 2. 允许外部注入覆盖
   if (window.__OKR_INJECTED__) {
     Object.assign(OKR_DATA, window.__OKR_INJECTED__);
   }
 
-  // 3. 执行所有渲染（DOM 操作期间不可见）
+  // 3. 执行所有渲染
   setUpdateTime();
   renderCompassRing();
   renderPhaseBar();
@@ -1368,8 +1908,9 @@ function renderWorkbuddyTasks() {
   renderBusinessCards();
   renderWorkbuddyTasks();
   renderHealthPanel();
+  renderFleetPanel();  // ← 新增：任务舰队面板
 
-  // 4. 渲染完成，恢复滚动位置 + 移除 loading 状态
+  // 4. 渲染完成，恢复滚动
   requestAnimationFrame(function() {
     window.scrollTo(0, scrollY);
     document.body.classList.remove('loading');
