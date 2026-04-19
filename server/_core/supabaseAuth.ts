@@ -3,9 +3,9 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
-// ⚠️ 注意：不要在模块顶层读取 process.env！
-// tsx 执行时 ES 模块 import 会先于 dotenv.config() 执行，导致环境变量为空
-// 所有需要环境变量的地方都通过 getSupabaseConfig() 函数动态获取
+// 注意：不要在模块顶层读取 process.env！
+// dotenv.config() 在 index.ts 中调用，但 ES 模块导入会先执行，导致这里读到空值
+// 改为在函数内动态读取
 
 function getSupabaseConfig() {
   return {
@@ -176,10 +176,12 @@ export function registerSupabaseAuthRoutes(app: Express) {
       const openId = `supabase:${authData.user.id}`;
       const userEmail = authData.user.email ?? email;
       const now = new Date().toISOString();
+      const ownerEmail = process.env.OWNER_EMAIL ?? "benedictashford20@gmail.com";
+      const isAdminEmail = userEmail === ownerEmail || userEmail === "sean_lab@me.com";
 
       // 3. 先查询 openId，再查询 email（处理 PENDING_FIRST_LOGIN 情况）
       let existingUser = await getUserByOpenId(openId);
-      let role: "admin" | "user" = "user";
+      let role: "admin" | "user" = isAdminEmail ? "admin" : "user";
 
       if (!existingUser) {
         // 尝试通过 email 查找（可能是 PENDING_FIRST_LOGIN 状态）
@@ -189,14 +191,10 @@ export function registerSupabaseAuthRoutes(app: Express) {
           // 找到了邮箱对应的用户，更新 openId
           const userId = userByEmail.id as number;
           await updateUserOpenId(userId, openId, now);
-          role = (userByEmail.role as "admin" | "user") ?? "user";
-          existingUser = { ...userByEmail, openId };
+          role = isAdminEmail ? "admin" : ((userByEmail.role as "admin" | "user") ?? "user");
+          existingUser = { ...userByEmail, openId, role };
         } else {
           // 全新用户
-          const ownerEmail = process.env.OWNER_EMAIL ?? "benedictashford20@gmail.com";
-          if (userEmail === ownerEmail) {
-            role = "admin";
-          }
           await upsertUser({
             openId,
             email: userEmail,
@@ -207,8 +205,8 @@ export function registerSupabaseAuthRoutes(app: Express) {
           });
         }
       } else {
-        role = (existingUser.role as "admin" | "user") ?? "user";
-        // 更新 lastSignedIn
+        role = isAdminEmail ? "admin" : ((existingUser.role as "admin" | "user") ?? "user");
+        // 更新 lastSignedIn 与角色
         const key = getApiKey(cfg);
         await fetch(
           `${cfg.url}/rest/v1/users?openId=eq.${encodeURIComponent(openId)}`,
@@ -219,7 +217,7 @@ export function registerSupabaseAuthRoutes(app: Express) {
               Authorization: `Bearer ${key}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ lastSignedIn: now }),
+            body: JSON.stringify({ lastSignedIn: now, role }),
           }
         );
       }
@@ -233,11 +231,15 @@ export function registerSupabaseAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
+      // 5. 决定跳转目标：优先用请求传入的 redirectTo
+      const finalRedirectTo = (req.body as { redirectTo?: string }).redirectTo
+        ?? (role === "admin" ? "/admin/nodes" : "/maoai");
+
       // 5. 返回登录结果（同时返回 sessionToken 供跨域场景使用）
       res.json({
         success: true,
         role,
-        redirectTo: role === "admin" ? "/admin/nodes" : "/maoai",
+        redirectTo: finalRedirectTo,
         sessionToken,  // 供前端存入 localStorage，用于跨域 Authorization header
       });
     } catch (error) {

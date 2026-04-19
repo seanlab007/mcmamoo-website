@@ -1,3 +1,4 @@
+import { MAOAI_ROUTES } from "@/features/maoai";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -32,6 +33,36 @@ interface RuleForm {
 
 const defaultForm: RuleForm = { name: "", mode: "auto", nodeIds: "", failover: true, loadBalance: "priority", isDefault: false };
 
+// Typed view of routing rule (server returns Record<string, unknown>)
+interface RoutingRuleView {
+  id: number;
+  name: string;
+  mode: string;
+  nodeIds: string;
+  failover: boolean;
+  loadBalance: string;
+  isDefault: boolean;
+  isActive: boolean;
+  priority: number;
+}
+
+function toRuleView(raw: Record<string, unknown>): RoutingRuleView {
+  return {
+    id: Number(raw.id ?? 0),
+    name: String(raw.name ?? ""),
+    mode: String(raw.mode ?? "auto"),
+    nodeIds: String(raw.node_ids ?? raw.nodeIds ?? ""),
+    failover: Boolean(raw.failover ?? true),
+    loadBalance: String(raw.load_balance ?? raw.loadBalance ?? "priority"),
+    isDefault: Boolean(raw.is_default ?? raw.isDefault ?? false),
+    isActive: Boolean(raw.is_active ?? raw.isActive ?? true),
+    priority: Number(raw.priority ?? 100),
+  };
+}
+
+// Typed view of node for nodeMap (minimal)
+interface NodeBasic { id: number; name: string; }
+
 export default function AdminRouting() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
@@ -39,8 +70,10 @@ export default function AdminRouting() {
   const [editRule, setEditRule] = useState<any>(null);
   const [form, setForm] = useState<RuleForm>(defaultForm);
 
-  const { data: rules, isLoading } = trpc.routing.list.useQuery();
-  const { data: nodes } = trpc.nodes.list.useQuery();
+  const { data: rawRules, isLoading } = trpc.routing.list.useQuery();
+  const rules: RoutingRuleView[] = (rawRules ?? []).map(toRuleView);
+  const { data: rawNodes } = trpc.nodes.list.useQuery();
+  const nodes: NodeBasic[] = (rawNodes ?? []).map(n => ({ id: Number(n.id ?? 0), name: String(n.name ?? "") }));
   const createRule = trpc.routing.create.useMutation({ onSuccess: () => { utils.routing.list.invalidate(); setOpen(false); toast.success("策略已创建"); } });
   const updateRule = trpc.routing.update.useMutation({ onSuccess: () => { utils.routing.list.invalidate(); setOpen(false); toast.success("策略已更新"); } });
   const deleteRule = trpc.routing.delete.useMutation({ onSuccess: () => { utils.routing.list.invalidate(); toast.success("策略已删除"); } });
@@ -65,7 +98,7 @@ export default function AdminRouting() {
     <div className="flex flex-col h-screen bg-background">
       <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50">
         <div className="flex items-center gap-3">
-          <Link href="/maoai" className="text-muted-foreground hover:text-foreground text-sm">← 返回聊天</Link>
+          <Link href={MAOAI_ROUTES.CHAT} className="text-muted-foreground hover:text-foreground text-sm">← 返回聊天</Link>
           <span className="text-muted-foreground">/</span>
           <Link href="/admin/nodes" className="text-muted-foreground hover:text-foreground text-sm">节点管理</Link>
           <span className="text-muted-foreground">/</span>

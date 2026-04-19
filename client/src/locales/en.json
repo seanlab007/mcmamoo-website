@@ -96,5 +96,87 @@
     "loading": "Loading...",
     "success": "Submitted Successfully",
     "error": "Submission failed, please try again"
+  },
+  "maoai": {
+    "sales": {
+      "intelTitle": "Sales Intelligence",
+      "intelSubtitle": "Huawei-style CRM System",
+      "loading": "Loading sales data...",
+      "focusLeads": "Focus Leads (A/B)",
+      "ltcPipelineTitle": "LTC Pipeline Overview",
+      "searchPlaceholder": "Search leads by name, company...",
+      "filter": "Filter",
+      "back": "Back to List",
+      "tabs": {
+        "dashboard": "Dashboard",
+        "leads": "Leads",
+        "outreach": "Outreach",
+        "ai": "AI Assistant"
+      },
+      "intelStats": {
+        "focusLeads": "Focus Leads",
+        "strategic": "Strategic (A)",
+        "key": "Key (B)",
+        "totalPipeline": "Pipeline Value",
+        "highRisk": "High Risk",
+        "total": "Total Leads"
+      },
+      "table": {
+        "lead": "Lead",
+        "company": "Company",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "statuses": {
+        "new": "New",
+        "contacted": "Contacted",
+        "qualified": "Qualified",
+        "proposal": "Proposal",
+        "negotiation": "Negotiation",
+        "closed_won": "Closed Won",
+        "closed_lost": "Closed Lost"
+      },
+      "detailTabs": {
+        "profile": "Profile",
+        "powerMap": "Power Map",
+        "painChain": "Pain Chain",
+        "ironTriangle": "Iron Triangle",
+        "competitors": "Competitors",
+        "intel": "Intel",
+        "ltc": "LTC Weekly"
+      },
+      "profile": {
+        "basic": "Basic Information",
+        "company": "Company",
+        "industry": "Industry",
+        "title": "Title",
+        "email": "Email",
+        "valueRating": "Value Rating",
+        "estimatedValue": "Estimated Value",
+        "competitive": "Competitive Intel",
+        "competitor": "Main Competitor",
+        "competitorAdv": "Competitor Advantage",
+        "ourAdv": "Our Advantage",
+        "risk": "Risk Assessment",
+        "paymentRisk": "Payment Risk",
+        "decisionCycle": "Decision Cycle",
+        "needPrepayment": "Prepayment Required"
+      },
+      "profileDecisionCycleLabels": {
+        "1_week": "1 Week",
+        "2_weeks": "2 Weeks",
+        "1_month": "1 Month",
+        "1_quarter": "1 Quarter",
+        "long": "Long Cycle",
+        "unknown": "Unknown"
+      },
+      "powerMap": {
+        "desc": "Map all decision makers, their pain points, and influence dynamics",
+        "addDecisionMaker": "Add Decision Maker"
+      },
+      "competitorView": {
+        "desc": "Track competitive landscape and our differentiation strategy"
+      }
+    }
   }
 }

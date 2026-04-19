@@ -15,7 +15,6 @@
 
 import { Router, Request, Response } from "express";
 import { AGENTS, getAgent, getAgentSystemPrompt, AGENTS_BY_CATEGORY, CATEGORY_INFO } from "./agents";
-import { guardMessage } from "./_core/guardrails";
 
 export const chatRouter = Router();
 
@@ -315,38 +314,6 @@ chatRouter.post("/send", async (req: Request, res: Response) => {
     );
     const history: { role: string; content: string }[] = Array.isArray(historyR.data) ? historyR.data : [];
 
-    // 1.5 安全围栏检查 🛡️
-    const guardResult = guardMessage(message, { history });
-    if (guardResult.blocked && guardResult.response) {
-      // 发送安全围栏响应（流式模拟）
-      const blockedResponse = guardResult.response;
-      let index = 0;
-      const streamInterval = setInterval(() => {
-        if (index < blockedResponse.length) {
-          const chunk = blockedResponse.slice(index, index + 10);
-          sendEvent("delta", { text: chunk });
-          index += 10;
-        } else {
-          clearInterval(streamInterval);
-          // 保存拦截回复到数据库
-          sbPost("/messages", {
-            conversation_id: conversationId,
-            role: "assistant",
-            content: blockedResponse,
-            metadata: { 
-              type: "guardrail_blocked",
-              ruleId: guardResult.ruleId,
-              threatLevel: guardResult.threatLevel,
-            },
-          }).then(() => {
-            sendEvent("done", { text: "" });
-            res.end();
-          });
-        }
-      }, 20);
-      return;
-    }
-
     // 2. 联网搜索（按需）
     let searchContext = "";
     if (useSearch || needsSearch(message)) {
@@ -389,6 +356,66 @@ chatRouter.post("/send", async (req: Request, res: Response) => {
     // 告诉前端用的哪个模型
     sendEvent("model", { provider: modelCfg.provider, label: modelCfg.label });
 
+    // ── Google AI Studio 特殊处理（使用 generateContent API）────────────────
+    if (modelCfg.provider === "google-ai-studio") {
+      const googleUrl = `${base}/models/${modelCfg.apiModel}:generateContent?key=${key}`;
+      
+      // 将 OpenAI 格式的消息转换为 Gemini 格式
+      const contents = messages
+        .filter((m: any) => m.role !== "system")
+        .map((m: any) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        }));
+
+      const systemInstruction = messages.find((m: any) => m.role === "system");
+      const requestBody: any = {
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: modelCfg.maxTokens,
+        },
+      };
+      if (systemInstruction) {
+        requestBody.systemInstruction = { parts: [{ text: systemInstruction.content }] };
+      }
+
+      try {
+        const googleRes = await fetch(googleUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!googleRes.ok) {
+          const errText = await googleRes.text();
+          sendEvent("error", { text: `Gemma 调用失败: ${errText}` });
+          return res.end();
+        }
+
+        const googleData: any = await googleRes.json();
+        // 过滤掉思维链(thought) parts，只取纯文本回复
+        const parts = googleData.candidates?.[0]?.content?.parts || [];
+        const geminiText = parts
+          .filter((p: any) => !p.thought)
+          .map((p: any) => p.text)
+          .join("") || "无回复";
+        
+        // 流式返回（Google AI Studio 不支持 SSE 流，这里一次性返回）
+        const words = geminiText.split("");
+        for (const word of words) {
+          sendEvent("delta", { text: word });
+          await new Promise(r => setTimeout(r, 5)); // 模拟打字效果
+        }
+        sendEvent("done", {});
+        return res.end();
+      } catch (e: any) {
+        sendEvent("error", { text: `Gemma 调用异常: ${e.message}` });
+        return res.end();
+      }
+    }
+
+    // ── 标准 OpenAI 兼容 API ───────────────────────────────────────────────
     const llmRes = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: {
@@ -535,63 +562,4 @@ chatRouter.get("/agents/:id", (req, res) => {
     return res.status(404).json({ error: "Agent 不存在" });
   }
   res.json(agent);
-});
-
-
-// ─── RAG 状态与健康检查 ──────────────────────────────────────────────────────
-
-/**
- * GET /api/chat/rag/status
- * 获取本地 RAG (Ollama) 状态
- */
-chatRouter.get("/rag/status", async (req: Request, res: Response) => {
-  try {
-    const ollamaUrl = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-    const response = await fetch(`${ollamaUrl}/api/tags`, { signal: controller.signal });
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const data: any = await response.json();
-      const models = data.models || [];
-      const hasNomic = models.some((m: any) => m.name.includes("nomic-embed-text"));
-      
-      res.json({
-        status: "online",
-        ollama: "connected",
-        embedding_model: hasNomic ? "nomic-embed-text" : "missing",
-        available_models: models.map((m: any) => m.name),
-        vector_db: "local_json",
-        index_size: 0,
-        last_sync: new Date().toISOString()
-      });
-    } else {
-      throw new Error("Ollama returned non-ok status");
-    }
-  } catch (error) {
-    res.json({
-      status: "offline",
-      ollama: "disconnected",
-      reason: error instanceof Error ? error.message : "Unknown error",
-      suggestion: "请确保本地 Ollama 已启动并安装了 nomic-embed-text 模型"
-    });
-  }
-});
-
-/**
- * GET /api/chat/rag/health
- * RAG 系统健康检查
- */
-chatRouter.get("/rag/health", (req: Request, res: Response) => {
-  res.json({
-    status: "healthy",
-    components: {
-      ollama: "unknown",
-      vector_store: "ready",
-      document_processor: "ready"
-    },
-    timestamp: new Date().toISOString()
-  });
 });

@@ -41,21 +41,14 @@ export async function generateImage(
     throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
   }
 
-  // Build the full URL by appending the service path to the base URL
-  const baseUrl = ENV.forgeApiUrl.endsWith("/")
-    ? ENV.forgeApiUrl
-    : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL(
-    "images.v1.ImageService/GenerateImage",
-    baseUrl
-  ).toString();
+  // Build full URL - use standard API path
+  const baseUrl = ENV.forgeApiUrl.replace(/\/$/, "");
+  const fullUrl = `${baseUrl}/images.v1.ImageService/GenerateImage`;
 
   const response = await fetch(fullUrl, {
     method: "POST",
     headers: {
-      accept: "application/json",
       "content-type": "application/json",
-      "connect-protocol-version": "1",
       authorization: `Bearer ${ENV.forgeApiKey}`,
     },
     body: JSON.stringify({

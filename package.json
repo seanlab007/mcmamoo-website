@@ -5,6 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
+    "dev:frontend": "vite --port 3000",
+    "dev:all": "npm run dev & npm run dev:frontend",
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
@@ -12,12 +14,10 @@
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "build:server": "esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "skill:install-marketing-claw": "node scripts/install-marketing-claw.mjs",
-    "skill:bridge": "node scripts/skill-bridge.mjs",
-    "skill:bridge:watch": "node scripts/skill-bridge.mjs --watch",
-    "skill:bridge:dry": "node scripts/skill-bridge.mjs --dry-run"
+    "skill:install-marketing-claw": "node scripts/install-marketing-claw.mjs"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.1.1",
     "@aws-sdk/client-s3": "^3.693.0",
     "@aws-sdk/s3-request-presigner": "^3.693.0",
     "@hookform/resolvers": "^5.2.2",
@@ -52,15 +52,19 @@
     "@trpc/client": "^11.6.0",
     "@trpc/react-query": "^11.6.0",
     "@trpc/server": "^11.6.0",
+    "@types/multer": "^2.1.0",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.11",
-    "axios": "^1.12.0",
+    "@types/react-beautiful-dnd": "^13.1.8",
+    "antd": "^6.3.5",
+    "axios": "^1.12.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "cookie": "^1.0.2",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.2.2",
+    "dayjs": "^1.11.20",
+    "dotenv": "^17.3.1",
     "drizzle-orm": "^0.44.5",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
@@ -70,6 +74,7 @@
     "input-otp": "^1.4.2",
     "jose": "6.1.0",
     "lucide-react": "^0.453.0",
+    "mammoth": "^1.12.0",
     "mysql2": "^3.15.0",
     "nanoid": "^5.1.5",
     "next-themes": "^0.4.6",
@@ -77,12 +82,19 @@
     "nodemailer": "^8.0.2",
     "pdf-parse": "2.4.5",
     "react": "^19.2.1",
+    "react-beautiful-dnd": "^13.1.1",
     "react-day-picker": "^9.11.1",
     "react-dom": "^19.2.1",
+    "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.64.0",
     "react-i18next": "^16.6.6",
+    "react-markdown": "^10.1.0",
+    "react-player": "^3.4.0",
     "react-resizable-panels": "^3.0.6",
+    "react-router-dom": "^7.14.0",
     "recharts": "^2.15.2",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "streamdown": "^1.4.0",
     "superjson": "^1.13.3",
@@ -90,7 +102,9 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "wouter": "^3.3.5",
-    "zod": "^4.1.12"
+    "ws": "^8.20.0",
+    "zod": "^4.1.12",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@builder.io/vite-plugin-jsx-loc": "^0.1.1",
@@ -101,12 +115,13 @@
     "@types/node": "^24.7.0",
     "@types/react": "^19.2.1",
     "@types/react-dom": "^19.2.1",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.0.4",
     "add": "^2.0.6",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.0",
-    "pnpm": "^10.15.1",
+    "pnpm": "latest",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.14",
@@ -125,6 +140,10 @@
     },
     "overrides": {
       "tailwindcss>nanoid": "3.3.7"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "esbuild"
+    ]
   }
 }

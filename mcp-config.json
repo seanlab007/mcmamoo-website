@@ -1,0 +1,90 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema.json",
+  "_comment": "MCP Server 统一配置 - 用于 MaoAI (mcmamoo-website) 和外部 MCP 客户端共享",
+  "mcp_servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/mac/Desktop/mcmamoo-website"],
+      "description": "文件系统操作 - 读写、列表、搜索文件"
+    },
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "/Users/mac/Desktop/mcmamoo-website"],
+      "description": "Git 操作 - status, commit, branch, diff"
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "description": "HTTP 请求 - 网页抓取、API 调用"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "description": "顺序思考 - 复杂推理链"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "description": "浏览器自动化 - 截图、表单、点击"
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/tmp/maoai-mcp.db"],
+      "description": "SQLite 数据库操作"
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      },
+      "description": "Brave 搜索引擎"
+    },
+    "opencli": {
+      "command": "node",
+      "args": ["/Users/mac/Desktop/opencli/dist/main.js", "mcp"],
+      "description": "OpenCLI MCP 服务 - 将任意网站/Electron App 变成 CLI 工具",
+      "env": {
+        "OPENCLI_MCP_PORT": "19825"
+      }
+    }
+  },
+  "tool_mappings": {
+    "FileReadTool": "filesystem/read_file",
+    "FileWriteTool": "filesystem/write_file",
+    "FileEditTool": "filesystem/edit_file",
+    "GlobTool": "filesystem/list_directory",
+    "GrepTool": "filesystem/search_files",
+    "BashTool": "filesystem/bash",
+    "WebSearchTool": "brave-search/brave_web_search",
+    "WebFetchTool": "fetch/fetch",
+    "GitStatusTool": "git/git_status",
+    "GitCommitTool": "git/git_commit",
+    "GitBranchTool": "git/git_branch",
+    "SQLiteQueryTool": "sqlite/read_query",
+    "OpencliRunTool": "opencli/opencli_run",
+    "OpencliCatalogTool": "opencli/opencli_catalog"
+  },
+  "usage_guide": {
+    "maoai_as_mcp_server": {
+      "description": "MaoAI 作为 MCP 服务器，暴露 AI 工具给外部 AI Agent 调用",
+      "endpoint": "http://localhost:3000/api/mcp",
+      "protocol": "HTTP SSE (MCP 2025-03-26)",
+      "tools_exposed": [
+        "web_search", "run_code", "github_push", "github_read", "read_url",
+        "opencli_run", "opencli_catalog", "openclaw_weather", "openclaw_github",
+        "openclaw_summarize", "openclaw_memory", "openclaw_canvas"
+      ]
+    },
+    "maoai_as_mcp_client": {
+      "description": "MaoAI 作为 MCP 客户端，连接外部 MCP 服务器获取工具",
+      "method": "在环境变量中配置 OPENCLI_MCP_URL 等，server/opencli-tools.ts 自动连接",
+      "env_vars": {
+        "OPENCLI_MCP_ENABLED": "1 (默认开启)",
+        "OPENCLI_MCP_URL": "http://127.0.0.1:19825/mcp (OpenCLI daemon)",
+        "OPENCLI_ROOT": "/Users/mac/Desktop/opencli",
+        "OPENCLI_GATEWAY_URL": "http://localhost:18789 (OpenClaw gateway)"
+      }
+    }
+  }
+}

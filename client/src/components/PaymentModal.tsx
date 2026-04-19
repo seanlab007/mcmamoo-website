@@ -111,13 +111,10 @@ export default function PaymentModal({ open, onClose, product, onSuccess }: Paym
   const handlePaymentMethod = async (methodId: string) => {
     try {
       const result = await createOrderMutation.mutateAsync({
-        tier: "pro" as any, // generic product order
-        provider: methodId as any,
-        currency: product.currency,
-        billingCycle: "monthly" as any,
-        // Pass product metadata via billingCycle field workaround
+        plan: "content", // generic product order
+        amount: product.amount,
       });
-      setOrderId(String(result.orderId));
+      setOrderId(result ? String((result as any).id ?? (result as any).orderId ?? `ORD-${Date.now()}`) : `ORD-${Date.now()}`);
       setStep("pending");
     } catch {
       // Fallback: show manual payment step anyway

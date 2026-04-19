@@ -43,6 +43,14 @@ const MODELS = [
   { id: "glm-4-flash",      label: "GLM-4 Flash",        desc: "免费额度",       group: "智谱" },
   { id: "glm-4-plus",       label: "GLM-4 Plus",         desc: "均衡",           group: "智谱" },
   { id: "glm-z1-flash",     label: "GLM-Z1 Flash",       desc: "推理轻量",       group: "智谱" },
+  // Gemini
+  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash",   desc: "Google · 极速",   group: "Gemini" },
+  { id: "gemini-2.5-pro",   label: "Gemini 2.5 Pro",     desc: "Google · 专业",   group: "Gemini" },
+  // Google AI Studio (Gemma 4)
+  { id: "gemma-4-e2b-it",   label: "Gemma 4 E2B",        desc: "Google AI Studio · 移动端", group: "Google AI" },
+  { id: "gemma-4-e4b-it",   label: "Gemma 4 E4B",        desc: "Google AI Studio · 边缘设备", group: "Google AI" },
+  { id: "gemma-4-26b-it",   label: "Gemma 4 26B",        desc: "Google AI Studio · MoE架构", group: "Google AI" },
+  { id: "gemma-4-31b-it",   label: "Gemma 4 31B",        desc: "Google AI Studio · 最强性能", group: "Google AI" },
 ];
 
 const DEFAULT_MODEL = "deepseek-chat";
