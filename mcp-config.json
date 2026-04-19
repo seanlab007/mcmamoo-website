@@ -1,15 +1,16 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema.json",
   "_comment": "MCP Server 统一配置 - 用于 MaoAI (mcmamoo-website) 和外部 MCP 客户端共享",
+  "_version": "2026-04-19",
   "mcp_servers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/mac/Desktop/mcmamoo-website"],
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/daiyan/Desktop/mcmamoo-website"],
       "description": "文件系统操作 - 读写、列表、搜索文件"
     },
     "git": {
       "command": "uvx",
-      "args": ["mcp-server-git", "--repository", "/Users/mac/Desktop/mcmamoo-website"],
+      "args": ["mcp-server-git", "--repository", "/Users/daiyan/Desktop/mcmamoo-website"],
       "description": "Git 操作 - status, commit, branch, diff"
     },
     "fetch": {
@@ -42,11 +43,60 @@
     },
     "opencli": {
       "command": "node",
-      "args": ["/Users/mac/Desktop/opencli/dist/main.js", "mcp"],
+      "args": ["/Users/daiyan/Desktop/opencli/dist/main.js", "mcp"],
       "description": "OpenCLI MCP 服务 - 将任意网站/Electron App 变成 CLI 工具",
       "env": {
         "OPENCLI_MCP_PORT": "19825"
       }
+    }
+  },
+  "api_providers": {
+    "_comment": "所有已接入的 AI API 提供商配置",
+    "deepseek": {
+      "name": "DeepSeek",
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "baseUrl": "https://api.deepseek.com/v1",
+      "models": ["deepseek-chat", "deepseek-reasoner"],
+      "reasoning": true
+    },
+    "gemini": {
+      "name": "Google Gemini",
+      "apiKeyEnv": "GEMINI_API_KEY",
+      "googleApiKeyEnv": "GOOGLE_API_KEY",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "models": ["gemini-2.5-pro-preview-06-05", "gemini-2.0-flash", "gemini-2.5-flash-preview-05-20"],
+      "reasoning": true
+    },
+    "zhipu": {
+      "name": "智谱 GLM",
+      "apiKeyEnv": "ZHIPU_API_KEY",
+      "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+      "models": ["glm-4-flash", "glm-4-plus", "glm-z1-flash"],
+      "reasoning": true
+    },
+    "groq": {
+      "name": "Groq",
+      "apiKeyEnv": "GROQ_API_KEY",
+      "baseUrl": "https://api.groq.com/openai/v1",
+      "models": ["llama-3.3-70b-versatile", "mixtral-8x7b-32768", "qwen-2.5-32b"],
+      "reasoning": false
+    },
+    "workbuddy": {
+      "name": "WorkBuddy Claude",
+      "apiKeyEnv": "WORKBUDDY_API_KEY",
+      "baseUrl": "https://api.codebuddy.cn/v1",
+      "models": ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022"],
+      "reasoning": false
+    },
+    "runpod": {
+      "name": "RunPod",
+      "apiKeyEnv": "RUNPOD_API_KEY",
+      "endpoint": "https://api.runpod.io"
+    },
+    "tencent": {
+      "name": "腾讯云",
+      "secretIdEnv": "TENCENT_SECRET_ID",
+      "secretKeyEnv": "TENCENT_SECRET_KEY"
     }
   },
   "tool_mappings": {
@@ -82,7 +132,7 @@
       "env_vars": {
         "OPENCLI_MCP_ENABLED": "1 (默认开启)",
         "OPENCLI_MCP_URL": "http://127.0.0.1:19825/mcp (OpenCLI daemon)",
-        "OPENCLI_ROOT": "/Users/mac/Desktop/opencli",
+        "OPENCLI_ROOT": "/Users/daiyan/Desktop/opencli",
         "OPENCLI_GATEWAY_URL": "http://localhost:18789 (OpenClaw gateway)"
       }
     }
