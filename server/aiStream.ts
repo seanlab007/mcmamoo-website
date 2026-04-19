@@ -1650,10 +1650,16 @@ aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
   }
   let nodeCount = 0, onlineCount = 0;
   try {
-    const nodes = await getAiNodes();
+    // 添加超时保护，防止数据库连接问题导致请求挂起
+    const nodes = await Promise.race([
+      getAiNodes(),
+      new Promise<typeof Awaited<ReturnType<typeof getAiNodes>>>((_, reject) =>
+        setTimeout(() => reject(new Error("DB timeout")), 3000)
+      )
+    ]);
     nodeCount = nodes.length;
     onlineCount = nodes.filter(n => n.isOnline).length;
-  } catch { /* db not ready */ }
+  } catch { /* db not ready or timeout */ }
   res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: new Date().toISOString(), version: "v2.3-openclaw-skills" });
 });
 

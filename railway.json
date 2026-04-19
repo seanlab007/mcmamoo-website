@@ -8,7 +8,7 @@
     "startCommand": "node dist/index.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
-    "healthcheckPath": "/",
-    "healthcheckTimeout": 30
+    "healthcheckPath": "/api/ai/status",
+    "healthcheckTimeout": 60
   }
 }
