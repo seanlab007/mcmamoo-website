@@ -35,6 +35,10 @@ const MODELS = [
   // DeepSeek
   { id: "deepseek-chat",     label: "DeepSeek Chat",      desc: "主力 · 推荐",    group: "DeepSeek" },
   { id: "deepseek-reasoner", label: "DeepSeek Reasoner",  desc: "深度推理",       group: "DeepSeek" },
+  // Anthropic Claude
+  { id: "claude-opus-4-5",   label: "Claude Opus 4.5",    desc: "Anthropic · 最强", group: "Claude" },
+  { id: "claude-sonnet-4-5", label: "Claude Sonnet 4.5",  desc: "Anthropic · 均衡", group: "Claude" },
+  { id: "claude-haiku-4",    label: "Claude Haiku 4",     desc: "Anthropic · 极速", group: "Claude" },
   // Groq（极速）
   { id: "llama-3.3-70b",    label: "Llama 3.3 70B",      desc: "Groq 极速",     group: "Groq" },
   { id: "llama-3.1-8b",     label: "Llama 3.1 8B",       desc: "Groq 轻量",     group: "Groq" },

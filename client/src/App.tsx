@@ -39,6 +39,7 @@ import AdminMillenniumClock from "./pages/AdminMillenniumClock";
 import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
 import MaoIndustry from "./components/sections/MaoIndustry";
+import FaceFusion from "./pages/FaceFusion";
 
 // 猫眼内容平台跳转地址（本地:3001，云端: mcmamoo.com/content）
 const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
@@ -86,7 +87,7 @@ function Router() {
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       
-      {/* 猫眼内容平台跳转（已拆分到独立项目） */}
+      {/* 猫眼内容平台 */}
       <Route path={"/content"}>
         {() => {
           if (typeof window !== "undefined") {
@@ -103,6 +104,9 @@ function Router() {
           return null;
         }}
       </Route>
+
+      {/* FaceFusion 面部融合 */}
+      <Route path={"/facefusion"} component={FaceFusion} />
       
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
