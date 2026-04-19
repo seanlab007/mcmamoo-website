@@ -7,6 +7,9 @@
 import { Router } from 'express';
 import { getRowboatAgent } from './rowboat-agent';
 
+const rowboatRouter = Router();
+export default rowboatRouter;
+
 // 初始化 Agent
 let agent = getRowboatAgent({
   qdrantUrl: process.env.QDRANT_URL || 'http://localhost:6333',
