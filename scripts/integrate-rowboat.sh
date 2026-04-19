@@ -6,18 +6,6 @@
 
 set -e
 
-<<<<<<< HEAD
-TARGET_DIR="/Users/daiyan/Desktop/mcmamoo-website"
-ROWBOAT_DIR="$TARGET_DIR/rowboat-source"
-FORK_URL="git@github.com:seanlab007/rowboat.git"
-
-echo "🚀 Rowboat 整合脚本启动..."
-echo "=========================================="
-
-# 1. 检查网络连接
-echo "📡 检查 GitHub 连接..."
-if ! curl -s --connect-timeout 5 https://api.github.com > /dev/null 2>&1; then
-=======
 echo "🚀 Rowboat 整合脚本启动..."
 echo "=========================================="
 
@@ -29,7 +17,6 @@ ROWBOAT_DIR="$TARGET_DIR/rowboat"
 # 1. 检查网络连接
 echo "📡 检查 GitHub 连接..."
 if ! curl -s --connect-timeout 5 https://api.github.com > /dev/null; then
->>>>>>> 44900e2 (feat: integrate Claude Design + Google AI Studio, add local hybrid routing)
     echo "❌ 无法连接到 GitHub，请检查网络后重试"
     exit 1
 fi
@@ -37,20 +24,12 @@ echo "✅ GitHub 连接正常"
 
 # 2. Fork 检查
 echo "📦 检查 Rowboat Fork..."
-<<<<<<< HEAD
-if ! gh repo view seanlab007/rowboat > /dev/null 2>&1; then
-    echo "📌 创建 Fork..."
-    gh repo fork rowboatlabs/rowboat
-    echo "⏳ 等待 Fork 完成（15秒）..."
-    sleep 15
-=======
 FORK_CHECK=$(gh api repos/seanlab007/rowboat 2>/dev/null || echo "NOT_FOUND")
 if [[ "$FORK_CHECK" == "NOT_FOUND" ]]; then
     echo "📌 创建 Fork..."
     gh repo fork rowboatlabs/rowboat
     echo "⏳ 等待 Fork 完成（10秒）..."
     sleep 10
->>>>>>> 44900e2 (feat: integrate Claude Design + Google AI Studio, add local hybrid routing)
 else
     echo "✅ Fork 已存在"
 fi
@@ -58,20 +37,12 @@ fi
 # 3. 克隆 Rowboat
 echo "📥 克隆 Rowboat 仓库..."
 if [ -d "$ROWBOAT_DIR" ]; then
-<<<<<<< HEAD
-    echo "   Rowboat 源目录已存在，更新中..."
-=======
     echo "   Rowboat 目录已存在，更新中..."
->>>>>>> 44900e2 (feat: integrate Claude Design + Google AI Studio, add local hybrid routing)
     cd "$ROWBOAT_DIR"
     git pull origin main
 else
     echo "   执行 git clone..."
-<<<<<<< HEAD
-    git clone "$FORK_URL" "$ROWBOAT_DIR"
-=======
     git clone "$ROWBOAT_REMOTE" "$ROWBOAT_DIR"
->>>>>>> 44900e2 (feat: integrate Claude Design + Google AI Studio, add local hybrid routing)
     cd "$ROWBOAT_DIR"
 fi
 
@@ -82,9 +53,6 @@ ls -la "$ROWBOAT_DIR/packages/" 2>/dev/null || echo "   (未找到)"
 echo "   apps/:"
 ls -la "$ROWBOAT_DIR/apps/" 2>/dev/null || echo "   (未找到)"
 
-<<<<<<< HEAD
-# 5. 复制核心代码
-=======
 # 5. 创建目录结构
 echo "📁 创建 MaoAI 目录结构..."
 mkdir -p "$TARGET_DIR/packages/rowboat-core"
@@ -96,7 +64,6 @@ mkdir -p "$TARGET_DIR/client/src/features/maoai/components/MemoryPanel"
 mkdir -p "$TARGET_DIR/client/src/features/maoai/hooks"
 
 # 6. 复制核心代码
->>>>>>> 44900e2 (feat: integrate Claude Design + Google AI Studio, add local hybrid routing)
 echo "📋 复制 Rowboat 核心代码..."
 
 # 核心库
@@ -105,18 +72,6 @@ if [ -d "$ROWBOAT_DIR/packages/core" ]; then
     echo "   ✅ packages/rowboat-core/"
 fi
 
-<<<<<<< HEAD
-# 6. 创建索引文件
-cat > "$TARGET_DIR/packages/rowboat-core/src/index.ts" << 'EOF'
-// Rowboat Core - 整合原始代码
-export * from './packages/core';
-EOF
-
-# 7. 打印完成信息
-echo ""
-echo "=========================================="
-echo "✅ Rowboat 源码整合完成！"
-=======
 # 图谱引擎
 if [ -d "$ROWBOAT_DIR/packages/graph" ]; then
     cp -r "$ROWBOAT_DIR/packages/graph/"* "$TARGET_DIR/packages/rowboat-graph/"
@@ -359,7 +314,7 @@ async function getAgent() {
   if (!agent) {
     const { RowboatGraph } = await import('@rowboat/graph');
     const { MemoryStore } = await import('@rowboat/memory');
-    const { EntityExtractor } = await import('@rowboat/core');
+    const { EntityExtractor } = await import('@rowboat/core';
     
     agent = new RowboatAgent({
       graph: new RowboatGraph({ url: process.env.QDRANT_URL }),
@@ -412,19 +367,13 @@ EOF
 echo ""
 echo "=========================================="
 echo "✅ Rowboat 整合脚本执行完成！"
->>>>>>> 44900e2 (feat: integrate Claude Design + Google AI Studio, add local hybrid routing)
 echo "=========================================="
 echo ""
 echo "📋 下一步操作："
 echo "   1. 安装依赖: cd $TARGET_DIR && pnpm install"
 echo "   2. 启动 Qdrant: docker compose -f docker-compose.rowboat.yml up -d"
 echo "   3. 启动开发服务器: pnpm dev"
-<<<<<<< HEAD
-echo ""
-echo "📖 详细方案文档: docs/ROWBOAT_INTEGRATION_REPORT.md"
-=======
 echo "   4. 访问 MaoAI 测试知识图谱功能"
 echo ""
-echo "📖 详细方案文档: docs/ROWBOAT_INTEGRATION_PLAN.md"
->>>>>>> 44900e2 (feat: integrate Claude Design + Google AI Studio, add local hybrid routing)
+echo "📖 详细方案文档: docs/ROWBOAT_INTEGRATION_REPORT.md"
 echo ""
