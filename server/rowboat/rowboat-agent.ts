@@ -5,8 +5,8 @@
  * 整合 Rowboat 能力到 MaoAI Agent 系统
  */
 
-import { EntityExtractor, MemoryManager, GraphStore } from '@maoai/rowboat-core';
-import { Entity, Memory, ExtractionResult } from '@maoai/rowboat-core';
+import { EntityExtractor, MemoryManager, GraphStore } from '../../packages/rowboat-core/src';
+import { Entity, Memory, ExtractionResult } from '../../packages/rowboat-core/src/types';
 import { RowboatMCPServer } from './mcp-server';
 
 export interface RowboatContext {
