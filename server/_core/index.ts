@@ -25,6 +25,11 @@ function isPortAvailable(port: number): Promise<boolean> {
 }
 
 async function findAvailablePort(startPort: number = 3000): Promise<number> {
+  // 生产环境跳过端口探测（Railway 等平台端口通常是可用的）
+  if (process.env.NODE_ENV === "production") {
+    console.log(`[Server] Production mode: using port ${startPort}`);
+    return startPort;
+  }
   for (let port = startPort; port < startPort + 20; port++) {
     if (await isPortAvailable(port)) {
       return port;
@@ -34,6 +39,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  console.log("[Server] Starting server...");
+  console.log(`[Server] NODE_ENV: ${process.env.NODE_ENV || "development"}`);
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
