@@ -298,6 +298,12 @@ export default function MaoAIChat() {
   // 推荐追问状态
   const [suggestions, setSuggestions] = useState<SuggestedQuestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  // Token Optimization 统计
+  const [tokenOptStats, setTokenOptStats] = useState<{
+    savedTokens: number;
+    savingRatio: number;
+    strategies: Record<string, number>;
+  } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   // 用于 useEffect 判断：流式生成中不触发 auto-scroll
@@ -895,6 +901,7 @@ export default function MaoAIChat() {
     userScrolledUpRef.current = false; // 重置：开始生成时默认跟随
     setStreamingContent("");
     setActiveNodeInfo(null);
+    setTokenOptStats(null);
     abortRef.current = new AbortController();
 
     let convId = currentConvId;
@@ -1026,6 +1033,16 @@ export default function MaoAIChat() {
               } else if (chunk.agentLog) {
                 // Agent 推理日志（Manus Max 流式可视化）
                 setAgentLogs(prev => [...prev, chunk.agentLog]);
+              } else if (chunk.tokenOptimization) {
+                // Token Optimization 统计
+                const opt = chunk.tokenOptimization;
+                if (opt.stage === "session_summary") {
+                  setTokenOptStats({
+                    savedTokens: opt.totalSavedTokens || 0,
+                    savingRatio: opt.savingRatio || 0,
+                    strategies: opt.strategies || {},
+                  });
+                }
               }
             } catch { /* skip */ }
           }
@@ -1714,6 +1731,21 @@ export default function MaoAIChat() {
                         🔄 推理中 · 第 {reactRound.round}/{reactRound.maxRounds} 轮
                       </span>
                       <span className="text-white/30">· ReAct Thinking</span>
+                    </div>
+                  )}
+                  {/* Token Optimization 统计徽章 */}
+                  {tokenOptStats && tokenOptStats.savedTokens > 0 && !isStreaming && (
+                    <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded text-[11px]">
+                      <span className="text-emerald-400/80">
+                        💰 Token 节省: {tokenOptStats.savedTokens} tokens ({tokenOptStats.savingRatio}%)
+                      </span>
+                      {Object.keys(tokenOptStats.strategies).length > 0 && (
+                        <span className="text-white/30">
+                          · {Object.entries(tokenOptStats.strategies)
+                            .map(([k, v]) => `${k}: ${v}`)
+                            .join(" · ")}
+                        </span>
+                      )}
                     </div>
                   )}
                   {/* Agent 推理日志视图（Manus Max 流式可视化） */}

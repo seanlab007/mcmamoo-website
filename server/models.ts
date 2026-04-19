@@ -9,7 +9,7 @@
 export interface ModelConfig {
   name: string;
   badge: string;
-  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "google-ai-studio" | "zai" | "autoclaw";
+  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "google-ai-studio" | "zai" | "autoclaw" | "anthropic";
   model: string;
   baseUrl: string;
   /** apiKey 为 getter，运行时动态读取环境变量，避免模块加载顺序问题 */
@@ -18,6 +18,8 @@ export interface ModelConfig {
   supportsVision?: boolean;
   supportsAudio?: boolean;
   supportsVideo?: boolean;
+  /** 是否支持 extended thinking / reasoning 模式 */
+  supportsReasoning?: boolean;
 }
 
 // ─── Provider Base URLs ───────────────────────────────────────────────────────
@@ -28,6 +30,7 @@ const GROQ_BASE     = "https://api.groq.com/openai/v1";
 const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1beta/openai";
 const GOOGLE_AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const ZAI_BASE      = "https://api.z.ai/api/paas/v4";
+const ANTHROPIC_BASE = "https://api.anthropic.com/v1";
 
 // ─── Model Config Map ─────────────────────────────────────────────────────────
 
@@ -246,4 +249,50 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
   //   3. 通过 /api/ai/node/register 接口注册本地节点
   //   4. 注册成功后，AutoClaw 将作为 local:<nodeId> 模型出现在模型列表中
   // 注意：AutoClaw 本身不支持 function calling，其 Agent 能力通过 Skills 系统实现
+
+  // ── MiniMind（超小型本地 LLM）──────────────────────────────────────────
+  // MiniMind 是从零训练的超小型 LLM 框架（26M-502M 参数）
+  // 通过 Ollama 部署后自动发现为本地节点
+  // 特点：$3 训练成本、2小时训练、支持视觉（MiniMind-V）
+  // 部署步骤：
+  //   1. 安装 Ollama：https://ollama.ai
+  //   2. 拉取模型：ollama pull minimind（或自定义 GGUF）
+  //   3. MaoAI 自动发现 Ollama 模型并注册为本地节点
+  //   4. 配合 Token Optimization 可实现极低成本的本地推理
+  // 注意：MiniMind 参数量小，适合简单问答/摘要，复杂推理建议使用云端模型
+  // 仓库：https://github.com/seanlab007/minimind
+
+  // ── Anthropic Claude ─────────────────────────────────────────────────────────
+  "claude-opus-4-5": {
+    name: "Claude Opus 4.5",
+    badge: "MAX",
+    provider: "anthropic",
+    model: "claude-opus-4-5-20251101",
+    baseUrl: ANTHROPIC_BASE,
+    get apiKey() { return process.env.ANTHROPIC_API_KEY || ""; },
+    maxTokens: 8192,
+    supportsVision: true,
+    supportsReasoning: true,
+  },
+  "claude-sonnet-4-5": {
+    name: "Claude Sonnet 4.5",
+    badge: "PRO",
+    provider: "anthropic",
+    model: "claude-sonnet-4-5-20251101",
+    baseUrl: ANTHROPIC_BASE,
+    get apiKey() { return process.env.ANTHROPIC_API_KEY || ""; },
+    maxTokens: 8192,
+    supportsVision: true,
+    supportsReasoning: true,
+  },
+  "claude-haiku-4": {
+    name: "Claude Haiku 4",
+    badge: "FAST",
+    provider: "anthropic",
+    model: "claude-haiku-4-20251101",
+    baseUrl: ANTHROPIC_BASE,
+    get apiKey() { return process.env.ANTHROPIC_API_KEY || ""; },
+    maxTokens: 4096,
+    supportsVision: true,
+  },
 };
