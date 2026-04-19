@@ -1,16 +1,27 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema.json",
   "_comment": "MCP Server 统一配置 - 用于 MaoAI (mcmamoo-website) 和外部 MCP 客户端共享",
+<<<<<<< HEAD
   "_version": "2026-04-19",
   "mcp_servers": {
     "filesystem": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/daiyan/Desktop/mcmamoo-website"],
+=======
+  "mcp_servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/mac/Desktop/mcmamoo-website"],
+>>>>>>> feat/maoai-latest
       "description": "文件系统操作 - 读写、列表、搜索文件"
     },
     "git": {
       "command": "uvx",
+<<<<<<< HEAD
       "args": ["mcp-server-git", "--repository", "/Users/daiyan/Desktop/mcmamoo-website"],
+=======
+      "args": ["mcp-server-git", "--repository", "/Users/mac/Desktop/mcmamoo-website"],
+>>>>>>> feat/maoai-latest
       "description": "Git 操作 - status, commit, branch, diff"
     },
     "fetch": {
@@ -43,13 +54,18 @@
     },
     "opencli": {
       "command": "node",
+<<<<<<< HEAD
       "args": ["/Users/daiyan/Desktop/opencli/dist/main.js", "mcp"],
+=======
+      "args": ["/Users/mac/Desktop/opencli/dist/main.js", "mcp"],
+>>>>>>> feat/maoai-latest
       "description": "OpenCLI MCP 服务 - 将任意网站/Electron App 变成 CLI 工具",
       "env": {
         "OPENCLI_MCP_PORT": "19825"
       }
     }
   },
+<<<<<<< HEAD
   "api_providers": {
     "_comment": "所有已接入的 AI API 提供商配置",
     "deepseek": {
@@ -99,6 +115,8 @@
       "secretKeyEnv": "TENCENT_SECRET_KEY"
     }
   },
+=======
+>>>>>>> feat/maoai-latest
   "tool_mappings": {
     "FileReadTool": "filesystem/read_file",
     "FileWriteTool": "filesystem/write_file",
@@ -132,7 +150,11 @@
       "env_vars": {
         "OPENCLI_MCP_ENABLED": "1 (默认开启)",
         "OPENCLI_MCP_URL": "http://127.0.0.1:19825/mcp (OpenCLI daemon)",
+<<<<<<< HEAD
         "OPENCLI_ROOT": "/Users/daiyan/Desktop/opencli",
+=======
+        "OPENCLI_ROOT": "/Users/mac/Desktop/opencli",
+>>>>>>> feat/maoai-latest
         "OPENCLI_GATEWAY_URL": "http://localhost:18789 (OpenClaw gateway)"
       }
     }

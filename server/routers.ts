@@ -35,20 +35,29 @@ import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfi
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
 import { autoclipRouter } from "./autoclip";
 import { salesRouter } from "./sales";
+<<<<<<< HEAD
 import { rowboatRouter } from "./rowboat/router";
+=======
+>>>>>>> feat/maoai-latest
 import {
   generateVideo,
   getVideoTaskStatus,
   VIDEO_MODELS,
   type VideoGenerateOptions,
 } from "./video";
+<<<<<<< HEAD
 import { generateEmbedding, generateEmbeddings, findSimilarTexts, getEmbeddingModels, checkEmbeddingHealth } from "./embedding";
+=======
+>>>>>>> feat/maoai-latest
 
 export const appRouter = router({
   system: systemRouter,
   autoclip: autoclipRouter,
   sales: salesRouter,
+<<<<<<< HEAD
   rowboat: rowboatRouter, // 知识图谱 + 记忆系统
+=======
+>>>>>>> feat/maoai-latest
   video: router({
     // 获取可用视频模型列表
     listModels: publicProcedure.query(() => {
@@ -338,6 +347,7 @@ export const appRouter = router({
         // Lightweight passthrough — actual streaming handled by /api/ai/stream REST endpoint
         return { message: "Use /api/ai/stream for streaming chat", modelId: input.modelId };
       }),
+<<<<<<< HEAD
     // ── 嵌入模型 API ───────────────────────────────────────────────────────
     embeddings: router({
       // 获取可用嵌入模型列表
@@ -380,6 +390,8 @@ export const appRouter = router({
         return await checkEmbeddingHealth();
       }),
     }),
+=======
+>>>>>>> feat/maoai-latest
   }),
 
   // ─── AI 节点管理 ─────────────────────────────────────────────────────────

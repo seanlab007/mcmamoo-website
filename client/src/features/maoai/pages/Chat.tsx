@@ -1,7 +1,10 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { AgentModeSelector } from "../components/AgentModeSelector";
+<<<<<<< HEAD
 import { SuggestedFollowUps } from "../components/SuggestedFollowUps";
+=======
+>>>>>>> feat/maoai-latest
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
@@ -9,7 +12,10 @@ import {
   LayoutGrid, Lock, Search, BookOpen,
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
+<<<<<<< HEAD
 
+=======
+>>>>>>> feat/maoai-latest
 import { useTranslation } from "react-i18next";
 import { Streamdown } from "streamdown";
 import { useLocation } from "wouter";
@@ -26,7 +32,10 @@ import type {
   Conversation,
   PendingFile,
   ToolCallStep,
+<<<<<<< HEAD
   SuggestedQuestion,
+=======
+>>>>>>> feat/maoai-latest
 } from "../types";
 
 const BACKEND_URL = MAOAI_BACKEND_URL;
@@ -295,6 +304,7 @@ export default function MaoAIChat() {
   // Agent 推理日志（Manus Max 流式可视化）
   const [agentLogs, setAgentLogs] = useState<any[]>([]);
   const [agentThinkingOpen, setAgentThinkingOpen] = useState(true);
+<<<<<<< HEAD
   // 推荐追问状态
   const [suggestions, setSuggestions] = useState<SuggestedQuestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -314,6 +324,10 @@ export default function MaoAIChat() {
   const userScrolledUpRef = useRef(false);
   // 防抖计时器（100ms 间隔限制滚动频率）
   const scrollDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+=======
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+>>>>>>> feat/maoai-latest
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -385,6 +399,7 @@ export default function MaoAIChat() {
   }, [chat.yesterday, t, timeLocale]);
 
   useEffect(() => {
+<<<<<<< HEAD
     // 仅在新消息追加时（非流式生成中）触发滚动
     if (!isGeneratingRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -397,6 +412,10 @@ export default function MaoAIChat() {
       safeScrollToBottom();
     }
   }, [streamingContent]);
+=======
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, streamingContent]);
+>>>>>>> feat/maoai-latest
 
   useEffect(() => {
     if (isResearchEntry) {
@@ -500,6 +519,7 @@ export default function MaoAIChat() {
     setPendingImages(prev => [...prev, dataUrl]);
   };
 
+<<<<<<< HEAD
   // ── 防抖滚动到底 ──────────────────────────────────────────────
   // 100ms 间隔限制 + 用户主动滚上时暂停
   const safeScrollToBottom = useCallback((force = false) => {
@@ -517,6 +537,8 @@ export default function MaoAIChat() {
     }, 100);
   }, []);
 
+=======
+>>>>>>> feat/maoai-latest
   const handlePaste = useCallback(async (e: ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -849,9 +871,12 @@ export default function MaoAIChat() {
     if (!checkChatLimit()) return;
     if (!currentOption.isLocal && !checkPremiumModel(selectedId)) return;
 
+<<<<<<< HEAD
     // 清除之前的推荐追问
     setSuggestions([]);
 
+=======
+>>>>>>> feat/maoai-latest
     // Build document context system prompt from pending files
     let docSystemPrompt = "";
     if (pendingFiles.length > 0) {
@@ -899,12 +924,17 @@ export default function MaoAIChat() {
     setPendingImages([]);
     setPendingFiles([]);
     setIsStreaming(true);
+<<<<<<< HEAD
     isGeneratingRef.current = true;
     userScrolledUpRef.current = false; // 重置：开始生成时默认跟随
     setStreamingContent("");
     setActiveNodeInfo(null);
     setTokenOptStats(null);
     setTokenRealtimeSaved(0);
+=======
+    setStreamingContent("");
+    setActiveNodeInfo(null);
+>>>>>>> feat/maoai-latest
     abortRef.current = new AbortController();
 
     let convId = currentConvId;
@@ -989,11 +1019,17 @@ export default function MaoAIChat() {
               } else if (chunk.content) {
                 fullContent += chunk.content;
                 setStreamingContent(fullContent);
+<<<<<<< HEAD
                 safeScrollToBottom(); // 防抖滚动：避免每个字符都跳
               } else if (chunk.error) {
                 fullContent += `\n\n${chat.streamErrorPrefix} ${chunk.error}`;
                 setStreamingContent(fullContent);
                 safeScrollToBottom(true);
+=======
+              } else if (chunk.error) {
+                fullContent += `\n\n${chat.streamErrorPrefix} ${chunk.error}`;
+                setStreamingContent(fullContent);
+>>>>>>> feat/maoai-latest
               } else if (chunk.skillMatch) {
                 // Skill was matched — show it as a tool-call-style step
                 const step: ToolCallStep = {
@@ -1036,6 +1072,7 @@ export default function MaoAIChat() {
               } else if (chunk.agentLog) {
                 // Agent 推理日志（Manus Max 流式可视化）
                 setAgentLogs(prev => [...prev, chunk.agentLog]);
+<<<<<<< HEAD
               } else if (chunk.tokenOptimization) {
                 // Token Optimization 统计
                 const opt = chunk.tokenOptimization;
@@ -1051,6 +1088,8 @@ export default function MaoAIChat() {
                     setTokenRealtimeSaved(prev => prev + opt.savedTokens);
                   }
                 }
+=======
+>>>>>>> feat/maoai-latest
               }
             } catch { /* skip */ }
           }
@@ -1085,18 +1124,25 @@ export default function MaoAIChat() {
       setReactRound(null);
       setAgentLogs([]);
     } finally {
+<<<<<<< HEAD
       isGeneratingRef.current = false;
       setIsStreaming(false);
       safeScrollToBottom(true); // 生成完毕，强制滚到底
+=======
+      setIsStreaming(false);
+>>>>>>> feat/maoai-latest
       setStreamingContent("");
       setReactRound(null);
       setAgentLogs([]);
       abortRef.current = null;
+<<<<<<< HEAD
       
       // 生成推荐追问
       if (fullContent && fullContent.trim().length >= 50) {
         generateSuggestions([...newMessages, { role: "assistant" as const, content: fullContent }], fullContent);
       }
+=======
+>>>>>>> feat/maoai-latest
     }
   };
 
@@ -1130,6 +1176,7 @@ export default function MaoAIChat() {
     abortRef.current?.abort();
   };
 
+<<<<<<< HEAD
   // ── 生成推荐追问 ───────────────────────────────────────────────────
   const generateSuggestions = useCallback(async (messagesHistory: Message[], lastResponse: string) => {
     if (!lastResponse.trim() || lastResponse.length < 50) {
@@ -1171,6 +1218,9 @@ export default function MaoAIChat() {
   }, []);
 
   const isBusy = isStreaming || isGeneratingImage || isUploadingFile || isLoadingSuggestions;
+=======
+  const isBusy = isStreaming || isGeneratingImage || isUploadingFile;
+>>>>>>> feat/maoai-latest
 
   if (loading) {
     return (
@@ -1539,6 +1589,7 @@ export default function MaoAIChat() {
         </header>
 
         {/* ── Messages area ── */}
+<<<<<<< HEAD
         <div
           className="flex-1 overflow-y-auto"
           style={{ overflowAnchor: "auto" }}
@@ -1553,6 +1604,9 @@ export default function MaoAIChat() {
             }
           }}
         >
+=======
+        <div className="flex-1 overflow-y-auto">
+>>>>>>> feat/maoai-latest
           <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col gap-6">
             {messages.length === 0 && !isBusy && (
               <div className="flex flex-col items-center justify-center py-16 gap-6">
@@ -1679,6 +1733,7 @@ export default function MaoAIChat() {
               );
             })}
 
+<<<<<<< HEAD
             {/* 推荐追问 — 仅在最后一条 assistant 消息后显示 */}
             {!isStreaming && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
               <div className="flex gap-4 justify-start">
@@ -1700,6 +1755,11 @@ export default function MaoAIChat() {
             {/* Streaming chat bubble */}
             {isStreaming && (
               <div className="flex gap-4 justify-start" data-streaming="true">
+=======
+            {/* Streaming chat bubble */}
+            {isStreaming && (
+              <div className="flex gap-4 justify-start">
+>>>>>>> feat/maoai-latest
                 <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center shrink-0 mt-1">
                   <Bot size={14} className="text-[#C9A84C]" />
                 </div>
@@ -1741,6 +1801,7 @@ export default function MaoAIChat() {
                       <span className="text-white/30">· ReAct Thinking</span>
                     </div>
                   )}
+<<<<<<< HEAD
                   {/* Token Optimization 统计 */}
                   {((tokenOptStats && tokenOptStats.savedTokens > 0 && !isStreaming) || (isStreaming && tokenRealtimeSaved > 0)) && (
                     <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded text-[11px] flex-wrap">
@@ -1764,6 +1825,8 @@ export default function MaoAIChat() {
                       )}
                     </div>
                   )}
+=======
+>>>>>>> feat/maoai-latest
                   {/* Agent 推理日志视图（Manus Max 流式可视化） */}
                   <AgentThinkingView logs={agentLogs} isOpen={agentThinkingOpen} onToggle={() => setAgentThinkingOpen(v => !v)} />
                   <div className="bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">

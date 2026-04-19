@@ -10,7 +10,10 @@ import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
 import { searchCorpus, formatForPrompt } from "./maoRagServer";
+<<<<<<< HEAD
 import { TokenOptimizationPipeline } from "./token-optimization";
+=======
+>>>>>>> feat/maoai-latest
 
 const aiStreamRouter = Router();
 
@@ -480,6 +483,7 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     try {
       const ragResults = await searchCorpus(userTextForRag, 3);
       if (ragResults.length > 0) {
+<<<<<<< HEAD
         let refs = formatForPrompt(ragResults);
         if (refs) {
           // ── Token Optimization: RAG 上下文压缩 ────────────────────────
@@ -495,6 +499,10 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
               }
             })}\n\n`);
           }
+=======
+        const refs = formatForPrompt(ragResults);
+        if (refs) {
+>>>>>>> feat/maoai-latest
           res.write(`data: ${JSON.stringify({ ragReferences: { count: ragResults.length, preview: refs.slice(0, 100) + "..." } })}\n\n`);
           effectiveSystemPrompt = (effectiveSystemPrompt ? effectiveSystemPrompt + "\n\n" : "") + refs;
         }
@@ -686,6 +694,7 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         res.write(`data: ${JSON.stringify({
           reactEnd: { reason: toolCalls.length === 0 ? "no_tools" : "final_answer", rounds: round + 1 }
         })}\n\n`);
+<<<<<<< HEAD
 
         // ── Token Optimization: 推送会话总统计 ──────────────────────────
         const sessionStats = tokenPipeline.getSessionStats(sessionId);
@@ -701,6 +710,8 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
           })}\n\n`);
         }
 
+=======
+>>>>>>> feat/maoai-latest
         res.write("data: [DONE]\n\n");
         res.end();
         return;
@@ -778,6 +789,7 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     res.write(`data: ${JSON.stringify({
       reactEnd: { reason: "max_rounds", rounds: MAX_TOOL_ROUNDS }
     })}\n\n`);
+<<<<<<< HEAD
 
     // ── Token Optimization: 推送会话总统计 ──────────────────────────────
     const finalSessionStats = tokenPipeline.getSessionStats(sessionId);
@@ -793,6 +805,8 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
       })}\n\n`);
     }
 
+=======
+>>>>>>> feat/maoai-latest
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err: any) {
@@ -1551,6 +1565,7 @@ aiStreamRouter.post("/agent/stream", async (req: Request, res: Response) => {
   }, 5 * 60 * 1000);
 });
 
+<<<<<<< HEAD
 // ─── Suggested Follow-ups Generator ────────────────────────────────────────
 // POST /api/ai/suggestions
 // 根据对话历史和 AI 回复，生成 3 个推荐追问
@@ -1655,6 +1670,8 @@ ${lastResponse.slice(0, 1500)}
   }
 });
 
+=======
+>>>>>>> feat/maoai-latest
 // ─── Health check ─────────────────────────────────────────────
 aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
   const status: Record<string, any> = {};

@@ -362,6 +362,7 @@ export const ZH_MAOAI_TRANSLATION = {
     manage: "管理",
     chatUsage: "对话",
     imageUsage: "图像生成",
+<<<<<<< HEAD
     unlimited: "无限制使用中",
     suggestedFollowUps: {
       title: "推荐追问",
@@ -373,6 +374,9 @@ export const ZH_MAOAI_TRANSLATION = {
         practice: "实践"
       }
     }
+=======
+    unlimited: "无限制使用中"
+>>>>>>> feat/maoai-latest
   }
 } as const;
 
@@ -740,6 +744,7 @@ export const EN_MAOAI_TRANSLATION = {
     manage: "Manage",
     chatUsage: "Chat",
     imageUsage: "Images",
+<<<<<<< HEAD
     unlimited: "Unlimited usage enabled",
     suggestedFollowUps: {
       title: "Suggested Follow-ups",
@@ -751,6 +756,9 @@ export const EN_MAOAI_TRANSLATION = {
         practice: "Practice"
       }
     }
+=======
+    unlimited: "Unlimited usage enabled"
+>>>>>>> feat/maoai-latest
   }
 } as const;
 

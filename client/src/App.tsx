@@ -46,6 +46,11 @@ const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
   ? "/content"
   : "http://localhost:3001/content";
 
+// 猫眼内容平台跳转地址（本地:3001，云端: mcmamoo.com/content）
+const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
+  ? "/content"
+  : "http://localhost:3001/content";
+
 function Router() {
   return (
     <Switch>
@@ -87,7 +92,11 @@ function Router() {
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       
+<<<<<<< HEAD
       {/* 猫眼内容平台 */}
+=======
+      {/* 猫眼内容平台跳转（已拆分到独立项目） */}
+>>>>>>> feat/maoai-latest
       <Route path={"/content"}>
         {() => {
           if (typeof window !== "undefined") {
@@ -104,9 +113,12 @@ function Router() {
           return null;
         }}
       </Route>
+<<<<<<< HEAD
 
       {/* FaceFusion 面部融合 */}
       <Route path={"/facefusion"} component={FaceFusion} />
+=======
+>>>>>>> feat/maoai-latest
       
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />
