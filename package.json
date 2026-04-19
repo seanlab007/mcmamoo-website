@@ -17,7 +17,7 @@
     "skill:install-marketing-claw": "node scripts/install-marketing-claw.mjs"
   },
   "dependencies": {
-    "@maoai/rowboat-core": "workspace:*",
+    "@maoai/rowboat-core": "file:./packages/rowboat-core",
     "@ant-design/icons": "^6.1.1",
     "@aws-sdk/client-s3": "^3.693.0",
     "@aws-sdk/s3-request-presigner": "^3.693.0",
