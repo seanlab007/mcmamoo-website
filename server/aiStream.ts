@@ -10,8 +10,20 @@ import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
 import { searchCorpus, formatForPrompt } from "./maoRagServer";
+import { TokenOptimizationPipeline } from "./token-optimization";
 
 const aiStreamRouter = Router();
+
+// ─── Token Optimization Pipeline ────────────────────────────────────────────────
+// 集成 TokenSaver / Claw-Compactor / RTK 的 token 节省管线
+const tokenPipeline = new TokenOptimizationPipeline({
+  enableInputPreprocess: true,
+  enableOutputCompact: true,
+  enableCliProxy: true,
+  enableTokenCounting: true,
+  inputMaxChars: 12000,
+  toolOutputMaxChars: 6000,
+});
 
 // ─── Admin Auth Helper ────────────────────────────────────────────────────────
 // Returns the user if authenticated AND role === "admin", else null
@@ -478,7 +490,25 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   }
 
   const rawMessages = effectiveSystemPrompt ? [{ role: "system", content: effectiveSystemPrompt }, ...messages] : messages;
-  const allMessages = hasImage ? normalizeMessagesForVision(rawMessages) : rawMessages;
+
+  // ── Token Optimization: 输入预处理 ──────────────────────────────────────
+  // 压缩用户输入和 system prompt，减少发送给 LLM 的 token 数
+  const sessionId = req.headers["x-session-id"] as string || `chat-${Date.now()}`;
+  const { messages: optimizedMessages, savedTokens: inputSaved, stats: inputStats } = tokenPipeline.optimizeInput(rawMessages, sessionId);
+
+  if (inputSaved > 0) {
+    res.write(`data: ${JSON.stringify({
+      tokenOptimization: {
+        stage: "input_preprocess",
+        savedTokens: inputSaved,
+        strategies: inputStats.flatMap(s => s.appliedStrategies),
+        originalChars: inputStats.reduce((sum, s) => sum + s.originalChars, 0),
+        processedChars: inputStats.reduce((sum, s) => sum + s.processedChars, 0),
+      }
+    })}\n\n`);
+  }
+
+  const allMessages = hasImage ? normalizeMessagesForVision(optimizedMessages) : optimizedMessages;
 
   // ── Local node routing (admin only) ────────────────────────────────────────────────────────────────────────────
   if (useLocal || (typeof model === "string" && model.startsWith("local:"))) {
@@ -643,6 +673,21 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         res.write(`data: ${JSON.stringify({
           reactEnd: { reason: toolCalls.length === 0 ? "no_tools" : "final_answer", rounds: round + 1 }
         })}\n\n`);
+
+        // ── Token Optimization: 推送会话总统计 ──────────────────────────
+        const sessionStats = tokenPipeline.getSessionStats(sessionId);
+        if (sessionStats && sessionStats.totalSavedTokens > 0) {
+          res.write(`data: ${JSON.stringify({
+            tokenOptimization: {
+              stage: "session_summary",
+              totalSavedTokens: sessionStats.totalSavedTokens,
+              savingRatio: Math.round(sessionStats.savingRatio * 100),
+              strategies: sessionStats.strategyBreakdown,
+              rounds: sessionStats.rounds,
+            }
+          })}\n\n`);
+        }
+
         res.write("data: [DONE]\n\n");
         res.end();
         return;
@@ -683,12 +728,33 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         })}\n\n`);
 
         // Add tool result to conversation
+        // ── Token Optimization: 工具输出压缩 ──────────────────────────────
+        // 对 CLI/code 工具的输出进行压缩，减少上下文 token 消耗
+        let toolOutput = result.success ? result.output : `工具执行失败: ${result.error}`;
+        if (result.success && result.output.length > 200) {
+          const { text: compressedOutput, savedTokens: outputSaved } = tokenPipeline.optimizeToolOutput(tc.name, result.output, sessionId);
+          toolOutput = compressedOutput;
+
+          if (outputSaved > 0) {
+            res.write(`data: ${JSON.stringify({
+              tokenOptimization: {
+                stage: "output_compact",
+                toolName: tc.name,
+                savedTokens: outputSaved,
+              }
+            })}\n\n`);
+          }
+        }
+
+        // 限制上下文大小
+        if (toolOutput.length > 8000) {
+          toolOutput = toolOutput.slice(0, 8000);
+        }
+
         conversationMessages.push({
           role: "tool",
           tool_call_id: tc.id,
-          content: result.success
-            ? result.output.slice(0, 8000) // limit context size
-            : `工具执行失败: ${result.error}`
+          content: toolOutput,
         } as any);
       }
 
@@ -699,6 +765,21 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     res.write(`data: ${JSON.stringify({
       reactEnd: { reason: "max_rounds", rounds: MAX_TOOL_ROUNDS }
     })}\n\n`);
+
+    // ── Token Optimization: 推送会话总统计 ──────────────────────────────
+    const finalSessionStats = tokenPipeline.getSessionStats(sessionId);
+    if (finalSessionStats && finalSessionStats.totalSavedTokens > 0) {
+      res.write(`data: ${JSON.stringify({
+        tokenOptimization: {
+          stage: "session_summary",
+          totalSavedTokens: finalSessionStats.totalSavedTokens,
+          savingRatio: Math.round(finalSessionStats.savingRatio * 100),
+          strategies: finalSessionStats.strategyBreakdown,
+          rounds: finalSessionStats.rounds,
+        }
+      })}\n\n`);
+    }
+
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err: any) {
