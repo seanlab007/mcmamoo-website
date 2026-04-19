@@ -1,0 +1,8 @@
+{
+  "name": "MaoYan Voice",
+  "provider": "qwen3",
+  "speaker": "Ryan",
+  "speed": 1.0,
+  "pitch": 0,
+  "volume": 1.0
+}

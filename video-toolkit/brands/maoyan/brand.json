@@ -1,0 +1,21 @@
+{
+  "name": "MaoYan",
+  "displayName": "猫眼内容平台",
+  "primary": "#FF6B35",
+  "secondary": "#1A1A2E",
+  "accent": "#FFE66D",
+  "background": "#0F0F1A",
+  "text": "#FFFFFF",
+  "textMuted": "#A0A0B0",
+  "fonts": {
+    "heading": "Noto Sans SC",
+    "body": "Noto Sans SC",
+    "mono": "JetBrains Mono"
+  },
+  "borderRadius": 8,
+  "shadows": {
+    "sm": "0 2px 8px rgba(0,0,0,0.3)",
+    "md": "0 4px 16px rgba(0,0,0,0.4)",
+    "lg": "0 8px 32px rgba(0,0,0,0.5)"
+  }
+}

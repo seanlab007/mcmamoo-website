@@ -14,8 +14,13 @@ import * as fs from "fs/promises";
 import * as os from "os";
 import { promisify } from "util";
 import { exec } from "child_process";
+import { fileURLToPath } from "url";
 
 const execAsync = promisify(exec);
+
+// 获取 __dirname 兼容 ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 配置
 const HYPERAGENTS_DIR = path.join(__dirname, "hyperagents");
