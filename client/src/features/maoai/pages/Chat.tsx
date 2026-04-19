@@ -8,6 +8,7 @@ import {
   LayoutGrid, Lock, Search, BookOpen,
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
+
 import { useTranslation } from "react-i18next";
 import { Streamdown } from "streamdown";
 import { useLocation } from "wouter";
@@ -294,6 +295,12 @@ export default function MaoAIChat() {
   const [agentThinkingOpen, setAgentThinkingOpen] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // 用于 useEffect 判断：流式生成中不触发 auto-scroll
+  const isGeneratingRef = useRef(false);
+  // 追踪用户是否主动向上滚（暂停自动置底）
+  const userScrolledUpRef = useRef(false);
+  // 防抖计时器（100ms 间隔限制滚动频率）
+  const scrollDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -365,8 +372,18 @@ export default function MaoAIChat() {
   }, [chat.yesterday, t, timeLocale]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent]);
+    // 仅在新消息追加时（非流式生成中）触发滚动
+    if (!isGeneratingRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  // 流式内容更新时用防抖滚动
+  useEffect(() => {
+    if (streamingContent) {
+      safeScrollToBottom();
+    }
+  }, [streamingContent]);
 
   useEffect(() => {
     if (isResearchEntry) {
@@ -469,6 +486,23 @@ export default function MaoAIChat() {
     const dataUrl = await fileToDataUrl(file);
     setPendingImages(prev => [...prev, dataUrl]);
   };
+
+  // ── 防抖滚动到底 ──────────────────────────────────────────────
+  // 100ms 间隔限制 + 用户主动滚上时暂停
+  const safeScrollToBottom = useCallback((force = false) => {
+    if (scrollDebounceRef.current) return; // 防抖：还在冷却中
+    if (userScrolledUpRef.current && !force) return; // 用户滚上去了，除非强制
+
+    scrollDebounceRef.current = setTimeout(() => {
+      scrollDebounceRef.current = null;
+      const container = messagesEndRef.current?.parentElement?.parentElement;
+      if (!container) return;
+      const dist = container.scrollHeight - container.scrollTop - container.clientHeight;
+      if (dist > 100 || force) {
+        container.scrollTo({ top: container.scrollHeight, behavior: isGeneratingRef.current ? "instant" : "smooth" });
+      }
+    }, 100);
+  }, []);
 
   const handlePaste = useCallback(async (e: ClipboardEvent) => {
     const items = e.clipboardData?.items;
@@ -849,6 +883,8 @@ export default function MaoAIChat() {
     setPendingImages([]);
     setPendingFiles([]);
     setIsStreaming(true);
+    isGeneratingRef.current = true;
+    userScrolledUpRef.current = false; // 重置：开始生成时默认跟随
     setStreamingContent("");
     setActiveNodeInfo(null);
     abortRef.current = new AbortController();
@@ -935,9 +971,11 @@ export default function MaoAIChat() {
               } else if (chunk.content) {
                 fullContent += chunk.content;
                 setStreamingContent(fullContent);
+                safeScrollToBottom(); // 防抖滚动：避免每个字符都跳
               } else if (chunk.error) {
                 fullContent += `\n\n${chat.streamErrorPrefix} ${chunk.error}`;
                 setStreamingContent(fullContent);
+                safeScrollToBottom(true);
               } else if (chunk.skillMatch) {
                 // Skill was matched — show it as a tool-call-style step
                 const step: ToolCallStep = {
@@ -1014,7 +1052,9 @@ export default function MaoAIChat() {
       setReactRound(null);
       setAgentLogs([]);
     } finally {
+      isGeneratingRef.current = false;
       setIsStreaming(false);
+      safeScrollToBottom(true); // 生成完毕，强制滚到底
       setStreamingContent("");
       setReactRound(null);
       setAgentLogs([]);
@@ -1421,7 +1461,20 @@ export default function MaoAIChat() {
         </header>
 
         {/* ── Messages area ── */}
-        <div className="flex-1 overflow-y-auto">
+        <div
+          className="flex-1 overflow-y-auto"
+          style={{ overflowAnchor: "auto" }}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const dist = el.scrollHeight - el.scrollTop - el.clientHeight;
+            // 用户向上滚超过 150px → 暂停自动置底
+            if (dist > 150) {
+              userScrolledUpRef.current = true;
+            } else if (dist < 30) {
+              userScrolledUpRef.current = false;
+            }
+          }}
+        >
           <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col gap-6">
             {messages.length === 0 && !isBusy && (
               <div className="flex flex-col items-center justify-center py-16 gap-6">
@@ -1550,7 +1603,7 @@ export default function MaoAIChat() {
 
             {/* Streaming chat bubble */}
             {isStreaming && (
-              <div className="flex gap-4 justify-start">
+              <div className="flex gap-4 justify-start" data-streaming="true">
                 <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center shrink-0 mt-1">
                   <Bot size={14} className="text-[#C9A84C]" />
                 </div>
