@@ -27,8 +27,18 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
+  // SPA catch-all — but let Express API routes handle /api/* first
   app.use("*", async (req, res, next) => {
+    // Don't handle API routes — let Express handle them
+    if (req.originalUrl.startsWith("/api")) {
+      return next();
+    }
     const url = req.originalUrl;
+
+    // Skip API routes - they should be handled before this middleware
+    if (url.startsWith("/api/")) {
+      return next();
+    }
 
     try {
       const clientTemplate = path.resolve(
@@ -54,10 +64,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath =
-    process.env.NODE_ENV === "development"
-      ? path.resolve(__dirname, "../..", "dist", "public")
-      : path.resolve(__dirname, "public");
+  const distPath = path.resolve(__dirname, "..", "..", "dist", "public");
   if (!fs.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`

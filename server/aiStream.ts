@@ -1,104 +1,17 @@
 import { Router, Request, Response } from "express";
+import { spawn } from "child_process";
 import { MODEL_CONFIGS } from "./models";
+import { getAiNodes, getAiNodeById, createAiNode, updateAiNode, updateNodePingStatus, getRoutingRules, createNodeLog, getNodeSkills, getAllNodeSkills, upsertNodeSkill, deleteNodeSkill, deleteAllNodeSkills, setNodeSkillEnabled } from "./db";
 import { dbFetch } from "./aiNodes";
-import { refreshSkillCache, getSkillCacheSnapshot, matchSkillForMessage } from "./skillMatcher";
 import { sdk } from "./_core/sdk";
 import mammoth from "mammoth";
 // pdf-parse is loaded dynamically to avoid DOMMatrix crash at startup
 import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
+import { searchCorpus, formatForPrompt } from "./maoRagServer";
 
 const aiStreamRouter = Router();
-
-// ─── DB Helpers (Supabase REST via dbFetch) ──────────────────────────────────
-// These replace the non-existent functions that were previously imported from db.ts.
-
-async function getAiNodes(onlineOnly?: boolean): Promise<any[]> {
-  const query = onlineOnly ? "?isOnline=eq.true" : "";
-  const select = "id,name,baseUrl,type,modelId,isLocal,isPaid,isOnline,isActive,priority,apiKey,lastPingAt,token,skillsChecksum,lastHeartbeatAt";
-  const res = await dbFetch(`/ai_nodes?select=${select}${onlineOnly ? "&isOnline=eq.true" : ""}`);
-  return (res.data as any[]) ?? [];
-}
-
-async function getAiNodeById(id: number): Promise<any> {
-  const res = await dbFetch(`/ai_nodes?id=eq.${id}&select=*`);
-  const rows = (res.data as any[]) ?? [];
-  return rows[0] ?? null;
-}
-
-async function createAiNode(data: Record<string, unknown>): Promise<any> {
-  const res = await dbFetch("/ai_nodes", { method: "POST", body: JSON.stringify(data) }, "return=representation");
-  const rows = (res.data as any[]) ?? [];
-  return rows[0] ?? null;
-}
-
-async function updateAiNode(id: number, data: Record<string, unknown>): Promise<void> {
-  await dbFetch(`/ai_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(data) });
-}
-
-async function updateNodePingStatus(id: number, isOnline: boolean, _pingMs?: number): Promise<void> {
-  await dbFetch(`/ai_nodes?id=eq.${id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ isOnline, lastPingAt: new Date().toISOString() }),
-  });
-}
-
-async function getRoutingRules(): Promise<any[]> {
-  try {
-    const res = await dbFetch("/routing_rules?isActive=eq.true&select=*");
-    return (res.data as any[]) ?? [];
-  } catch {
-    return [];
-  }
-}
-
-async function createNodeLog(data: { nodeId: number; model: string; status: string; latencyMs: number; errorMessage?: string }): Promise<void> {
-  try {
-    await dbFetch("/node_logs", {
-      method: "POST",
-      body: JSON.stringify({ ...data, createdAt: new Date().toISOString() }),
-    });
-  } catch {
-    // non-critical, ignore
-  }
-}
-
-async function getNodeSkills(nodeId: number): Promise<any[]> {
-  const res = await dbFetch(`/node_skills?nodeId=eq.${nodeId}&select=*`);
-  return (res.data as any[]) ?? [];
-}
-
-async function getAllNodeSkills(): Promise<any[]> {
-  const res = await dbFetch("/node_skills?select=*");
-  return (res.data as any[]) ?? [];
-}
-
-async function upsertNodeSkill(data: Record<string, unknown>): Promise<void> {
-  const { nodeId, skillId } = data;
-  const existing = await dbFetch(`/node_skills?nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId as string)}&select=id`);
-  const rows = (existing.data as any[]) ?? [];
-  if (rows.length > 0) {
-    await dbFetch(`/node_skills?id=eq.${rows[0].id}`, { method: "PATCH", body: JSON.stringify(data) });
-  } else {
-    await dbFetch("/node_skills", { method: "POST", body: JSON.stringify(data) });
-  }
-}
-
-async function deleteNodeSkill(nodeId: number, skillId: string): Promise<void> {
-  await dbFetch(`/node_skills?nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`, { method: "DELETE" });
-}
-
-async function deleteAllNodeSkills(nodeId: number): Promise<void> {
-  await dbFetch(`/node_skills?nodeId=eq.${nodeId}`, { method: "DELETE" });
-}
-
-async function setNodeSkillEnabled(nodeId: number, skillId: string, isEnabled: boolean): Promise<void> {
-  await dbFetch(
-    `/node_skills?nodeId=eq.${nodeId}&skillId=eq.${encodeURIComponent(skillId)}`,
-    { method: "PATCH", body: JSON.stringify({ isActive: isEnabled, updatedAt: new Date().toISOString() }) }
-  );
-}
 
 // ─── Admin Auth Helper ────────────────────────────────────────────────────────
 // Returns the user if authenticated AND role === "admin", else null
@@ -114,8 +27,62 @@ async function getAdminUser(req: Request): Promise<{ id: number; role: string; e
 
 // ─── Smart Router ─────────────────────────────────────────────────────────────
 // onlyLocal: true = only local nodes; false = only cloud nodes; undefined = all
+const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
+const OLLAMA_OPENAI_BASE_URL = `${OLLAMA_BASE_URL}/v1`;
+const OLLAMA_NODE_NAME_PREFIX = "Ollama / ";
+
+async function syncAutoDiscoveredOllamaNodes() {
+  try {
+    const resp = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
+    if (!resp.ok) return;
+
+    const data = await resp.json().catch(() => ({}));
+    const modelIds = (Array.isArray(data?.models) ? data.models : [])
+      .map((item: any) => String(item?.model || item?.name || "").trim())
+      .filter(Boolean);
+
+    if (modelIds.length === 0) return;
+
+    const existing = await getAiNodes();
+
+    for (let idx = 0; idx < modelIds.length; idx++) {
+      const modelId = modelIds[idx];
+      const name = `${OLLAMA_NODE_NAME_PREFIX}${modelId}`;
+      const found = existing.find((node) => String(node.name || "") === name);
+      const payload = {
+        name,
+        type: "openai_compat",
+        baseUrl: OLLAMA_OPENAI_BASE_URL,
+        modelId,
+        isPaid: false,
+        isLocal: true,
+        isActive: true,
+        isOnline: true,
+        priority: Number(found?.priority) || 50 + idx,
+        description: `Auto-discovered from Ollama (${OLLAMA_BASE_URL})`,
+      };
+
+      if (found?.id) {
+        await updateAiNode(Number(found.id), payload);
+        await updateNodePingStatus(Number(found.id), true, 0);
+      } else {
+        const created = await createAiNode(payload);
+        if (created?.id) {
+          await updateNodePingStatus(Number(created.id), true, 0);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[Ollama Sync] Skip auto-discovery:", err);
+  }
+}
+
 async function selectNode(preferPaid?: boolean, onlyLocal?: boolean, onlyCloud?: boolean) {
   try {
+    if (onlyLocal) {
+      await syncAutoDiscoveredOllamaNodes();
+    }
+
     const nodes = await getAiNodes(true);
     if (!nodes || nodes.length === 0) return null;
     const rules = await getRoutingRules();
@@ -221,28 +188,79 @@ async function streamFromNode(
   }
 }
 
-// ─── GET /api/ai/skill/status — Skill Proxy health check ────────────────────
-aiStreamRouter.get("/skill/status", async (_req: Request, res: Response) => {
+// ─── Skill Match Helper ───────────────────────────────────────────────────────
+// Finds the best matching skill for a user message from online local nodes.
+// Returns the matched skill row (with nodeId, skillId, invokeMode, systemPrompt, etc.)
+// or null if no match / no online nodes.
+async function matchSkillForMessage(userMessage: string): Promise<{
+  nodeId: number;
+  skillId: string;
+  name: string;
+  description: string | null;
+  invokeMode: string;        // 'prompt' | 'invoke'
+  systemPrompt: string | null;
+  inputSchema: Record<string, unknown> | null;
+  requiredPlan: string;      // 'free' | 'content' | 'strategic' | 'admin'
+  node: { baseUrl: string; token: string; name: string } | null;
+} | null> {
   try {
-    await refreshSkillCache(true);
-    const { skills, nodes, loadedAt } = getSkillCacheSnapshot();
-    res.json({
-      success: true,
-      cachedSkills: skills.length,
-      onlineNodes: nodes.length,
-      topModes: Object.entries(
-        skills.reduce((acc, s) => {
-          const mode = s.invokeMode || "unknown";
-          acc[mode] = (acc[mode] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      ).sort(([, a], [, b]) => b - a).slice(0, 10),
-      loadedAt: new Date(loadedAt).toISOString(),
+    // Get all online local nodes
+    const nodesRes = await dbFetch("/ai_nodes?isOnline=eq.true&isLocal=eq.true&select=id,name,baseUrl,token");
+    const onlineNodes = nodesRes.data as { id: number; name: string; baseUrl: string; token: string }[] | [];
+    if (!onlineNodes || onlineNodes.length === 0) return null;
+
+    const nodeIds = onlineNodes.map((n) => n.id);
+    const skillsRes = await dbFetch(
+      `/node_skills?nodeId=in.(${nodeIds.join(",")})&isActive=eq.true&select=*`
+    );
+    const skills = skillsRes.data as Array<{
+      nodeId: number;
+      skillId: string;
+      name: string;
+      triggers: string[] | null;
+      description: string | null;
+      invokeMode: string | null;
+      systemPrompt: string | null;
+      inputSchema: Record<string, unknown> | null;
+      required_plan: string | null;
+    }> | [];
+
+    if (!skills || skills.length === 0) return null;
+
+    // Keyword matching (same logic as skill/match endpoint)
+    const msgLower = userMessage.toLowerCase();
+    const matched = skills.filter((skill) => {
+      const triggers = skill.triggers ?? [];
+      return triggers.some((t: string) => msgLower.includes(t.toLowerCase()));
     });
+
+    if (matched.length === 0) return null;
+
+    // Pick highest-priority match (first matched, or refine by trigger specificity)
+    const best = matched.sort((a, b) => {
+      const aMaxLen = Math.max(...(a.triggers ?? [""]).map((t) => t.length));
+      const bMaxLen = Math.max(...(b.triggers ?? [""]).map((t) => t.length));
+      return bMaxLen - aMaxLen; // prefer longer (more specific) trigger
+    })[0];
+
+    const node = onlineNodes.find((n) => n.id === best.nodeId) || null;
+
+    return {
+      nodeId: best.nodeId,
+      skillId: best.skillId,
+      name: best.name,
+      description: best.description ?? null,
+      invokeMode: best.invokeMode ?? "prompt",
+      systemPrompt: best.systemPrompt ?? null,
+      inputSchema: best.inputSchema ?? null,
+      requiredPlan: best.required_plan ?? "free",
+      node: node ? { baseUrl: node.baseUrl, token: node.token, name: node.name } : null,
+    };
   } catch (err) {
-    res.status(500).json({ success: false, error: String(err) });
+    console.warn("[SkillMatch] Error during skill matching:", err);
+    return null;
   }
-});
+}
 
 // ─── Main Chat Stream ─────────────────────────────────────────────────────────
 // model: cloud model ID (e.g. "deepseek-chat") or "local:<nodeId>" for local node
@@ -272,7 +290,7 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   if (hasImage && !useLocal && !String(model).startsWith("local:")) {
     const currentCfg = MODEL_CONFIGS[model];
     if (!currentCfg?.supportsVision) {
-      model = "glm-4v-flash"; // auto-switch to vision model
+      model = "glm-5v-turbo"; // auto-switch to GLM-5V-Turbo (newest vision model)
     }
   }
 
@@ -301,6 +319,8 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     if (userText.trim()) {
       matchedSkill = await matchSkillForMessage(userText);
       if (matchedSkill) {
+        console.log(`[SkillMatch] Matched skill "${matchedSkill.skillId}" (mode=${matchedSkill.invokeMode}, requiredPlan=${matchedSkill.requiredPlan}) on node ${matchedSkill.nodeId}`);
+
         // ── 权限校验 ────────────────────────────────────────────────────────
         if (matchedSkill.requiredPlan && matchedSkill.requiredPlan !== "free") {
           const perm = await checkSkillPermission(callerOpenId, callerRole, matchedSkill.requiredPlan);
@@ -431,6 +451,30 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         mode: "prompt",
       }
     })}\n\n`);
+}
+
+  // ── MaoAI 语料库 RAG 引用注入 ───────────────────────────────────────────
+  // 当有用户消息时，检索相关语料并追加到 system prompt（非阻塞执行）
+  const userTextForRag = (() => {
+    const lastUserMsg = [...(messages ?? [])].reverse().find((m: any) => m.role === "user");
+    if (!lastUserMsg) return "";
+    return typeof lastUserMsg.content === "string"
+      ? lastUserMsg.content
+      : Array.isArray(lastUserMsg.content)
+        ? lastUserMsg.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
+        : "";
+  })();
+  if (userTextForRag.trim() && userTextForRag.length > 2) {
+    try {
+      const ragResults = await searchCorpus(userTextForRag, 3);
+      if (ragResults.length > 0) {
+        const refs = formatForPrompt(ragResults);
+        if (refs) {
+          res.write(`data: ${JSON.stringify({ ragReferences: { count: ragResults.length, preview: refs.slice(0, 100) + "..." } })}\n\n`);
+          effectiveSystemPrompt = (effectiveSystemPrompt ? effectiveSystemPrompt + "\n\n" : "") + refs;
+        }
+      }
+    } catch (_) { /* RAG 失败不影响主流程 */ }
   }
 
   const rawMessages = effectiveSystemPrompt ? [{ role: "system", content: effectiveSystemPrompt }, ...messages] : messages;
@@ -485,9 +529,9 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   const { enableTools = true } = req.body;
   const adminUser = await getAdminUser(req);
   const toolDefs = enableTools ? (adminUser ? ADMIN_TOOL_DEFINITIONS : TOOL_DEFINITIONS) : [];
-  // Vision models don't support function calling
-  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 &&
-    (model === "deepseek-chat" || model === "glm-4-plus" || model === "glm-4-flash");
+      // Vision models don't support function calling
+  // All cloud models with an apiKey support OpenAI-style function calling
+  const supportsTools = enableTools && !hasImage && toolDefs.length > 0 && !!cfg.apiKey;
 
   try {
     // Debug: log vision request structure
@@ -521,6 +565,11 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         requestBody.tools = toolDefs;
         requestBody.tool_choice = "auto";
       }
+
+      // ── ReAct 推理轮次通知（SSE，frontend 显示"正在思考..."动画）─────────────
+      res.write(`data: ${JSON.stringify({
+        reactRound: { round: round + 1, status: "thinking", maxRounds: MAX_TOOL_ROUNDS }
+      })}\n\n`);
 
       const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
         method: "POST",
@@ -591,6 +640,9 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
 
       // ── No tool calls → final answer, done ───────────────────────────────
       if (toolCalls.length === 0 || finishReason === "stop") {
+        res.write(`data: ${JSON.stringify({
+          reactEnd: { reason: toolCalls.length === 0 ? "no_tools" : "final_answer", rounds: round + 1 }
+        })}\n\n`);
         res.write("data: [DONE]\n\n");
         res.end();
         return;
@@ -644,6 +696,9 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     }
 
     // Reached max rounds without final answer
+    res.write(`data: ${JSON.stringify({
+      reactEnd: { reason: "max_rounds", rounds: MAX_TOOL_ROUNDS }
+    })}\n\n`);
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err: any) {
@@ -777,6 +832,7 @@ aiStreamRouter.get("/v1/models", async (req: Request, res: Response) => {
   let localModels: any[] = [];
   if (admin) {
     try {
+      await syncAutoDiscoveredOllamaNodes();
       const nodes = await getAiNodes();
       localModels = nodes
         .filter(n => n.isLocal && n.isOnline)
@@ -788,6 +844,7 @@ aiStreamRouter.get("/v1/models", async (req: Request, res: Response) => {
           display_name: n.name,
           badge: "🖥️",
           is_local: true,
+          is_online: n.isOnline !== false,
           node_id: n.id,
           base_url: n.baseUrl,
           model_id: n.modelId,
@@ -863,7 +920,8 @@ aiStreamRouter.post("/node/heartbeat", async (req: Request, res: Response) => {
     await updateNodePingStatus(nodeId, true, undefined);
     // Update skillsChecksum if provided
     if (skillsChecksum !== undefined) {
-      await updateAiNode(nodeId, { skillsChecksum });
+      const { updateAiNode } = await import("./db");
+      await updateAiNode(nodeId, { skillsChecksum } as any);
     }
     // Check if server's skill checksum differs from client's
     const serverChecksum = (node as any).skillsChecksum;
@@ -954,6 +1012,18 @@ aiStreamRouter.get("/node/skills", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/ai/skill/list — 返回所有可用 AI 技能（内容平台前端使用）
+aiStreamRouter.get("/skill/list", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const skills = await getAllNodeSkills();
+    res.json({ skills });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // PATCH /api/ai/node/skills/toggle  (admin only, enable/disable a skill)
 aiStreamRouter.patch("/node/skills/toggle", async (req: Request, res: Response) => {
   const admin = await getAdminUser(req);
@@ -1013,6 +1083,135 @@ aiStreamRouter.post("/image/generate", async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error("[Image Generate] Error:", err);
     res.status(500).json({ error: err.message || "图像生成失败" });
+  }
+});
+
+// ─── Midjourney Imagine ──────────────────────────────────────────────────────
+// POST /api/ai/midjourney/imagine
+aiStreamRouter.post("/midjourney/imagine", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { prompt, aspectRatio, quality, style, version } = req.body;
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      res.status(400).json({ error: "请提供图像描述 (prompt)" });
+      return;
+    }
+    const { midjourneyImagine } = await import("./_core/midjourney");
+    const result = await midjourneyImagine({
+      prompt: prompt.trim(),
+      aspectRatio,
+      quality,
+      style,
+      version,
+    });
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Midjourney Imagine] Error:", err);
+    res.status(500).json({ error: err.message || "Midjourney 生成失败" });
+  }
+});
+
+// POST /api/ai/midjourney/status
+aiStreamRouter.post("/midjourney/status", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { taskId } = req.body;
+    if (!taskId) { res.status(400).json({ error: "缺少 taskId" }); return; }
+    const { midjourneyTaskStatus } = await import("./_core/midjourney");
+    const result = await midjourneyTaskStatus(taskId);
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Midjourney Status] Error:", err);
+    res.status(500).json({ error: err.message || "Midjourney 状态查询失败" });
+  }
+});
+
+// POST /api/ai/midjourney/upscale
+aiStreamRouter.post("/midjourney/upscale", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { taskId, index } = req.body;
+    if (!taskId || index === undefined) {
+      res.status(400).json({ error: "缺少 taskId 或 index" });
+      return;
+    }
+    const { midjourneyUpscale } = await import("./_core/midjourney");
+    const result = await midjourneyUpscale(taskId, index);
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Midjourney Upscale] Error:", err);
+    res.status(500).json({ error: err.message || "Midjourney Upscale 失败" });
+  }
+});
+
+// ─── Runway Text-to-Video ────────────────────────────────────────────────────
+// POST /api/ai/runway/text-to-video
+aiStreamRouter.post("/runway/text-to-video", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { promptText, negativePromptText, duration, seed, model } = req.body;
+    if (!promptText || typeof promptText !== "string" || !promptText.trim()) {
+      res.status(400).json({ error: "请提供视频描述 (promptText)" });
+      return;
+    }
+    const { runwayTextToVideo } = await import("./_core/runway");
+    const result = await runwayTextToVideo({
+      promptText: promptText.trim(),
+      negativePromptText,
+      duration,
+      seed,
+      model,
+    });
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Runway T2V] Error:", err);
+    res.status(500).json({ error: err.message || "Runway 视频生成失败" });
+  }
+});
+
+// POST /api/ai/runway/image-to-video
+aiStreamRouter.post("/runway/image-to-video", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { promptImage, promptText, negativePromptText, duration, seed, model } = req.body;
+    if (!promptImage) {
+      res.status(400).json({ error: "请提供输入图片 URL (promptImage)" });
+      return;
+    }
+    const { runwayImageToVideo } = await import("./_core/runway");
+    const result = await runwayImageToVideo({
+      promptImage,
+      promptText,
+      negativePromptText,
+      duration,
+      seed,
+      model,
+    });
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Runway I2V] Error:", err);
+    res.status(500).json({ error: err.message || "Runway 图片生成视频失败" });
+  }
+});
+
+// POST /api/ai/runway/status
+aiStreamRouter.post("/runway/status", async (req: Request, res: Response) => {
+  try {
+    const user = await sdk.authenticateRequest(req) as any;
+    if (!user) { res.status(401).json({ error: "请先登录" }); return; }
+    const { taskId } = req.body;
+    if (!taskId) { res.status(400).json({ error: "缺少 taskId" }); return; }
+    const { runwayTaskStatus } = await import("./_core/runway");
+    const result = await runwayTaskStatus(taskId);
+    res.json(result);
+  } catch (err: any) {
+    console.error("[Runway Status] Error:", err);
+    res.status(500).json({ error: err.message || "Runway 状态查询失败" });
   }
 });
 
@@ -1160,6 +1359,102 @@ aiStreamRouter.post("/upload", async (req: Request, res: Response) => {
     console.error("[Upload] Error:", err);
     res.status(500).json({ error: err.message || "文件解析失败" });
   }
+});
+
+// ─── HyperAgents Python Engine — 流式推理日志 ─────────────────────────────────────
+// POST /api/ai/agent/stream
+// 启动 Python HyperAgents Engine，通过 SSE 将 ReAct 推理日志实时推送到前端
+// 请求体: { task: string, domain?: "coding"|"research"|"general", workspace?: string }
+aiStreamRouter.post("/agent/stream", async (req: Request, res: Response) => {
+  const { task, domain = "general", workspace = "." } = req.body as {
+    task: string;
+    domain?: string;
+    workspace?: string;
+  };
+
+  if (!task || typeof task !== "string" || !task.trim()) {
+    res.status(400).json({ error: "Missing required field: task" });
+    return;
+  }
+
+  const admin = await getAdminUser(req);
+  if (!admin) {
+    res.status(403).json({ error: "仅限管理员使用 HyperAgents" });
+    return;
+  }
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const PYTHON_SCRIPT = `${__dirname}/hyperagents/generate_loop.py`;
+  const PYTHON_CMD = (process.env.PYTHON3_PATH || "python3");
+
+  const pythonProcess = spawn(PYTHON_CMD, [
+    PYTHON_SCRIPT,
+    "--task", task.trim(),
+    "--domain", domain,
+    "--workspace", workspace,
+  ], {
+    cwd: workspace,
+    env: {
+      ...process.env,
+      PYTHONIOENCODING: "utf-8",
+    },
+    timeout: 120000,
+  });
+
+  let hasErrored = false;
+
+  pythonProcess.stdout.on("data", (data: Buffer) => {
+    const lines = data.toString("utf-8").split("\n");
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      try {
+        const logEntry = JSON.parse(line);
+        // 通过 SSE 发送 agentLog 事件，frontend 实时渲染"推理日志"视图
+        res.write(`data: ${JSON.stringify({ agentLog: logEntry })}\n\n`);
+      } catch {
+        // 非 JSON 输出（如 Python stderr）作为普通消息
+        console.log("[Python Raw stdout]:", line.substring(0, 200));
+        res.write(`data: ${JSON.stringify({ agentLog: { type: "raw", message: line.substring(0, 200), timestamp: Date.now() / 1000 } })}\n\n`);
+      }
+    }
+  });
+
+  pythonProcess.stderr.on("data", (data: Buffer) => {
+    if (hasErrored) return;
+    hasErrored = true;
+    const errMsg = data.toString("utf-8").trim();
+    console.warn("[HyperAgents stderr]:", errMsg.substring(0, 300));
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "env", message: errMsg.substring(0, 300), timestamp: Date.now() / 1000 } })}\n\n`);
+  });
+
+  pythonProcess.on("close", (code: number | null) => {
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "done", exitCode: code, timestamp: Date.now() / 1000 } })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  });
+
+  pythonProcess.on("error", (err: Error) => {
+    console.error("[HyperAgents spawn error]:", err);
+    res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "env", message: `启动失败: ${err.message}`, timestamp: Date.now() / 1000 } })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  });
+
+  // 超时保护：5 分钟
+  setTimeout(() => {
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ agentLog: { type: "error", category: "timeout", message: "执行超时（5分钟）", timestamp: Date.now() / 1000 } })}\n\n`);
+      res.write("data: [DONE]\n\n");
+      res.end();
+      pythonProcess.kill("SIGTERM");
+    }
+  }, 5 * 60 * 1000);
 });
 
 // ─── Health check ─────────────────────────────────────────────

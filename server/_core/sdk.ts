@@ -154,6 +154,14 @@ class SDKServer {
     return new Map(Object.entries(parsed));
   }
 
+  private getBearerToken(req: Request): string | null {
+    const authHeader = req.headers.authorization;
+    const raw = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+    if (!raw) return null;
+    const match = raw.match(/^Bearer\s+(.+)$/i);
+    return match?.[1] ?? null;
+  }
+
   private getSessionSecret() {
     const secret = ENV.cookieSecret;
     return new TextEncoder().encode(secret);
@@ -186,10 +194,11 @@ class SDKServer {
     const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
     const secretKey = this.getSessionSecret();
+    const normalizedAppId = payload.appId || ENV.appId || "maoai-local";
 
     return new SignJWT({
       openId: payload.openId,
-      appId: payload.appId,
+      appId: normalizedAppId,
       name: payload.name,
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
@@ -211,19 +220,16 @@ class SDKServer {
         algorithms: ["HS256"],
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
+      const normalizedAppId = isNonEmptyString(appId) ? appId : ENV.appId || "maoai-local";
 
-      if (
-        !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
-      ) {
+      if (!isNonEmptyString(openId) || !isNonEmptyString(name)) {
         console.warn("[Auth] Session payload missing required fields");
         return null;
       }
 
       return {
         openId,
-        appId,
+        appId: normalizedAppId,
         name,
       };
     } catch (error) {
@@ -257,23 +263,25 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Regular authentication flow
+    // 优先使用 cookie，其次支持 Authorization: Bearer <sessionToken>
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
-    const session = await this.verifySession(sessionCookie);
+    const bearerToken = this.getBearerToken(req);
+    const rawSessionToken = sessionCookie ?? bearerToken;
+    const session = await this.verifySession(rawSessionToken);
 
     if (!session) {
-      throw ForbiddenError("Invalid session cookie");
+      throw ForbiddenError("Invalid session");
     }
 
-    const sessionUserId = session.openId;
+    const sessionUserId = String(session.openId);
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
     // If user not in DB, sync from OAuth server automatically
     if (!user) {
       try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
+        const userInfo = await this.getUserInfoWithJwt(rawSessionToken ?? "");
         await db.upsertUser({
           openId: userInfo.openId,
           name: userInfo.name || null,
@@ -293,11 +301,11 @@ class SDKServer {
     }
 
     await db.upsertUser({
-      openId: user.openId,
+      openId: String(user.openId),
       lastSignedIn: signedInAt,
     });
 
-    return user;
+    return user as unknown as User;
   }
 }
 

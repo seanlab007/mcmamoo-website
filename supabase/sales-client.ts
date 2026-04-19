@@ -12,8 +12,10 @@ const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 // 创建Supabase客户端
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 创建Service Role客户端（用于服务端操作）
-export const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+// 创建Service Role客户端（用于服务端操作）- 只在有key时才创建
+export const supabaseAdmin = SUPABASE_SERVICE_KEY 
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  : supabase;
 
 // 销售线索类型
 export interface SalesLead {

@@ -3,17 +3,21 @@
  *
  * 所有云端模型的 provider、API key、endpoint 统一在此定义。
  * aiStream.ts 通过此文件获取模型路由配置。
+ * 注意：apiKey 使用 getter 动态读取，确保每次调用时从最新的环境变量获取。
  */
 
 export interface ModelConfig {
   name: string;
   badge: string;
-  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "zai" | "autoclaw";
+  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "google-ai-studio" | "zai" | "autoclaw";
   model: string;
   baseUrl: string;
-  apiKey: string;
+  /** apiKey 为 getter，运行时动态读取环境变量，避免模块加载顺序问题 */
+  readonly apiKey: string;
   maxTokens: number;
   supportsVision?: boolean;
+  supportsAudio?: boolean;
+  supportsVideo?: boolean;
 }
 
 // ─── Provider Base URLs ───────────────────────────────────────────────────────
@@ -22,6 +26,7 @@ const ZHIPU_BASE    = "https://open.bigmodel.cn/api/paas/v4";
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 const GROQ_BASE     = "https://api.groq.com/openai/v1";
 const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1beta/openai";
+const GOOGLE_AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const ZAI_BASE      = "https://api.z.ai/api/paas/v4";
 
 // ─── Model Config Map ─────────────────────────────────────────────────────────
@@ -34,7 +39,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "deepseek",
     model: "deepseek-chat",
     baseUrl: DEEPSEEK_BASE,
-    apiKey: process.env.DEEPSEEK_API_KEY || "",
+    get apiKey() { return process.env.DEEPSEEK_API_KEY || ""; },
     maxTokens: 4096,
   },
   "deepseek-reasoner": {
@@ -43,7 +48,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "deepseek",
     model: "deepseek-reasoner",
     baseUrl: DEEPSEEK_BASE,
-    apiKey: process.env.DEEPSEEK_API_KEY || "",
+    get apiKey() { return process.env.DEEPSEEK_API_KEY || ""; },
     maxTokens: 8192,
   },
 
@@ -54,7 +59,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "zhipu",
     model: "glm-4-flash",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() { return process.env.ZHIPU_API_KEY || ""; },
     maxTokens: 4096,
   },
   "glm-4-plus": {
@@ -63,7 +68,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "zhipu",
     model: "glm-4-plus",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() { return process.env.ZHIPU_API_KEY || ""; },
     maxTokens: 4096,
   },
   "glm-4-air": {
@@ -72,7 +77,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "zhipu",
     model: "glm-4-air",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() { return process.env.ZHIPU_API_KEY || ""; },
     maxTokens: 4096,
   },
   "glm-z1-flash": {
@@ -81,7 +86,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "zhipu",
     model: "glm-z1-flash",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() { return process.env.ZHIPU_API_KEY || ""; },
     maxTokens: 4096,
   },
   "glm-4v-flash": {
@@ -90,7 +95,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "zhipu",
     model: "glm-4v-flash",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() { return process.env.ZHIPU_API_KEY || ""; },
     maxTokens: 4096,
     supportsVision: true,
   },
@@ -102,7 +107,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "groq",
     model: "llama-3.3-70b-versatile",
     baseUrl: GROQ_BASE,
-    apiKey: process.env.GROQ_API_KEY || "",
+    get apiKey() { return process.env.GROQ_API_KEY || ""; },
     maxTokens: 4096,
   },
   "llama-3.1-8b": {
@@ -111,7 +116,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "groq",
     model: "llama-3.1-8b-instant",
     baseUrl: GROQ_BASE,
-    apiKey: process.env.GROQ_API_KEY || "",
+    get apiKey() { return process.env.GROQ_API_KEY || ""; },
     maxTokens: 4096,
   },
   "gemma2-9b": {
@@ -120,7 +125,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "groq",
     model: "gemma2-9b-it",
     baseUrl: GROQ_BASE,
-    apiKey: process.env.GROQ_API_KEY || "",
+    get apiKey() { return process.env.GROQ_API_KEY || ""; },
     maxTokens: 4096,
   },
 
@@ -131,7 +136,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "gemini",
     model: "gemini-2.5-flash-preview-04-17",
     baseUrl: GEMINI_BASE,
-    apiKey: process.env.GEMINI_API_KEY || "",
+    get apiKey() { return process.env.GEMINI_API_KEY || ""; },
     maxTokens: 8192,
     supportsVision: true,
   },
@@ -141,36 +146,81 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "gemini",
     model: "gemini-2.5-pro-preview-03-25",
     baseUrl: GEMINI_BASE,
-    apiKey: process.env.GEMINI_API_KEY || "",
+    get apiKey() { return process.env.GEMINI_API_KEY || ""; },
     maxTokens: 8192,
     supportsVision: true,
   },
 
   // ── 智谱 GLM-5V-TurboAutoClaw（BigModel 多模态）─────────────────────────────────
-  // 基于智谱 BigModel 开放平台 GLM-5V-TurboAutoClaw 模型
-  // 200K 上下文，支持图片/视频/文本多模态输入，面向视觉编程和 Agent 工作流优化
-  // API Doc: https://docs.bigmodel.cn/cn/guide/models/vlm/glm-5v-turbo
   "glm-5v-turbo": {
     name: "GLM-5V-Turbo",
     badge: "VL-TURBO",
     provider: "zhipu",
     model: "glm-5v-turbo",
     baseUrl: ZHIPU_BASE,
-    apiKey: process.env.ZHIPU_API_KEY || "",
+    get apiKey() { return process.env.ZHIPU_API_KEY || ""; },
     maxTokens: 8192,
     supportsVision: true,
   },
 
+  // ── Google AI Studio (Gemma 4) ─────────────────────────────────────────────
+  "gemma-4-e2b-it": {
+    name: "Gemma 4 E2B",
+    badge: "MOBILE",
+    provider: "google-ai-studio",
+    model: "gemma-4-e2b-it",
+    baseUrl: GOOGLE_AI_STUDIO_BASE,
+    get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
+    maxTokens: 128000,
+    supportsVision: true,
+    supportsAudio: true,
+    supportsVideo: true,
+  },
+  "gemma-4-e4b-it": {
+    name: "Gemma 4 E4B",
+    badge: "EDGE",
+    provider: "google-ai-studio",
+    model: "gemma-4-e4b-it",
+    baseUrl: GOOGLE_AI_STUDIO_BASE,
+    get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
+    maxTokens: 128000,
+    supportsVision: true,
+    supportsAudio: true,
+    supportsVideo: true,
+  },
+  "gemma-4-26b-it": {
+    name: "Gemma 4 26B",
+    badge: "PRO",
+    provider: "google-ai-studio",
+    model: "gemma-4-26b-it",
+    baseUrl: GOOGLE_AI_STUDIO_BASE,
+    get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
+    maxTokens: 256000,
+    supportsVision: true,
+    supportsAudio: true,
+    supportsVideo: true,
+  },
+  "gemma-4-31b-it": {
+    name: "Gemma 4 31B",
+    badge: "MAX",
+    provider: "google-ai-studio",
+    model: "gemma-4-31b-it",
+    baseUrl: GOOGLE_AI_STUDIO_BASE,
+    get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
+    maxTokens: 256000,
+    supportsVision: true,
+    supportsAudio: true,
+    supportsVideo: true,
+  },
+
   // ── Z.ai 平台（GLM-5 / GLM-4.7）────────────────────────────────────────────
-  // Z.ai 是智谱推出的全球 AI 模型体验平台，提供 GLM-5、GLM-4.7 等模型
-  // API Doc: https://docs.z.ai/api-reference/llm/chat-completion
   "zai-glm-5": {
     name: "Z.ai GLM-5",
     badge: "GLM5",
     provider: "zai",
     model: "glm-5",
     baseUrl: ZAI_BASE,
-    apiKey: process.env.ZAI_API_KEY || "",
+    get apiKey() { return process.env.ZAI_API_KEY || ""; },
     maxTokens: 8192,
   },
   "zai-glm-4-7": {
@@ -179,7 +229,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     provider: "zai",
     model: "glm-4.7",
     baseUrl: ZAI_BASE,
-    apiKey: process.env.ZAI_API_KEY || "",
+    get apiKey() { return process.env.ZAI_API_KEY || ""; },
     maxTokens: 8192,
   },
 

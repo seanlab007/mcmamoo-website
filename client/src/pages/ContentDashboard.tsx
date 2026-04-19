@@ -160,9 +160,9 @@ export default function ContentDashboard() {
         <div className="text-center">
           <Cat className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
           <p className="text-white/60 mb-4">请先登录</p>
-          <Link href="/mao-ai">
+          <Link href="/content/login">
             <button className="px-6 py-2 bg-[#C9A84C] text-black font-semibold rounded-lg text-sm hover:bg-[#D4B55A] transition-colors">
-              前往 MaoAI
+              登录进入内容平台
             </button>
           </Link>
         </div>
@@ -185,9 +185,15 @@ export default function ContentDashboard() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Cat className="w-6 h-6 text-[#C9A84C]" />
-            <span className="font-['Noto_Serif_SC'] text-white font-semibold text-lg">猫眼内容平台</span>
+            <span className="font-['Noto_Serif_SC'] text-white font-semibold text-lg">猫眼增长引擎 Mc&Mamoo Growth Engine内容平台</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/autoclip">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] text-xs rounded-lg hover:bg-[#C9A84C]/20 transition-colors">
+                <Zap className="w-3.5 h-3.5" />
+                AutoClip
+              </button>
+            </Link>
             {sub?.isAdmin && (
               <Link href="/admin/content-jobs">
                 <button className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs rounded-lg hover:bg-purple-500/20 transition-colors">
@@ -196,7 +202,7 @@ export default function ContentDashboard() {
                 </button>
               </Link>
             )}
-            <Link href="/mao-ai">
+            <Link href={MAOAI_ROUTES.CHAT}>
               <button className="flex items-center gap-1 text-white/40 hover:text-white/70 text-sm transition-colors">
                 MaoAI <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -236,7 +242,7 @@ export default function ContentDashboard() {
                     到期：{new Date(sub.expiresAt).toLocaleDateString("zh-CN")}
                   </div>
                 )}
-                <Link href="/mao-ai-pricing">
+                <Link href={MAOAI_ROUTES.PRICING}>
                   <button className="mt-auto text-xs text-[#C9A84C] hover:text-[#D4B55A] transition-colors flex items-center gap-1">
                     升级套餐 <ChevronRight className="w-3 h-3" />
                   </button>
@@ -365,7 +371,7 @@ export default function ContentDashboard() {
                           触发
                         </button>
                       ) : (
-                        <Link href="/mao-ai-pricing">
+                        <Link href={MAOAI_ROUTES.PRICING}>
                           <button className="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/10 text-white/40 text-xs rounded-lg hover:bg-white/10 transition-all">
                             升级解锁
                           </button>

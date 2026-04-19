@@ -7,11 +7,18 @@ interface SystemPromptSelectorProps {
   disabled?: boolean;
 }
 
+type Preset = { id: string; name: string; prompt: string };
+
 export function SystemPromptSelector({ value, onChange, disabled }: SystemPromptSelectorProps) {
-  const { data: presets } = trpc.ai.presets.useQuery();
+  const { data: rawPresets } = trpc.ai.presets.useQuery();
+  const presets: Preset[] = (rawPresets ?? []).map(p => ({
+    id: String(p.id ?? ""),
+    name: String(p.name ?? ""),
+    prompt: String(p.prompt ?? ""),
+  }));
 
   const handleChange = (presetId: string) => {
-    const preset = presets?.find(p => p.id === presetId);
+    const preset = presets.find(p => p.id === presetId);
     if (preset) {
       onChange(presetId, preset.prompt);
     }
@@ -23,7 +30,7 @@ export function SystemPromptSelector({ value, onChange, disabled }: SystemPrompt
         <SelectValue placeholder="选择预设" />
       </SelectTrigger>
       <SelectContent>
-        {presets?.map(preset => (
+        {presets.map(preset => (
           <SelectItem key={preset.id} value={preset.id} className="text-xs">
             {preset.name}
           </SelectItem>

@@ -1,0 +1,37 @@
+# Maoyan Video Tools - 依赖
+# 猫眼内容平台 视频处理后端
+
+# 核心
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.0.0
+python-multipart>=0.0.9
+httpx>=0.27.0
+
+# 视频编辑
+moviepy>=1.0.3
+ffmpeg-python>=0.2.0
+pillow>=10.0.0
+
+# 字幕 & ASR
+faster-whisper>=1.0.0
+srt>=3.5.0
+
+# AI 配音 & 翻译
+openai>=1.0.0
+edge-tts>=6.0.0
+deep-translator>=1.11.0
+
+# 下载器
+yt-dlp>=2024.0.0
+requests>=2.32.0
+
+# 进度 & 日志
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+sse-starlette>=1.8.0
+
+# 工具
+numpy>=1.26.0
+pyyaml>=6.0
+aiofiles>=23.0.0

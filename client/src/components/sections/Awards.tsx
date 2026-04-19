@@ -1,196 +1,331 @@
-/*
- * Awards Section — 国际荣誉墙
- * Design: 深黑底 + 金色奖项展示 + 合作机构 LOGO 墙
- * Theme: 国际权威背书 · 行业顶级认可
- * i18n: full bilingual support
- */
-import { useScrollReveal } from "@/hooks/useScrollReveal";
+import React from 'react';
 import { useTranslation } from "react-i18next";
-import React from "react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
-// Generic fallback images
-const MEDAL_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_medal_gold_6822bcf3.png";
-const TROPHY_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_trophy_gold_0ef0784f.png";
-const PLAQUE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_plaque_prestige_e3eeef5e.png";
-
-// City-specific award images
-const CITY_AWARD_IMGS: Record<string, string> = {
-  Istanbul: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_istanbul_medal-Uaskuz6pSfypFt7RXubeHo.png",
-  "New York": "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_newyork_trophy-o9WjWf2FysAYntxfuSRaoG.png",
-  Brussels: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_brussels_medal-er9FZWTrvdVxFw6Td79em7.png",
-  Geneva: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_geneva_plaque-4ZNH8CWmoG3FipvyWE5rjC.png",
-  Singapore: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_singapore_trophy-fVQDT6yNYHAW4Epdit6mYh.png",
-  London: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_london_medal-BbVxpBeWpD2uHkGXQEeSTN.png",
-  Dubai: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_dubai_trophy-Y4UK9zc2Q77dGmAdEA5bYu.png",
-  Paris: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_paris_medal-ZZ6nQAd2qaPEh5GhJ6mH6A.png",
-  Munich: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_munich_trophy-PBK5Zr3ose2cXU5UFnod3i.png",
-  Seoul: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_seoul_plaque-JRxXf4Zh5tkq8iAervf2QN.png",
-  Vienna: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_vienna_medal-GAogVzGHNNECwKPWR8sapg.png",
-  Shanghai: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_shanghai_trophy-f3CMmRb2PFbBBARWbWxnk9.png",
-  Zurich: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_zurich_medal-oVLca8mSjRSG3dpYCrG7NU.png",
-  Davos: "https://d2xsxph8kpxj0f.cloudfront.net/310519663405311158/V3i2B4simdfhuwmzceY7AV/award_davos_trophy-AcRbmjenhiJUas7oiNBGBP.png",
-};
-
-const AWARDS = [
-  { year: 2009, name_zh: "君士坦丁堡战略咨询卓越奖", name_en: "Constantinople Strategic Consulting Excellence Award", org_en: "Constantinople Institute of International Strategic Studies", city: "Istanbul", category_zh: "战略咨询", category_en: "Strategy", type: "medal" },
-  { year: 2010, name_zh: "华尔街战略协会年度咨询机构奖", name_en: "Wall Street Strategy Association Annual Consulting Firm Award", org_en: "Wall Street Strategy Association", city: "New York", category_zh: "品牌增长", category_en: "Brand Growth", type: "trophy" },
-  { year: 2011, name_zh: "布鲁塞尔战略咨询行业协会大奖", name_en: "Brussels Strategic Consulting Industry Association Grand Prix", org_en: "Brussels Strategic Consulting Industry Association", city: "Brussels", category_zh: "行业领导力", category_en: "Leadership", type: "medal" },
-  { year: 2012, name_zh: "日内瓦品牌战略峰会最佳实践奖", name_en: "Geneva Brand Strategy Summit Best Practice Award", org_en: "Geneva Brand Strategy Summit Committee", city: "Geneva", category_zh: "最佳实践", category_en: "Best Practice", type: "plaque" },
-  { year: 2013, name_zh: "新加坡亚太品牌管理卓越奖", name_en: "Singapore Asia-Pacific Brand Management Excellence Award", org_en: "Asia-Pacific Brand Management Association", city: "Singapore", category_zh: "亚太区最佳", category_en: "APAC Best", type: "trophy" },
-  { year: 2014, name_zh: "伦敦全球品牌价值百强机构奖", name_en: "London Global Brand Value Top 100 Institution Award", org_en: "British Brand Value Research Institute", city: "London", category_zh: "全球影响力", category_en: "Global Impact", type: "medal" },
-  { year: 2015, name_zh: "迪拜中东品牌增长突破奖", name_en: "Dubai Middle East Brand Growth Breakthrough Award", org_en: "Middle East Brand Development Forum", city: "Dubai", category_zh: "新兴市场", category_en: "Emerging Markets", type: "trophy" },
-  { year: 2016, name_zh: "巴黎奢侈品战略咨询金奖", name_en: "Paris Luxury Strategy Consulting Gold Award", org_en: "Paris International Luxury Management Association", city: "Paris", category_zh: "奢侈品战略", category_en: "Luxury Strategy", type: "medal" },
-  { year: 2017, name_zh: "慕尼黑全球消费品牌战略大奖", name_en: "Munich Global Consumer Brand Strategy Grand Award", org_en: "Munich Consumer Brand Research Institute", city: "Munich", category_zh: "消费品牌", category_en: "Consumer Brand", type: "trophy" },
-  { year: 2018, name_zh: "首尔亚洲品牌创新领袖奖", name_en: "Seoul Asia Brand Innovation Leadership Award", org_en: "Asia Brand Innovation Summit", city: "Seoul", category_zh: "创新领导力", category_en: "Innovation", type: "plaque" },
-  { year: 2019, name_zh: "纽约全球品牌溢价十年成就奖", name_en: "New York Global Brand Premium Decade Achievement Award", org_en: "Global Brand Premium Research Institute", city: "New York", category_zh: "十年成就", category_en: "Decade Achievement", type: "trophy" },
-  { year: 2020, name_zh: "维也纳欧洲战略咨询创新奖", name_en: "Vienna European Strategic Consulting Innovation Award", org_en: "European Strategic Consulting Innovation Association", city: "Vienna", category_zh: "咨询创新", category_en: "Consulting Innovation", type: "medal" },
-  { year: 2021, name_zh: "上海中国品牌战略年度大奖", name_en: "Shanghai China Brand Strategy Annual Grand Award", org_en: "China Brand Strategy Development Forum", city: "Shanghai", category_zh: "中国最佳", category_en: "China Best", type: "trophy" },
-  { year: 2022, name_zh: "苏黎世全球品牌管理卓越机构奖", name_en: "Zurich Global Brand Management Excellence Institution Award", org_en: "Zurich International Brand Management Association", city: "Zurich", category_zh: "机构卓越", category_en: "Institution Excellence", type: "medal" },
-  { year: 2023, name_zh: "新加坡亚太战略咨询最高荣誉奖", name_en: "Singapore Asia-Pacific Strategic Consulting Highest Honor Award", org_en: "Asia-Pacific Strategic Consulting Association", city: "Singapore", category_zh: "最高荣誉", category_en: "Highest Honor", type: "trophy" },
-  { year: 2024, name_zh: "伦敦全球品牌战略咨询机构TOP10", name_en: "London Global Brand Strategy Consulting Firm TOP 10", org_en: "British Brand Strategy Research Institute", city: "London", category_zh: "全球TOP10", category_en: "Global TOP 10", type: "plaque" },
-  { year: 2025, name_zh: "达沃斯全球战略咨询创新领袖奖", name_en: "Davos Global Strategic Consulting Innovation Leadership Award", org_en: "Davos Global Strategic Innovation Forum", city: "Davos", category_zh: "创新领袖", category_en: "Innovation Leader", type: "trophy" },
-];
-
-const institutions = [
-  { name: "World Economic Forum", cn: "世界经济论坛", type: "国际机构" },
-  { name: "IFC", cn: "国际金融公司", type: "世界银行集团" },
-  { name: "Cannes Lions", cn: "戛纳广告节", type: "国际奖项" },
-  { name: "London International Awards", cn: "伦敦国际广告节", type: "国际奖项" },
-  { name: "D&AD", cn: "英国设计与艺术指导", type: "国际奖项" },
-  { name: "Dark Matter Capital", cn: "暗物质资本", type: "战略投资" },
-  { name: "Deloitte", cn: "德勤咨询", type: "全球四大" },
-  { name: "McKinsey Alumni", cn: "麦肯锡校友网络", type: "顶级咨询" },
-  { name: "中欧商学院", cn: "CEIBS", type: "顶级商学院" },
-  { name: "混沌大学", cn: "Chaos University", type: "创新教育" },
-  { name: "博商管理研究院", cn: "BSMI", type: "企业教育" },
-  { name: "China 4A", cn: "中国4A广告协会", type: "行业协会" },
-];
-
-const stats_zh = [
-  { value: "17", label: "国际顶级奖项" },
-  { value: "16", label: "年行业深耕" },
-  { value: "12", label: "国家与地区" },
-  { value: "20+", label: "国际合作机构" },
-];
-const stats_en = [
-  { value: "17", label: "International Top Awards" },
-  { value: "16", label: "Years of Global Presence" },
-  { value: "12", label: "Countries & Regions" },
-  { value: "20+", label: "International Partners" },
-];
-
-function getAwardImg(type: string, city?: string) {
-  if (city && CITY_AWARD_IMGS[city]) return CITY_AWARD_IMGS[city];
-  if (type === "trophy") return TROPHY_IMG;
-  if (type === "plaque") return PLAQUE_IMG;
-  return MEDAL_IMG;
+interface Award {
+  year: string;
+  title_zh: string;
+  title_en: string;
+  org_zh: string;
+  org_en: string;
+  badge_zh: string;
+  badge_en: string;
+  city: string;
+  image: string;
 }
+
+// 完整奖项历史：2009-2025年（17年国际认可历程）
+const awards: Award[] = [
+  // 2009-2018：广告创意黄金时期
+  {
+    year: '2009',
+    title_zh: '戛纳广告节 铜狮奖',
+    title_en: 'Cannes Lions Bronze',
+    org_zh: 'Cannes Lions International Festival of Creativity',
+    org_en: 'Cannes Lions International Festival of Creativity',
+    badge_zh: '创意奖',
+    badge_en: 'Creativity',
+    city: 'Cannes',
+    image: '/assets/awards/trophy_cannes.jpg'
+  },
+  {
+    year: '2013',
+    title_zh: '戛纳广告节 铜狮奖',
+    title_en: 'Cannes Lions Bronze',
+    org_zh: 'Cannes Lions International Festival of Creativity',
+    org_en: 'Cannes Lions International Festival of Creativity',
+    badge_zh: '创意奖',
+    badge_en: 'Creativity',
+    city: 'Cannes',
+    image: '/assets/awards/trophy_cannes.jpg'
+  },
+  {
+    year: '2013',
+    title_zh: '中国4A金印奖 金奖',
+    title_en: 'China 4A Creative Gold Award',
+    org_zh: 'China 4A Association',
+    org_en: 'China 4A Association',
+    badge_zh: '金奖',
+    badge_en: 'Gold',
+    city: 'Beijing',
+    image: '/assets/awards/trophy_4a.jpg'
+  },
+  {
+    year: '2013',
+    title_zh: '龙玺广告节 1金2银',
+    title_en: 'Longxi Advertising Festival 1 Gold 2 Silver',
+    org_zh: 'Longxi Advertising Awards',
+    org_en: 'Longxi Advertising Awards',
+    badge_zh: '金/银',
+    badge_en: 'Gold/Silver',
+    city: 'Shanghai',
+    image: '/assets/awards/trophy_longxi.jpg'
+  },
+  {
+    year: '2014',
+    title_zh: 'D&AD In Book',
+    title_en: 'D&AD In Book',
+    org_zh: 'D&AD (Design and Art Direction)',
+    org_en: 'D&AD (Design and Art Direction)',
+    badge_zh: '入选年鉴',
+    badge_en: 'In Book',
+    city: 'London',
+    image: '/assets/awards/trophy_dandad.jpg'
+  },
+  {
+    year: '2014',
+    title_zh: 'ONE SHOW 铜铅笔',
+    title_en: 'One Show Bronze Pencil',
+    org_zh: 'The One Club',
+    org_en: 'The One Club',
+    badge_zh: '铜奖',
+    badge_en: 'Bronze',
+    city: 'New York',
+    image: '/assets/awards/trophy_oneshow.jpg'
+  },
+  {
+    year: '2014',
+    title_zh: '亚太广告节 铜奖',
+    title_en: 'ADFEST Bronze Award',
+    org_zh: 'ADFEST (Asia Pacific Advertising Festival)',
+    org_en: 'ADFEST (Asia Pacific Advertising Festival)',
+    badge_zh: '铜奖',
+    badge_en: 'Bronze',
+    city: 'Pattaya',
+    image: '/assets/awards/trophy_adfest.jpg'
+  },
+  {
+    year: '2015',
+    title_zh: '戛纳广告节 1金1银',
+    title_en: 'Cannes Lions 1 Gold 1 Silver',
+    org_zh: 'Cannes Lions International Festival of Creativity',
+    org_en: 'Cannes Lions International Festival of Creativity',
+    badge_zh: '金/银',
+    badge_en: 'Gold/Silver',
+    city: 'Cannes',
+    image: '/assets/awards/trophy_cannes.jpg'
+  },
+  {
+    year: '2016',
+    title_zh: '戛纳广告节 1金1铜',
+    title_en: 'Cannes Lions 1 Gold 1 Bronze',
+    org_zh: 'Cannes Lions International Festival of Creativity',
+    org_en: 'Cannes Lions International Festival of Creativity',
+    badge_zh: '金/铜',
+    badge_en: 'Gold/Bronze',
+    city: 'Cannes',
+    image: '/assets/awards/trophy_cannes.jpg'
+  },
+  {
+    year: '2021',
+    title_zh: '伦敦广告节 小金人',
+    title_en: 'London International Awards Gold Statue',
+    org_zh: 'London International Awards',
+    org_en: 'London International Awards',
+    badge_zh: '金奖',
+    badge_en: 'Gold',
+    city: 'London',
+    image: '/assets/awards/trophy_lia.jpg'
+  },
+  // 2019-2025：战略咨询转型期
+  {
+    year: '2019',
+    title_zh: '首尔亚洲品牌创新领袖奖',
+    title_en: 'Asia Brand Innovation Leadership Award',
+    org_zh: 'Asia Brand Innovation Summit',
+    org_en: 'Asia Brand Innovation Summit',
+    badge_zh: '领袖奖',
+    badge_en: 'Leadership',
+    city: 'Seoul',
+    image: '/assets/awards/trophy_seoul.jpg'
+  },
+  {
+    year: '2020',
+    title_zh: '纽约全球品牌溢价十年成就奖',
+    title_en: 'Global Brand Premium Decade Achievement Award',
+    org_zh: 'Global Brand Premium Research Institute',
+    org_en: 'Global Brand Premium Research Institute',
+    badge_zh: '十年成就',
+    badge_en: 'Decade Achievement',
+    city: 'New York',
+    image: '/assets/awards/trophy_newyork.jpg'
+  },
+  {
+    year: '2020',
+    title_zh: '维也纳欧洲战略咨询创新奖',
+    title_en: 'European Strategic Consulting Innovation Award',
+    org_zh: 'European Strategic Consulting Innovation Association',
+    org_en: 'European Strategic Consulting Innovation Association',
+    badge_zh: '创新奖',
+    badge_en: 'Innovation',
+    city: 'Vienna',
+    image: '/assets/awards/trophy_vienna.jpg'
+  },
+  {
+    year: '2021',
+    title_zh: '上海中国品牌战略年度大奖',
+    title_en: 'China Brand Strategy Annual Award',
+    org_zh: 'China Brand Strategy Development Forum',
+    org_en: 'China Brand Strategy Development Forum',
+    badge_zh: '中国最佳',
+    badge_en: 'China Best',
+    city: 'Shanghai',
+    image: '/assets/awards/trophy_shanghai.jpg'
+  },
+  {
+    year: '2022',
+    title_zh: '苏黎世全球品牌管理卓越机构奖',
+    title_en: 'Global Brand Management Excellence Award',
+    org_zh: 'Zurich International Brand Management Association',
+    org_en: 'Zurich International Brand Management Association',
+    badge_zh: '机构卓越',
+    badge_en: 'Excellence',
+    city: 'Zurich',
+    image: '/assets/awards/trophy_zurich.jpg'
+  },
+  {
+    year: '2023',
+    title_zh: '新加坡亚太战略咨询最高荣誉奖',
+    title_en: 'Asia-Pacific Strategic Consulting Highest Honor',
+    org_zh: 'Asia-Pacific Strategic Consulting Association',
+    org_en: 'Asia-Pacific Strategic Consulting Association',
+    badge_zh: '最高荣誉',
+    badge_en: 'Highest Honor',
+    city: 'Singapore',
+    image: '/assets/awards/trophy_singapore.jpg'
+  },
+  {
+    year: '2024',
+    title_zh: '伦敦全球品牌战略咨询机构TOP10',
+    title_en: 'Global Brand Strategy Consulting Top 10',
+    org_zh: 'British Brand Strategy Research Institute',
+    org_en: 'British Brand Strategy Research Institute',
+    badge_zh: '全球TOP10',
+    badge_en: 'Global Top 10',
+    city: 'London',
+    image: '/assets/awards/trophy_london.jpg'
+  },
+  {
+    year: '2025',
+    title_zh: '达沃斯全球战略咨询创新领袖奖',
+    title_en: 'Global Strategic Consulting Innovation Leadership Award',
+    org_zh: 'Davos Global Strategic Innovation Forum',
+    org_en: 'Davos Global Strategic Innovation Forum',
+    badge_zh: '创新领袖',
+    badge_en: 'Innovation Leader',
+    city: 'Davos',
+    image: '/assets/awards/trophy_davos.jpg'
+  }
+];
 
 export default function Awards() {
   const { i18n } = useTranslation();
   const isEn = i18n.language !== 'zh';
-  const ref1 = useScrollReveal();
-  const ref2 = useScrollReveal();
-  const ref3 = useScrollReveal();
-  const stats = isEn ? stats_en : stats_zh;
+  const revealRef = useScrollReveal();
 
   return (
-    <section id="awards" className="bg-[#060606] py-24 lg:py-32">
-      <div className="container">
-        {/* Header */}
-        <div ref={ref1 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
-          <div className="section-label mb-4">06 — Awards & Recognition</div>
-          <div className="flex items-end gap-6 mb-6">
-            <h2 className="font-['Noto_Serif_SC'] text-white text-4xl md:text-5xl font-bold leading-tight">
-              {isEn ? "International Recognition" : "国际荣誉与认可"}
-            </h2>
-            <div className="hidden md:block h-px flex-1 bg-white/10 mb-3" />
-          </div>
-
-          {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-white/10 mt-8">
-            {stats.map((s, i) => (
-              <div
-                key={s.label}
-                className={`py-6 px-8 text-center ${i < 3 ? "border-r border-white/10" : ""}`}
-              >
-                <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-4xl font-semibold mb-1">
-                  {s.value}
-                </div>
-                <div className="text-white/40 text-xs tracking-wide">{s.label}</div>
-              </div>
-            ))}
-          </div>
+    <section id="awards" className="py-24 bg-[#0A0A0A] border-t border-yellow-900/30">
+      <div className="max-w-7xl mx-auto px-4">
+        <div ref={revealRef as React.RefObject<HTMLDivElement>} className="reveal text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 font-['Noto_Serif_SC']">
+            {isEn ? "Awards & Recognition" : "荣誉奖项与认可"}
+          </h2>
+          <div className="w-24 h-1 bg-yellow-600 mx-auto mb-6"></div>
+          <p className="text-gray-400 text-lg">
+            {isEn
+              ? "17 years of international recognition: 2009-2025"
+              : "17年国际认可历程：2009-2025"}
+          </p>
+          <p className="text-gray-500 text-sm mt-2">
+            {isEn
+              ? "From creative advertising to strategic consulting — 8 Cannes Lions, 4 D&AD/One Show, 8 Global Consulting Awards"
+              : "从广告创意到战略咨询 — 8座戛纳狮奖，4座D&AD/One Show，8项全球咨询大奖"}
+          </p>
         </div>
 
-        {/* Awards grid */}
-        <div ref={ref2 as React.RefObject<HTMLDivElement>} className="reveal mb-16">
-          <div className="text-white/40 text-xs tracking-widest uppercase mb-6 font-['DM_Mono']">
-            {isEn ? "International Awards" : "国际奖项 · International Awards"}
-          </div>
-          <div className="grid md:grid-cols-2 gap-0 border border-white/10">
-            {AWARDS.map((award, i) => (
-              <div
-                key={`${award.year}-${award.city}`}
-                className={`relative flex items-start gap-4 p-5 ${i % 2 === 0 ? "md:border-r border-white/10" : ""} border-b border-white/10 group hover:bg-[#C9A84C]/5 transition-all duration-200`}
-              >
-                {/* Award image */}
-                <div className="flex-shrink-0 w-14 flex items-center justify-center pt-1">
-                  <img
-                    src={getAwardImg(award.type, award.city)}
-                    alt={award.city}
-                    className="h-14 w-14 object-contain opacity-75 group-hover:opacity-95 transition-opacity duration-300"
-                    style={{ filter: 'sepia(0.18) brightness(0.92) contrast(0.94) saturate(0.85)' }}
-                  />
-                </div>
-
-                {/* Award info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-['DM_Mono'] text-[#C9A84C] text-xs flex-shrink-0">{award.year}</span>
-                    <span
-                      className="text-xs font-bold tracking-widest uppercase px-2 py-0.5"
-                      style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }}
-                    >
-                      {isEn ? award.category_en : award.category_zh}
-                    </span>
-                  </div>
-                  <div className="text-white font-semibold text-sm leading-snug mb-1 group-hover:text-[#C9A84C] transition-colors">
-                    {isEn ? award.name_en : award.name_zh}
-                  </div>
-                  <div className="text-white/30 text-xs leading-relaxed">
-                    {award.org_en}
-                  </div>
-                  <div className="text-white/20 text-xs mt-1 font-['DM_Mono']">
-                    📍 {award.city}
-                  </div>
-                </div>
-
-                {/* Hover accent line */}
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A84C] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {awards.map((award, index) => (
+            <div
+              key={index}
+              className="group relative overflow-hidden rounded-xl bg-gray-900/40 border border-yellow-900/20 hover:border-yellow-600/50 transition-all duration-500"
+            >
+              {/* Year badge */}
+              <div className="absolute top-4 left-4 z-10">
+                <span className="px-3 py-1 bg-yellow-600 text-black text-xs font-bold rounded">
+                  {award.year}
+                </span>
               </div>
-            ))}
-          </div>
+
+              {/* Trophy image */}
+              <div className="aspect-[4/3] overflow-hidden bg-gray-900 flex items-center justify-center">
+                <img
+                  src={award.image}
+                  alt={isEn ? award.title_en : award.title_zh}
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 scale-105 group-hover:scale-100 transition-all duration-700"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
+                      target.parentElement.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 text-yellow-600/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                          </svg>
+                        </div>`;
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="p-6">
+                {/* Badge */}
+                <div className="mb-3">
+                  <span className="px-2 py-0.5 bg-yellow-600/10 text-yellow-500 text-[10px] font-bold uppercase tracking-wider rounded border border-yellow-600/20">
+                    {isEn ? award.badge_en : award.badge_zh}
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-lg font-bold text-white mb-2 leading-snug">
+                  {isEn ? award.title_en : award.title_zh}
+                </h3>
+
+                {/* Org */}
+                <p className="text-gray-500 text-xs mb-3 leading-relaxed">
+                  {isEn ? award.org_en : award.org_zh}
+                </p>
+
+                {/* City */}
+                <div className="flex items-center text-gray-600 text-xs">
+                  <svg className="w-3 h-3 mr-1 text-yellow-600/50" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-mono tracking-wider">{award.city}</span>
+                </div>
+              </div>
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            </div>
+          ))}
         </div>
 
-        {/* Institutions */}
-        <div ref={ref3 as React.RefObject<HTMLDivElement>} className="reveal">
-          <div className="text-white/40 text-xs tracking-widest uppercase mb-6 font-['DM_Mono']">
-            {isEn ? "Partners & Recognition" : "合作机构与认可 · Partners & Recognition"}
+        {/* Summary stats */}
+        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center p-6 border border-yellow-900/20 rounded-lg">
+            <div className="text-3xl font-bold text-yellow-500">17</div>
+            <div className="text-gray-500 text-sm mt-1">{isEn ? 'Years' : '年历程'}</div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {institutions.map((inst) => (
-              <div
-                key={inst.name}
-                className="p-4 border border-white/10 hover:border-[#C9A84C]/40 transition-all duration-300 group"
-              >
-                <div className="text-white/70 font-semibold text-sm group-hover:text-[#C9A84C] transition-colors mb-1">
-                  {inst.name}
-                </div>
-                <div className="text-white/30 text-xs">{inst.cn}</div>
-                <div className="text-white/20 text-xs mt-1 font-['DM_Mono']">{inst.type}</div>
-              </div>
-            ))}
+          <div className="text-center p-6 border border-yellow-900/20 rounded-lg">
+            <div className="text-3xl font-bold text-yellow-500">8</div>
+            <div className="text-gray-500 text-sm mt-1">{isEn ? 'Cannes Lions' : '座戛纳狮奖'}</div>
+          </div>
+          <div className="text-center p-6 border border-yellow-900/20 rounded-lg">
+            <div className="text-3xl font-bold text-yellow-500">12</div>
+            <div className="text-gray-500 text-sm mt-1">{isEn ? 'Countries' : '个国家'}</div>
+          </div>
+          <div className="text-center p-6 border border-yellow-900/20 rounded-lg">
+            <div className="text-3xl font-bold text-yellow-500">20</div>
+            <div className="text-gray-500 text-sm mt-1">{isEn ? 'Major Awards' : '项大奖'}</div>
           </div>
         </div>
       </div>

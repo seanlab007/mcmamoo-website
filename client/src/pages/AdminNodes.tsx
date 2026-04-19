@@ -1,3 +1,4 @@
+import { MAOAI_ROUTES } from "@/features/maoai";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -114,6 +115,41 @@ interface NodeFormData {
   modelId: string; isPaid: boolean; isLocal: boolean; priority: number; description: string;
 }
 
+// Local typed view of AI node data returned from server (Record<string, unknown>)
+interface AiNodeView {
+  id: number;
+  name: string;
+  type: string;
+  baseUrl: string;
+  modelId: string;
+  isActive: boolean;
+  isPaid: boolean;
+  isLocal: boolean;
+  isOnline: boolean;
+  priority: number;
+  description: string;
+  lastPingAt: string | null;
+  lastPingMs: number | null;
+}
+
+function toAiNodeView(raw: Record<string, unknown>): AiNodeView {
+  return {
+    id: Number(raw.id ?? 0),
+    name: String(raw.name ?? ""),
+    type: String(raw.type ?? raw.node_type ?? "openai_compat"),
+    baseUrl: String(raw.base_url ?? raw.baseUrl ?? ""),
+    modelId: String(raw.model_id ?? raw.modelId ?? ""),
+    isActive: Boolean(raw.is_active ?? raw.isActive ?? true),
+    isPaid: Boolean(raw.is_paid ?? raw.isPaid ?? false),
+    isLocal: Boolean(raw.is_local ?? raw.isLocal ?? false),
+    isOnline: Boolean(raw.is_online ?? raw.isOnline ?? false),
+    priority: Number(raw.priority ?? 100),
+    description: String(raw.description ?? ""),
+    lastPingAt: raw.last_ping_at != null ? String(raw.last_ping_at) : null,
+    lastPingMs: raw.last_ping_ms != null ? Number(raw.last_ping_ms) : null,
+  };
+}
+
 const defaultForm: NodeFormData = {
   name: "", type: "openai_compat", baseUrl: "", apiKey: "",
   modelId: "", isPaid: false, isLocal: false, priority: 100, description: "",
@@ -127,7 +163,8 @@ export default function AdminNodes() {
   const [form, setForm] = useState<NodeFormData>(defaultForm);
   const [pinging, setPinging] = useState<Record<number, boolean>>({});
 
-  const { data: nodes, isLoading } = trpc.nodes.list.useQuery();
+  const { data: rawNodes, isLoading } = trpc.nodes.list.useQuery();
+  const nodes: AiNodeView[] = (rawNodes ?? []).map(toAiNodeView);
   const createNode = trpc.nodes.create.useMutation({ onSuccess: () => { utils.nodes.list.invalidate(); setOpen(false); toast.success("节点已添加"); } });
   const updateNode = trpc.nodes.update.useMutation({ onSuccess: () => { utils.nodes.list.invalidate(); setOpen(false); toast.success("节点已更新"); } });
   const deleteNode = trpc.nodes.delete.useMutation({ onSuccess: () => { utils.nodes.list.invalidate(); toast.success("节点已删除"); } });
@@ -158,8 +195,11 @@ export default function AdminNodes() {
 
   const handleSubmit = () => {
     if (!form.name || !form.baseUrl) { toast.error("请填写节点名称和地址"); return; }
-    if (editNode) updateNode.mutate({ id: editNode.id, ...form, type: form.type as any });
-    else createNode.mutate({ ...form, type: form.type as any });
+    if (editNode) {
+      updateNode.mutate({ id: editNode.id, name: form.name, baseUrl: form.baseUrl, token: form.apiKey, isPaid: form.isPaid, isLocal: form.isLocal });
+    } else {
+      createNode.mutate({ name: form.name, baseUrl: form.baseUrl, token: form.apiKey, type: form.type, modelId: form.modelId, isPaid: form.isPaid, isLocal: form.isLocal });
+    }
   };
 
   const handlePing = (id: number) => {
@@ -171,7 +211,7 @@ export default function AdminNodes() {
     <div className="flex flex-col h-screen bg-background">
       <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50">
         <div className="flex items-center gap-3">
-          <Link href="/maoai" className="text-muted-foreground hover:text-foreground text-sm">← 返回聊天</Link>
+          <Link href={MAOAI_ROUTES.CHAT} className="text-muted-foreground hover:text-foreground text-sm">← 返回聊天</Link>
           <span className="text-muted-foreground">/</span>
           <h1 className="text-base font-semibold">AI 节点管理</h1>
         </div>

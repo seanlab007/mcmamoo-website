@@ -15,6 +15,12 @@ const featuredIPs = [
   { name: "Che Guevara", nameCn: "切·格瓦拉", image: `${CDN}/che-guevara_9cf42a64.jpg`, tag: "国家级授权" },
 ];
 
+const whaleWorks = [
+  { title: "品牌大片", titleEn: "Brand Film", image: "/assets/brand/page_17.jpg", category: "TVC Production" },
+  { title: "代言营销", titleEn: "Endorsement", image: "/assets/brand/page_20.jpg", category: "Celebrity Marketing" },
+  { title: "视觉创意", titleEn: "Visual Creative", image: "/assets/brand/page_18.jpg", category: "Creative Design" },
+];
+
 export default function IPAndWhale() {
   const { i18n } = useTranslation();
   const isEn = i18n.language !== 'zh';
@@ -59,7 +65,7 @@ export default function IPAndWhale() {
           <p className="text-white/40 text-sm leading-relaxed max-w-2xl mb-10">
             {isEn
               ? "Mc&Mamoo curates the world's most iconic IP resources — from Hollywood legends to global cultural icons — offering brands exclusive licensing partnerships through our strategic alliance with Authentic Brands Group (ABG) and global IP management agencies."
-              : "猫眼增长引擎精选全球最具影响力的 IP 资源——从好莱坞传奇到全球文化符号——通过与 ABG 集团及全球 IP 管理机构的战略联盟，为品牌提供独家授权合作。"}
+              : "猫眼增长引擎 Mc&Mamoo Growth Engine精选全球最具影响力的 IP 资源——从好莱坞传奇到全球文化符号——通过与 ABG 集团及全球 IP 管理机构的战略联盟，为品牌提供独家授权合作。"}
           </p>
 
           {/* IP Grid */}
@@ -88,40 +94,71 @@ export default function IPAndWhale() {
               </a>
             ))}
           </div>
+        </div>
 
-          {/* Stats row */}
-          <div className="flex gap-8 mt-8 pt-8 border-t border-white/5">
-            {[
-              { num: "15+", labelEn: "Global IPs", labelCn: "全球 IP 资源" },
-              { num: "3", labelEn: "License Types", labelCn: "授权类别" },
-              { num: "ABG", labelEn: "Strategic Partner", labelCn: "战略合作伙伴" },
-              { num: "∞", labelEn: "Brand Potential", labelCn: "品牌溢价空间" },
-            ].map(s => (
-              <div key={s.num}>
-                <div className="text-[#C9A84C] font-['Cormorant_Garamond'] text-2xl font-light">{s.num}</div>
-                <div className="text-white/25 text-[9px] tracking-widest uppercase mt-0.5">{isEn ? s.labelEn : s.labelCn}</div>
+        {/* ── Section 2: Whale Pictures 鲸达影业 ── */}
+        <div className="mb-12">
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <span style={{ width: 8, height: 8, background: "#C9A84C", transform: "rotate(45deg)", display: "inline-block", boxShadow: "0 0 10px #C9A84C" }} />
+                <span className="text-[#C9A84C]/60 text-xs font-mono tracking-[0.3em] uppercase">
+                  {isEn ? "Whale Pictures Production" : "鲸达影业 · 视觉制片"}
+                </span>
+              </div>
+              <h2 className="font-['Cormorant_Garamond'] text-4xl md:text-5xl text-white font-light">
+                {isEn ? "Whale Pictures" : "鲸达影业"}
+              </h2>
+              <p className="text-[#C9A84C] font-['Cormorant_Garamond'] text-xl italic mt-1">
+                {isEn ? "Cinematic Storytelling · High-End Production" : "电影级叙事 · 高端视觉制片"}
+              </p>
+            </div>
+            <a
+              href="/whale-pictures"
+              className="hidden md:flex items-center gap-2 text-[#C9A84C]/60 hover:text-[#C9A84C] font-mono text-xs tracking-wider transition-colors duration-200"
+            >
+              {isEn ? "View Portfolio" : "查看作品集"}
+              <span>→</span>
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {whaleWorks.map((work, idx) => (
+              <div key={idx} className="group relative overflow-hidden rounded-lg border border-white/5 hover:border-[#C9A84C]/30 transition-all duration-500">
+                <div className="aspect-video overflow-hidden">
+                  <img 
+                    src={work.image} 
+                    alt={work.title}
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <span className="text-[#C9A84C] text-[10px] font-mono tracking-widest uppercase mb-2 block">{isEn ? work.category : work.category}</span>
+                  <h3 className="text-white text-xl font-bold">{isEn ? work.titleEn : work.title}</h3>
+                </div>
               </div>
             ))}
           </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              href="#contact"
-              onClick={(e) => { e.preventDefault(); document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="inline-flex items-center gap-3 px-7 py-3 bg-[#C9A84C] text-[#0A0A0A] font-mono text-xs tracking-wider font-bold hover:bg-[#D4B866] transition-all duration-300"
-            >
-              <span style={{ width: 5, height: 5, background: "#0A0A0A", transform: "rotate(45deg)", display: "inline-block" }} />
-              {isEn ? "Book IP Licensing Consultation" : "预约 IP 授权合作洽谈"}
-            </a>
-            <a
-              href="/ip-licensing"
-              className="inline-flex items-center gap-3 px-6 py-3 border border-[#C9A84C]/40 text-[#C9A84C]/80 font-mono text-xs tracking-wider hover:border-[#C9A84C] hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 transition-all duration-300"
-            >
-              {isEn ? "Browse IP Library →" : "浏览 IP 资源库 →"}
-            </a>
-          </div>
         </div>
 
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-4 mt-12 pt-12 border-t border-white/5">
+          <a
+            href="#contact"
+            onClick={(e) => { e.preventDefault(); document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' }); }}
+            className="inline-flex items-center gap-3 px-8 py-4 bg-[#C9A84C] text-[#0A0A0A] font-mono text-sm tracking-wider font-bold hover:bg-[#D4B866] transition-all duration-300"
+          >
+            <span style={{ width: 6, height: 6, background: "#0A0A0A", transform: "rotate(45deg)", display: "inline-block" }} />
+            {isEn ? "Start Collaboration" : "开启战略合作"}
+          </a>
+          <a
+            href="/whale-pictures"
+            className="inline-flex items-center gap-3 px-8 py-4 border border-[#C9A84C]/40 text-[#C9A84C]/80 font-mono text-sm tracking-wider hover:border-[#C9A84C] hover:text-[#C9A84C] hover:bg-[#C9A84C]/5 transition-all duration-300"
+          >
+            {isEn ? "Explore Whale Pictures →" : "探索鲸达影业 →"}
+          </a>
+        </div>
       </div>
     </section>
   );
