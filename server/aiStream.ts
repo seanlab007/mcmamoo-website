@@ -480,8 +480,21 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     try {
       const ragResults = await searchCorpus(userTextForRag, 3);
       if (ragResults.length > 0) {
-        const refs = formatForPrompt(ragResults);
+        let refs = formatForPrompt(ragResults);
         if (refs) {
+          // ── Token Optimization: RAG 上下文压缩 ────────────────────────
+          const { text: compressedRefs, savedTokens: ragSaved } = tokenPipeline.optimizeRagContext(refs, sessionId);
+          refs = compressedRefs;
+          if (ragSaved > 0) {
+            res.write(`data: ${JSON.stringify({
+              tokenOptimization: {
+                stage: "rag_compact",
+                savedTokens: ragSaved,
+                originalChars: refs.length + ragSaved * 4,
+                processedChars: refs.length,
+              }
+            })}\n\n`);
+          }
           res.write(`data: ${JSON.stringify({ ragReferences: { count: ragResults.length, preview: refs.slice(0, 100) + "..." } })}\n\n`);
           effectiveSystemPrompt = (effectiveSystemPrompt ? effectiveSystemPrompt + "\n\n" : "") + refs;
         }
@@ -1661,6 +1674,42 @@ aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
     onlineCount = nodes.filter(n => n.isOnline).length;
   } catch { /* db not ready or timeout */ }
   res.json({ status: "ok", models: status, nodes: { total: nodeCount, online: onlineCount }, timestamp: new Date().toISOString(), version: "v2.3-openclaw-skills" });
+});
+
+// ── Token Optimization Admin API ──────────────────────────────────────
+aiStreamRouter.get("/token-optimization/stats", async (_req: Request, res: Response) => {
+  try {
+    const { tokenCounter } = await import("./token-optimization/tokenCounter");
+    res.json({
+      activeSessions: tokenCounter.getActiveSessionCount(),
+      pipelineConfig: tokenPipeline.getOptions(),
+      version: "v2",
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+aiStreamRouter.get("/token-optimization/session/:sessionId", async (req: Request, res: Response) => {
+  try {
+    const stats = tokenPipeline.getSessionStats(req.params.sessionId);
+    if (!stats) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    res.json(stats);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+aiStreamRouter.post("/token-optimization/config", async (req: Request, res: Response) => {
+  try {
+    tokenPipeline.updateOptions(req.body);
+    res.json({ success: true, config: tokenPipeline.getOptions() });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default aiStreamRouter;
