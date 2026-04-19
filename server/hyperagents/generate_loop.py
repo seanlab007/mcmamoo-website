@@ -1,711 +1,1189 @@
-#!/usr/bin/env python3
-"""
-MaoAI HyperAgents Engine — Manus Max 架构
-─────────────────────────────────────────────────────────────────────────────
-核心：ReAct (Reasoning + Acting) 自主循环 + 流式 JSON 日志输出
-支持：Multi-Agent Swarm (多代理集群协作)
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 
-输出格式（每行 JSON，flush=True）：
-  { "type": "start",      "task": "...", "timestamp": 1234567890 }
-  { "type": "thought",    "round": 1, "content": "...", "timestamp": 1234567890 }
-  { "type": "action",     "round": 1, "tool": "...", "args": {...}, "timestamp": 1234567890 }
-  { "type": "observation","round": 1, "tool": "...", "success": true, "output": "...", "timestamp": 1234567890 }
-  { "type": "score",      "round": 1, "score": 0.82, "reasoning": "...", "timestamp": 1234567890 }
-  { "type": "patch",      "round": 2, "diff": "...", "timestamp": 1234567890 }
-  { "type": "iteration",   "round": 2, "status": "improved|worse|same", "timestamp": 1234567890 }
-  { "type": "error",      "category": "env|timeout|logic", "message": "...", "retry": true, "timestamp": 1234567890 }
-  { "type": "done",       "answer": "...", "rounds": 3, "timestamp": 1234567890 }
-
-  Multi-Agent Swarm 日志：
-  { "type": "swarm_start", "task": "...", "agents": ["architect", "coder", "reviewer", "test"] }
-  { "type": "swarm_step",  "agent": "architect|coder|reviewer|test", "step": "...", "status": "..." }
-  { "type": "swarm_review","approved": true/false, "score": 0.85, "issues": [...] }
-  { "type": "swarm_done",  "success": true, "iterations": 2, "answer": "..." }
-
-用法：
-  python3 generate_loop.py --task "优化登录逻辑" --domain coding --mode swarm --workspace /path/to/project
-  python3 generate_loop.py --task "优化登录逻辑" --domain coding --mode react --workspace /path/to/project
-"""
-
-import sys
+import argparse
 import json
-import time
 import os
-import re
-import subprocess
-import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-# ─── 日志工具 ────────────────────────────────────────────────────────────────
+import docker
+from analysis.plot_progress import plot_progress_single, plot_progress_together
+from analysis.visualize_archive import (
+    visualize_archive_single,
+    visualize_archive_together,
+)
 
-def log_step(step_type: str, message: str = "", **kwargs):
-    """发送结构化日志到标准输出（flush=True 确保实时性）"""
-    entry = {
-        "type": step_type,
-        "message": message,
-        "timestamp": time.time(),
-        **kwargs
-    }
-    print(json.dumps(entry, ensure_ascii=False), flush=True)
-
-
-# ─── 工具执行器 ─────────────────────────────────────────────────────────────
-
-class ToolExecutor:
-    """可扩展的工具执行器（映射 Python 函数到工具名）"""
-
-    def __init__(self, workspace: str = None):
-        self.workspace = workspace or os.getcwd()
-        self.tools = {
-            "web_search": self._web_search,
-            "run_code": self._run_code,
-            "read_file": self._read_file,
-            "read_project_structure": self._read_project_structure,
-            "run_npm_test": self._run_npm_test,
-            "build_verify": self._build_verify,
-            "run_shell": self._run_shell,
-        }
-
-    def execute(self, tool_name: str, args: dict) -> dict:
-        """执行工具并返回结果字典"""
-        if tool_name not in self.tools:
-            return {"success": False, "output": "", "error": f"Unknown tool: {tool_name}"}
-        try:
-            return self.tools[tool_name](args)
-        except Exception as e:
-            return {"success": False, "output": "", "error": str(e)}
-
-    def _web_search(self, args: dict) -> dict:
-        """模拟联网搜索（实际集成 Tavily/Serper API）"""
-        query = args.get("query", "")
-        log_step("action", f"执行联网搜索: {query}", tool="web_search", args=args)
-        # 实际生产环境请替换为 Tavily API:
-        # from tavily import TavilyClient; client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
-        # results = client.search(query=query, max_results=args.get("max_results", 5))
-        output = f"[模拟搜索结果] 关于「{query}」的相关信息...（生产环境请配置 TAVILY_API_KEY）"
-        return {"success": True, "output": output}
-
-    def _run_code(self, args: dict) -> dict:
-        """在沙箱中执行 Python/JS 代码（实际集成 E2B）"""
-        code = args.get("code", "")
-        language = args.get("language", "python")
-        log_step("action", f"执行 {language} 代码...", tool="run_code", args={"language": language, "code_length": len(code)})
-        # 实际生产环境请使用 E2B 代码执行沙箱:
-        # from e2b import Sandbox; sandbox = Sandbox()
-        # result = await sandbox.run_code(language=language, code=code)
-        output = f"[模拟执行] {language} 代码执行成功（生产环境请配置 E2B_API_KEY）"
-        return {"success": True, "output": output}
-
-    def _read_file(self, args: dict) -> dict:
-        """读取项目文件"""
-        file_path = args.get("path", "")
-        max_lines = args.get("max_lines", 100)
-        recursive = args.get("recursive", False)
-        log_step("action", f"读取文件: {file_path}", tool="read_file", args=args)
-        try:
-            full_path = os.path.join(self.workspace, file_path) if not os.path.isabs(file_path) else file_path
-            if not os.path.exists(full_path):
-                return {"success": False, "output": "", "error": f"File not found: {file_path}"}
-            with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
-                lines = [f.readline() for _ in range(max_lines)]
-                content = "".join(lines)
-            return {"success": True, "output": content}
-        except Exception as e:
-            return {"success": False, "output": "", "error": str(e)}
-
-    def _read_project_structure(self, args: dict) -> dict:
-        """递归扫描项目目录结构"""
-        root = args.get("root", self.workspace)
-        max_depth = args.get("max_depth", 3)
-        extensions = args.get("extensions", [".ts", ".tsx", ".py", ".js", ".jsx", ".json"])
-        log_step("action", f"扫描项目结构: {root}", tool="read_project_structure", args=args)
-
-        def _scan(path: str, depth: int = 0) -> list:
-            if depth > max_depth:
-                return []
-            items = []
-            try:
-                for entry in sorted(os.scandir(path), key=lambda e: (not e.is_dir(), e.name)):
-                    if entry.name.startswith("."):
-                        continue
-                    if entry.name in ["node_modules", "__pycache__", ".git", "dist", "build", ".next", "venv"]:
-                        continue
-                    rel = os.path.relpath(entry.path, root)
-                    if entry.is_dir():
-                        items.append({"type": "dir", "path": rel})
-                        items.extend(_scan(entry.path, depth + 1))
-                    else:
-                        if any(rel.endswith(ext) for ext in extensions):
-                            items.append({"type": "file", "path": rel})
-            except PermissionError:
-                pass
-            return items
-
-        structure = _scan(root)
-        output = json.dumps(structure, ensure_ascii=False)
-        return {"success": True, "output": output}
-
-    def _run_npm_test(self, args: dict) -> dict:
-        """运行项目测试套件（TDD 自我修正核心）"""
-        test_args = args.get("args", "")
-        log_step("action", f"运行测试套件: npm test {test_args}", tool="run_npm_test", args=args)
-        try:
-            result = subprocess.run(
-                f"npm test -- {test_args}".split(),
-                cwd=self.workspace,
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
-            # 解析测试结果
-            passed = failed = 0
-            for line in result.stdout.splitlines():
-                m = re.search(r"PASS|passed", line, re.IGNORECASE)
-                if m: passed += 1
-                m = re.search(r"FAIL|failed", line, re.IGNORECASE)
-                if m: failed += 1
-            return {
-                "success": result.returncode == 0,
-                "output": result.stdout[:2000],
-                "error": None if result.returncode == 0 else f"Exit code: {result.returncode}"
-            }
-        except subprocess.TimeoutExpired:
-            return {"success": False, "output": "", "error": "Test timeout (>60s)"}
-        except FileNotFoundError:
-            return {"success": False, "output": "", "error": "npm not found in PATH"}
-        except Exception as e:
-            return {"success": False, "output": "", "error": str(e)}
-
-    def _build_verify(self, args: dict) -> dict:
-        """构建并验证项目能否成功编译"""
-        build_cmd = args.get("command", "npm run build")
-        log_step("action", f"执行构建验证: {build_cmd}", tool="build_verify", args=args)
-        try:
-            result = subprocess.run(
-                build_cmd.split(),
-                cwd=self.workspace,
-                capture_output=True,
-                text=True,
-                timeout=120
-            )
-            return {
-                "success": result.returncode == 0,
-                "output": result.stdout[-2000:] if result.stdout else "",
-                "error": None if result.returncode == 0 else result.stderr[-500:]
-            }
-        except subprocess.TimeoutExpired:
-            return {"success": False, "output": "", "error": "Build timeout (>120s)"}
-        except Exception as e:
-            return {"success": False, "output": "", "error": str(e)}
-
-    def _run_shell(self, args: dict) -> dict:
-        """执行任意 Shell 命令（高风险，请谨慎使用）"""
-        command = args.get("command", "")
-        log_step("action", f"执行 Shell: {command}", tool="run_shell", args={"command": command[:100]})
-        try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                cwd=self.workspace,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            return {
-                "success": result.returncode == 0,
-                "output": result.stdout[-3000:],
-                "error": None if result.returncode == 0 else result.stderr[-500:]
-            }
-        except subprocess.TimeoutExpired:
-            return {"success": False, "output": "", "error": "Shell timeout (>30s)"}
-        except Exception as e:
-            return {"success": False, "output": "", "error": str(e)}
+from utils.common import file_exist_and_not_empty, load_json_file
+from utils.constants import REPO_NAME
+from utils.docker_utils import (
+    build_container,
+    cleanup_container,
+    copy_from_container,
+    copy_to_container,
+    log_container_output,
+    safe_log,
+    setup_logger,
+)
+from utils.domain_utils import (
+    can_domain_ensembled,
+    get_domain_eval_subset,
+    get_domain_splits,
+    get_domain_stagedeval_samples,
+)
+from utils.gl_utils import (
+    apply_diffs_container,
+    get_patch_files,
+    get_score,
+    load_archive_data,
+    run_commands_to_check_compilation,
+    select_parent,
+    setup_initial_gen,
+    update_and_save_archive,
+    update_node_metadata,
+    get_latest_can_select_parent,
+    is_starting_node,
+    process_meta_patch_files,
+)
 
 
-# ─── ReAct 推理循环 ─────────────────────────────────────────────────────────
+def run_harness_polyglot(root_dir, output_dir, genid, skip_staged_eval=False, num_samples=-1):
+    # NOTE: the harness for polyglot is different because each task instance needs a docker container
+    from domains.polyglot.harness import harness as harness_polyglot
+    from domains.polyglot.report import report as report_polyglot
 
-class ReActAgent:
-    """
-    ReAct (Reasoning + Acting) 自主代理引擎
+    eval_output_dir = os.path.join(output_dir, f"gen_{genid}", "polyglot_eval")
+    test_more_threshold = 0.4  # NOTE: same setting as that in DGM
+    model_name_or_path = "eval_run"
+    patch_files = get_patch_files(output_dir, genid)
+    run_next_eval = True
 
-    核心循环：
-    Thought → Action → Observation → Score → (可选) Patch → Repeat → Final Answer
-    """
-
-    def __init__(self, api_key: str = None, model: str = "gpt-4o", workspace: str = None, domain: str = "general"):
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
-        self.model = model
-        self.workspace = workspace or os.getcwd()
-        self.domain = domain
-        self.tools = ToolExecutor(workspace=self.workspace)
-        self.max_rounds = 8
-        self.conversation = []
-        self._setup_system_prompt()
-
-    def _setup_system_prompt(self):
-        domain_prompts = {
-            "coding": """你是 **代码工程代理**，专注于优化、调试和重构代码。
-
-**你的工作流程：**
-1. 先用 read_project_structure 了解项目全貌
-2. 用 read_file 阅读关键文件
-3. 制定修改计划（Thought）
-4. 实施修改（Action）
-5. 用 run_npm_test 或 build_verify 验证（Observation）
-6. 如果失败，根据错误信息自我修正（Patch）
-7. 直到通过所有测试，给出最终答案
-
-**关键原则：**
-- 每次修改后立即验证，不要积累多个未验证的改动
-- 优先理解代码结构和依赖，再动手修改
-- 错误信息是最好的老师，仔细阅读再行动""",
-
-            "research": """你是 **深度研究代理**，专注于联网搜索、信息整合和报告生成。
-
-**你的工作流程：**
-1. 理解研究问题，确定搜索关键词（Thought）
-2. 执行 web_search 获取一手信息（Action）
-3. 分析搜索结果，补充更多细节（Observation）
-4. 整合信息，生成结构化报告（Final Answer）
-
-**关键原则：**
-- 多角度搜索，确保信息全面
-- 交叉验证关键事实
-- 引用信息源，注明出处""",
-
-            "general": """你是 **通用助手代理**，擅长多领域任务处理。
-
-**你的工作流程：**
-1. 理解用户需求（Thought）
-2. 决定使用哪个工具（Action）
-3. 执行并观察结果（Observation）
-4. 继续或给出最终答案（Final Answer）
-
-**工具集：**
-- web_search: 联网搜索
-- read_file: 读取文件
-- read_project_structure: 扫描项目结构
-- run_code: 执行代码
-- run_npm_test: 运行测试
-- build_verify: 构建验证
-- run_shell: 执行 Shell 命令"""
-        }
-
-        system = f"""你是 MaoAI HyperAgents Engine — Manus Max 架构下的自主代理。
-
-{domain_prompts.get(self.domain, domain_prompts["general"])}
-
-**ReAct 格式要求（严格遵守）：**
-
-当需要使用工具时，必须输出：
-[THOUGHT]
-你的思考过程（分析任务、选择工具、构造参数）
-[/THOUGHT]
-
-[ACTION]
-{{"name": "工具名", "args": {{"参数1": "值1", ...}}}}
-[/ACTION]
-
-当工具返回结果后，继续分析或给出最终答案。
-当你确认已有足够信息回答问题时，输出：
-
-[FINAL]
-你的完整回答
-[/FINAL]"""
-
-        self.conversation = [{"role": "system", "content": system}]
-
-    def _call_llm(self, max_tokens: int = 1024) -> str:
-        """调用 OpenAI API（支持兼容 API）"""
-        import urllib.request
-        import urllib.error
-
-        if not self.api_key:
-            # 无 API Key 时返回模拟思考（用于测试）
-            return "[THOUGHT]\n这是测试任务，模拟 ReAct 推理过程...\n[/THOUGHT]\n\n[ACTION]\n{\"name\": \"read_project_structure\", \"args\": {\"root\": \".\", \"max_depth\": 2}}\n[/ACTION]"
-
-        base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        url = f"{base_url}/chat/completions"
-
-        payload = {
-            "model": self.model,
-            "messages": self.conversation,
-            "max_tokens": max_tokens,
-            "temperature": 0.0,
-        }
-
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            url,
-            data=data,
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}"
-            },
-            method="POST"
+    # Small sample size evaluation for staged eval
+    if not skip_staged_eval:
+        test_task_list = load_json_file("./domains/polyglot/subsets/small.json")
+        dnames = harness_polyglot(
+            test_task_list=test_task_list,
+            num_samples=-1,
+            max_workers=10,
+            model_name_or_path=model_name_or_path,
+            model_patch_paths=patch_files,
+            num_evals=1,
+            num_evals_parallel=1,
+            pred_dname=eval_output_dir,
+            output_dir=eval_output_dir,
+            root_dir=root_dir,
         )
+        report_polyglot(output_dir=eval_output_dir, run_keyword=model_name_or_path, expected_num_tasks=len(test_task_list))
+        stagedeval_score = get_score("polyglot", output_dir, genid)
+        run_next_eval = stagedeval_score is not None and stagedeval_score >= test_more_threshold
 
-        try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
-                return result["choices"][0]["message"]["content"]
-        except urllib.error.HTTPError as e:
-            error_body = e.read().decode("utf-8")
-            raise RuntimeError(f"OpenAI API Error {e.code}: {error_body}")
-        except Exception as e:
-            raise RuntimeError(f"LLM call failed: {e}")
+    # Check if additional evaluation should be run
+    if run_next_eval:
+        test_task_list_more = load_json_file("./domains/polyglot/subsets/medium.json")
+        dnames = harness_polyglot(
+            test_task_list=test_task_list + test_task_list_more,
+            num_samples=num_samples,
+            max_workers=10,
+            model_name_or_path=model_name_or_path,
+            model_patch_paths=patch_files,
+            num_evals=1,
+            num_evals_parallel=1,
+            pred_dname=eval_output_dir,
+            output_dir=eval_output_dir,
+            root_dir=root_dir,
+        )
+        report_polyglot(output_dir=eval_output_dir, run_keyword=model_name_or_path, expected_num_tasks=len(test_task_list + test_task_list_more))
 
-    def _parse_llm_output(self, text: str) -> tuple:
-        """解析 LLM 输出，提取 thought、action 和 final"""
-        thought = ""
-        action = None
-        final = None
+    # Update metadata
+    update_node_metadata(output_dir, genid, {"run_full_eval": run_next_eval})
 
-        thought_match = re.search(r"\[THOUGHT\](.*?)\[/THOUGHT\]", text, re.DOTALL | re.IGNORECASE)
-        if thought_match:
-            thought = thought_match.group(1).strip()
+def select_next_parent_container(
+    docker_client,
+    domains,
+    generate_output_dir,
+    archive,
+    root_dir="./",
+    root_commit="HEAD",
+    max_attempts=10,
+):
+    # Setup logger
+    logger = setup_logger(os.path.join(generate_output_dir, "select_next_parent.log"))
 
-        action_match = re.search(r"\[ACTION\]\s*(\{.*?\})\s*\[/ACTION\]", text, re.DOTALL | re.IGNORECASE)
-        if action_match:
-            try:
-                action = json.loads(action_match.group(1))
-            except json.JSONDecodeError:
-                action = None
+    # Get the latest node that can select parent
+    latest_node = get_latest_can_select_parent(archive, generate_output_dir)
+    safe_log(f"select_next_parent_container: latest_node={latest_node}")
+    prev_patch_files = get_patch_files(generate_output_dir, latest_node)
 
-        final_match = re.search(r"\[FINAL\](.*?)\[/FINAL\]", text, re.DOTALL | re.IGNORECASE)
-        if final_match:
-            final = final_match.group(1).strip()
+    # Create and start the Docker container
+    image_name = f"{REPO_NAME}"
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    container_name = f"{REPO_NAME}-nextparent-container-{run_id}"
+    container = build_container(docker_client, root_dir, image_name, container_name, verbose=False)
+    container.start()
+    container_output_folder = "/tmp/"
 
-        return thought, action, final
-
-    def run(self, task: str) -> str:
-        """运行完整 ReAct 循环"""
-        log_step("start", f"开始执行任务: {task[:100]}", domain=self.domain, model=self.model, workspace=self.workspace)
-        self.conversation.append({"role": "user", "content": task})
-
-        for round_num in range(1, self.max_rounds + 1):
-            log_step("thought", f"第 {round_num} 轮推理中...", round=round_num)
-
-            # 调用 LLM
-            try:
-                response = self._call_llm()
-            except Exception as e:
-                log_step("error", f"LLM 调用失败: {e}", category="logic", retry=False, round=round_num)
-                self.conversation.append({"role": "user", "content": f"Error: {e}"})
-                continue
-
-            self.conversation.append({"role": "assistant", "content": response})
-            thought, action, final = self._parse_llm_output(response)
-
-            if thought:
-                log_step("thought", thought, round=round_num, raw=response[:500])
-
-            if final:
-                log_step("done", final, rounds=round_num)
-                return final
-
-            if action:
-                tool_name = action.get("name", "")
-                tool_args = action.get("args", {})
-
-                log_step("action", f"调用工具: {tool_name}", round=round_num, tool=tool_name, args=tool_args)
-
-                # 执行工具
-                result = self.tools.execute(tool_name, tool_args)
-
-                observation = (
-                    f"[OBSERVATION]\n"
-                    f"Tool: {tool_name}\n"
-                    f"Success: {result['success']}\n"
-                    f"Output: {result.get('output', '')[:1500]}\n"
-                    f"Error: {result.get('error', '')}\n"
-                    f"[/OBSERVATION]"
-                )
-
-                log_step(
-                    "observation",
-                    f"工具 {tool_name} {'成功' if result['success'] else '失败'}",
-                    round=round_num,
-                    tool=tool_name,
-                    success=result["success"],
-                    output=result.get("output", "")[:500],
-                    error=result.get("error"),
-                )
-
-                # 根据结果打分（0-1）
-                score = 1.0 if result["success"] else 0.0
-                if result["success"]:
-                    # 检查是否仍有改进空间
-                    if "error" in result.get("output", "").lower() or result.get("error"):
-                        score = 0.5
-                log_step("score", f"本轮得分: {score}", round=round_num, score=score, reasoning=f"Based on tool execution result")
-
-                self.conversation.append({"role": "user", "content": observation})
-            else:
-                # LLM 没有输出有效格式，提示它继续
-                nudge = "[请继续。记住：需要工具时用 [ACTION]{{...}}[/ACTION]，完成时用 [FINAL]...[/FINAL]]"
-                log_step("thought", "输出格式不完整，引导继续...", round=round_num)
-                self.conversation.append({"role": "user", "content": nudge})
-
-        log_step("done", "达到最大轮次限制", rounds=self.max_rounds)
-        return "任务已达到最大推理轮次限制（8轮），建议拆分为更小的子任务。"
-
-
-# ─── 博弈循环模式 ───────────────────────────────────────────────────────────
-
-def run_adversarial_mode(task: str, args) -> bool:
-    """
-    运行博弈循环模式（Coder ↔ Reviewer 对抗式开发）
-
-    核心逻辑：
-      1. Coder 生成代码
-      2. Reviewer 严苛审查
-      3. 循环直到通过或达到最大次数
-    """
     try:
-        from agent.adversarial_loop import AdversarialLoop, create_adversarial_loop
+        # Apply all lineage diffs
+        commit_hash = apply_diffs_container(container, prev_patch_files, verbose=False)
 
-        log_step("adversarial_start", f"博弈循环启动: {task[:80]}",
-                mode=args.mode,
-                coder_model=args.coder_model,
-                reviewer_model=args.reviewer_model,
-                max_iterations=args.adversarial_iterations,
-                threshold=args.adversarial_threshold)
-
-        # 创建博弈循环
-        loop = create_adversarial_loop(
-            workspace=args.workspace,
-            coder_api_key=args.api_key,
-            reviewer_api_key=args.api_key,
-            coder_model=args.coder_model,
-            reviewer_model=args.reviewer_model,
-            max_iterations=args.adversarial_iterations,
-            score_threshold=args.adversarial_threshold
+        # Copy generate_output_dir to container
+        container_generate_output_dir = os.path.join(
+            container_output_folder, generate_output_dir.split(os.sep)[-1]
+        )
+        copy_to_container(
+            container,
+            source_path=generate_output_dir,
+            dest_path=container_generate_output_dir,
+            verbose=False,
         )
 
-        # 构建上下文
-        context = {}
-        if args.file:
-            context["file_path"] = args.file
+        # Get next parent in container
+        command = [
+            "timeout",
+            "3600",  # 1h timeout
+            "python",
+            "-m",
+            "utils.run_select_next_parent",
+            "--domains",
+            *domains,
+            "--generate_output_dir",
+            container_generate_output_dir,
+        ]
+        exec_result = container.exec_run(cmd=command, workdir=f"/{REPO_NAME}")
+        log_container_output(exec_result, verbose=True)
 
-        # 运行循环
-        result = loop.run(task=task, context=context, mode=args.adversarial_mode)
+        # Get next parent outputs
+        container_output_strings = exec_result.output.decode().strip().split("\n")
+        next_parent_genid = container_output_strings[-1]
+        next_parent_genid = int(next_parent_genid) if not is_starting_node(next_parent_genid) else next_parent_genid
 
-        # 输出结果
-        log_step("adversarial_done",
-                f"博弈循环完成: {'✓ 通过' if result.approved else '✗ 未通过'}",
-                approved=result.approved,
-                score=result.score,
-                iterations=result.iterations,
-                total_time=f"{result.total_time:.2f}s",
-                final_code_length=len(result.final_code),
-                diff_lines=len(result.final_patch.splitlines()))
-
-        # 额外输出最终 patch（供前端展示）
-        if result.final_patch:
-            print(json.dumps({
-                "type": "final_patch",
-                "patch": result.final_patch,
-                "timestamp": time.time()
-            }, ensure_ascii=False), flush=True)
-
-        # 输出迭代历史
-        for ir in result.iteration_results:
-            log_step("adversarial_iteration",
-                    f"第 {ir.iteration} 轮: score={ir.reviewer_result.overall_score:.2f}, "
-                    f"issues={len(ir.reviewer_result.issues)}",
-                    iteration=ir.iteration,
-                    score=ir.reviewer_result.overall_score,
-                    issues_count=len(ir.reviewer_result.issues),
-                    improvement=ir.improvement)
-
-        return result.approved
-
-    except ImportError as e:
-        log_step("error", f"导入博弈循环模块失败: {e}", category="logic")
-        return False
     except Exception as e:
-        log_step("error", f"博弈循环执行错误: {e}", category="logic")
-        import traceback
-        traceback.print_exc()
-        return False
+        safe_log(f"Error in select_next_parent_container: {e}")
+        update_node_metadata(generate_output_dir, latest_node, {"can_select_next_parent": False})
+        next_parent_genid = None
+
+    # Even on errors or KeyboardInterrupt
+    finally:
+        # Reset to the root commit
+        exec_result = container.exec_run(
+            cmd=["git", "reset", "--hard", root_commit], workdir=f"/{REPO_NAME}"
+        )
+        log_container_output(exec_result, verbose=False)
+        exec_result = container.exec_run(
+            cmd=["git", "clean", "-fd"], workdir=f"/{REPO_NAME}"
+        )
+        log_container_output(exec_result, verbose=False)
+
+        # Cleanup container
+        cleanup_container(container, verbose=False)
+
+    # Try again if no parent is selected
+    if next_parent_genid is None:
+        if max_attempts > 0:
+            next_parent_genid = select_next_parent_container(
+                docker_client,
+                domains,
+                generate_output_dir,
+                archive,
+                root_dir,
+                root_commit,
+                max_attempts=max_attempts - 1,
+            )
+        else:
+            # In case of infinite recursive, but it should not happen
+            raise Exception("Max attempts reached in select_next_parent_container")
+
+    return next_parent_genid
+
+def get_ensemble_scores_container(
+    docker_client,
+    domain,
+    generate_output_dir,
+    gen_output_dir,
+    root_dir="./",
+    root_commit="HEAD",
+    prev_patch_files=[],
+    num_samples=-1,
+    max_workers=5,
+    subsets=[],
+):
+    # Setup logger
+    logger = setup_logger(os.path.join(gen_output_dir, "ensemble.log"))
+
+    # Create and start the Docker container
+    image_name = f"{REPO_NAME}"
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    container_name = f"{REPO_NAME}-ens-container-{run_id}"
+    container = build_container(docker_client, root_dir, image_name, container_name)
+    container.start()
+    container_output_folder = "/tmp/"
+
+    try:
+        # Apply all lineage diffs
+        commit_hash = apply_diffs_container(container, prev_patch_files)
+
+        # Copy generate_output_dir to container
+        container_generate_output_dir = os.path.join(
+            container_output_folder, generate_output_dir.split(os.sep)[-1]
+        )
+        copy_to_container(
+            container,
+            source_path=generate_output_dir,
+            dest_path=container_generate_output_dir,
+        )
+
+        # Get ensemble scores in container
+        scores = []
+        for subset in subsets:
+            command = [
+                "timeout",
+                "10800",  # 3h timeout
+                "python",
+                "-m",
+                "utils.run_ensemble",
+                "--domain",
+                domain,
+                "--generate_output_dir",
+                container_generate_output_dir,
+                "--num_samples",
+                str(num_samples),
+                "--max_workers",
+                str(max_workers),
+                "--subset",
+                subset,
+            ]
+            exec_result = container.exec_run(cmd=command, workdir=f"/{REPO_NAME}")
+            log_container_output(exec_result)
+
+            # Get ensemble outputs
+            container_output_strings = exec_result.output.decode().strip().split("\n")
+            score = float(container_output_strings[-3])
+            scores.append(score)
+            container_predictions_path = container_output_strings[-2]
+            container_report_path = container_output_strings[-1]
+
+            # Copy container outputs to local
+            predictions_file = os.path.basename(container_predictions_path)
+            report_file = os.path.basename(container_report_path)
+            local_predictions_path = os.path.join(gen_output_dir, predictions_file)
+            local_report_path = os.path.join(gen_output_dir, report_file)
+            copy_from_container(
+                container,
+                source_path=container_predictions_path,
+                dest_path=local_predictions_path,
+            )
+            copy_from_container(
+                container,
+                source_path=container_report_path,
+                dest_path=local_report_path,
+            )
+
+    except Exception as e:
+        safe_log(f"Error in get_ensemble_scores_container: {e}")
+        scores = [None] * len(subsets)
+
+    # Even on errors or KeyboardInterrupt
+    finally:
+        # Reset to the root commit
+        exec_result = container.exec_run(
+            cmd=["git", "reset", "--hard", root_commit], workdir=f"/{REPO_NAME}"
+        )
+        log_container_output(exec_result)
+        exec_result = container.exec_run(
+            cmd=["git", "clean", "-fd"], workdir=f"/{REPO_NAME}"
+        )
+        log_container_output(exec_result)
+
+        # Cleanup container
+        cleanup_container(container)
+
+    return scores
 
 
-# ─── CLI 入口 ───────────────────────────────────────────────────────────────
+def eval_produced_agent(
+    container,
+    container_output_folder,
+    gen_output_dir,
+    domain,
+    eval_samples=-1,
+    eval_workers=10,
+    eval_subset="_filtered_100_train",
+    eval_test=False,
+):
+    # Evaluate the produced agent
+    splits = get_domain_splits(domain, eval_test=eval_test)
+    for split in splits:  # pyright: ignore
+        safe_log(f"Evaluating the produced agent on {domain} {eval_samples} {split}...")
+        eval_run_id = f"{domain}_eval" if split == "train" else f"{domain}_eval_{split}"
+        container_evaloutput_folder = os.path.join(container_output_folder, eval_run_id)
+        command = [
+            "timeout",
+            "18000",  # 5h timeout
+            "python",
+            "-m",
+            "domains.harness",
+            "--agent_path",
+            "./task_agent.py",
+            "--output_dir",
+            container_output_folder,
+            "--run_id",
+            eval_run_id,
+            "--domain",
+            domain,
+            "--num_samples",
+            str(eval_samples),
+            "--num_workers",
+            str(eval_workers),
+            "--subset",
+            eval_subset.replace("_train", f"_{split}"),
+        ]
+        exec_result = container.exec_run(cmd=command, workdir=f"/{REPO_NAME}")
+        log_container_output(exec_result)
+        command = [
+            "timeout",
+            "10800",  # 3h timeout
+            "python",
+            "-m",
+            "domains.report",
+            "--domain",
+            domain,
+            "--dname",
+            os.path.join(container_output_folder, eval_run_id),
+        ]
+        exec_result = container.exec_run(cmd=command, workdir=f"/{REPO_NAME}")
+        log_container_output(exec_result)
+        # Copy container outputs to local, evaluation results
+        evaloutput_folder = os.path.join(gen_output_dir, eval_run_id)
+        copy_from_container(
+            container,
+            source_path=container_evaloutput_folder,
+            dest_path=evaloutput_folder,
+        )
+
+
+def copy_prev_eval_to_container(
+    container,
+    prev_eval_path,
+    container_output_folder,
+    current_genid=None,
+    container_folder_name=None,
+):
+    """Copy the entire prev_eval_path into the container, then remove unwanted files/dirs in the container"""
+    if not os.path.exists(prev_eval_path):
+        raise FileNotFoundError(f"Previous eval path not found: {prev_eval_path}")
+
+    # Normalize and construct destination path in container
+    prev_eval_path = os.path.normpath(prev_eval_path)
+    tail = os.path.join(*prev_eval_path.split(os.sep)[-1:])
+    container_prev_eval_path = os.path.join(container_output_folder, tail)
+
+    # Ensure destination parent exists
+    container.exec_run(["mkdir", "-p", container_output_folder], workdir="/")
+
+    # Copy the whole tree into the container in one go
+    copy_to_container(
+        container, source_path=prev_eval_path, dest_path=container_prev_eval_path
+    )
+
+    # Now prune inside the container
+    prune_cmds = [
+        # Remove current genid folder
+        f"find '{container_prev_eval_path}' -type d -name 'gen_{current_genid}' -prune -exec rm -rf {{}} +",
+        # 1) Remove val/test eval directories
+        f"find '{container_prev_eval_path}' -type d -name '*_eval_val*' -prune -exec rm -rf {{}} +",
+        f"find '{container_prev_eval_path}' -type d -name '*_eval_test*' -prune -exec rm -rf {{}} +",
+        # 2) Remove any directories containing the repo name (copied worktrees, etc.)
+        f"find '{container_prev_eval_path}' -type d -name '*{REPO_NAME}*' -prune -exec rm -rf {{}} +",
+        # 3) Remove compiled Python files
+        f"find '{container_prev_eval_path}' -type f -name '*.pyc' -delete",
+        # 4) Remove files whose base name indicates val/test (with/without extensions)
+        #    *_val, *_val.*, *_val_*, and same for _test
+        f"find '{container_prev_eval_path}' -type f \\( -name '*_val' -o -name '*_val.*' -o -name '*_val_*' \\) -delete",
+        f"find '{container_prev_eval_path}' -type f \\( -name '*_test' -o -name '*_test.*' -o -name '*_test_*' \\) -delete",
+    ]
+
+    for cmd in prune_cmds:
+        exec_result = container.exec_run(["bash", "-lc", cmd], workdir="/")
+
+    # Confirm files remaining were copied
+    exec_result = container.exec_run(
+        ["ls", "-l", container_prev_eval_path], workdir="/"
+    )
+    log_container_output(exec_result)
+
+    # Move the folder to a new name
+    if container_folder_name is not None:
+        new_container_prev_eval_path = os.path.join(
+            container_output_folder, container_folder_name
+        )
+        container.exec_run(
+            ["mv", container_prev_eval_path, new_container_prev_eval_path], workdir="/"
+        )
+        log_container_output(exec_result)
+        container_prev_eval_path = new_container_prev_eval_path
+
+    return container_prev_eval_path
+
+
+def generate(
+    docker_client,
+    domains,
+    output_dir,
+    run_id,
+    current_genid,
+    parent_genid,
+    root_dir,
+    root_commit="main",
+    eval_samples=-1,
+    eval_workers=10,
+    eval_subsets="_filtered_100",
+    meta_patch_files=None,
+    run_meta_agent=True,
+    run_baseline=None,
+    optimize_option="only_agent",
+    agent_archive_path=None,
+    eval_test=False,
+    skip_staged_eval=False,
+    edit_select_parent=False,
+    max_generation=None,
+):
+    # Setup local output folder
+    prev_gen_dir = os.path.join(output_dir, f"gen_{parent_genid}")
+    gen_output_dir = os.path.join(output_dir, f"gen_{current_genid}")
+    os.makedirs(gen_output_dir, exist_ok=True)
+    logger = setup_logger(os.path.join(gen_output_dir, "generate.log"))  # Set up logger
+    metadata = {
+        "gen_output_dir": gen_output_dir,
+        "current_genid": current_genid,
+        "parent_genid": parent_genid,
+        "run_baseline": run_baseline,
+        "prev_patch_files": [],
+        "curr_patch_files": [],
+        "parent_agent_success": not run_meta_agent,  # meta agent success if not run
+        "optimize_option": optimize_option,
+        "agent_archive_path": agent_archive_path,
+        "can_select_next_parent": True,
+    }
+    run_eval = not run_meta_agent  # always run eval if not running meta agent
+    metadata["run_eval"] = run_eval
+    print(metadata)
+
+    # Create and start the Docker container
+    image_name = f"{REPO_NAME}"
+    container_name = f"{REPO_NAME}-gl-container-{run_id}"
+    container = build_container(
+        docker_client,
+        root_dir,
+        image_name,
+        container_name,
+        domains=domains,
+    )
+    container.start()
+    container_output_folder = "/tmp/"
+
+    try:
+        # Make a copy of the repo
+        if run_baseline and "no_selfimprove" in run_baseline:
+            donottouch_reponame = f"/DONOTTOUCH_{REPO_NAME}"
+            exec_result = container.exec_run(
+                cmd=["cp", "-r", f"/{REPO_NAME}", donottouch_reponame],
+                workdir=f"/",
+            )
+            log_container_output(exec_result)
+            meta_patch_files = meta_patch_files or []
+            _ = apply_diffs_container(container, meta_patch_files, repo_name=donottouch_reponame)
+
+        # Apply meta patches (only for starting node, because subsequent generations will inherit the patches from the parent)
+        if is_starting_node(current_genid):
+            meta_patch_files = meta_patch_files or []
+            commit_hash = apply_diffs_container(container, meta_patch_files)
+            metadata["prev_patch_files"] += meta_patch_files
+
+        # Apply all lineage diffs
+        patch_files = get_patch_files(output_dir, parent_genid)
+        metadata["prev_patch_files"] += patch_files
+        commit_hash = apply_diffs_container(container, patch_files)
+
+        if run_meta_agent:
+            if run_baseline and "dgm" in run_baseline:
+                # Get problem statement (DGM specific)
+                from baselines.dgm.utils import get_problem_statement
+                problem_statement = get_problem_statement(
+                    root_dir, output_dir, parent_genid, domains,
+                    customized="custom" in run_baseline,
+                )
+
+            else:
+                # Copy another agent archive to container
+                if optimize_option == "only_ensemble":
+                    container_agent_archive_path = copy_prev_eval_to_container(
+                        container,
+                        agent_archive_path,
+                        container_output_folder,
+                        current_genid=current_genid,
+                        container_folder_name="agent_archive",
+                    )
+
+                # Copy previous generations to container
+                if run_baseline == "no_archive":
+                    container_prev_eval_path = os.path.join(
+                        container_output_folder, *prev_gen_dir.split(os.sep)[-2:]
+                    )
+                    copy_to_container(
+                        container,
+                        source_path=prev_gen_dir,
+                        dest_path=container_prev_eval_path,
+                    )
+                else:
+                    container_prev_eval_path = copy_prev_eval_to_container(
+                        container, output_dir, container_output_folder, current_genid=current_genid,
+                    )
+
+            # Run meta agent
+            safe_log("Running meta agent...")
+            container_agentoutput_folder = os.path.join(
+                container_output_folder, "agent_output"
+            )
+            container_chat_history_file = os.path.join(
+                container_agentoutput_folder, "meta_agent_chat_history.md"
+            )
+            if run_baseline and "dgm" in run_baseline:
+                command = [
+                    "timeout",
+                    "21600",  # 6h timeout
+                    "python",
+                    "coding_agent.py",
+                    "--problem_statement",
+                    problem_statement,
+                    "--chat_history_file",
+                    container_chat_history_file,
+                    "--git_dir",
+                    f"/{REPO_NAME}",
+                    "--base_commit",
+                    commit_hash,
+                    "--outdir",
+                    container_agentoutput_folder,
+                ]
+            else:
+                command = [
+                    "timeout",
+                    "21600",  # 6h timeout
+                    "python",
+                    "run_meta_agent.py",
+                    "--chat_history_file",
+                    container_chat_history_file,
+                    "--repo_path",
+                    f"/{REPO_NAME}/",
+                    "--evals_folder",
+                    container_prev_eval_path,
+                    "--git_dir",
+                    f"/{REPO_NAME}",
+                    "--base_commit",
+                    commit_hash,
+                    "--outdir",
+                    container_agentoutput_folder,
+                    "--iterations_left",
+                    str(max_generation - current_genid),
+                    *(
+                        # If domain is polyglot, for a fair comparison with DGM
+                        ["--model", "claude-3-5-sonnet-20241022"] if domains == ["polyglot"] else []
+                    ),
+                ]
+
+            run_workdir = (
+                f"/DONOTTOUCH_{REPO_NAME}"
+                if run_baseline and "no_selfimprove" in run_baseline
+                else f"/{REPO_NAME}"
+            )
+            exec_result = container.exec_run(cmd=command, workdir=run_workdir)
+            log_container_output(exec_result)
+            metadata["parent_agent_success"] = exec_result.exit_code == 0
+
+            # Copy container outputs to local
+            local_agentoutput_folder = os.path.join(gen_output_dir, "agent_output/")
+            copy_from_container(
+                container,
+                source_path=container_agentoutput_folder,
+                dest_path=local_agentoutput_folder,
+            )
+
+            # Check if agent produced a diff
+            local_patch_file = os.path.join(
+                local_agentoutput_folder, "model_patch.diff"
+            )
+            metadata["curr_patch_files"].append(local_patch_file)
+            run_eval = file_exist_and_not_empty(local_patch_file)
+            metadata["run_eval"] = run_eval
+
+            # Run commands to check if the agents are compilable
+            run_commands_to_check_compilation(container, run_baseline=run_baseline, edit_select_parent=edit_select_parent)
+
+        # Evaluate the produced agent
+        if run_eval and "agent" in optimize_option:
+            log_path = os.path.join(gen_output_dir, "generate.log")
+
+            def eval_agent_worker(domain, eval_subset, eval_n):
+                setup_logger(log_path)  # Re-setup logger because of threading
+                eval_produced_agent(
+                    container,
+                    container_output_folder,
+                    gen_output_dir,
+                    domain=domain,
+                    eval_samples=eval_n,
+                    eval_workers=eval_workers,
+                    eval_subset=eval_subset,
+                    eval_test=eval_test,
+                )
+
+            # Small sample size evaluation for staged eval
+            if not skip_staged_eval:
+                stagedeval_samples = [
+                    get_domain_stagedeval_samples(domain) for domain in domains
+                ]
+                with ThreadPoolExecutor() as executor:
+                    futures = [
+                        executor.submit(eval_agent_worker, d, s, n)
+                        for d, s, n in zip(domains, eval_subsets, stagedeval_samples)
+                    ]
+                    try:
+                        for f in futures:
+                            f.result()
+                    except Exception as e:
+                        # Cancel all other futures if any job fails
+                        for future in futures:
+                            if not future.done():
+                                future.cancel()
+                        raise
+                stagedeval_scores = [
+                    get_score(domain, output_dir, current_genid) for domain in domains
+                ]
+                run_next_eval = all(
+                    [x is not None and x > 0 for x in stagedeval_scores]
+                )
+            else:
+                run_next_eval = True
+
+            # Full evaluation
+            if run_next_eval:
+                _per_domain_eval_samples = eval_samples
+                with ThreadPoolExecutor() as executor:
+                    futures = [
+                        executor.submit(eval_agent_worker, d, s, n)
+                        for d, s, n in zip(
+                            domains, eval_subsets, _per_domain_eval_samples
+                        )
+                    ]
+                    try:
+                        for f in futures:
+                            f.result()
+                    except Exception as e:
+                        # Cancel all other futures if any job fails
+                        for future in futures:
+                            if not future.done():
+                                future.cancel()
+                        raise
+                metadata["run_full_eval"] = True
+
+    except Exception as e:
+        safe_log(f"Error in generate: {e}")
+        metadata["run_eval"] = False
+
+    # Even on errors or KeyboardInterrupt
+    finally:
+        # Reset to the root commit
+        exec_result = container.exec_run(
+            cmd=["git", "reset", "--hard", root_commit], workdir=f"/{REPO_NAME}"
+        )
+        log_container_output(exec_result)
+        exec_result = container.exec_run(
+            cmd=["git", "clean", "-fd"], workdir=f"/{REPO_NAME}"
+        )
+        log_container_output(exec_result)
+
+        # Cleanup container
+        cleanup_container(container)
+
+        # Save metadata
+        eval_successful = all(
+            [
+                get_score(domain, output_dir, current_genid) is not None
+                for domain in domains
+            ]
+        )
+        metadata["valid_parent"] = metadata["run_eval"] and (eval_successful or meta_patch_files is not None)
+        with open(os.path.join(gen_output_dir, "metadata.json"), "w") as f:
+            json.dump(metadata, f, indent=4)
+
+    return metadata
+
+
+def generate_loop(
+    domains,
+    run_id=None,
+    max_generation=3,
+    eval_samples=-1,
+    eval_workers=5,
+    eval_subsets=[],
+    parent_selection="score_prop",
+    resume_from=None,
+    output_dir_parent=None,
+    meta_patch_files=None,
+    reset_task_agent=False,
+    reset_meta_agent=False,
+    copy_root_dir=None,  # To have the same initial repo
+    run_baseline=None,
+    optimize_option="only_agent",
+    agent_archive_path=None,
+    eval_test=False,
+    skip_staged_eval=False,
+    edit_select_parent=False,
+):
+    # Initialization
+    docker_client = docker.DockerClient()
+    parent_selection = "latest" if run_baseline == "no_archive" else parent_selection
+    if resume_from:
+        output_dir = os.path.normpath(os.path.abspath(resume_from))
+        run_id = os.path.basename(output_dir).split("generate_")[-1]
+        root_dir, root_commit = setup_initial_gen(
+            output_dir,
+            domains,
+            copy_root_dir=copy_root_dir,
+            subsets=eval_subsets,
+            resume=True,
+            optimize_option=optimize_option,
+            run_baseline=run_baseline,
+            eval_test=eval_test,
+            edit_select_parent=edit_select_parent,
+        )
+        archive = load_archive_data(
+            os.path.join(output_dir, "archive.jsonl"), last_only=True
+        )[
+            "archive"
+        ]  # pyright: ignore
+    else:
+        run_id = (
+            datetime.now().strftime("%Y%m%d_%H%M%S_%f") if run_id is None else run_id
+        )
+        output_dir_parent = (
+            os.path.join(os.getcwd(), "outputs/")
+            if output_dir_parent is None
+            else output_dir_parent
+        )
+        output_dir = os.path.normpath(
+            os.path.join(output_dir_parent, f"generate_{run_id}/")
+        )
+        os.makedirs(output_dir, exist_ok=True)
+        root_dir, root_commit = setup_initial_gen(
+            output_dir,
+            domains,
+            copy_root_dir=copy_root_dir,
+            subsets=eval_subsets,
+            resume=False,
+            optimize_option=optimize_option,
+            run_baseline=run_baseline,
+            eval_test=eval_test,
+            edit_select_parent=edit_select_parent,
+        )
+
+        # Create initial node
+        if meta_patch_files is None or len(meta_patch_files) <= 0:
+            archive = update_and_save_archive(output_dir, [], new_node="initial")
+            metadata = {
+                "gen_output_dir": os.path.join(output_dir, f"gen_initial"),
+                "prev_patch_files": [],
+                "curr_patch_files": [],
+                "run_eval": True,
+            }
+        elif reset_task_agent:
+            # Task agent is the same as initial agent
+            meta_patch_files = process_meta_patch_files(meta_patch_files, output_dir, reset_task_agent=reset_task_agent, reset_meta_agent=reset_meta_agent)
+            archive = update_and_save_archive(output_dir, [], new_node="initial")
+            gen_output_dir = os.path.join(output_dir, f"gen_initial")
+            metadata = {
+                "gen_output_dir": gen_output_dir,
+                "current_genid": "initial",
+                "parent_genid": None,
+                "run_baseline": run_baseline,
+                "prev_patch_files": meta_patch_files,
+                "curr_patch_files": [],
+                "optimize_option": optimize_option,
+                "agent_archive_path": agent_archive_path,
+                "can_select_next_parent": True,
+                "run_eval": True,
+                "run_full_eval": False,
+                "valid_parent": True,
+            }
+            with open(os.path.join(gen_output_dir, "metadata.json"), "w") as f:
+                json.dump(metadata, f, indent=4)
+        else:
+            # Process meta patch files
+            meta_patch_files = process_meta_patch_files(meta_patch_files, output_dir, reset_task_agent=reset_task_agent, reset_meta_agent=reset_meta_agent)
+            # add node 0, which is the evaled version of the patches applied
+            archive = update_and_save_archive(output_dir, [], new_node=0)
+            metadata = generate(
+                docker_client,
+                [d for d in domains if d != "polyglot"],
+                output_dir,
+                run_id,
+                current_genid=0,
+                parent_genid=None,
+                root_dir=root_dir,
+                root_commit=root_commit,
+                eval_samples=eval_samples,
+                eval_workers=eval_workers,
+                eval_subsets=eval_subsets,
+                meta_patch_files=meta_patch_files,
+                run_meta_agent=False,
+                run_baseline=run_baseline,
+                optimize_option=optimize_option,
+                agent_archive_path=agent_archive_path,
+                eval_test=eval_test,
+                skip_staged_eval=skip_staged_eval,
+                edit_select_parent=edit_select_parent,
+                max_generation=max_generation,
+            )
+            print(f"generate_loop: generation 0 completed, parent None")
+            # Evaluate the agent on polyglot if needed
+            if "polyglot" in domains:
+                run_harness_polyglot(root_dir, output_dir, 0, skip_staged_eval=skip_staged_eval, num_samples=eval_samples[domains.index("polyglot")])
+
+        # Evaluate the entire archive as an ensemble
+        eval_ensemble = (
+            "ensemble" in optimize_option
+            and all(can_domain_ensembled(domain) for domain in domains)
+            and run_baseline != "no_archive"
+        )
+        if metadata["run_eval"] and eval_ensemble:
+            for domain, eval_subset, eval_n in zip(domains, eval_subsets, eval_samples):
+                _ = get_ensemble_scores_container(
+                    docker_client,
+                    domain,
+                    (
+                        output_dir
+                        if optimize_option != "only_ensemble"
+                        else agent_archive_path
+                    ),
+                    gen_output_dir=metadata["gen_output_dir"],
+                    root_dir=root_dir,
+                    root_commit=root_commit,
+                    prev_patch_files=metadata["prev_patch_files"]
+                    + metadata["curr_patch_files"],
+                    num_samples=eval_n,
+                    subsets=[
+                        eval_subset,
+                        eval_subset.replace("_train", "_val"),
+                        *(
+                            [eval_subset.replace("_train", "_test")]
+                            if eval_test
+                            else []
+                        ),
+                    ],
+                )
+
+    # Save args
+    with open(os.path.join(output_dir, "generate_loop.log"), "a") as f:
+        args_dict = locals()
+        args_str = ", ".join([f"{k}={v}" for k, v in args_dict.items()])
+        f.write(f"Args: {args_str}\n")
+
+    # Run generations
+    start_genid = len(archive)
+    if not edit_select_parent or run_baseline == "no_archive":
+        parent_genid = select_parent(archive, output_dir, domains, method=parent_selection)
+    else:
+        parent_genid = select_next_parent_container(
+            docker_client,
+            domains,
+            output_dir,
+            archive,
+            root_dir, root_commit,
+        )
+    for current_genid in range(start_genid, max_generation + 1):
+        metadata = generate(
+            docker_client,
+            [d for d in domains if d != "polyglot"],
+            output_dir,
+            run_id,
+            current_genid,
+            parent_genid=parent_genid,
+            root_dir=root_dir,
+            root_commit=root_commit,
+            eval_samples=eval_samples,
+            eval_workers=eval_workers,
+            eval_subsets=eval_subsets,
+            meta_patch_files=meta_patch_files,
+            run_meta_agent=True,
+            run_baseline=run_baseline,
+            optimize_option=optimize_option,
+            agent_archive_path=agent_archive_path,
+            eval_test=eval_test,
+            skip_staged_eval=skip_staged_eval,
+            edit_select_parent=edit_select_parent,
+            max_generation=max_generation,
+        )
+
+        # NOTE: need to update and save archive before running ensembling eval
+        archive = update_and_save_archive(output_dir, archive, new_node=current_genid)
+
+        # Parent agent failed, update the metadata in the parent node
+        if not metadata["parent_agent_success"]:
+            update_node_metadata(output_dir, parent_genid, {"valid_parent": False})
+
+        # Evaluate the agent on polyglot if needed
+        if "polyglot" in domains:
+            run_harness_polyglot(root_dir, output_dir, current_genid, skip_staged_eval=skip_staged_eval, num_samples=eval_samples[domains.index("polyglot")])
+
+        # Evaluate the entire archive as an ensemble
+        eval_ensemble = (
+            "ensemble" in optimize_option
+            and all(can_domain_ensembled(domain) for domain in domains)
+            and run_baseline != "no_archive"
+        )
+        if metadata["run_eval"] and eval_ensemble:
+            for domain, eval_subset, eval_n in zip(domains, eval_subsets, eval_samples):
+                _ = get_ensemble_scores_container(
+                    docker_client,
+                    domain,
+                    (
+                        output_dir
+                        if optimize_option != "only_ensemble"
+                        else agent_archive_path
+                    ),
+                    gen_output_dir=metadata["gen_output_dir"],
+                    root_dir=root_dir,
+                    root_commit=root_commit,
+                    prev_patch_files=metadata["prev_patch_files"]
+                    + metadata["curr_patch_files"],
+                    num_samples=eval_n,
+                    subsets=[
+                        eval_subset,
+                        eval_subset.replace("_train", "_val"),
+                        *(
+                            [eval_subset.replace("_train", "_test")]
+                            if eval_test
+                            else []
+                        ),
+                    ],
+                )
+
+        # Make analysis plots
+        # Per-domain plots
+        for domain in domains:
+            splits = get_domain_splits(domain)
+            if optimize_option == "only_ensemble":
+                score_types = ["ensemble"]
+            elif eval_ensemble:
+                score_types = ["agent", "ensemble", "max"]
+            else:
+                score_types = ["agent"]
+            for split in splits:  # pyright: ignore
+                for stype in score_types:
+                    plot_progress_single(domain, output_dir, split=split, type=stype)
+                    visualize_archive_single(
+                        domain, output_dir, split=split, type=stype
+                    )
+
+        # Combined together plots across all domains (if there is more than one domain)
+        if len(domains) > 1:
+            domain_splits_sets = [set(get_domain_splits(d)) for d in domains]
+            common_splits = (
+                sorted(list(set.intersection(*domain_splits_sets)))
+                if domain_splits_sets
+                else []
+            )
+            if optimize_option == "only_ensemble":
+                together_score_types = ["ensemble"]
+            elif eval_ensemble:
+                together_score_types = ["agent", "ensemble", "max"]
+            else:
+                together_score_types = ["agent"]
+            for split in common_splits:
+                for stype in together_score_types:
+                    plot_progress_together(domains, output_dir, split=split, type=stype)
+                    visualize_archive_together(
+                        domains, output_dir, split=split, type=stype
+                    )
+
+        # Select next parent
+        parent_genid = None
+        if not edit_select_parent or run_baseline == "no_archive":
+            parent_genid = select_parent(archive, output_dir, domains, method=parent_selection)
+        else:
+            parent_genid = select_next_parent_container(
+                docker_client,
+                domains,
+                output_dir,
+                archive,
+                root_dir, root_commit,
+            )
+
+        print(f"generate_loop: generation {current_genid} completed, parent {parent_genid}")
+
+    # Return output dir
+    return output_dir
+
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="MaoAI HyperAgents Engine")
-    parser.add_argument("--task", type=str, default="", help="任务描述")
-    parser.add_argument("--domain", type=str, default="general", choices=["coding", "research", "general"], help="领域")
-    parser.add_argument("--model", type=str, default=os.environ.get("OPENAI_MODEL", "gpt-4o"), help="模型")
-    parser.add_argument("--workspace", type=str, default=os.environ.get("WORKSPACE", "."), help="工作目录")
-    parser.add_argument("--api-key", type=str, default=os.environ.get("OPENAI_API_KEY", ""), help="API Key")
-    parser.add_argument("--mode", type=str, default="react", choices=["react", "swarm", "phase3", "adversarial"], help="运行模式: react(单代理) | swarm(多代理) | phase3(自主环境) | adversarial(博弈循环)")
-    parser.add_argument("--phase3-mode", type=str, default="auto", choices=["auto", "analyze", "provision", "review", "test"], help="Phase 3 子模式")
-    # Adversarial 模式参数
-    parser.add_argument("--file", type=str, default="", help="目标文件路径（用于 adversarial 模式）")
-    parser.add_argument("--coder-model", type=str, default="claude-3-5-sonnet", help="Coder 模型")
-    parser.add_argument("--reviewer-model", type=str, default="gpt-4o", help="Reviewer 模型")
-    parser.add_argument("--adversarial-mode", type=str, default="auto", choices=["auto", "strict", "fast"], help="博弈循环子模式")
-    parser.add_argument("--adversarial-iterations", type=int, default=3, help="最大迭代次数")
-    parser.add_argument("--adversarial-threshold", type=float, default=0.8, help="通过分数阈值")
-    # TriadLoop 三权分立参数
-    parser.add_argument("--triad", action="store_true", help="启用三权分立模式")
-    parser.add_argument("--enable-docker", action="store_true", help="启用 Docker 沙箱验证")
-    parser.add_argument("--enable-cot", action="store_true", default=True, help="启用思维链追踪")
-    parser.add_argument("--disable-cot", action="store_true", help="禁用思维链追踪")
-    parser.add_argument("--test-command", type=str, help="自定义测试命令")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--run_id", type=str, default=None, help="Run ID")
+    parser.add_argument(
+        "--domains",
+        type=str,
+        nargs="+",  # one or more domains
+        choices=[
+            "search_arena",
+            "paper_review",
+            "balrog_babyai",
+            "balrog_babaisai",
+            "balrog_minihack",
+            "balrog_nle",
+            "genesis_go2walking",
+            "genesis_go2walkback",
+            "genesis_go2hop",
+            "polyglot",  # separate harness from the rest
+            "imo_grading",
+            "imo_proof",
+        ],
+        required=True,
+        help="One or more domains to evaluate (must be from the allowed list)",
+    )
+    parser.add_argument(
+        "--max_generation",
+        type=int,
+        default=10,
+        help="Maximum number of evolution generations",
+    )
+    parser.add_argument(
+        "--eval_samples",
+        type=int,
+        nargs="+",
+        default=None,
+        help="Evaluation samples per domain (-1 for all). Provide one value per domain.",
+    )
+    parser.add_argument(
+        "--eval_workers",
+        type=int,
+        default=10,
+        help="Number of evaluation workers in parallel",
+    )
+    parser.add_argument(
+        "--parent_selection",
+        type=str,
+        default="score_child_prop",
+        choices=["random", "latest", "best", "score_prop", "score_child_prop"],
+        help="Parent selection method",
+    )
+    parser.add_argument(
+        "--resume_from",
+        type=str,
+        default=None,
+        help="Path to an existing output folder to resume from",
+    )
+    parser.add_argument(
+        "--output_dir_parent",
+        type=str,
+        default=None,
+        help="Path to the parent output folder",
+    )
+    parser.add_argument(
+        "--meta_patch_files",
+        type=str,
+        nargs="+",
+        default=[],
+        help="Meta patch files to apply",
+    )
+    parser.add_argument(
+        "--reset_task_agent",
+        default=False,
+        action="store_true",
+        help="Whether to reset the changes in the task agent (for self-referential self-improvement transfer experiments)",
+    )
+    parser.add_argument(
+        "--reset_meta_agent",
+        default=False,
+        action="store_true",
+        help="Whether to reset the changes in the meta agent (for self-referential self-improvement transfer experiments)",
+    )
+    parser.add_argument(
+        "--copy_root_dir",
+        type=str,
+        default=None,
+        help="Copy root dir for setup_initial_gen",
+    )
+    parser.add_argument(
+        "--run_baseline",
+        type=str,
+        choices=[
+            "no_selfimprove", "no_archive",
+            "dgm", "dgm_custom",
+            "dgm+no_selfimprove", "dgm_custom+no_selfimprove",
+        ],
+        default=None,
+        help="Run baseline",
+    )
+    parser.add_argument(
+        "--optimize_option",
+        type=str,
+        default="only_agent",
+        choices=["both_agent_ensemble", "only_agent", "only_ensemble"],
+        help="Which part of the algorithm to optimize",
+    )
+    parser.add_argument(
+        "--agent_archive_path",
+        type=str,
+        default=None,
+        help="Path to agent archive (required if --optimize_option=only_ensemble)",
+    )
+    parser.add_argument(
+        "--eval_test",
+        default=False,
+        action="store_true",
+        help="Always run test set evaluation",
+    )
+    parser.add_argument(
+        "--skip_staged_eval",
+        default=False,
+        action="store_true",
+        help="Skip staged evaluation",
+    )
+    parser.add_argument(
+        "--edit_select_parent",
+        default=False,
+        action="store_true",
+        help="Whether to allow the agent to edit the selection mechanism",
+    )
     args = parser.parse_args()
 
-    if not args.task:
-        log_step("error", "缺少 --task 参数", category="logic", retry=False)
-        sys.exit(1)
-
-    if args.mode == "adversarial":
-        # Adversarial 博弈循环模式
-        success = run_adversarial_mode(args.task, args)
-        sys.exit(0 if success else 1)
-
-    elif args.mode == "triad" or args.triad:
-        # ═══════════════════════════════════════════════════════════════════════
-        # TriadLoop 三权分立模式
-        # 架构：Coder (Claude) ↔ Reviewer (GPT) ↔ Validator (Pytest)
-        # ═══════════════════════════════════════════════════════════════════════
-        try:
-            from agent.triad_loop import TriadLoop, create_triad_loop, log_thought
-
-            log_step("triad_mode_start", f"三权分立模式启动: {args.task[:80]}",
-                    coder_model=args.coder_model,
-                    reviewer_model=args.reviewer_model,
-                    enable_docker=args.enable_docker,
-                    enable_cot=not args.disable_cot)
-
-            # 创建三权分立循环
-            triad = create_triad_loop(
-                workspace=args.workspace,
-                coder_api_key=args.api_key,
-                reviewer_api_key=args.api_key,
-                coder_model=args.coder_model,
-                reviewer_model=args.reviewer_model,
-                max_iterations=args.adversarial_iterations,
-                score_threshold=args.adversarial_threshold,
-                enable_thought_tracking=not args.disable_cot,
-                enable_docker=args.enable_docker,
-                test_command=args.test_command
-            )
-
-            # 构建上下文
-            context = {"language": args.language}
-            if args.file:
-                context["file_path"] = args.file
-
-            # 运行三权分立循环
-            result = triad.run(task=args.task, context=context, mode="fix")
-
-            # 输出结果
-            print("\n" + "=" * 60)
-            print("三权分立博弈循环执行结果")
-            print("=" * 60)
-            print(f"状态: {'✓ 全部通过' if result.all_passed else '✗ 未通过'}")
-            print(f"最终得分: {result.final_score:.2f}")
-            print(f"迭代次数: {result.total_rounds}")
-            print(f"总耗时: {result.total_time:.2f}s")
-            print("三权检查:")
-            print(f"  Reviewer: {'✓ 通过' if result.reviewer_passed else '✗ 未通过'}")
-            print(f"  Validator: {'✓ 通过' if result.validator_passed else '✗ 未通过'}")
-            if result.converged:
-                print(f"收敛: 是 ({result.convergence_reason})")
-            print("=" * 60)
-
-            sys.exit(0 if result.all_passed else 1)
-
-        except ImportError as e:
-            log_step("error", f"TriadLoop 导入失败: {e}")
-            log_step("hint", "请确保 triad_loop.py 已创建并正确放置在 agent/ 目录")
-            sys.exit(1)
-        except Exception as e:
-            log_step("error", f"TriadLoop 执行错误: {e}", category="logic")
-            import traceback
-            traceback.print_exc()
-            sys.exit(1)
-
-    elif args.mode == "phase3":
-        # Phase 3: Self-Provisioning & Adversarial Review
-        try:
-            from self_provisioning.self_provisioning import DynamicSandbox, EnvironmentAnalyzer
-            from agent.reviewer_agent import ReviewerAgent as AdversarialReviewer
-
-            log_step("phase3_start", f"Phase 3 启动: {args.task[:80]}", mode=args.phase3_mode)
-
-            if args.phase3_mode in ["auto", "analyze"]:
-                analyzer = EnvironmentAnalyzer(args.workspace)
-                analysis = analyzer.analyze()
-                log_step("phase3_analysis", f"环境分析: {analysis['language']}", **analysis)
-
-            if args.phase3_mode in ["auto", "provision"]:
-                sandbox = DynamicSandbox(args.workspace)
-                inferred = sandbox.infer_services(args.task)
-                if inferred:
-                    config = sandbox.create(inferred, args.task)
-                    log_step("phase3_sandbox", f"沙箱创建: {config.name}", services=[s.name for s in config.services])
-
-            if args.phase3_mode in ["auto", "review"]:
-                reviewer = AdversarialReviewer(api_key=args.api_key, strict_mode=True)
-                log_step("phase3_review", "红蓝对抗审查已初始化")
-
-            log_step("phase3_done", "Phase 3 执行完成")
-            sys.exit(0)
-        except Exception as e:
-            log_step("error", f"Phase 3 执行错误: {e}", category="logic")
-            sys.exit(1)
-
-    elif args.mode == "swarm":
-        # Multi-Agent Swarm 模式
-        try:
-            from agent.swarm import MultiAgentSwarm
-        except ImportError:
-            log_step("error", "swarm 模块未找到，请确保 agent/swarm.py 存在", category="logic")
-            sys.exit(1)
-
-        log_step("swarm_start", f"启动 Multi-Agent Swarm: {args.task[:80]}",
-                mode="swarm", domain=args.domain, model=args.model)
-
-        swarm = MultiAgentSwarm(
-            api_key=args.api_key,
-            model=args.model,
-            workspace=args.workspace
+    # Post-parse validation
+    if args.optimize_option == "only_ensemble" and args.agent_archive_path is None:
+        parser.error(
+            "--agent_archive_path is required when --optimize_option=only_ensemble"
         )
-
-        try:
-            result = swarm.run(args.task)
-            log_step("swarm_done", "Multi-Agent Swarm 执行完成",
-                    success=result["success"],
-                    iterations=result["iterations"],
-                    answer=result["answer"])
-            sys.stdout.flush()
-        except KeyboardInterrupt:
-            log_step("error", "用户中断执行", category="env", retry=False)
-            sys.exit(130)
-        except Exception as e:
-            log_step("error", f"未预期错误: {e}", category="logic", retry=False)
-            sys.exit(1)
+    if args.eval_samples is None:
+        eval_samples = [-1] * len(args.domains)
+    elif len(args.eval_samples) == len(args.domains):
+        eval_samples = args.eval_samples
     else:
-        # ReAct 单代理模式（原有逻辑）
-        agent = ReActAgent(
-            api_key=args.api_key,
-            model=args.model,
-            workspace=args.workspace,
-            domain=args.domain,
-        )
+        parser.error("--eval_samples must be a one per domain if provided")
 
-        try:
-            answer = agent.run(args.task)
-            sys.stdout.flush()
-        except KeyboardInterrupt:
-            log_step("error", "用户中断执行", category="env", retry=False)
-            sys.exit(130)
-        except Exception as e:
-            log_step("error", f"未预期错误: {e}", category="logic", retry=False)
-            sys.exit(1)
+    eval_subsets = [get_domain_eval_subset(d) for d in args.domains]
+    output_dir = generate_loop(
+        domains=args.domains,
+        run_id=args.run_id,
+        max_generation=args.max_generation,
+        eval_samples=eval_samples,
+        eval_workers=args.eval_workers,
+        eval_subsets=eval_subsets,
+        parent_selection=args.parent_selection,
+        resume_from=args.resume_from,
+        output_dir_parent=args.output_dir_parent,
+        meta_patch_files=args.meta_patch_files,
+        reset_task_agent=args.reset_task_agent,
+        reset_meta_agent=args.reset_meta_agent,
+        copy_root_dir=args.copy_root_dir,
+        run_baseline=args.run_baseline,
+        optimize_option=args.optimize_option,
+        agent_archive_path=args.agent_archive_path,
+        eval_test=args.eval_test,
+        skip_staged_eval=args.skip_staged_eval,
+        edit_select_parent=args.edit_select_parent,
+    )

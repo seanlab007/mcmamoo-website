@@ -2,34 +2,15 @@
  * MaoAI Tool Calling Engine
  * 工具注册系统和执行引擎
  *
- * 原生工具：
- * 1. web_search       — 联网搜索（Tavily API，有免费额度）
- * 2. run_code         — 执行 Python/JS 代码（Railway 服务器沙箱）
- * 3. github_push      — 推送文件到 GitHub 仓库
- * 4. github_read      — 读取 GitHub 仓库文件
- * 5. read_url         — 读取网页内容
- * 6. deep_research    — 深度研究（DeerFlow 多智能体框架，需部署 DeerFlow）
- * 7. run_shell        — 执行 Shell 命令（仅管理员）
- * 8. midjourney_imagine — Midjourney 文字生成图片
- * 9. midjourney_status  — 查询 Midjourney 任务状态
- * 10. runway_text_to_video — Runway 文字生成视频
- * 11. runway_image_to_video — Runway 图片生成视频
- * 12. runway_status      — 查询 Runway 任务状态
- *
- * OpenClaw Skills（拆解自 seanlab007/open-claw）：
- * 13. openclaw_weather  — 天气查询（wttr.in，无需 API Key）
- * 14. openclaw_github   — GitHub PR/Issue/CI 查询
- * 15. openclaw_summarize — URL/网页内容摘要
- * 16. openclaw_memory   — 用户持久化记忆读写
- * 17. openclaw_canvas   — HTML 数据可视化生成
- * 18. openclaw_agent    — 通过 OpenClaw Gateway 调用专业 Agent
- * 19. openclaw_shell    — Shell 执行（仅管理员，通过 OpenClaw Skills）
- *
- * Claude Code Python 移植：
- * 20. claude_code_summary  — 获取 Claude Code 移植工作区摘要
- * 21. claude_code_analyze  — 分析代码结构和移植进度
- * 22. claude_code_init     — 初始化 Claude Code 工作区
- * 23. claude_code_run      — 运行 Claude Code Python 命令
+ * 支持的工具：
+ * 1. web_search            — 联网搜索（Tavily API，有免费额度）
+ * 2. run_code              — 执行 Python/JS 代码（Railway 服务器沙箱）
+ * 3. github_push           — 推送文件到 GitHub 仓库
+ * 4. github_read           — 读取 GitHub 仓库文件
+ * 5. read_url              — 读取网页内容
+ * 6. deep_research         — 深度研究（DeerFlow 多智能体框架，需部署 DeerFlow）
+ * 7. self_improving_agent  — HyperAgents 自改进 AI 引擎
+ * 8. run_shell             — 执行 Shell 命令（仅管理员）
  */
 
 import { exec } from "child_process";
@@ -37,17 +18,7 @@ import { promisify } from "util";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
-import {
-  OPENCLAW_TOOL_DEFINITIONS,
-  executeOpenclawTool,
-} from "./openclaw-skills";
-import {
-  OPENCLI_TOOL_DEFINITIONS,
-  executeOpencliTool,
-} from "./opencli-tools";
-import {
-  executeClaudeCodeTool,
-} from "./claude-code";
+import { runSelfImprovingAgent } from "./hyperagents";
 
 const execAsync = promisify(exec);
 
@@ -135,21 +106,6 @@ export const TOOL_DEFINITIONS = [
             type: "string",
             description: "目标分支，默认 main",
             default: "main"
-          },
-          verify: {
-            type: "boolean",
-            description: "Phase 3 功能：推送成功后自动触发 build_verify 构建验证。工程类修改建议开启。",
-            default: false
-          },
-          verifyProjectPath: {
-            type: "string",
-            description: "build_verify 的项目路径，默认 /Users/daiyan/Desktop/mcmamoo-website",
-            default: "/Users/daiyan/Desktop/mcmamoo-website"
-          },
-          verifyMaxRetries: {
-            type: "number",
-            description: "构建失败后最大重试次数，默认 3",
-            default: 3
           }
         },
         required: ["repo", "files", "message"]
@@ -232,286 +188,33 @@ export const TOOL_DEFINITIONS = [
       }
     }
   },
-  // ─── Midjourney 工具 ─────────────────────────────────────────────────────────
   {
     type: "function",
     function: {
-      name: "midjourney_imagine",
-      description: "使用 Midjourney AI 生成高质量图片。适用于概念设计、品牌视觉、产品效果图、艺术创作、社交媒体素材等。生成后可通过 midjourney_status 查询进度，完成后返回图片 URL。",
-      parameters: {
-        type: "object",
-        properties: {
-          prompt: {
-            type: "string",
-            description: "图像描述，英文效果最佳。例如: 'A futuristic city skyline at sunset, neon lights, cyberpunk style'"
-          },
-          aspectRatio: {
-            type: "string",
-            enum: ["1:1", "2:3", "3:2", "4:5", "5:4", "9:16", "16:9"],
-            description: "图片比例，默认 1:1",
-            default: "1:1"
-          },
-          quality: {
-            type: "string",
-            enum: ["0.25", "0.5", "1"],
-            description: "生成质量，默认 1（最高）",
-            default: "1"
-          },
-          style: {
-            type: "string",
-            enum: ["raw", "vivid"],
-            description: "风格：raw(原始)，vivid(鲜明)，默认 vivid",
-            default: "vivid"
-          },
-          version: {
-            type: "string",
-            enum: ["v6.1", "v6", "v5.2", "niji6"],
-            description: "模型版本，默认 v6.1。niji6 为动漫风格",
-            default: "v6.1"
-          }
-        },
-        required: ["prompt"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "midjourney_status",
-      description: "查询 Midjourney 任务的生成状态和结果。生成图片通常需要 30-60 秒。",
-      parameters: {
-        type: "object",
-        properties: {
-          taskId: {
-            type: "string",
-            description: "midjourney_imagine 返回的任务 ID"
-          }
-        },
-        required: ["taskId"]
-      }
-    }
-  },
-  // ─── Runway 工具 ────────────────────────────────────────────────────────────
-  {
-    type: "function",
-    function: {
-      name: "runway_text_to_video",
-      description: "使用 Runway Gen-3 AI 从文字描述生成视频。适用于品牌宣传片、产品演示、社交媒体视频、创意短片等。生成后可通过 runway_status 查询进度。",
-      parameters: {
-        type: "object",
-        properties: {
-          promptText: {
-            type: "string",
-            description: "视频描述，英文效果最佳。例如: 'A serene ocean sunset with gentle waves, cinematic drone shot'"
-          },
-          negativePromptText: {
-            type: "string",
-            description: "不想出现的内容，例如: 'blurry, low quality, watermark'"
-          },
-          duration: {
-            type: "number",
-            enum: [5, 10],
-            description: "视频时长（秒），默认 5 秒",
-            default: 5
-          },
-          model: {
-            type: "string",
-            enum: ["gen3a_turbo", "gen3a"],
-            description: "模型版本，gen3a_turbo(快速)，gen3a(高质量)。默认 gen3a_turbo",
-            default: "gen3a_turbo"
-          }
-        },
-        required: ["promptText"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "runway_image_to_video",
-      description: "使用 Runway AI 将图片转换为动态视频。输入一张图片 URL，生成一段动态视频。",
-      parameters: {
-        type: "object",
-        properties: {
-          promptImage: {
-            type: "string",
-            description: "输入图片的公开可访问 URL"
-          },
-          promptText: {
-            type: "string",
-            description: "运动描述，例如: 'Slowly zoom in, gentle camera pan'"
-          },
-          duration: {
-            type: "number",
-            enum: [5, 10],
-            description: "视频时长（秒），默认 5 秒",
-            default: 5
-          }
-        },
-        required: ["promptImage"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "runway_status",
-      description: "查询 Runway 视频生成任务的状态和结果。视频生成通常需要 1-5 分钟。",
-      parameters: {
-        type: "object",
-        properties: {
-          taskId: {
-            type: "string",
-            description: "runway_text_to_video 或 runway_image_to_video 返回的任务 ID"
-          }
-        },
-        required: ["taskId"]
-      }
-    }
-  },
-
-  // ─── Phase 2 新工具：项目结构感知 ─────────────────────────────────────────────
-
-  {
-    type: "function",
-    function: {
-      name: "project_tree_scanner",
-      description: "扫描指定目录的代码结构，生成可导航的目录树。用于在修改代码前了解项目布局，确认要修改的文件位置。返回文件列表、大小和最后修改时间。",
-      parameters: {
-        type: "object",
-        properties: {
-          projectPath: {
-            type: "string",
-            description: "项目根目录的绝对路径，默认为 /Users/daiyan/Desktop/mcmamoo-website"
-          },
-          maxDepth: {
-            type: "number",
-            description: "最大扫描深度，默认 4 层，超出深度的目录显示子目录数量",
-            default: 4
-          },
-          includePatterns: {
-            type: "string",
-            description: "逗号分隔的文件扩展名过滤，如 'ts,tsx,js,jsx'。为空则包含所有文件",
-            default: ""
-          }
-        },
-        required: ["projectPath"]
-      }
-    }
-  },
-
-  {
-    type: "function",
-    function: {
-      name: "build_verify",
-      description: "在指定项目目录执行构建验证（npm run build 或 tsconfig 检查），返回构建是否通过及错误详情。用于代码修改后自动验证，确认代码无误。",
-      parameters: {
-        type: "object",
-        properties: {
-          projectPath: {
-            type: "string",
-            description: "项目根目录的绝对路径，默认为 /Users/daiyan/Desktop/mcmamoo-website"
-          },
-          buildCommand: {
-            type: "string",
-            description: "构建命令，默认 'npm run build'",
-            default: "npm run build"
-          },
-          timeout: {
-            type: "number",
-            description: "超时时间（秒），默认 120",
-            default: 120
-          }
-        },
-        required: ["projectPath"]
-      }
-    }
-  },
-
-  // ─── Phase 3: RAG 向量记忆搜索工具 ─────────────────────────────────────────
-  {
-    type: "function",
-    function: {
-      name: "vector_memory_search",
-      description: "在项目代码库中进行语义化代码搜索（RAG）。输入关键词或自然语言描述，返回最相关的代码片段和文件位置。当用户问'修改XXX逻辑'、'在哪里找到XXX功能'时使用。此工具不使用外部向量数据库，而是通过多策略匹配（关键词+结构化分析）返回最相关的代码块。",
-      parameters: {
-        type: "object",
-        properties: {
-          query: {
-            type: "string",
-            description: "搜索查询（关键词或自然语言描述想找的代码功能）"
-          },
-          projectPath: {
-            type: "string",
-            description: "项目根目录的绝对路径"
-          },
-          fileTypes: {
-            type: "string",
-            description: "要搜索的文件类型，逗号分隔，如 'ts,tsx,py'。默认 'ts,tsx,js,jsx,py'",
-            default: "ts,tsx,js,jsx,py"
-          },
-          maxResults: {
-            type: "number",
-            description: "最多返回多少个相关代码块，默认 5",
-            default: 5
-          }
-        },
-        required: ["query", "projectPath"]
-      }
-    }
-  },
-
-  // ─── Phase 4: TDD 自我修正工具 ─────────────────────────────────────────────
-  {
-    type: "function",
-    function: {
-      name: "run_npm_test",
-      description: "在指定项目目录运行测试套件（npm test）。用于 TDD 自我修正循环：当 build_verify 通过但需要确认功能正确性时，运行测试。返回测试结果（通过/失败）和失败的测试用例详情，供 AI 重新生成 Thought 进行自我修正。",
-      parameters: {
-        type: "object",
-        properties: {
-          projectPath: {
-            type: "string",
-            description: "项目根目录的绝对路径"
-          },
-          testCommand: {
-            type: "string",
-            description: "测试命令，默认 'npm test -- --run'（Vitest/Jest headless 模式）",
-            default: "npm test -- --run"
-          },
-          timeout: {
-            type: "number",
-            description: "超时时间（秒），默认 120",
-            default: 120
-          }
-        },
-        required: ["projectPath"]
-      }
-    }
-  },
-
-  // ─── Manus Max: HyperAgents ReAct 自主循环引擎 ──────────────────────────────
-  {
-    type: "function",
-    function: {
-      name: "run_agent_loop",
-      description: "启动 HyperAgents Python 引擎，运行 ReAct 推理循环（Thought→Action→Observation→Score→Patch→Repeat），支持代码工程、深度研究、通用任务。自动调用工具、执行验证、返回最终答案。这是 MaoAI Manus Max 架构的核心能力，适合复杂多步骤任务。",
+      name: "self_improving_agent",
+      description: "使用 HyperAgents 自改进 AI 引擎执行复杂任务。HyperAgents 是 Meta 开发的自引用自改进 Agent，能够通过迭代优化来提升任务完成质量。适合需要代码生成、算法设计、复杂问题求解的任务。",
       parameters: {
         type: "object",
         properties: {
           task: {
             type: "string",
-            description: "任务描述（可以是代码优化、深度研究、复杂分析等）"
+            description: "任务描述，例如：'写一个快速排序算法'、'实现一个神经网络'、'设计一个数据库schema'"
           },
           domain: {
             type: "string",
-            enum: ["coding", "research", "general"],
-            description: "领域：coding（代码工程）、research（深度研究）、general（通用）",
+            enum: ["coding", "math", "reasoning", "general"],
+            description: "领域类型：coding(代码生成)、math(数学计算)、reasoning(推理分析)、general(通用任务)",
             default: "general"
           },
-          workspace: {
+          max_iterations: {
+            type: "number",
+            description: "最大迭代次数，默认3次，复杂任务可以增加到5-10次",
+            default: 3
+          },
+          model: {
             type: "string",
-            description: "工作目录路径（用于代码工程），默认 /Users/daiyan/Desktop/mcmamoo-website"
+            description: "使用的 LLM 模型，默认 gpt-4",
+            default: "gpt-4"
           }
         },
         required: ["task"]
@@ -520,12 +223,7 @@ export const TOOL_DEFINITIONS = [
   }
 ];
 
-// ─── 合并 OpenClaw / OpenCLI Tools 到工具列表 ─────────────────────────────────
-// OpenClaw Skills 对普通用户和管理员都开放（openclaw_shell 除外，在 executor 中鉴权）
-(TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLAW_TOOL_DEFINITIONS as unknown as any[]));
-(TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLI_TOOL_DEFINITIONS as unknown as any[]));
-
-// Admin-only tools (不暴露给普通用户)
+// Admin-only tools (not exposed to regular users)
 export const ADMIN_TOOL_DEFINITIONS = [
   ...TOOL_DEFINITIONS,
   {
@@ -548,86 +246,7 @@ export const ADMIN_TOOL_DEFINITIONS = [
         required: ["command"]
       }
     }
-  },
-  {
-    type: "function",
-    function: {
-      name: "openclaw_shell",
-      description: "通过 OpenClaw Skills 执行 Shell 命令（管理员专用）。",
-      parameters: {
-        type: "object",
-        properties: {
-          command: { type: "string", description: "Shell 命令" },
-          cwd: { type: "string", description: "工作目录" },
-        },
-        required: ["command"],
-      },
-    },
-  },
-  // ─── Claude Code Python 移植工具 ────────────────────────────────────────────
-  {
-    type: "function",
-    function: {
-      name: "claude_code_summary",
-      description: "获取 Claude Code Python 移植工作区的摘要报告，包括文件统计、子系统状态、移植进度等信息。",
-      parameters: {
-        type: "object",
-        properties: {},
-        required: [],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "claude_code_analyze",
-      description: "分析 Claude Code 移植工作区的代码结构，提供架构分析和改进建议。",
-      parameters: {
-        type: "object",
-        properties: {
-          file_path: {
-            type: "string",
-            description: "可选：指定要分析的特定文件或目录路径（相对于工作区根目录）",
-          },
-        },
-        required: [],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "claude_code_init",
-      description: "初始化 Claude Code Python 移植工作区，从 GitHub 克隆代码仓库。",
-      parameters: {
-        type: "object",
-        properties: {},
-        required: [],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "claude_code_run",
-      description: "运行 Claude Code Python 移植版本的 CLI 命令（如 summary、manifest、subsystems）。",
-      parameters: {
-        type: "object",
-        properties: {
-          command: {
-            type: "string",
-            description: "要执行的命令，如 summary、manifest、subsystems",
-          },
-          args: {
-            type: "array",
-            items: { type: "string" },
-            description: "命令参数列表",
-          },
-        },
-        required: ["command"],
-      },
-    },
-  },
+  }
 ];
 
 // ─── Tool Executor ────────────────────────────────────────────────────────────
@@ -654,62 +273,19 @@ export async function executeTool(
       case "run_code":
         return await toolRunCode(args.language, args.code, args.timeout || 30);
       case "github_push":
-        return await toolGithubPush(
-          args.repo,
-          args.files,
-          args.message,
-          args.branch || "main",
-          args.verify === true,
-          args.verifyProjectPath,
-          args.verifyMaxRetries
-        );
+        return await toolGithubPush(args.repo, args.files, args.message, args.branch || "main");
       case "github_read":
         return await toolGithubRead(args.repo, args.file_path, args.branch || "main");
       case "read_url":
         return await toolReadUrl(args.url, args.extract_text_only !== false);
       case "deep_research":
         return await toolDeepResearch(args.query, args.mode || "pro", args.max_duration || 300);
-      case "midjourney_imagine":
-        return await toolMidjourneyImagine(args.prompt, args.aspectRatio, args.quality, args.style, args.version);
-      case "midjourney_status":
-        return await toolMidjourneyStatus(args.taskId);
-      case "runway_text_to_video":
-        return await toolRunwayTextToVideo(args.promptText, args.negativePromptText, args.duration, args.model);
-      case "runway_image_to_video":
-        return await toolRunwayImageToVideo(args.promptImage, args.promptText, args.duration);
-      case "runway_status":
-        return await toolRunwayStatus(args.taskId);
-      // ─── Phase 2 新工具 ───────────────────────────────────────────────────
-      case "project_tree_scanner":
-        return await toolProjectTreeScanner(args.projectPath, args.maxDepth || 4, args.includePatterns);
-      case "build_verify":
-        return await toolBuildVerify(args.projectPath, args.buildCommand || "npm run build", args.timeout || 120);
-      // ─── Phase 3 RAG 记忆搜索 ─────────────────────────────────────────────
-      case "vector_memory_search":
-        return await toolVectorMemorySearch(args.query, args.projectPath, args.fileTypes, args.maxResults);
-      // ─── Phase 4 TDD 自我修正 ─────────────────────────────────────────────
-      case "run_npm_test":
-        return await toolRunNpmTest(args.projectPath, args.testCommand, args.timeout);
-      // ─── Manus Max: HyperAgents ReAct 引擎 ────────────────────────────────
-      case "run_agent_loop":
-        return await toolRunAgentLoop(args.task, args.domain, args.workspace);
+      case "self_improving_agent":
+        return await toolSelfImprovingAgent(args.task, args.domain || "general", args.max_iterations || 3, args.model || "gpt-4");
       case "run_shell":
         if (!isAdmin) return { success: false, output: "", error: "run_shell 仅管理员可用" };
         return await toolRunShell(args.command, args.cwd || "/tmp");
-      // ─── Claude Code Python 移植工具 ────────────────────────────────────
-      case "claude_code_summary":
-      case "claude_code_analyze":
-      case "claude_code_init":
-      case "claude_code_run":
-        return await toolClaudeCode(toolName, args);
       default:
-        // ─── 路由到 OpenCLI / OpenClaw Tools ──────────────────────────────
-        if (toolName.startsWith("opencli_")) {
-          return await executeOpencliTool(toolName, args);
-        }
-        if (toolName.startsWith("openclaw_")) {
-          return await executeOpenclawTool(toolName, args, { isAdmin });
-        }
         return { success: false, output: "", error: `未知工具: ${toolName}` };
     }
   } catch (err: any) {
@@ -810,10 +386,7 @@ async function toolGithubPush(
   repo: string,
   files: Array<{ path: string; content: string }>,
   message: string,
-  branch: string,
-  verify?: boolean,        // Phase 3: 推送后自动触发 build_verify
-  verifyProjectPath?: string,
-  verifyMaxRetries?: number
+  branch: string
 ): Promise<ToolResult> {
   // Try multiple GitHub tokens from environment
   const token =
@@ -875,29 +448,10 @@ async function toolGithubPush(
   }
 
   const allOk = results.every(r => r.startsWith("✓"));
-
-  // ─── Phase 3：推送成功后自动触发构建验证循环 ───────────────────────────────
-  let verifyResult: string = "";
-  if (allOk && verify === true) {
-    const loopResult = await runBuildVerifyLoop(
-      verifyProjectPath || "/Users/daiyan/Desktop/mcmamoo-website",
-      "npm run build",
-      verifyMaxRetries || 3
-    );
-    verifyResult = `\n\n## 🔄 构建验证循环\n\n` +
-      `**总尝试次数:** ${loopResult.totalAttempts} / ${verifyMaxRetries || 3}\n\n` +
-      loopResult.history.map(h =>
-        `${h.passed ? "✅" : "❌"} 第 ${h.attempt} 次: ` +
-        `错误数=${h.errorCount} | ${h.passed ? "通过" : "失败"}`
-      ).join("\n") +
-      `\n\n**最终结果:** ${loopResult.success ? "✅ 全部通过" : "❌ 验证失败（请检查错误并重新推送）"}\n\n` +
-      loopResult.finalOutput;
-  }
-
   return {
-    success: allOk && (!verify || verifyResult.includes("✅")),
-    output: `GitHub 推送结果（${repo}@${branch}）:\n${results.join("\n")}\n\nCommit: "${message}"` + verifyResult,
-    metadata: { repo, branch, fileCount: files.length, verify, verifyResult }
+    success: allOk,
+    output: `GitHub 推送结果（${repo}@${branch}）:\n${results.join("\n")}\n\nCommit: "${message}"`,
+    metadata: { repo, branch, fileCount: files.length }
   };
 }
 
@@ -964,98 +518,6 @@ async function toolReadUrl(url: string, extractTextOnly: boolean): Promise<ToolR
   } catch (e: any) {
     return { success: false, output: "", error: `读取失败: ${e.message}` };
   }
-}
-
-// ─── HyperAgents Python Engine — Manus Max ──────────────────────────────────
-// 使用 Python ReAct 循环引擎，支持流式 JSON 日志
-async function toolRunAgentLoop(
-  task: string,
-  domain: "coding" | "research" | "general" = "general",
-  workspace: string = ""
-): Promise<ToolResult> {
-  const { spawn } = await import("child_process");
-  const resolvedWorkspace = workspace || "/Users/daiyan/Desktop/mcmamoo-website";
-
-  const PYTHON_SCRIPT = `${__dirname}/hyperagents/generate_loop.py`;
-  const PYTHON_CMD = (process.env.PYTHON3_PATH || "python3");
-
-  return new Promise((resolve) => {
-    const collectedLogs: string[] = [];
-    const pythonProcess = spawn(PYTHON_CMD, [
-      PYTHON_SCRIPT,
-      "--task", task,
-      "--domain", domain,
-      "--workspace", resolvedWorkspace,
-    ], {
-      cwd: resolvedWorkspace,
-      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
-    });
-
-    let hasErrored = false;
-
-    pythonProcess.stdout.on("data", (data: Buffer) => {
-      const lines = data.toString("utf-8").split("\n");
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const entry = JSON.parse(trimmed);
-          if (entry.type === "done") {
-            resolve({
-              success: true,
-              output: entry.message || entry.answer || "Agent 执行完成",
-              metadata: { domain, rounds: entry.rounds, logs: collectedLogs.slice(0, 20) },
-            });
-          } else if (entry.type === "error" && !entry.retry) {
-            if (!hasErrored) {
-              hasErrored = true;
-              resolve({
-                success: false,
-                output: "",
-                error: `[${entry.category}] ${entry.message}`,
-              });
-            }
-          } else {
-            collectedLogs.push(`[${entry.type}] ${entry.message}`);
-          }
-        } catch {
-          collectedLogs.push(trimmed.slice(0, 100));
-        }
-      }
-    });
-
-    pythonProcess.stderr.on("data", (data: Buffer) => {
-      if (!hasErrored) {
-        hasErrored = true;
-        resolve({ success: false, output: "", error: `Python stderr: ${data.toString().slice(0, 300)}` });
-      }
-    });
-
-    pythonProcess.on("error", (err: Error) => {
-      if (!hasErrored) {
-        hasErrored = true;
-        resolve({ success: false, output: "", error: `启动 Python 引擎失败: ${err.message}` });
-      }
-    });
-
-    pythonProcess.on("close", (code: number | null) => {
-      if (!hasErrored && collectedLogs.length > 0) {
-        resolve({
-          success: code === 0,
-          output: `Agent 执行完成（退出码: ${code}）\n\n日志摘要:\n${collectedLogs.slice(0, 10).join("\n")}`,
-          error: code !== 0 ? `Exit code: ${code}` : undefined,
-        });
-      }
-    });
-
-    // 5分钟超时保护
-    setTimeout(() => {
-      if (!hasErrored) {
-        pythonProcess.kill("SIGTERM");
-        resolve({ success: false, output: "", error: "Agent 执行超时（5分钟）" });
-      }
-    }, 5 * 60 * 1000);
-  });
 }
 
 // ─── DeerFlow Deep Research Helper ─────────────────────────────────────────
@@ -1308,737 +770,52 @@ async function toolRunShell(command: string, cwd: string): Promise<ToolResult> {
   }
 }
 
-// ─── Claude Code Python 移植工具实现 ───────────────────────────────────────────
-
-async function toolClaudeCode(
-  toolName: string,
-  args: Record<string, any>
+/**
+ * HyperAgents 自改进 Agent 工具
+ * 
+ * @param task - 任务描述
+ * @param domain - 领域类型
+ * @param maxIterations - 最大迭代次数
+ * @param model - 使用的 LLM 模型
+ * @returns 执行结果
+ */
+async function toolSelfImprovingAgent(
+  task: string,
+  domain: string,
+  maxIterations: number,
+  model: string
 ): Promise<ToolResult> {
   try {
-    const result = await executeClaudeCodeTool(toolName, args);
+    const result = await runSelfImprovingAgent({
+      task,
+      domain,
+      maxIterations,
+      model
+    });
     
-    // 处理不同类型的返回结果
-    if (typeof result === "string") {
-      return {
-        success: true,
-        output: result,
-        metadata: { tool: toolName }
-      };
-    }
-    
-    if (result && typeof result === "object") {
-      const res = result as Record<string, unknown>;
-      // 处理运行命令的结果
-      if ("success" in result && "output" in result) {
-        return {
-          success: res.success as boolean,
-          output: (res.output as string) || "",
-          error: ("error" in res ? (res.error as string) : undefined) || undefined,
-          metadata: { tool: toolName }
-        };
-      }
-      
-      // 处理分析结果
-      if ("structure" in result && "suggestions" in result) {
-        const analysis = result as { structure: string; suggestions: string[] };
-        return {
-          success: true,
-          output: `## 代码结构分析\n\n${analysis.structure}\n\n## 改进建议\n\n${analysis.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
-          metadata: { tool: toolName }
-        };
-      }
-      
-      // 通用对象处理
-      return {
-        success: true,
-        output: JSON.stringify(result, null, 2),
-        metadata: { tool: toolName }
-      };
-    }
-    
-    return {
-      success: true,
-      output: String(result),
-      metadata: { tool: toolName }
-    };
-  } catch (err: any) {
-    return {
-      success: false,
-      output: "",
-      error: `Claude Code 工具执行失败: ${err.message}`
-    };
-  }
-}
-
-// ─── Midjourney 工具实现 ─────────────────────────────────────────────────────
-
-async function toolMidjourneyImagine(
-  prompt: string,
-  aspectRatio?: string,
-  quality?: string,
-  style?: string,
-  version?: string
-): Promise<ToolResult> {
-  try {
-    const { midjourneyImagine } = await import("./_core/midjourney");
-    const result = await midjourneyImagine({
-      prompt,
-      aspectRatio: aspectRatio as any,
-      quality: quality as any,
-      style: style as any,
-      version: version as any,
-    });
-    return {
-      success: true,
-      output: `Midjourney 图片生成任务已提交！\n\n任务 ID: ${result.taskId}\n提示词: ${prompt}\n\n图片通常需要 30-60 秒生成。请使用 midjourney_status 工具查询进度。`,
-      metadata: { taskId: result.taskId, provider: "midjourney" },
-    };
-  } catch (err: any) {
-    return { success: false, output: "", error: `Midjourney Imagine 失败: ${err.message}` };
-  }
-}
-
-async function toolMidjourneyStatus(taskId: string): Promise<ToolResult> {
-  try {
-    const { midjourneyTaskStatus } = await import("./_core/midjourney");
-    const result = await midjourneyTaskStatus(taskId);
-
-    const statusLabels: Record<string, string> = {
-      pending: "等待中",
-      in_progress: `生成中 (${result.progress || 0}%)`,
-      completed: "已完成",
-      failed: "失败",
-    };
-
-    let output = `Midjourney 任务状态: ${statusLabels[result.status] || result.status}\n任务 ID: ${taskId}`;
-    if (result.imageUrl) {
-      output += `\n\n图片 URL: ${result.imageUrl}`;
-    }
-    if (result.failReason) {
-      output += `\n失败原因: ${result.failReason}`;
-    }
-
-    return {
-      success: result.status === "completed",
-      output,
-      metadata: result,
-    };
-  } catch (err: any) {
-    return { success: false, output: "", error: `Midjourney 状态查询失败: ${err.message}` };
-  }
-}
-
-// ─── Runway 工具实现 ─────────────────────────────────────────────────────────
-
-async function toolRunwayTextToVideo(
-  promptText: string,
-  negativePromptText?: string,
-  duration?: number,
-  model?: string
-): Promise<ToolResult> {
-  try {
-    const { runwayTextToVideo } = await import("./_core/runway");
-    const result = await runwayTextToVideo({
-      promptText,
-      negativePromptText,
-      duration: duration as any,
-      model,
-    });
-    return {
-      success: true,
-      output: `Runway 视频生成任务已提交！\n\n任务 ID: ${result.taskId}\n描述: ${promptText}\n时长: ${duration || 5} 秒\n\n视频通常需要 1-5 分钟生成。请使用 runway_status 工具查询进度。`,
-      metadata: { taskId: result.taskId, provider: "runway" },
-    };
-  } catch (err: any) {
-    return { success: false, output: "", error: `Runway Text-to-Video 失败: ${err.message}` };
-  }
-}
-
-async function toolRunwayImageToVideo(
-  promptImage: string,
-  promptText?: string,
-  duration?: number
-): Promise<ToolResult> {
-  try {
-    const { runwayImageToVideo } = await import("./_core/runway");
-    const result = await runwayImageToVideo({
-      promptImage,
-      promptText,
-      duration: duration as any,
-    });
-    return {
-      success: true,
-      output: `Runway 图片生成视频任务已提交！\n\n任务 ID: ${result.taskId}\n输入图片: ${promptImage}\n时长: ${duration || 5} 秒\n\n视频通常需要 1-5 分钟生成。请使用 runway_status 工具查询进度。`,
-      metadata: { taskId: result.taskId, provider: "runway" },
-    };
-  } catch (err: any) {
-    return { success: false, output: "", error: `Runway Image-to-Video 失败: ${err.message}` };
-  }
-}
-
-async function toolRunwayStatus(taskId: string): Promise<ToolResult> {
-  try {
-    const { runwayTaskStatus } = await import("./_core/runway");
-    const result = await runwayTaskStatus(taskId);
-
-    const statusLabels: Record<string, string> = {
-      PENDING: "等待中",
-      IN_PROGRESS: "生成中",
-      SUCCEEDED: "已完成",
-      FAILED: "失败",
-      CANCELLED: "已取消",
-    };
-
-    let output = `Runway 任务状态: ${statusLabels[result.status] || result.status}\n任务 ID: ${taskId}`;
-    if (result.output && result.output.length > 0) {
-      output += `\n\n视频 URL: ${result.output[0].url}`;
-    }
-    if (result.failure) {
-      output += `\n失败原因: ${result.failure}`;
-    }
-
-    return {
-      success: result.status === "SUCCEEDED",
-      output,
-      metadata: result,
-    };
-  } catch (err: any) {
-    return { success: false, output: "", error: `Runway 状态查询失败: ${err.message}` };
-  }
-}
-
-// ─── Phase 2 工具实现：项目结构扫描器 ───────────────────────────────────────────
-
-interface TreeNode {
-  name: string;
-  type: "file" | "directory";
-  size?: number;        // bytes, only for files
-  modified?: string;    // ISO date string, only for files
-  children?: TreeNode[];
-  childCount?: number; // only for directories beyond maxDepth
-}
-
-async function toolProjectTreeScanner(
-  projectPath: string,
-  maxDepth: number = 4,
-  includePatterns: string = ""
-): Promise<ToolResult> {
-  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
-  const resolvedPath = projectPath && projectPath.trim() ? path.resolve(projectPath) : DEFAULT_PATH;
-
-  // Filter extensions (e.g. "ts,tsx,js,jsx")
-  const allowedExts = includePatterns
-    ? includePatterns.split(",").map(e => e.trim().replace(/^\./, "")).filter(Boolean)
-    : null;
-
-  function matchesFilter(name: string): boolean {
-    if (!allowedExts) return true;
-    const ext = name.includes(".") ? name.split(".").pop()! : "";
-    return allowedExts.includes(ext);
-  }
-
-  async function scanDir(dirPath: string, depth: number): Promise<TreeNode> {
-    const name = path.basename(dirPath) || dirPath;
-    const node: TreeNode = { name, type: "directory" };
-
-    if (depth > maxDepth) {
-      try {
-        const entries = await fs.readdir(dirPath);
-        node.childCount = entries.length;
-      } catch {
-        node.childCount = 0;
-      }
-      return node;
-    }
-
-    try {
-      const entries = await fs.readdir(dirPath, { withFileTypes: true });
-      const children: TreeNode[] = [];
-      let fileCount = 0;
-      let dirCount = 0;
-
-      for (const entry of entries) {
-        // Skip hidden, node_modules, .git, dist, build
-        if (
-          entry.name.startsWith(".") ||
-          entry.name === "node_modules" ||
-          entry.name === "dist" ||
-          entry.name === "build" ||
-          entry.name === "__pycache__"
-        ) continue;
-
-        const fullPath = path.join(dirPath, entry.name);
-
-        if (entry.isDirectory()) {
-          dirCount++;
-          const subNode = await scanDir(fullPath, depth + 1);
-          children.push(subNode);
-        } else if (entry.isFile()) {
-          if (!matchesFilter(entry.name)) continue;
-          fileCount++;
-          try {
-            const stat = await fs.stat(fullPath);
-            children.push({
-              name: entry.name,
-              type: "file",
-              size: stat.size,
-              modified: stat.mtime.toISOString(),
-            });
-          } catch {
-            children.push({ name: entry.name, type: "file" });
-          }
-        }
-      }
-
-      // Directories first, then files
-      children.sort((a, b) => {
-        if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      });
-
-      node.children = children;
-      node.childCount = fileCount + dirCount;
-    } catch (err: any) {
-      node.childCount = 0;
-    }
-
-    return node;
-  }
-
-  // Build flat file list with paths (for LLM to know where to edit)
-  const flatFiles: Array<{ path: string; size: number; modified: string }> = [];
-
-  async function collectFiles(dirPath: string, depth: number): Promise<void> {
-    if (depth > maxDepth + 2) return;
-    try {
-      const entries = await fs.readdir(dirPath, { withFileTypes: true });
-      for (const entry of entries) {
-        if (
-          entry.name.startsWith(".") ||
-          entry.name === "node_modules" ||
-          entry.name === "dist" ||
-          entry.name === "build" ||
-          entry.name === "__pycache__"
-        ) continue;
-        const fullPath = path.join(dirPath, entry.name);
-        if (entry.isFile() && matchesFilter(entry.name)) {
-          try {
-            const stat = await fs.stat(fullPath);
-            flatFiles.push({
-              path: fullPath,
-              size: stat.size,
-              modified: stat.mtime.toISOString(),
-            });
-          } catch { /* skip */ }
-        } else if (entry.isDirectory()) {
-          await collectFiles(fullPath, depth + 1);
-        }
-      }
-    } catch { /* skip */ }
-  }
-
-  try {
-    const tree = await scanDir(resolvedPath, 0);
-    await collectFiles(resolvedPath, 0);
-
-    const output = `## 项目结构扫描：${resolvedPath}\n\n` +
-      `**扫描深度:** ${maxDepth} 层 | **文件总数:** ${flatFiles.length}\n\n` +
-      `### 目录树\n\`\`\`\n${formatTree(tree, 0)}\n\`\`\`\n\n` +
-      `### 完整文件列表（共 ${flatFiles.length} 个）\n\n` +
-      flatFiles
-        .sort((a, b) => a.path.localeCompare(b.path))
-        .map(f => {
-          const rel = f.path.replace(resolvedPath + "/", "");
-          const size = f.size < 1024 ? `${f.size}B` : `${(f.size / 1024).toFixed(1)}KB`;
-          const date = f.modified ? f.modified.slice(0, 10) : "";
-          return `${rel.padEnd(60)} ${size.padStart(8)}  ${date}`;
-        })
-        .join("\n");
-
-    return {
-      success: true,
-      output,
-      metadata: {
-        projectPath: resolvedPath,
-        totalFiles: flatFiles.length,
-        maxDepth,
-      },
-    };
-  } catch (err: any) {
-    return { success: false, output: "", error: `项目扫描失败: ${err.message}` };
-  }
-}
-
-function formatTree(node: TreeNode, indent: number): string {
-  const prefix = "  ".repeat(indent);
-  const connector = node.type === "directory" ? "📁 " : "📄 ";
-  let result = `${prefix}${connector}${node.name}`;
-  if (node.type === "directory" && node.childCount !== undefined) {
-    result += ` (${node.childCount} items)`;
-  }
-  if (node.type === "file" && node.size !== undefined) {
-    result += ` (${node.size < 1024 ? node.size + "B" : (node.size / 1024).toFixed(1) + "KB"})`;
-  }
-  result += "\n";
-  if (node.children) {
-    for (const child of node.children) {
-      result += formatTree(child, indent + 1);
-    }
-  }
-  return result;
-}
-
-// ─── Phase 2 工具实现：构建验证 ────────────────────────────────────────────────
-
-async function toolBuildVerify(
-  projectPath: string,
-  buildCommand: string = "npm run build",
-  timeout: number = 120
-): Promise<ToolResult> {
-  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
-  const resolvedPath = projectPath && projectPath.trim() ? path.resolve(projectPath) : DEFAULT_PATH;
-
-  // Check if package.json exists
-  try {
-    await fs.access(path.join(resolvedPath, "package.json"));
-  } catch {
-    return {
-      success: false,
-      output: "",
-      error: `项目路径不存在 package.json: ${resolvedPath}`
-    };
-  }
-
-  // Run TypeScript type check first (fast, catches type errors)
-  const tscResult = await runBuildCommand(`cd "${resolvedPath}" && npx tsc --noEmit 2>&1`, timeout);
-  const hasTypeErrors = tscResult.exitCode !== 0;
-
-  // Run the actual build
-  const buildResult = await runBuildCommand(`cd "${resolvedPath}" && ${buildCommand} 2>&1`, timeout);
-  const buildPassed = buildResult.exitCode === 0;
-
-  // Collect error lines
-  const errorLines = [
-    ...extractErrors(tscResult.stdout + tscResult.stderr, "TypeScript"),
-    ...extractErrors(buildResult.stdout + buildResult.stderr, "Build"),
-  ];
-
-  const summary = buildPassed && !hasTypeErrors
-    ? "✅ **构建通过** — 代码类型检查和构建均成功"
-    : hasTypeErrors
-    ? `⚠️ **构建完成，但有 ${errorLines.length} 个类型错误**`
-    : "❌ **构建失败**";
-
-  const output = `## 构建验证结果\n\n` +
-    `**项目:** ${resolvedPath}\n` +
-    `**命令:** ${buildCommand}\n` +
-    `**退出码:** ${buildResult.exitCode}\n\n` +
-    `${summary}\n\n` +
-    `### 详细输出（最后 100 行）\n\`\`\`\n${(buildResult.stdout + buildResult.stderr).split("\n").slice(-100).join("\n")}\n\`\`\``;
-
-  return {
-    success: buildPassed && !hasTypeErrors,
-    output: errorLines.length > 0 ? output + "\n\n### 错误摘要\n" + errorLines.join("\n") : output,
-    metadata: {
-      projectPath: resolvedPath,
-      buildCommand,
-      exitCode: buildResult.exitCode,
-      hasTypeErrors,
-      errorCount: errorLines.length,
-    },
-  };
-}
-
-async function runBuildCommand(cmd: string, timeoutSec: number): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  return new Promise((resolve) => {
-    exec(cmd, { timeout: timeoutSec * 1000, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
-      resolve({
-        stdout: stdout || "",
-        stderr: stderr || "",
-        exitCode: err?.code ?? (err ? 1 : 0),
-      });
-    });
-  });
-}
-
-function extractErrors(output: string, source: string): string[] {
-  const errorPatterns = [
-    /error TS\d+:/gi,
-    /error:/gi,
-    /Error:/gi,
-    /ERROR/gi,
-    /failed/gi,
-    /Failed/gi,
-  ];
-  const lines = output.split("\n");
-  const errors: string[] = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed && errorPatterns.some(p => p.test(trimmed))) {
-      errors.push(`[${source}] ${trimmed}`);
-    }
-  }
-  return errors.slice(0, 50); // cap at 50 errors
-}
-
-// ─── Phase 3：github_push 触发构建验证循环（内部逻辑）─────────────────────────────
-// 注意：此函数不对外暴露工具，由 aiStream.ts 在 github_push 后自动调用
-
-export async function runBuildVerifyLoop(
-  projectPath: string,
-  buildCommand: string = "npm run build",
-  maxRetries: number = 3
-): Promise<{
-  success: boolean;
-  totalAttempts: number;
-  finalOutput: string;
-  history: Array<{ attempt: number; passed: boolean; errorCount: number; output: string }>;
-}> {
-  const history: Array<{ attempt: number; passed: boolean; errorCount: number; output: string }> = [];
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const result = await toolBuildVerify(projectPath, buildCommand);
-    const errorCount = result.metadata?.errorCount || 0;
-    history.push({
-      attempt,
-      passed: result.success,
-      errorCount,
-      output: result.output,
-    });
-
     if (result.success) {
-      return { success: true, totalAttempts: attempt, finalOutput: result.output, history };
-    }
-
-    if (attempt < maxRetries) {
-      // Wait 2 seconds before retry
-      await new Promise(r => setTimeout(r, 2000));
-    }
-  }
-
-  return {
-    success: false,
-    totalAttempts: maxRetries,
-    finalOutput: history[history.length - 1]?.output || "",
-    history,
-  };
-}
-
-// ─── Phase 3 工具实现：向量记忆搜索（RAG）────────────────────────────────
-// 多策略代码搜索：关键词匹配 + 文件结构分析 + 相关性排序
-// 不依赖外部向量数据库，通过智能文本匹配实现语义化搜索
-async function toolVectorMemorySearch(
-  query: string,
-  projectPath: string,
-  fileTypes: string = "ts,tsx,js,jsx,py",
-  maxResults: number = 5
-): Promise<ToolResult> {
-  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
-  const absPath = projectPath || DEFAULT_PATH;
-
-  // 提取关键词
-  const keywords = query
-    .toLowerCase()
-    .replace(/[^\w\s]/g, " ")
-    .split(/\s+/)
-    .filter(w => w.length > 2);
-
-  const allowedExts = fileTypes.split(",").map(e => e.trim()).filter(Boolean);
-
-  interface FileScore {
-    path: string;
-    score: number;
-    preview: string;
-    lineStart: number;
-  }
-
-  const results: FileScore[] = [];
-
-  try {
-    // 递归扫描所有匹配文件
-    async function scanDir(dir: string, depth: number = 0): Promise<void> {
-      if (depth > 6) return; // 安全限制
-      let entries;
-      try {
-        entries = await fs.readdir(dir, { withFileTypes: true });
-      } catch { return; }
-
-      for (const entry of entries) {
-        if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "dist" || entry.name === "__pycache__") continue;
-
-        const fullPath = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-          await scanDir(fullPath, depth + 1);
-        } else if (entry.isFile()) {
-          const ext = entry.name.split(".").pop() || "";
-          if (!allowedExts.includes(ext)) continue;
-
-          try {
-            const stat = await fs.stat(fullPath);
-            if (stat.size > 500_000) continue; // 跳过超大文件
-
-            const content = await fs.readFile(fullPath, "utf8");
-            const lines = content.split("\n");
-
-            // 多策略评分
-            let score = 0;
-            const matchedLines: { line: number; text: string }[] = [];
-
-            for (let i = 0; i < lines.length; i++) {
-              const line = lines[i];
-              const lineLower = line.toLowerCase();
-
-              for (const kw of keywords) {
-                // 精确词匹配
-                if (lineLower.includes(kw)) {
-                  score += kw.length * 2;
-                  // 函数/类定义行权重更高
-                  if (/^(export\s+)?(async\s+)?function|^(export\s+)?const\s+\w+\s*=|^class\s+|^interface\s+|^type\s+/.test(line.trim())) {
-                    score += 20;
-                  }
-                  matchedLines.push({ line: i + 1, text: line.trim() });
-                }
-              }
-            }
-
-            // 函数名/变量名包含关键词的额外加分
-            const baseName = path.basename(fullPath).toLowerCase();
-            for (const kw of keywords) {
-              if (baseName.includes(kw)) score += 30;
-            }
-
-            if (score > 0) {
-              // 取最有代表性的匹配片段（前3个）
-              const preview = matchedLines.slice(0, 3)
-                .map(m => `  L${m.line}: ${m.text}`)
-                .join("\n");
-
-              results.push({
-                path: fullPath.replace(absPath, ""),
-                score,
-                preview,
-                lineStart: matchedLines[0]?.line || 1,
-              });
-            }
-          } catch { /* 跳过无法读取的文件 */ }
-        }
-      }
-    }
-
-    await scanDir(absPath);
-
-    // 按相关性排序，取 top N
-    results.sort((a, b) => b.score - a.score);
-    const top = results.slice(0, maxResults);
-
-    if (top.length === 0) {
       return {
         success: true,
-        output: `未找到与 "${query}" 相关的代码片段。尝试扩大搜索范围或使用更通用的关键词。`,
-        metadata: { query, resultCount: 0 },
-      };
-    }
-
-    const lines: string[] = [];
-    lines.push(`找到 ${top.length} 个相关代码片段（按相关性排序）：\n`);
-
-    top.forEach((item, idx) => {
-      lines.push(`\n--- 结果 ${idx + 1} [得分: ${item.score}] ---`);
-      lines.push(`📄 ${item.path}`);
-      lines.push(item.preview);
-    });
-
-    lines.push(`\n💡 提示：使用 project_tree_scanner 工具可以查看完整的项目结构。`);
-
-    return {
-      success: true,
-      output: lines.join("\n"),
-      metadata: { query, resultCount: top.length, scores: top.map(t => ({ path: t.path, score: t.score })) },
-    };
-
-  } catch (err: any) {
-    return { success: false, output: "", error: `RAG 搜索失败: ${err.message}` };
-  }
-}
-
-// ─── Phase 4 工具实现：NPM Test TDD ────────────────────────────────────────
-
-async function toolRunNpmTest(
-  projectPath: string,
-  testCommand: string = "npm test -- --run",
-  timeout: number = 120
-): Promise<ToolResult> {
-  const DEFAULT_PATH = "/Users/daiyan/Desktop/mcmamoo-website";
-  const absPath = projectPath || DEFAULT_PATH;
-
-  try {
-    const { stdout, stderr } = await execAsync(testCommand, {
-      cwd: absPath,
-      timeout: timeout * 1000,
-      maxBuffer: 5 * 1024 * 1024,
-    });
-
-    const output = (stdout + stderr).trim();
-
-    // 解析测试结果
-    const passedMatch = output.match(/(\d+) passed/);
-    const failedMatch = output.match(/(\d+) failed/);
-    const passed = passedMatch ? parseInt(passedMatch[1]) : 0;
-    const failed = failedMatch ? parseInt(failedMatch[1]) : 0;
-
-    if (failed > 0) {
-      // 提取失败的测试详情
-      const failedTests: string[] = [];
-      const lines = output.split("\n");
-      let inFailureBlock = false;
-      for (const line of lines) {
-        if (line.includes("FAIL") || line.includes("✕") || line.includes("×")) {
-          inFailureBlock = true;
-          failedTests.push(line.trim());
-        } else if (inFailureBlock && line.trim()) {
-          if (line.match(/^\s{2,}\d+\)|line\s+\d+|Error:|expect\(/) || line.trim().startsWith("at ")) {
-            failedTests.push("  " + line.trim());
-          } else if (!line.includes("✓") && !line.includes("●")) {
-            inFailureBlock = false;
-          }
+        output: result.output,
+        metadata: {
+          tool: "hyperagents",
+          domain,
+          iterations: result.iterations,
+          model
         }
-      }
-
+      };
+    } else {
       return {
         success: false,
-        output: `❌ 测试失败: ${failed} 个测试未通过\n\n${output.slice(-3000)}`,
-        metadata: {
-          testPassed: false,
-          passed,
-          failed,
-          failedTests: failedTests.slice(0, 20).join("\n"),
-          rawOutput: output.slice(-5000),
-        },
+        output: "",
+        error: result.error || "HyperAgents 执行失败"
       };
     }
-
-    return {
-      success: true,
-      output: `✅ 所有 ${passed} 个测试通过\n\n${output.slice(-1000)}`,
-      metadata: { testPassed: true, passed, failed: 0 },
-    };
-
   } catch (err: any) {
-    const output = err.stdout || err.message || "";
-    const failedMatch = output.match(/(\d+) failed/);
-    const failed = failedMatch ? parseInt(failedMatch[1]) : null;
-
     return {
-      success: failed !== null && failed > 0 ? false : true,
-      output: err.killed
-        ? `⏱️ 测试执行超时（${timeout}秒）`
-        : `⚠️ 测试执行异常\n\n${output.slice(-3000)}`,
-      metadata: {
-        testPassed: failed !== null && failed > 0 ? false : undefined,
-        passed: null,
-        failed,
-        rawOutput: output.slice(-5000),
-      },
+      success: false,
+      output: "",
+      error: `HyperAgents 调用异常: ${err.message}`
     };
   }
 }
