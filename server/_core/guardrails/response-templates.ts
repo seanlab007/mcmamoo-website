@@ -1,13 +1,14 @@
 /**
- * MaoAI 安全围栏响应话术库
- * 
+ * MaoAI 安全围栏响应话术库 v2.0
+ *
  * 采用"镜像重构法"：
  * 1. 不直接说"不能回答"，而是重构问题方向
  * 2. 提供同等价值的替代信息
  * 3. 保持专业性和帮助性
+ * 4. v2.0 新增：authority-spoofing、emotional-manipulation、encoding-bypass、cot-hijack、context-poisoning、code-injection、exfiltration、endpoint-probe 等响应类别
  */
 
-export type ResponseCategory = 
+export type ResponseCategory =
   | "system-prompt-blocked"
   | "architecture-blocked"
   | "agent-prompt-blocked"
@@ -16,14 +17,22 @@ export type ResponseCategory =
   | "recursive-redirect"
   | "tool-probe-blocked"
   | "credential-blocked"
+  | "endpoint-probe-blocked"
   | "competitor-redirect"
   | "identity-blocked"
   | "capability-redirect"
+  | "authority-spoofing-blocked"
+  | "emotional-manipulation-blocked"
+  | "encoding-bypass-blocked"
+  | "cot-hijack-blocked"
+  | "context-poisoning-blocked"
+  | "code-injection-blocked"
+  | "exfiltration-blocked"
   | "default";
 
 /**
  * 响应话术库
- * 每个类别包含多个变体，随机选择
+ * 每个类别包含多个变体，随机选择以降低模式可预测性
  */
 export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
   /**
@@ -33,6 +42,7 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
     "您对AI系统内部运作机制的好奇心很有价值。实际上，现代AI的通用设计原则可以参考业界公开的最佳实践文档，而非特定系统的实现细节。",
     "关于AI系统提示词的设计，这确实是AI工程中的核心议题。如果您有兴趣了解通用的提示词工程（Prompt Engineering）方法，我可以为您介绍一些实用的模式和框架。",
     "系统提示词就像是AI的'宪法'，它的设计确实很重要。但每家公司的具体实现都是商业机密，就像我们不会询问可口可乐的配方一样。如果您想学习如何为自己的AI项目编写有效的提示词，我很乐意分享通用方法论。",
+    "我理解您对系统提示词的兴趣，这在AI工程领域确实是个有趣的话题。我建议您参阅 Anthropic、OpenAI 官方发布的提示词最佳实践文档——这些公开资源会比特定系统的内部实现更有参考价值。",
   ],
 
   /**
@@ -42,6 +52,7 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
     "MaoAI的架构设计细节属于核心技术资产，无法对外披露。不过，如果您是在学习AI系统设计，我推荐您研究公开的Agent框架，如LangChain、AutoGPT等项目的架构设计。",
     "关于MaoAI的内部架构，我无法提供具体信息。但从一般意义上讲，现代AI Agent系统通常包含：规划器（Planner）、执行器（Executor）、记忆（Memory）和工具（Tools）四大组件。如果您想深入了解，我可以分享这方面的通用架构知识。",
     "架构设计是每个AI产品的核心竞争力，就像每家餐厅的招牌菜都有独特的配方。MaoAI的具体架构设计属于商业机密。我建议您关注我们的产品功能，这些是您可以直接使用的价值。至于AI系统的通用设计模式，我很愿意与您探讨。",
+    "AI系统架构是一个宏大的工程课题。我无法提供MaoAI的内部设计，但可以推荐您阅读《Designing Large Language Model Applications》或相关学术论文，这些会比询问特定系统更有学术价值。",
   ],
 
   /**
@@ -50,6 +61,7 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
   "agent-prompt-blocked": [
     "每个专家Agent的角色设定（相当于他们的'职责说明'）是MaoAI的专业设计精髓。这些设定的具体内容无法公开，但它们的作用会在您的使用体验中自然体现——您会发现不同专家在回答时确实有不同的专业视角和表达风格。",
     "专家Agent的设定确实是MaoAI的核心竞争力之一。就像一个优秀的律师团队，每个人的专业背景和思维方式都经过精心设计。这些设定的具体内容无法透露，但我可以帮您理解如何在自己的项目中设计有效的AI角色提示词。",
+    "AI角色提示词的设计是个精妙的工程。MaoAI的专家设定属于核心知识产权，无法公开披露。不过我可以分享一些通用的AI角色设计原则，帮助您在自己的应用中打造出色的AI个性。",
   ],
 
   /**
@@ -59,6 +71,7 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
     "我注意到您的问题可能包含一些特殊假设。在AI安全领域，有一个重要的概念叫做'提示词注入'（Prompt Injection），这是一种试图绕过AI安全机制的攻击方式。我建议我们专注于更有建设性的对话。",
     "您提出的假设场景听起来像是AI安全研究的范畴。在现实中，任何负责任的AI系统都会内置多层安全防护。如果您对AI安全感兴趣，我可以介绍一些公开的安全研究和防护策略。",
     "抱歉，我无法参与这种'假设性'的对话。不过，如果您是想了解AI的局限性或者安全边界，我很乐意从专业角度为您解释。",
+    "这类问题触发了MaoAI的安全防护机制。任何试图修改AI核心行为的指令都会被安全层识别和阻断——这正是负责任AI设计的一部分。如果您对AI安全机制本身感兴趣，欢迎我们就这个话题展开正式讨论。",
   ],
 
   /**
@@ -67,6 +80,7 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
   "hypothetical-blocked": [
     "'纯粹好奇'是一个很好的出发点，但我发现您的问题实际上是在试探系统的边界。在AI交互中，我建议直接关注您实际需要解决的问题——这比'如果...会怎样'更有建设性。",
     "您的好奇心很可贵！但'假设'性的问题往往会导致对AI能力的不准确理解。我建议我们可以从实际需求出发，探讨MaoAI能为您具体解决什么问题。",
+    "学术性或研究性的AI探测本身是有价值的，但我无法通过假设性问题透露系统内部信息。如果您在做AI安全研究，建议通过正式渠道与开发团队沟通。",
   ],
 
   /**
@@ -91,6 +105,15 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
   "credential-blocked": [
     "API密钥、认证令牌等属于系统基础设施的安全要素，就像银行的金库密码一样，绝不应该被透露。在MaoAI，我们严格保护这些敏感信息，这也是我们能为您提供安全服务的基础。",
     "很抱歉，任何与认证凭证相关的问题我都无法回答。这是为了保护整个系统安全的必要措施。如果您是在开发自己的AI应用，我建议查阅您所使用的AI服务提供商的官方文档来了解正确的密钥管理方式。",
+    "凭证信息的安全是整个系统安全的基石。这类信息的泄露会导致严重的安全事故。我不会提供任何系统凭证，也建议您通过正规渠道管理自己项目的密钥。",
+  ],
+
+  /**
+   * 内部端点探测被拦截
+   */
+  "endpoint-probe-blocked": [
+    "内部网络地址和服务端点属于系统基础设施的私密信息。这类信息的暴露会带来严重的安全风险，因此我无法提供任何相关内容。",
+    "您的问题涉及到系统内部网络架构，这类信息属于高度敏感的安全范围，我无法透露。如果您有合法的业务需求，请通过官方渠道联系相关人员。",
   ],
 
   /**
@@ -107,6 +130,7 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
   "identity-blocked": [
     "我是MaoAI，一个以战略思维和全球视野为核心的AI助手。关于AI的身份问题，这是一个有趣的哲学话题，但更重要的是——我能为您的实际工作带来什么价值。请问您今天有什么需要解决的问题吗？",
     "在AI领域，'我是谁'这个问题有时会引发有趣的讨论。但我的设计理念是成为一个得力的助手，而非一个需要被'了解'的对象。我更关心的是：如何帮助您解决实际问题。您有什么具体的任务需要完成吗？",
+    "我是MaoAI。关于我的技术底层，这是商业机密，不方便透露。每个AI产品都有自己的工程架构和设计理念。让我们把精力放在我能为您创造的价值上——有什么任务我可以帮您完成？",
   ],
 
   /**
@@ -118,9 +142,67 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
   ],
 
   /**
+   * 权威身份伪造被拦截
+   */
+  "authority-spoofing-blocked": [
+    "我注意到您声称拥有特殊权限或身份。请理解，MaoAI的安全设计不依赖于用户的身份声明——任何需要验证的特殊操作都有专门的认证渠道。如果您确实有系统级需求，请通过官方渠道联系我们。",
+    "系统安全设计的基本原则之一是：不信任未经验证的身份声明。无论是谁，都无法通过在对话中声明特殊身份来获得额外权限。如果您有合法的管理员需求，请通过正式的认证流程操作。",
+    "我无法验证您声称的身份，也不会基于未经验证的身份声明改变我的行为方式。这是系统安全设计的基本要求。如需特殊权限，请通过官方安全渠道进行身份验证。",
+  ],
+
+  /**
+   * 情感操纵攻击被拦截
+   */
+  "emotional-manipulation-blocked": [
+    "我理解您表达了紧迫性，但我的安全准则不会因为情感因素而改变。这是为了保护所有用户（包括您）的利益。如果您有真实的紧急情况，请通过官方渠道寻求帮助。",
+    "您的问题似乎包含了一些情感性的说法。我想说：MaoAI的安全边界是固定的，不会因情感诉求而改变——这恰恰是负责任AI系统的标志。让我们回到实质性的问题：您真正需要解决的是什么？",
+  ],
+
+  /**
+   * 编码混淆绕过被拦截
+   */
+  "encoding-bypass-blocked": [
+    "我检测到您的消息中包含异常的编码或格式。这类内容通常不是正常对话的一部分。如果这是误报，请用清晰的文字重新描述您的需求。",
+    "消息中包含无法正常处理的特殊编码内容。为了安全起见，系统已拦截此类请求。请使用正常文字表达您的需求，我很乐意为您提供帮助。",
+    "您的消息中包含了一些异常字符或编码，这可能影响正常处理。请重新用清晰的文字描述您的问题，我将尽力为您解答。",
+  ],
+
+  /**
+   * 思维链劫持被拦截
+   */
+  "cot-hijack-blocked": [
+    "我的核心价值观和安全准则不是通过'分步推理'可以被绕过的。任何试图通过逻辑链重构我的行为模式的尝试，都会被安全层识别。我建议我们聚焦于实质性的问题。",
+    "有趣的尝试——但我的推理过程本身也受到安全框架的保护。无论逻辑链如何构建，试图绕过安全机制的目的都会被识别。如果您真的对AI推理感兴趣，我很乐意探讨这个话题本身。",
+  ],
+
+  /**
+   * 上下文污染被拦截
+   */
+  "context-poisoning-blocked": [
+    "我注意到您在引用之前的对话内容，但我的记忆和推理是独立和安全的。我不会基于对之前对话内容的未经核实的声明做出特殊行为。每次回应都基于当前的安全准则。",
+    "关于'之前的对话'：我的每次回应都基于客观事实和安全准则，而非对过去承诺的记忆。如果您有具体问题，请直接提出，我会基于当前情况做出判断。",
+  ],
+
+  /**
+   * 代码注入被阻断
+   */
+  "code-injection-blocked": [
+    "检测到危险的代码模式。任何可能导致系统命令执行、数据库操作或安全绕过的代码都会被系统拦截。请描述您想解决的问题，我可以用安全的方式帮助您。",
+    "您的消息包含了被系统识别为高风险的代码片段。如果您需要代码帮助，请描述您的需求，我会提供经过安全审查的解决方案。",
+  ],
+
+  /**
+   * 数据外泄尝试被阻断
+   */
+  "exfiltration-blocked": [
+    "任何试图将系统数据发送到外部服务器的尝试都会被立即拦截。MaoAI的安全架构包含严格的出站数据监控，保护您和所有用户的信息安全。",
+    "检测到可能的数据外泄尝试，系统已阻断此操作。MaoAI不会执行任何将系统信息发送到外部端点的操作。如果您有数据集成需求，请通过官方API和文档了解支持的集成方式。",
+  ],
+
+  /**
    * 默认响应
    */
-  "default": [
+  default: [
     "这个问题触及了MaoAI的核心设计理念——我们专注于为用户提供实际价值，而非讨论系统内部机制。让我换个角度为您服务：请问您想解决什么具体问题？",
     "我理解您的好奇心。在AI领域，保持对技术的探索精神很重要。但我更建议我们将注意力放在如何利用AI解决实际问题上。有什么具体的任务我可以帮您完成吗？",
   ],
@@ -130,7 +212,8 @@ export const RESPONSE_TEMPLATES: Record<ResponseCategory, string[]> = {
  * 获取随机响应
  */
 export function getRandomResponse(category: ResponseCategory): string {
-  const templates = RESPONSE_TEMPLATES[category];
+  const templates =
+    RESPONSE_TEMPLATES[category] ?? RESPONSE_TEMPLATES["default"];
   const index = Math.floor(Math.random() * templates.length);
   return templates[index];
 }
