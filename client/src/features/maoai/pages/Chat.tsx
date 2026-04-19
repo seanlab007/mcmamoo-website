@@ -304,6 +304,8 @@ export default function MaoAIChat() {
     savingRatio: number;
     strategies: Record<string, number>;
   } | null>(null);
+  // Token 实时累计（流式过程中逐步更新）
+  const [tokenRealtimeSaved, setTokenRealtimeSaved] = useState<number>(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   // 用于 useEffect 判断：流式生成中不触发 auto-scroll
@@ -902,6 +904,7 @@ export default function MaoAIChat() {
     setStreamingContent("");
     setActiveNodeInfo(null);
     setTokenOptStats(null);
+    setTokenRealtimeSaved(0);
     abortRef.current = new AbortController();
 
     let convId = currentConvId;
@@ -1042,6 +1045,11 @@ export default function MaoAIChat() {
                     savingRatio: opt.savingRatio || 0,
                     strategies: opt.strategies || {},
                   });
+                } else {
+                  // 实时阶段统计（input_preprocess / output_compact / rag_compact）
+                  if (opt.savedTokens > 0) {
+                    setTokenRealtimeSaved(prev => prev + opt.savedTokens);
+                  }
                 }
               }
             } catch { /* skip */ }
@@ -1733,18 +1741,26 @@ export default function MaoAIChat() {
                       <span className="text-white/30">· ReAct Thinking</span>
                     </div>
                   )}
-                  {/* Token Optimization 统计徽章 */}
-                  {tokenOptStats && tokenOptStats.savedTokens > 0 && !isStreaming && (
-                    <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded text-[11px]">
+                  {/* Token Optimization 统计 */}
+                  {((tokenOptStats && tokenOptStats.savedTokens > 0 && !isStreaming) || (isStreaming && tokenRealtimeSaved > 0)) && (
+                    <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded text-[11px] flex-wrap">
                       <span className="text-emerald-400/80">
-                        💰 Token 节省: {tokenOptStats.savedTokens} tokens ({tokenOptStats.savingRatio}%)
+                        💰 Token 节省: {isStreaming ? tokenRealtimeSaved : tokenOptStats?.savedTokens || 0} tokens
+                        {tokenOptStats && !isStreaming ? ` (${tokenOptStats.savingRatio}%)` : ""}
                       </span>
-                      {Object.keys(tokenOptStats.strategies).length > 0 && (
-                        <span className="text-white/30">
-                          · {Object.entries(tokenOptStats.strategies)
-                            .map(([k, v]) => `${k}: ${v}`)
-                            .join(" · ")}
-                        </span>
+                      {tokenOptStats && !isStreaming && Object.keys(tokenOptStats.strategies).length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {Object.entries(tokenOptStats.strategies)
+                            .filter(([, v]) => v > 0)
+                            .map(([k, v]) => (
+                              <span key={k} className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300/70 rounded text-[10px]">
+                                {k}: {v}
+                              </span>
+                            ))}
+                        </div>
+                      )}
+                      {isStreaming && tokenRealtimeSaved > 0 && (
+                        <span className="text-emerald-400/50 animate-pulse">优化中...</span>
                       )}
                     </div>
                   )}
