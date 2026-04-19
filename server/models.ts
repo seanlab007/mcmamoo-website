@@ -163,12 +163,14 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsVision: true,
   },
 
-  // ── Google AI Studio (Gemma 4) ─────────────────────────────────────────────
-  "gemma-4-e2b-it": {
-    name: "Gemma 4 E2B",
+  // ── Google AI Studio (Gemma 3n / Gemma 4) ─────────────────────────────────────
+  // ⚠️ 模型 ID 已根据 API 实际情况修正（2026-04-19 验证）
+  // API Key 使用同一个 GOOGLE_AI_STUDIO_API_KEY
+  "gemma-3n-e2b-it": {
+    name: "Gemma 3n E2B",
     badge: "MOBILE",
     provider: "google-ai-studio",
-    model: "gemma-4-e2b-it",
+    model: "gemma-3n-e2b-it",
     baseUrl: GOOGLE_AI_STUDIO_BASE,
     get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
     maxTokens: 128000,
@@ -176,11 +178,11 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsAudio: true,
     supportsVideo: true,
   },
-  "gemma-4-e4b-it": {
-    name: "Gemma 4 E4B",
+  "gemma-3n-e4b-it": {
+    name: "Gemma 3n E4B",
     badge: "EDGE",
     provider: "google-ai-studio",
-    model: "gemma-4-e4b-it",
+    model: "gemma-3n-e4b-it",
     baseUrl: GOOGLE_AI_STUDIO_BASE,
     get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
     maxTokens: 128000,
@@ -188,18 +190,20 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     supportsAudio: true,
     supportsVideo: true,
   },
-  "gemma-4-26b-it": {
-    name: "Gemma 4 26B",
+  // Gemma 4 26B A4B (MoE 架构，激活参数仅 3.8B)
+  "gemma-4-26b-a4b-it": {
+    name: "Gemma 4 26B A4B",
     badge: "PRO",
     provider: "google-ai-studio",
-    model: "gemma-4-26b-it",
+    model: "gemma-4-26b-a4b-it",
     baseUrl: GOOGLE_AI_STUDIO_BASE,
     get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
-    maxTokens: 256000,
+    maxTokens: 262144,
     supportsVision: true,
     supportsAudio: true,
     supportsVideo: true,
   },
+  // Gemma 4 31B (Dense 架构，Arena AI 开源第三)
   "gemma-4-31b-it": {
     name: "Gemma 4 31B",
     badge: "MAX",
@@ -207,7 +211,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     model: "gemma-4-31b-it",
     baseUrl: GOOGLE_AI_STUDIO_BASE,
     get apiKey() { return process.env.GOOGLE_AI_STUDIO_API_KEY || ""; },
-    maxTokens: 256000,
+    maxTokens: 262144,
     supportsVision: true,
     supportsAudio: true,
     supportsVideo: true,
