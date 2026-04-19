@@ -3,23 +3,26 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.4.1 --activate
+RUN npm install -g pnpm@10.4.1
 
-# Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy package files first for caching
+COPY package.json pnpm-lock.yaml ./
 COPY packages/rowboat-core/package.json ./packages/rowboat-core/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
+# Copy all source code
 COPY . .
 
-# Build
+# Build frontend and backend
 RUN pnpm run build
 
 # Expose port
 EXPOSE 3000
 
-# Start
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Start the server
 CMD ["node", "dist/index.js"]
