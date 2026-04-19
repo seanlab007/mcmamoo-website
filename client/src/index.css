@@ -237,3 +237,18 @@
   background: oklch(0.72 0.09 75 / 30%);
   color: oklch(0.95 0.005 75);
 }
+
+/* ── Scroll Anchoring — 解决 AI 流式输出时的屏幕闪跳 ── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 全局启用 Scroll Anchoring：浏览器自动补偿动态内容增长 */
+body {
+  overflow-anchor: auto;
+}
+
+/* AI 聊天流式输出气泡 — 高度预占避免跳动 */
+[data-streaming] {
+  min-height: 48px;
+}
