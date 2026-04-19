@@ -1,2 +1,11 @@
 [phases.setup]
 nixPkgs = ["nodejs_22", "nodePackages.pnpm"]
+
+[phases.install]
+cmd = "pnpm install --no-frozen-lockfile"
+
+[phases.build]
+cmd = "pnpm run build"
+
+[variables]
+NODE_ENV = "production"
