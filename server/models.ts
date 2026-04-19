@@ -9,7 +9,7 @@
 export interface ModelConfig {
   name: string;
   badge: string;
-  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "google-ai-studio" | "zai" | "autoclaw" | "anthropic";
+  provider: "zhipu" | "deepseek" | "groq" | "gemini" | "google-ai-studio" | "zai" | "autoclaw" | "anthropic" | "ollama";
   model: string;
   baseUrl: string;
   /** apiKey 为 getter，运行时动态读取环境变量，避免模块加载顺序问题 */
@@ -20,6 +20,8 @@ export interface ModelConfig {
   supportsVideo?: boolean;
   /** 是否支持 extended thinking / reasoning 模式 */
   supportsReasoning?: boolean;
+  /** 是否为嵌入模型 */
+  isEmbedding?: boolean;
 }
 
 // ─── Provider Base URLs ───────────────────────────────────────────────────────
@@ -294,5 +296,60 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     get apiKey() { return process.env.ANTHROPIC_API_KEY || ""; },
     maxTokens: 4096,
     supportsVision: true,
+  },
+
+  // ── Ollama 本地模型 ─────────────────────────────────────────────────────────
+  // 通过 OLLAMA_BASE_URL 自动发现本地模型
+  // 这些配置用于 MaoAI 识别和路由到本地 Ollama 实例
+  "ollama-gemma3-4b": {
+    name: "Gemma 3 4B (Local)",
+    badge: "LOCAL",
+    provider: "ollama",
+    model: "gemma3:4b",
+    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    get apiKey() { return ""; },  // Ollama 不需要 API Key
+    maxTokens: 8192,
+    supportsVision: true,
+  },
+  "ollama-qwen2.5-7b": {
+    name: "Qwen 2.5 7B (Local)",
+    badge: "LOCAL",
+    provider: "ollama",
+    model: "qwen2.5:7b",
+    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    get apiKey() { return ""; },
+    maxTokens: 32768,
+  },
+  "ollama-qwen2.5-3b": {
+    name: "Qwen 2.5 3B (Local)",
+    badge: "LOCAL",
+    provider: "ollama",
+    model: "qwen2.5:3b",
+    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    get apiKey() { return ""; },
+    maxTokens: 32768,
+  },
+
+  // ── Ollama 嵌入模型 ─────────────────────────────────────────────────────────
+  // 用于 RAG、语义搜索、文本相似度计算
+  "ollama-nomic-embed": {
+    name: "Nomic Embed (Local)",
+    badge: "EMBED",
+    provider: "ollama",
+    model: "nomic-embed-text:latest",
+    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    get apiKey() { return ""; },
+    maxTokens: 512,
+    isEmbedding: true,
+  },
+  "ollama-all-minilm": {
+    name: "All-MiniLM (Local)",
+    badge: "EMBED",
+    provider: "ollama",
+    model: "all-minilm:latest",
+    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    get apiKey() { return ""; },
+    maxTokens: 512,
+    isEmbedding: true,
   },
 };

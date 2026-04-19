@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { getRowboatAgent } from './rowboat-agent';
 
 const rowboatRouter = Router();
+export { rowboatRouter };
 export default rowboatRouter;
 
 // 初始化 Agent

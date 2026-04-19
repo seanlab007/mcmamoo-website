@@ -8,8 +8,8 @@
  * @see https://github.com/rowboatlabs/rowboat
  */
 
-import { EntityExtractor, MemoryManager, GraphStore } from '@maoai/rowboat-core';
-import { Entity, Memory, ExtractionResult } from '@maoai/rowboat-core';
+import { EntityExtractor, MemoryManager, GraphStore } from '../../packages/rowboat-core/src';
+import { Entity, Memory, ExtractionResult } from '../../packages/rowboat-core/src/types';
 
 // MCP 协议类型
 interface MCPRequest {
