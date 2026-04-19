@@ -19,6 +19,7 @@ export { default as MaoAICustomerService } from "./pages/CustomerService";
 
 // Components
 export { AgentModeSelector } from "./components/AgentModeSelector";
+export { SuggestedFollowUps } from "./components/SuggestedFollowUps";
 
 // Constants
 export {
@@ -27,6 +28,7 @@ export {
   MAOAI_TOOL_DISPLAY,
   MAOAI_TIER_LABELS,
   MAOAI_LOCAL_OLLAMA,
+  SUGGESTION_DIMENSIONS,
 } from "./constants";
 
 // Types
@@ -46,4 +48,6 @@ export type {
   LeadStatus,
   MaoAIRoute,
   MaoAIInputMode,
+  SuggestedQuestion,
+  SuggestionDimension,
 } from "./types";

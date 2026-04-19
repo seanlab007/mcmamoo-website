@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { AgentModeSelector } from "../components/AgentModeSelector";
+import { SuggestedFollowUps } from "../components/SuggestedFollowUps";
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
@@ -25,6 +26,7 @@ import type {
   Conversation,
   PendingFile,
   ToolCallStep,
+  SuggestedQuestion,
 } from "../types";
 
 const BACKEND_URL = MAOAI_BACKEND_URL;
@@ -293,6 +295,9 @@ export default function MaoAIChat() {
   // Agent 推理日志（Manus Max 流式可视化）
   const [agentLogs, setAgentLogs] = useState<any[]>([]);
   const [agentThinkingOpen, setAgentThinkingOpen] = useState(true);
+  // 推荐追问状态
+  const [suggestions, setSuggestions] = useState<SuggestedQuestion[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   // 用于 useEffect 判断：流式生成中不触发 auto-scroll
@@ -836,6 +841,9 @@ export default function MaoAIChat() {
     if (!checkChatLimit()) return;
     if (!currentOption.isLocal && !checkPremiumModel(selectedId)) return;
 
+    // 清除之前的推荐追问
+    setSuggestions([]);
+
     // Build document context system prompt from pending files
     let docSystemPrompt = "";
     if (pendingFiles.length > 0) {
@@ -1059,6 +1067,11 @@ export default function MaoAIChat() {
       setReactRound(null);
       setAgentLogs([]);
       abortRef.current = null;
+      
+      // 生成推荐追问
+      if (fullContent && fullContent.trim().length >= 50) {
+        generateSuggestions([...newMessages, { role: "assistant" as const, content: fullContent }], fullContent);
+      }
     }
   };
 
@@ -1092,7 +1105,47 @@ export default function MaoAIChat() {
     abortRef.current?.abort();
   };
 
-  const isBusy = isStreaming || isGeneratingImage || isUploadingFile;
+  // ── 生成推荐追问 ───────────────────────────────────────────────────
+  const generateSuggestions = useCallback(async (messagesHistory: Message[], lastResponse: string) => {
+    if (!lastResponse.trim() || lastResponse.length < 50) {
+      // 回复太短，不生成建议
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+    setSuggestions([]);
+
+    try {
+      const resp = await fetch(`${BACKEND_URL}/api/ai/suggestions`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          messages: messagesHistory.slice(-6).map(m => ({
+            role: m.role,
+            content: typeof m.content === "string" ? m.content : getDisplayText(m.content),
+          })),
+          lastResponse,
+        }),
+      });
+
+      if (!resp.ok) {
+        console.warn("[Suggestions] API error:", resp.status);
+        return;
+      }
+
+      const data = await resp.json();
+      if (data.suggestions && Array.isArray(data.suggestions)) {
+        setSuggestions(data.suggestions);
+      }
+    } catch (err) {
+      console.warn("[Suggestions] Error:", err);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  }, []);
+
+  const isBusy = isStreaming || isGeneratingImage || isUploadingFile || isLoadingSuggestions;
 
   if (loading) {
     return (
@@ -1600,6 +1653,24 @@ export default function MaoAIChat() {
                 </div>
               );
             })}
+
+            {/* 推荐追问 — 仅在最后一条 assistant 消息后显示 */}
+            {!isStreaming && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
+              <div className="flex gap-4 justify-start">
+                <div className="w-8 shrink-0" /> {/* 占位，对齐消息 */}
+                <div className="max-w-[80%]">
+                  <SuggestedFollowUps
+                    suggestions={suggestions}
+                    onSend={(question) => {
+                      setInput(question);
+                      sendMessage(question);
+                    }}
+                    isLoading={isLoadingSuggestions}
+                    disabled={isBusy}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Streaming chat bubble */}
             {isStreaming && (
