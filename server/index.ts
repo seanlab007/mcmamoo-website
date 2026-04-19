@@ -9,6 +9,7 @@ import { registerOAuthRoutes } from "./_core/oauth";
 import { registerSupabaseAuthRoutes } from "./_core/supabaseAuth";
 import { mcpServerRouter } from "./mcp-server";
 import { notesRouter } from "./notes";
+import { compassRouter } from "./compassData";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,6 +33,8 @@ async function startServer() {
   app.use("/api/mcp", mcpServerRouter);
   // 私密云笔记 API（管理员专属）
   app.use("/api/notes", notesRouter);
+  // 罗盘数据 API — 从 ~/.maoai-sync/ 读取真实数据
+  app.use("/api/compass", compassRouter);
 
   // Serve static files from dist/public in production
   const staticPath =
