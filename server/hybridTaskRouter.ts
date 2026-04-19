@@ -19,6 +19,69 @@ import os from "os";
 import crypto from "crypto";
 
 // ═══════════════════════════════════════════════════════════════════
+// AI Headquarters 集成 — 自动上报到 n8n 总控系统
+// ═══════════════════════════════════════════════════════════════════
+
+/** HQ Proxy 地址（与 hq-local-proxy.js 对应） */
+const HQ_URL = process.env.HQ_URL || "http://127.0.0.1:5680";
+
+interface HQReport {
+  protocolVersion: string;
+  agentId: string;
+  agentType: string;
+  accountId: string;
+  machineId: string;
+  machineName: string;
+  action: "register" | "heartbeat" | "task-update" | "task-complete" | "task-failed" | "error";
+  payload: Record<string, unknown>;
+  okrLink?: { businessId: string; objectiveIndex: number; krIndex: number };
+}
+
+/**
+ * 向 AI Headquarters 发送上报（非阻塞，失败不影响主流程）
+ * 协议兼容: POST /webhook/ai-hq-report
+ */
+async function reportToHQ(report: Partial<HQReport>): Promise<void> {
+  try {
+    const fullReport: HQReport = {
+      protocolVersion: "1.0",
+      agentId: "maoai-triad",
+      agentType: "maoai",
+      accountId: process.env.ACCOUNT_ID || "acc-mbp-main",
+      machineId: process.env.MACHINE_ID || "mbp-pro",
+      machineName: os.hostname(),
+      ...report,
+      payload: report.payload || {},
+    };
+
+    const res = await fetch(`${HQ_URL}/webhook/ai-hq-report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fullReport),
+      signal: AbortSignal.timeout(3000), // 3s 超时，不阻塞主流程
+    });
+
+    if (res.ok) {
+      // 仅在开发环境打印详细日志
+      if (process.env.NODE_ENV === "development") {
+        const result = await res.json().catch(() => ({}));
+        console.log(`[HQ] ${report.action} ✅ (${result.data?.message || "OK"})`);
+      }
+    } else {
+      // HQ 离线时静默忽略
+      if (process.env.NODE_ENV === "development") {
+        console.warn(`[HQ] ${report.action} ⚠️ HTTP ${res.status} (HQ 可能离线)`);
+      }
+    }
+  } catch (err) {
+    // 网络错误静默处理 — HQ 不是关键路径
+    if (process.env.NODE_ENV === "development") {
+      console.warn(`[HQ] ${report.action} ⚠️ 连接失败: ${(err as Error).message}`);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // 常量配置
 // ═══════════════════════════════════════════════════════════════════
 
@@ -183,6 +246,17 @@ export class MaoAIRouter {
 
       this.deviceStatus.isOnline = true;
       console.log(`[MaoAIRouter] 设备已注册: ${this.deviceStatus.deviceId}`);
+
+      // ★ 向 AI Headquarters 注册
+      reportToHQ({
+        action: "register",
+        payload: {
+          version: "3.0",
+          capabilities: ["triad-loop", "hybrid-cloud", "tRPC", "websocket"],
+          workspace: "/Users/daiyan/Desktop/mcmamoo-website",
+        },
+      });
+
       return true;
     } catch (err) {
       console.error("[MaoAIRouter] 设备注册异常:", err);
@@ -221,7 +295,7 @@ export class MaoAIRouter {
   }
 
   /**
-   * 发送一次心跳到 Supabase
+   * 发送一次心跳到 Supabase + AI Headquarters
    */
   private async sendHeartbeat(): Promise<void> {
     try {
@@ -238,6 +312,15 @@ export class MaoAIRouter {
         this.deviceStatus.isOnline = true;
         this.deviceStatus.lastSeenAt = now;
         this.deviceStatus.lastHeartbeatAt = Date.now();
+
+        // ★ 向 HQ 上报心跳（每 30s 一次，非阻塞）
+        reportToHQ({
+          action: "heartbeat",
+          payload: {
+            status: "online",
+            pendingCommands: await this.getPendingCommandCount(),
+          },
+        });
       }
     } catch (err) {
       console.warn("[MaoAIRouter] 心跳异常:", err);
@@ -339,6 +422,21 @@ export class MaoAIRouter {
 
     // 回调通知
     this.onRouteDecision?.(request, response);
+
+    // ★ 向 HQ 上报任务路由决策
+    reportToHQ({
+      action: "task-update",
+      payload: {
+        taskId: `route-${request.taskType}-${Date.now()}`,
+        title: `路由决策: ${request.taskType} → ${decision}`,
+        status: "running",
+        progress: 0,
+        step: decision,
+        strategy,
+        reason,
+      },
+      okrLink: { businessId: "maoai", objectiveIndex: 2, krIndex: 0 },
+    });
 
     // 记录路由决策到遥测日志
     this.logTelemetry("INFO", `Route: ${request.taskType} → ${decision}`, {

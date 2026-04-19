@@ -123,12 +123,72 @@ async function upsertUser(user: {
   }
 }
 
-/**
- * Supabase 邮箱+密码登录路由
- * POST /api/auth/email-login
- * Body: { email: string, password: string }
- */
+  /**
+   * Supabase 邮箱+密码登录路由
+   * POST /api/auth/email-login
+   * Body: { email: string, password: string }
+   */
 export function registerSupabaseAuthRoutes(app: Express) {
+  // ── 密码重置 ──────────────────────────────────────────────────────
+  // POST /api/auth/password-reset-request
+  // Body: { email: string } → 发送密码重置邮件到用户邮箱
+  app.post("/api/auth/password-reset-request", async (req: Request, res: Response) => {
+    const { email } = req.body as { email?: string };
+    if (!email) {
+      res.status(400).json({ error: "请输入邮箱地址" });
+      return;
+    }
+
+    const cfg = getSupabaseConfig();
+    if (!cfg.url || !cfg.anonKey) {
+      console.error("[SupabaseAuth] Missing env for password reset");
+      res.status(500).json({ error: "服务未配置" });
+      return;
+    }
+
+    try {
+      // 调用 Supabase Auth 发送密码重置邮件
+      const resetResp = await fetch(
+        `${cfg.url}/auth/v1/recover`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: cfg.anonKey,
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const resetData = await resetResp.json() as Record<string, unknown>;
+
+      if (!resetResp.ok) {
+        console.error("[SupabaseAuth] Password reset request failed:", resetData);
+        // 即使失败也返回成功（防止邮箱枚举攻击）
+        res.json({
+          success: true,
+          message: "如果该邮箱已注册，您将收到一封重置邮件（请检查垃圾箱）",
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: "重置链接已发送到您的邮箱，请检查收件箱和垃圾箱",
+      });
+    } catch (error) {
+      console.error("[SupabaseAuth] Password reset error:", error);
+      // 安全起见，不暴露具体错误
+      res.json({
+        success: true,
+        message: "如果该邮箱已注册，您将收到一封重置邮件（请检查垃圾箱）",
+      });
+    }
+  });
+
+  // ── 邮箱登录 ───────────────────────────────────────────────────────
+  // POST /api/auth/email-login
+  // Body: { email: string, password: string }
   app.post("/api/auth/email-login", async (req: Request, res: Response) => {
     const { email, password } = req.body as { email?: string; password?: string };
 

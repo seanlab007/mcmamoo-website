@@ -2183,6 +2183,44 @@ function safeInject(windowKey, defaultData) {
   return defaultData;
 }
 
+// ── 从 API 拉取真实数据 ──────────────────────────────────────────
+async function fetchCompassData() {
+  try {
+    const resp = await fetch('/api/compass/data');
+    if (!resp.ok) throw new Error('API error: ' + resp.status);
+    const data = await resp.json();
+    
+    // 如果有真实数据，注入到全局变量
+    if (data.okr && !data.okr.error) {
+      window.__OKR_INJECTED__ = data.okr;
+    }
+    if (data.fleet && !data.fleet.error) {
+      window.__FLEET_INJECTED__ = data.fleet;
+    }
+    
+    // 单独获取 health 和 sync 数据
+    try {
+      const healthResp = await fetch('/api/compass/health');
+      if (healthResp.ok) {
+        const healthData = await healthResp.json();
+        window.__HEALTH_INJECTED__ = healthData;
+      }
+    } catch (e) { /* health optional */ }
+    
+    try {
+      const syncResp = await fetch('/api/compass/sync');
+      if (syncResp.ok) {
+        const syncData = await syncResp.json();
+        window.__SYNC_INJECTED__ = syncData;
+      }
+    } catch (e) { /* sync optional */ }
+    
+    console.log('[Compass] 真实数据加载成功');
+  } catch (e) {
+    console.warn('[Compass] API 不可用，将使用演示数据:', e.message);
+  }
+}
+
 (function init() {
   // 1. 锁定当前滚动位置
   var scrollY = window.scrollY || window.pageYOffset || 0;
@@ -2203,10 +2241,32 @@ function safeInject(windowKey, defaultData) {
   renderFleetPanel();  // ← 新增：任务舰队面板
   renderSyncPanel();   // ← 新增：跨设备同步状态面板
 
-  // 4. 渲染完成，恢复滚动
+  // 4. 渲染完成后，异步加载真实数据并更新
   requestAnimationFrame(function() {
     window.scrollTo(0, scrollY);
     document.body.classList.remove('loading');
+    
+    // 异步拉取真实数据并刷新面板
+    fetchCompassData().then(function() {
+      // 数据加载完成后重新渲染（如果数据已更新）
+      if (window.__OKR_INJECTED__) {
+        Object.assign(OKR_DATA, window.__OKR_INJECTED__);
+        renderCompassRing();
+        renderOverview();
+        renderBusinessCards();
+      }
+      if (window.__FLEET_INJECTED__) {
+        renderFleetPanel();
+      }
+      if (window.__HEALTH_INJECTED__) {
+        renderHealthPanel();
+      }
+      if (window.__SYNC_INJECTED__) {
+        renderSyncPanel();
+      }
+      setUpdateTime();
+    });
+  });
   });
 })();
 </script>

@@ -49,9 +49,21 @@ const trpcClient = trpc.createClient({
         return sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {};
       },
       fetch(input, init) {
+        // 从 localStorage 获取 sessionToken（邮箱登录后存储的）
+        const sessionToken =
+          typeof window !== "undefined"
+            ? localStorage.getItem("maoai_session_token")
+            : null;
+
+        const headers: Record<string, string> = {
+          ...(init?.headers as Record<string, string> ?? {}),
+          ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+        };
+
         return globalThis.fetch(input, {
           ...(init ?? {}),
-          credentials: "include",
+          headers,
+          credentials: "include", // 同时尝试带 Cookie（同域场景）
         });
       },
     }),
