@@ -56,7 +56,7 @@ export type CloudModel = {
   description: string;
   supportsVision?: boolean;
   available?: boolean;
-  isLocal: false;
+  isLocal: boolean;  // true = Ollama 本地模型, false = 云端模型
 };
 
 export type LocalNode = {
