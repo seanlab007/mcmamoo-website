@@ -18,6 +18,7 @@ const buildEndpointUrl = (baseUrl: string): string => {
   return `${normalizedBase}/webdevtoken.v1.WebDevService/SendNotification`;
 };
 
+function validatePayload(input: NotificationPayload) {
   if (!isNonEmptyString(input.content)) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -43,7 +44,7 @@ const buildEndpointUrl = (baseUrl: string): string => {
   }
 
   return { title, content };
-};
+}
 
 /**
  * Dispatches a project-owner notification through the Manus Notification Service.

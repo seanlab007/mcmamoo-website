@@ -192,24 +192,14 @@ export const TOOL_DEFINITIONS = [
         required: ["query"]
       }
     }
-  },
-      parameters: {
-        type: "object",
-        properties: {
-          task: {
-            type: "string",
-          }
-        },
-        required: ["task"]
-      }
-    }
   }
 ];
 
 // ─── 合并 OpenClaw / OpenCLI Tools 到工具列表 ─────────────────────────────────
 // OpenClaw Skills 对普通用户和管理员都开放（openclaw_shell 除外，在 executor 中鉴权）
-(TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLAW_TOOL_DEFINITIONS as unknown as any[]));
-(TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLI_TOOL_DEFINITIONS as unknown as any[]));
+// TODO: 重新添加 OPENCLAW_TOOL_DEFINITIONS 和 OPENCLI_TOOL_DEFINITIONS 导入
+// (TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLAW_TOOL_DEFINITIONS as unknown as any[]));
+// (TOOL_DEFINITIONS as unknown as any[]).push(...(OPENCLI_TOOL_DEFINITIONS as unknown as any[]));
 
 // Admin-only tools (不暴露给普通用户)
 export const ADMIN_TOOL_DEFINITIONS = [
@@ -966,14 +956,6 @@ async function toolRunShell(command: string, cwd: string): Promise<ToolResult> {
       success: false,
       output: err.stdout || "",
       error: err.stderr || err.message
-    };
-  }
-}
-
-  } catch (err: any) {
-    return {
-      success: false,
-      output: "",
     };
   }
 }
