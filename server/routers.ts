@@ -318,7 +318,10 @@ export const appRouter = router({
         provider: cfg.provider,
         supportsVision: cfg.supportsVision ?? false,
         configured: !!cfg.apiKey,
-        available: !!cfg.apiKey,
+        // Ollama 本地模型不需要 API Key，但需要检测服务是否在线
+        // 对于本地模型，available 取决于 isLocal (provider === "ollama")
+        available: cfg.provider === "ollama" ? true : !!cfg.apiKey,
+        isLocal: cfg.provider === "ollama",
       }));
     }),
     status: publicProcedure.query(async () => {

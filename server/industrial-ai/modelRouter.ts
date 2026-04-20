@@ -45,13 +45,16 @@ function classifyByIntent(text: string): { tier: ModelTier; confidence: number }
 }
 
 const MODEL_MAP: Record<ModelTier, string[]> = {
-  free: ["glm-4-flash", "llama-3.1-8b"],
-  cheap: ["glm-4-flash", "deepseek-chat", "gemini-2.5-flash"],
+  free: ["ollama-gemma3-4b", "ollama-qwen2.5-3b", "llama-3.1-8b", "glm-4-flash"],
+  cheap: ["ollama-qwen2.5-7b", "glm-4-flash", "deepseek-chat", "gemini-2.5-flash"],
   expensive: ["deepseek-reasoner", "gemini-2.5-pro", "claude-sonnet-4-5"],
   max: ["claude-opus-4-5", "gemini-2.5-pro"],
 };
 
 const MODEL_COSTS: Record<string, number> = {
+  // Ollama 本地模型（零成本）
+  "ollama-gemma3-4b": 0, "ollama-qwen2.5-3b": 0, "ollama-qwen2.5-7b": 0,
+  // 云端模型
   "glm-4-flash": 0.001, "llama-3.1-8b": 0.002, "deepseek-chat": 0.014,
   "deepseek-reasoner": 0.055, "gemini-2.5-flash": 0.0035, "gemini-2.5-pro": 0.035,
   "claude-sonnet-4-5": 0.03, "claude-opus-4-5": 0.075,
