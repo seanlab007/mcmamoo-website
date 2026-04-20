@@ -524,9 +524,9 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     try {
       const ragResults = await searchCorpus(userTextForRag, 3);
       if (ragResults.length > 0) {
-          res.write(`data: ${JSON.stringify({ ragReferences: { count: ragResults.length, preview: refs.slice(0, 100) + "..." } })}\n\n`);
-          effectiveSystemPrompt = (effectiveSystemPrompt ? effectiveSystemPrompt + "\n\n" : "") + refs;
-        }
+        const refs = ragResults.map((r: any) => `[${r.title}]: ${r.content?.slice(0, 300)}...`).join("\n\n");
+        res.write(`data: ${JSON.stringify({ ragReferences: { count: ragResults.length, preview: refs.slice(0, 100) + "..." } })}\n\n`);
+        effectiveSystemPrompt = (effectiveSystemPrompt ? effectiveSystemPrompt + "\n\n" : "") + refs;
       }
     } catch (_) { /* RAG 失败不影响主流程 */ }
   }
@@ -535,8 +535,8 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
 
   // ── Token Optimization: 输入预处理 ──────────────────────────────────────
   // 压缩用户输入和 system prompt，减少发送给 LLM 的 token 数
-  const sessionId = req.headers["x-session-id"] as string || `chat-${Date.now()}`;
-  const { messages: optimizedMessages, savedTokens: inputSaved, stats: inputStats } = tokenPipeline.optimizeInput(rawMessages, sessionId);
+  const optSessionId = req.headers["x-session-id"] as string || `chat-${Date.now()}`;
+  const { messages: optimizedMessages, savedTokens: inputSaved, stats: inputStats } = tokenPipeline.optimizeInput(rawMessages, optSessionId);
 
   if (inputSaved > 0) {
     res.write(`data: ${JSON.stringify({
