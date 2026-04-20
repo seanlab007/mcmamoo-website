@@ -10,10 +10,16 @@ import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
 import { searchCorpus, formatForPrompt } from "./maoRagServer";
-<<<<<<< HEAD
 import { TokenOptimizationPipeline } from "./token-optimization";
-=======
->>>>>>> feat/maoai-latest
+
+// ─── Industrial AI Modules ────────────────────────────────────────────────────
+import { 
+  modelRouter, 
+  semanticCache, 
+  streamingOptimizer,
+  dataFlywheel,
+  TokenTimer 
+} from "./industrial-ai";
 
 const aiStreamRouter = Router();
 
@@ -297,6 +303,41 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
+
+  // ── Industrial AI: Token Timer & Session Context ──────────────────────────────────
+  const tokenTimer = new TokenTimer();
+  const sessionId = req.body.sessionId || `session_${Date.now()}`;
+  const messageId = `msg_${Date.now()}`;
+
+  // ── Industrial AI: Semantic Cache Check (Priority 1) ───────────────────────────
+  const lastUserMsg = [...(messages ?? [])].reverse().find((m: any) => m.role === "user");
+  const userText = typeof lastUserMsg?.content === "string"
+    ? lastUserMsg.content
+    : Array.isArray(lastUserMsg?.content)
+      ? lastUserMsg.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
+      : "";
+
+  if (userText.trim() && !hasImage) {
+    // 语义缓存命中检查
+    const cacheResult = semanticCache.get(userText);
+    if (cacheResult.hit) {
+      console.log(`[IndustrialAI] Cache HIT for session ${sessionId}`);
+      streamingOptimizer.sendChunk(res, cacheResult.response!);
+      streamingOptimizer.sendDone(res, {
+        totalTokens: Math.ceil(cacheResult.response!.length / 4),
+        latencyMs: Date.now() - (req.body._startTime || Date.now()),
+        model: "CACHE",
+      });
+      return;
+    }
+
+    // 模型路由选择（成本优化）
+    const routing = modelRouter.route(userText, model);
+    if (routing.modelKey && !model.startsWith("local:")) {
+      console.log(`[IndustrialAI] Routed: "${userText.slice(0, 30)}..." -> ${routing.modelKey} (${routing.modelTier})`);
+      streamingOptimizer.sendChunk(res, `<!-- routed:${routing.modelKey}:${routing.modelTier} -->`);
+    }
+  }
 
   // ── Vision auto-routing: if any message contains image_url, switch to vision model ──
   const hasImage = Array.isArray(messages) && messages.some((m: any) =>
@@ -789,7 +830,6 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     res.write(`data: ${JSON.stringify({
       reactEnd: { reason: "max_rounds", rounds: MAX_TOOL_ROUNDS }
     })}\n\n`);
-<<<<<<< HEAD
 
     // ── Token Optimization: 推送会话总统计 ──────────────────────────────
     const finalSessionStats = tokenPipeline.getSessionStats(sessionId);
@@ -805,8 +845,22 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
       })}\n\n`);
     }
 
-=======
->>>>>>> feat/maoai-latest
+    // ── Industrial AI: 后处理（缓存+反馈） ─────────────────────────────
+    const stats = tokenTimer.getStats();
+    if (userText.trim()) {
+      // 写入语义缓存（已通过路由和缓存检查）
+      dataFlywheel.recordFeedback({
+        sessionId,
+        messageId,
+        type: "thumbs_up",
+        metadata: {
+          responseTime: stats.totalLatency,
+          modelKey: model,
+          tokenCount: stats.totalTokens,
+        },
+      });
+    }
+
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (err: any) {
