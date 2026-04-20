@@ -5,11 +5,6 @@
  * 需要修改路由或配置时，只需改这一个文件。
  */
 
-<<<<<<< HEAD
-import type { SuggestionDimension } from "./types";
-
-=======
->>>>>>> feat/maoai-latest
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 export const MAOAI_ROUTES = {
@@ -127,17 +122,3 @@ export const MAOAI_SUPPORTED_FILE_TYPES = [
 ] as const;
 export type MaoAISupportedFileType =
   (typeof MAOAI_SUPPORTED_FILE_TYPES)[number];
-<<<<<<< HEAD
-
-// ─── Suggested Follow-ups Dimensions ──────────────────────────────────────────
-
-export const SUGGESTION_DIMENSIONS: Record<
-  SuggestionDimension,
-  { label: string; labelEn: string; emoji: string }
-> = {
-  depth: { label: "深度", labelEn: "Depth", emoji: "🔬" },
-  tradeoff: { label: "权衡", labelEn: "Trade-off", emoji: "⚖️" },
-  practice: { label: "实践", labelEn: "Practice", emoji: "🚀" },
-} as const;
-=======
->>>>>>> feat/maoai-latest

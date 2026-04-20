@@ -524,26 +524,6 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     try {
       const ragResults = await searchCorpus(userTextForRag, 3);
       if (ragResults.length > 0) {
-<<<<<<< HEAD
-        let refs = formatForPrompt(ragResults);
-        if (refs) {
-          // ── Token Optimization: RAG 上下文压缩 ────────────────────────
-          const { text: compressedRefs, savedTokens: ragSaved } = tokenPipeline.optimizeRagContext(refs, sessionId);
-          refs = compressedRefs;
-          if (ragSaved > 0) {
-            res.write(`data: ${JSON.stringify({
-              tokenOptimization: {
-                stage: "rag_compact",
-                savedTokens: ragSaved,
-                originalChars: refs.length + ragSaved * 4,
-                processedChars: refs.length,
-              }
-            })}\n\n`);
-          }
-=======
-        const refs = formatForPrompt(ragResults);
-        if (refs) {
->>>>>>> feat/maoai-latest
           res.write(`data: ${JSON.stringify({ ragReferences: { count: ragResults.length, preview: refs.slice(0, 100) + "..." } })}\n\n`);
           effectiveSystemPrompt = (effectiveSystemPrompt ? effectiveSystemPrompt + "\n\n" : "") + refs;
         }
@@ -735,24 +715,6 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         res.write(`data: ${JSON.stringify({
           reactEnd: { reason: toolCalls.length === 0 ? "no_tools" : "final_answer", rounds: round + 1 }
         })}\n\n`);
-<<<<<<< HEAD
-
-        // ── Token Optimization: 推送会话总统计 ──────────────────────────
-        const sessionStats = tokenPipeline.getSessionStats(sessionId);
-        if (sessionStats && sessionStats.totalSavedTokens > 0) {
-          res.write(`data: ${JSON.stringify({
-            tokenOptimization: {
-              stage: "session_summary",
-              totalSavedTokens: sessionStats.totalSavedTokens,
-              savingRatio: Math.round(sessionStats.savingRatio * 100),
-              strategies: sessionStats.strategyBreakdown,
-              rounds: sessionStats.rounds,
-            }
-          })}\n\n`);
-        }
-
-=======
->>>>>>> feat/maoai-latest
         res.write("data: [DONE]\n\n");
         res.end();
         return;
@@ -1619,113 +1581,6 @@ aiStreamRouter.post("/agent/stream", async (req: Request, res: Response) => {
   }, 5 * 60 * 1000);
 });
 
-<<<<<<< HEAD
-// ─── Suggested Follow-ups Generator ────────────────────────────────────────
-// POST /api/ai/suggestions
-// 根据对话历史和 AI 回复，生成 3 个推荐追问
-aiStreamRouter.post("/suggestions", async (req: Request, res: Response) => {
-  const { messages, lastResponse } = req.body;
-
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    res.status(400).json({ error: "Missing or invalid messages" });
-    return;
-  }
-
-  if (!lastResponse || typeof lastResponse !== "string" || lastResponse.trim().length === 0) {
-    res.status(400).json({ error: "Missing or invalid lastResponse" });
-    return;
-  }
-
-  // 使用快速模型生成推荐追问
-  const cfg = MODEL_CONFIGS["deepseek-chat"] || MODEL_CONFIGS["glm-4-flash"];
-  if (!cfg?.apiKey) {
-    res.status(503).json({ error: "No model configured for suggestions" });
-    return;
-  }
-
-  // 构建对话摘要（避免发送完整历史，限制长度）
-  const recentMessages = messages.slice(-6);
-  const conversationSummary = recentMessages
-    .map((m: any) => `${m.role === "user" ? "用户" : "AI"}: ${typeof m.content === "string" ? m.content.slice(0, 500) : "[多模态内容]"}`)
-    .join("\n");
-
-  const prompt = `你是一个对话助手，需要根据以下对话内容，为用户生成3个具有启发性的追问建议。
-
-对话历史：
-${conversationSummary}
-
-AI 最新回复：
-${lastResponse.slice(0, 1500)}
-
-请生成3个追问建议，要求：
-1. 每个问题不超过20个中文字
-2. 必须与当前话题强相关
-3. 从不同角度提问：
-   - 第1个问题：技术深度/定制化（如"如何自定义配置？"）
-   - 第2个问题：工程权衡/挑战（如"性能和成本如何平衡？"）
-   - 第3个问题：落地实践/案例（如"有哪些成功案例？"）
-4. 避免是非性问题，多用"如何"、"为什么"、"对比"
-
-请直接返回3个问题，每行一个，不要序号和任何其他内容。`;
-
-  try {
-    const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${cfg.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: cfg.model,
-        messages: [{ role: "user", content: prompt }],
-        stream: false,
-        max_tokens: 200,
-        temperature: 0.8,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("[Suggestions] Model API error:", response.status, errText.slice(0, 200));
-      res.status(500).json({ error: `Model API error: ${response.status}` });
-      return;
-    }
-
-    const data = await response.json();
-    const rawContent = data.choices?.[0]?.message?.content || "";
-
-    // 解析问题（每行一个）
-    const lines = rawContent.split("\n").map((l: string) => l.trim()).filter(Boolean);
-    const questions = lines.slice(0, 3);
-
-    // 分配维度标签
-    const dimensions: Array<"depth" | "tradeoff" | "practice"> = ["depth", "tradeoff", "practice"];
-    const suggestions = questions.map((q: string, i: number) => ({
-      question: q.replace(/^[\d\.\-\*]+\s*/, "").replace(/[\"「」]/g, ""), // 清理序号和引号
-      dimension: dimensions[i] || "depth",
-    }));
-
-    // 确保返回3个建议（如果解析失败则用默认值补充）
-    if (suggestions.length < 3) {
-      const defaults = [
-        { question: "如何进一步深入探讨这个话题？", dimension: "depth" as const },
-        { question: "这有什么优缺点或权衡？", dimension: "tradeoff" as const },
-        { question: "有哪些实际应用案例？", dimension: "practice" as const },
-      ];
-      while (suggestions.length < 3) {
-        suggestions.push(defaults[suggestions.length]);
-      }
-    }
-
-    res.json({ suggestions });
-  } catch (err: any) {
-    console.error("[Suggestions] Error:", err);
-    res.status(500).json({ error: err.message || "Failed to generate suggestions" });
-  }
-});
-
-=======
->>>>>>> feat/maoai-latest
 // ─── Health check ─────────────────────────────────────────────
 aiStreamRouter.get("/status", async (_req: Request, res: Response) => {
   const status: Record<string, any> = {};
