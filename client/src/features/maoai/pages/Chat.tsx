@@ -1,10 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { AgentModeSelector } from "../components/AgentModeSelector";
-<<<<<<< HEAD
 import { SuggestedFollowUps } from "../components/SuggestedFollowUps";
-=======
->>>>>>> feat/maoai-latest
 import {
   Loader2, Send, Bot, User, ChevronDown, LogOut, Cloud, Monitor, RefreshCw,
   ImagePlus, X, MessageSquarePlus, Trash2, PanelLeftClose, PanelLeftOpen, History,
@@ -12,10 +9,6 @@ import {
   LayoutGrid, Lock, Search, BookOpen,
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
-<<<<<<< HEAD
-
-=======
->>>>>>> feat/maoai-latest
 import { useTranslation } from "react-i18next";
 import { Streamdown } from "streamdown";
 import { useLocation } from "wouter";
@@ -32,10 +25,7 @@ import type {
   Conversation,
   PendingFile,
   ToolCallStep,
-<<<<<<< HEAD
   SuggestedQuestion,
-=======
->>>>>>> feat/maoai-latest
 } from "../types";
 
 const BACKEND_URL = MAOAI_BACKEND_URL;
@@ -304,7 +294,6 @@ export default function MaoAIChat() {
   // Agent 推理日志（Manus Max 流式可视化）
   const [agentLogs, setAgentLogs] = useState<any[]>([]);
   const [agentThinkingOpen, setAgentThinkingOpen] = useState(true);
-<<<<<<< HEAD
   // 推荐追问状态
   const [suggestions, setSuggestions] = useState<SuggestedQuestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -324,10 +313,6 @@ export default function MaoAIChat() {
   const userScrolledUpRef = useRef(false);
   // 防抖计时器（100ms 间隔限制滚动频率）
   const scrollDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-=======
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
->>>>>>> feat/maoai-latest
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -346,6 +331,79 @@ export default function MaoAIChat() {
     available: m.available,
     isLocal: m.isLocal as boolean,
   }));
+
+  // ── 模型成本分层（按费用从低到高排序）──────────────────────────────────────
+  // 免费: Ollama 本地模型（零成本）
+  // 低成本: GLM-4-Flash, Gemini-2.5-Flash
+  // 中成本: DeepSeek-Chat, Claude-Haiku
+  // 高成本: DeepSeek-Reasoner, Claude-Sonnet, Gemini-2.5-Pro, Claude-Opus
+  const MODEL_COST_TIER: Record<string, number> = {
+    // 免费（本地）
+    "ollama-gemma3-4b": 0, "ollama-qwen2.5-3b": 0, "ollama-qwen2.5-7b": 0,
+    // 低成本
+    "glm-4-flash": 1, "gemma2-9b": 1, "llama-3.1-8b": 1,
+    // 中成本
+    "deepseek-chat": 2, "gemini-2.5-flash": 2, "claude-haiku-4": 2,
+    "gemma-3n-e2b-it": 2, "gemma-3n-e4b-it": 2,
+    // 高成本
+    "deepseek-reasoner": 3, "gemini-2.5-pro": 3, "claude-sonnet-4-5": 3,
+    "glm-4-plus": 3, "gemma-4-26b-a4b-it": 3, "gemma-4-31b-it": 3,
+    // 旗舰
+    "claude-opus-4-5": 4,
+  };
+
+  // 获取模型成本层级（数字越小越便宜）
+  const getModelCostTier = (modelId: string): number => MODEL_COST_TIER[modelId] ?? 2;
+
+  // ── 判断任务复杂度 ───────────────────────────────────────────────────────
+  // 根据输入文本特征判断任务复杂度，返回推荐的最低成本层级
+  const estimateTaskComplexity = (inputText: string): number => {
+    // 空输入默认简单
+    if (!inputText.trim()) return 0;
+    
+    const len = inputText.length;
+    const lower = inputText.toLowerCase();
+    
+    // 复杂任务特征
+    const complexIndicators = [
+      /分析|分析一下|对比|比较|评估|调研|报告|总结|推荐/,
+      /代码|函数|算法|实现|调试|bug|重构|优化/,
+      /详细|深入|全面|完整|专业/,
+      /为什么|原因|解释|原理/,
+      /帮我|请帮我|能不能|可以吗/,
+    ];
+    
+    // 简单任务特征
+    const simpleIndicators = [
+      /翻译|convert|transform/,
+      /天气|时间|日期|现在/,
+      /你好|hi|hello|hiya/,
+      /^.{0,50}$/, // 非常短的输入
+    ];
+    
+    // 计算复杂指标分数
+    let complexScore = 0;
+    let simpleScore = 0;
+    
+    for (const re of complexIndicators) {
+      if (re.test(lower)) complexScore += 2;
+    }
+    
+    for (const re of simpleIndicators) {
+      if (re.test(lower)) simpleScore += 1;
+    }
+    
+    // 根据长度调整
+    if (len > 500) complexScore += 2;
+    else if (len > 200) complexScore += 1;
+    if (len < 30) simpleScore += 2;
+    
+    // 综合判断
+    if (complexScore >= 3) return 2; // 需要中成本模型
+    if (complexScore >= 1 && len > 200) return 2;
+    if (simpleScore >= 2 || len < 50) return 0; // 简单任务用本地模型
+    return 1; // 默认低成本
+  };
 
   // ── 模型成本分层（按费用从低到高排序）──────────────────────────────────────
   // 免费: Ollama 本地模型（零成本）
@@ -422,7 +480,6 @@ export default function MaoAIChat() {
   }, [chat.yesterday, t, timeLocale]);
 
   useEffect(() => {
-<<<<<<< HEAD
     // 仅在新消息追加时（非流式生成中）触发滚动
     if (!isGeneratingRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -435,10 +492,6 @@ export default function MaoAIChat() {
       safeScrollToBottom();
     }
   }, [streamingContent]);
-=======
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent]);
->>>>>>> feat/maoai-latest
 
   useEffect(() => {
     if (isResearchEntry) {
@@ -514,8 +567,8 @@ export default function MaoAIChat() {
     if (isAdmin) fetchLocalNodes();
   }, [isAdmin, fetchLocalNodes]);
 
-  // ── 成本优先自动选择模型 ───────────────────────────────────────────────
-  // 策略：优先选择免费本地模型 → 低成本云端模型 → 中成本 → 高成本
+  // ── 复杂度感知自动选择模型 ───────────────────────────────────────────────
+  // 策略：根据任务复杂度动态选择 → 简单任务用本地（快速）→ 复杂任务用高性能
   useEffect(() => {
     // 合并所有可用模型（云端 + 本地节点）
     const allAvailable = [
@@ -531,12 +584,24 @@ export default function MaoAIChat() {
 
     if (allAvailable.length === 0) return;
 
-    // 按成本排序，选择最便宜的
-    allAvailable.sort((a, b) => a.costTier - b.costTier);
-    const cheapest = allAvailable[0];
+    // 获取当前输入文本（用于判断任务复杂度）
+    const inputText = document.querySelector('textarea[placeholder*="消息"]')?.value 
+      || document.querySelector('textarea')?.value 
+      || "";
+    const minTier = estimateTaskComplexity(inputText);
 
-    if (cheapest.id !== selectedId) {
-      setSelectedId(cheapest.id);
+    // 筛选满足最低复杂度要求的模型
+    const suitableModels = allAvailable.filter(m => m.costTier <= minTier + 1);
+    
+    // 如果没有合适的模型，降级到最低成本的可用模型
+    const candidates = suitableModels.length > 0 ? suitableModels : allAvailable;
+    
+    // 按成本排序，选择最便宜的
+    candidates.sort((a, b) => a.costTier - b.costTier);
+    const bestModel = candidates[0];
+
+    if (bestModel.id !== selectedId) {
+      setSelectedId(bestModel.id);
     }
   }, [backendModels, isAdmin, localNodes, selectedId]);
 
@@ -546,7 +611,6 @@ export default function MaoAIChat() {
     setPendingImages(prev => [...prev, dataUrl]);
   };
 
-<<<<<<< HEAD
   // ── 防抖滚动到底 ──────────────────────────────────────────────
   // 100ms 间隔限制 + 用户主动滚上时暂停
   const safeScrollToBottom = useCallback((force = false) => {
@@ -564,8 +628,6 @@ export default function MaoAIChat() {
     }, 100);
   }, []);
 
-=======
->>>>>>> feat/maoai-latest
   const handlePaste = useCallback(async (e: ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -898,12 +960,9 @@ export default function MaoAIChat() {
     if (!checkChatLimit()) return;
     if (!currentOption.isLocal && !checkPremiumModel(selectedId)) return;
 
-<<<<<<< HEAD
     // 清除之前的推荐追问
     setSuggestions([]);
 
-=======
->>>>>>> feat/maoai-latest
     // Build document context system prompt from pending files
     let docSystemPrompt = "";
     if (pendingFiles.length > 0) {
@@ -951,17 +1010,12 @@ export default function MaoAIChat() {
     setPendingImages([]);
     setPendingFiles([]);
     setIsStreaming(true);
-<<<<<<< HEAD
     isGeneratingRef.current = true;
     userScrolledUpRef.current = false; // 重置：开始生成时默认跟随
     setStreamingContent("");
     setActiveNodeInfo(null);
     setTokenOptStats(null);
     setTokenRealtimeSaved(0);
-=======
-    setStreamingContent("");
-    setActiveNodeInfo(null);
->>>>>>> feat/maoai-latest
     abortRef.current = new AbortController();
 
     let convId = currentConvId;
@@ -1046,17 +1100,11 @@ export default function MaoAIChat() {
               } else if (chunk.content) {
                 fullContent += chunk.content;
                 setStreamingContent(fullContent);
-<<<<<<< HEAD
                 safeScrollToBottom(); // 防抖滚动：避免每个字符都跳
               } else if (chunk.error) {
                 fullContent += `\n\n${chat.streamErrorPrefix} ${chunk.error}`;
                 setStreamingContent(fullContent);
                 safeScrollToBottom(true);
-=======
-              } else if (chunk.error) {
-                fullContent += `\n\n${chat.streamErrorPrefix} ${chunk.error}`;
-                setStreamingContent(fullContent);
->>>>>>> feat/maoai-latest
               } else if (chunk.skillMatch) {
                 // Skill was matched — show it as a tool-call-style step
                 const step: ToolCallStep = {
@@ -1099,7 +1147,6 @@ export default function MaoAIChat() {
               } else if (chunk.agentLog) {
                 // Agent 推理日志（Manus Max 流式可视化）
                 setAgentLogs(prev => [...prev, chunk.agentLog]);
-<<<<<<< HEAD
               } else if (chunk.tokenOptimization) {
                 // Token Optimization 统计
                 const opt = chunk.tokenOptimization;
@@ -1115,8 +1162,6 @@ export default function MaoAIChat() {
                     setTokenRealtimeSaved(prev => prev + opt.savedTokens);
                   }
                 }
-=======
->>>>>>> feat/maoai-latest
               }
             } catch { /* skip */ }
           }
@@ -1151,25 +1196,18 @@ export default function MaoAIChat() {
       setReactRound(null);
       setAgentLogs([]);
     } finally {
-<<<<<<< HEAD
       isGeneratingRef.current = false;
       setIsStreaming(false);
       safeScrollToBottom(true); // 生成完毕，强制滚到底
-=======
-      setIsStreaming(false);
->>>>>>> feat/maoai-latest
       setStreamingContent("");
       setReactRound(null);
       setAgentLogs([]);
       abortRef.current = null;
-<<<<<<< HEAD
       
       // 生成推荐追问
       if (fullContent && fullContent.trim().length >= 50) {
         generateSuggestions([...newMessages, { role: "assistant" as const, content: fullContent }], fullContent);
       }
-=======
->>>>>>> feat/maoai-latest
     }
   };
 
@@ -1203,7 +1241,6 @@ export default function MaoAIChat() {
     abortRef.current?.abort();
   };
 
-<<<<<<< HEAD
   // ── 生成推荐追问 ───────────────────────────────────────────────────
   const generateSuggestions = useCallback(async (messagesHistory: Message[], lastResponse: string) => {
     if (!lastResponse.trim() || lastResponse.length < 50) {
@@ -1245,9 +1282,6 @@ export default function MaoAIChat() {
   }, []);
 
   const isBusy = isStreaming || isGeneratingImage || isUploadingFile || isLoadingSuggestions;
-=======
-  const isBusy = isStreaming || isGeneratingImage || isUploadingFile;
->>>>>>> feat/maoai-latest
 
   if (loading) {
     return (
@@ -1616,7 +1650,6 @@ export default function MaoAIChat() {
         </header>
 
         {/* ── Messages area ── */}
-<<<<<<< HEAD
         <div
           className="flex-1 overflow-y-auto"
           style={{ overflowAnchor: "auto" }}
@@ -1631,9 +1664,6 @@ export default function MaoAIChat() {
             }
           }}
         >
-=======
-        <div className="flex-1 overflow-y-auto">
->>>>>>> feat/maoai-latest
           <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col gap-6">
             {messages.length === 0 && !isBusy && (
               <div className="flex flex-col items-center justify-center py-16 gap-6">
@@ -1760,7 +1790,6 @@ export default function MaoAIChat() {
               );
             })}
 
-<<<<<<< HEAD
             {/* 推荐追问 — 仅在最后一条 assistant 消息后显示 */}
             {!isStreaming && messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
               <div className="flex gap-4 justify-start">
@@ -1782,11 +1811,6 @@ export default function MaoAIChat() {
             {/* Streaming chat bubble */}
             {isStreaming && (
               <div className="flex gap-4 justify-start" data-streaming="true">
-=======
-            {/* Streaming chat bubble */}
-            {isStreaming && (
-              <div className="flex gap-4 justify-start">
->>>>>>> feat/maoai-latest
                 <div className="w-8 h-8 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center shrink-0 mt-1">
                   <Bot size={14} className="text-[#C9A84C]" />
                 </div>
@@ -1828,7 +1852,6 @@ export default function MaoAIChat() {
                       <span className="text-white/30">· ReAct Thinking</span>
                     </div>
                   )}
-<<<<<<< HEAD
                   {/* Token Optimization 统计 */}
                   {((tokenOptStats && tokenOptStats.savedTokens > 0 && !isStreaming) || (isStreaming && tokenRealtimeSaved > 0)) && (
                     <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded text-[11px] flex-wrap">
@@ -1852,8 +1875,6 @@ export default function MaoAIChat() {
                       )}
                     </div>
                   )}
-=======
->>>>>>> feat/maoai-latest
                   {/* Agent 推理日志视图（Manus Max 流式可视化） */}
                   <AgentThinkingView logs={agentLogs} isOpen={agentThinkingOpen} onToggle={() => setAgentThinkingOpen(v => !v)} />
                   <div className="bg-white/5 border border-white/10 rounded px-4 py-3 text-sm text-white/85">
