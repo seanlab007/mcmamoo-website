@@ -18,18 +18,6 @@ const buildEndpointUrl = (baseUrl: string): string => {
   return `${normalizedBase}/webdevtoken.v1.WebDevService/SendNotification`;
 };
 
-<<<<<<< HEAD
-const validatePayload = (input: NotificationPayload): NotificationPayload => {
-=======
-function validatePayload(input: NotificationPayload) {
-  if (!isNonEmptyString(input.title)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Notification title is required.",
-    });
-  }
-
->>>>>>> feat/maoai-latest
   if (!isNonEmptyString(input.content)) {
     throw new TRPCError({
       code: "BAD_REQUEST",

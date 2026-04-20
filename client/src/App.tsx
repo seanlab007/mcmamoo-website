@@ -92,11 +92,6 @@ function Router() {
       <Route path={"/mao-ai"} component={MaoAIChat} />
       <Route path={"/mao-ai-pricing"} component={MaoAIPricing} />
       
-<<<<<<< HEAD
-      {/* 猫眼内容平台 */}
-=======
-      {/* 猫眼内容平台跳转（已拆分到独立项目） */}
->>>>>>> feat/maoai-latest
       <Route path={"/content"}>
         {() => {
           if (typeof window !== "undefined") {
@@ -113,12 +108,6 @@ function Router() {
           return null;
         }}
       </Route>
-<<<<<<< HEAD
-
-      {/* FaceFusion 面部融合 */}
-      <Route path={"/facefusion"} component={FaceFusion} />
-=======
->>>>>>> feat/maoai-latest
       
       {/* Admin 管理页面 */}
       <Route path={"/admin/inquiries"} component={AdminInquiries} />

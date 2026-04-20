@@ -225,18 +225,6 @@ export type IntelRecord = {
   recordedAt: string;
 };
 
-<<<<<<< HEAD
-// ─── Suggested Follow-ups ────────────────────────────────────────────────────
-
-export type SuggestionDimension = "depth" | "tradeoff" | "practice";
-
-export type SuggestedQuestion = {
-  question: string;
-  dimension: SuggestionDimension;
-};
-
-=======
->>>>>>> feat/maoai-latest
 // ─── LTC Weekly Task ─────────────────────────────────────────────────────────
 
 export type LTCPhase = "ML_clean" | "ML_value_email" | "MO_deep_update" | "MO_strategy" | "ATC_review" | "delivery_monitor" | "collection";

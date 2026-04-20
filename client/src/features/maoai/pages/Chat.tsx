@@ -954,11 +954,40 @@ export default function MaoAIChat() {
     }
   };
 
+  // ── 视觉模型列表（支持图片识别）──────────────────────────────────────────
+  const VISION_MODELS = [
+    "claude-opus-4-5", "claude-opus-4", "claude-sonnet-4-5", "claude-sonnet-4",
+    "gemini-2.5-flash", "gemini-2.5-pro", "glm-4v-flash",
+  ];
+
+  // ── 检测当前模型是否支持视觉 ───────────────────────────────────────────────
+  const currentModelSupportsVision = (): boolean => {
+    const modelId = selectedId.toLowerCase();
+    // 本地 Ollama 模型通常不支持视觉
+    if (modelId.includes("ollama")) return false;
+    return VISION_MODELS.some(m => modelId.includes(m.toLowerCase().replace(/-/g, "")));
+  };
+
   // ── Send chat message ────────────────────────────────────────────────────────
   const sendMessage = async (textContent: string) => {
     if ((!textContent.trim() && pendingImages.length === 0 && pendingFiles.length === 0) || isStreaming) return;
     if (!checkChatLimit()) return;
     if (!currentOption.isLocal && !checkPremiumModel(selectedId)) return;
+
+    // ── 图片识别时自动切换视觉模型 ──────────────────────────────────────────
+    const hasImages = pendingImages.length > 0 || textContent.includes("data:image/");
+    if (hasImages && !currentModelSupportsVision()) {
+      // 查找第一个可用的视觉模型
+      const visionModel = backendModels.find(m => 
+        m.available && VISION_MODELS.some(vm => m.id.toLowerCase().includes(vm.toLowerCase().replace(/-/g, "")))
+      );
+      if (visionModel) {
+        console.log(`[ModelSwitch] 图片检测 → 自动切换到 ${visionModel.name}`);
+        setSelectedId(visionModel.id);
+        // 等待状态更新后再继续
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
 
     // 清除之前的推荐追问
     setSuggestions([]);

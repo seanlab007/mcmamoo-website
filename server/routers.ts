@@ -35,29 +35,17 @@ import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfi
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
 import { autoclipRouter } from "./autoclip";
 import { salesRouter } from "./sales";
-<<<<<<< HEAD
-import { rowboatRouter } from "./rowboat/router";
-=======
->>>>>>> feat/maoai-latest
 import {
   generateVideo,
   getVideoTaskStatus,
   VIDEO_MODELS,
   type VideoGenerateOptions,
 } from "./video";
-<<<<<<< HEAD
-import { generateEmbedding, generateEmbeddings, findSimilarTexts, getEmbeddingModels, checkEmbeddingHealth } from "./embedding";
-=======
->>>>>>> feat/maoai-latest
 
 export const appRouter = router({
   system: systemRouter,
   autoclip: autoclipRouter,
   sales: salesRouter,
-<<<<<<< HEAD
-  rowboat: rowboatRouter, // 知识图谱 + 记忆系统
-=======
->>>>>>> feat/maoai-latest
   video: router({
     // 获取可用视频模型列表
     listModels: publicProcedure.query(() => {
@@ -350,51 +338,6 @@ export const appRouter = router({
         // Lightweight passthrough — actual streaming handled by /api/ai/stream REST endpoint
         return { message: "Use /api/ai/stream for streaming chat", modelId: input.modelId };
       }),
-<<<<<<< HEAD
-    // ── 嵌入模型 API ───────────────────────────────────────────────────────
-    embeddings: router({
-      // 获取可用嵌入模型列表
-      models: publicProcedure.query(() => {
-        return getEmbeddingModels();
-      }),
-      // 生成单条文本嵌入
-      generate: protectedProcedure
-        .input(z.object({
-          text: z.string().min(1).max(10000),
-          model: z.string().optional(),
-        }))
-        .mutation(async ({ input }) => {
-          const result = await generateEmbedding(input.text, input.model);
-          return result;
-        }),
-      // 批量生成嵌入
-      generateBatch: protectedProcedure
-        .input(z.object({
-          texts: z.array(z.string().min(1)).max(100),
-          model: z.string().optional(),
-        }))
-        .mutation(async ({ input }) => {
-          const results = await generateEmbeddings(input.texts, input.model);
-          return results;
-        }),
-      // 语义搜索 - 查找相似文本
-      similarity: protectedProcedure
-        .input(z.object({
-          query: z.string().min(1),
-          candidates: z.array(z.string()).min(1),
-          topK: z.number().int().min(1).max(20).optional(),
-        }))
-        .mutation(async ({ input }) => {
-          const results = await findSimilarTexts(input.query, input.candidates, input.topK);
-          return results;
-        }),
-      // 健康检查
-      health: publicProcedure.query(async () => {
-        return await checkEmbeddingHealth();
-      }),
-    }),
-=======
->>>>>>> feat/maoai-latest
   }),
 
   // ─── AI 节点管理 ─────────────────────────────────────────────────────────
