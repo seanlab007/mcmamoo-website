@@ -181,33 +181,113 @@ const pricingData_zh = {
     ]
   },
 
-  // 6. 毛智库（军事业务）：6 级定价
+  // 6. 毛智库（Mao ThinkTank）：军事/主权级战略 · 上不封顶
   maoThinkTankServices: {
     id: "mao-think-tank-services",
-    badge: "军事类",
-    badgeColor: "#EF4444",
-    title: "毛智库 — 军事战略与兵棋推演",
-    subtitle: "To 军队 / 国防战略 / 兵棋推演",
-    desc: "专业的军事战略咨询与兵棋推演服务，为国防建设提供智力支持。",
+    badge: "👑 毛智库",
+    badgeColor: "#D4AF37",
+    title: "👑 毛智库 — 毛泽东思想完整智库系统",
+    subtitle: "军事战略 / 国防咨询 / 主权决策 / 上不封顶",
+    desc: "全球唯一融合毛泽东思想历史智慧、五层分权决策架构、TriadLoop博弈推理引擎的完整战略AI智库。从¥199尝鲜到上不封顶的国家级战略护航。",
     groups: [
       {
-        name: "AI 组 (AI-Powered)",
+        name: "🧪 尝鲜体验组",
         icon: <Sparkles className="text-[#40d090]" size={20} />,
-        desc: "AI 军事分析方案",
+        desc: "小额尝鲜 · 低门槛体验毛泽东思想AI能力",
         plans: [
-          { name: "AI 战略分析", period: "单次", price: "198", unit: "元", features: ["AI 军事分析", "情报综合", "趋势预测"] },
-          { name: "AI 兵棋模拟", period: "单次", price: "19800", unit: "元", features: ["AI 兵棋推演", "场景模拟", "结果分析"] },
-          { name: "AI 国防咨询", period: "3 个月", price: "98000", unit: "元", highlight: true, features: ["持续战略分析", "定期推演", "专项研究"] }
+          { 
+            name: "AI 战略分析·尝鲜", 
+            period: "单次", 
+            price: "199", 
+            unit: "元", 
+            cta: "立即尝鲜",
+            href: "/maoai/pricing",
+            features: [
+              "AI 军事/商业战略分析（1次）",
+              "情报综合与趋势预测",
+              "基础博弈模拟场景",
+              "电子版报告交付",
+              "✨ 小额尝鲜，低门槛入门"
+            ],
+            highlight: false // ← 尝鲜入口
+          },
+          { 
+            name: "AI 兵棋模拟包", 
+            period: "月度", 
+            price: "1999", 
+            unit: "元", 
+            features: [
+              "AI 兵棋推演（每月4次）",
+              "多场景对抗模拟",
+              "详细结果分析与报告",
+              "7×24在线支持",
+            ] 
+          },
+          { 
+            name: "AI 国防咨询包", 
+            period: "3个月", 
+            price: "99999", 
+            unit: "元", 
+            highlight: true, 
+            features: [
+              "持续战略分析（每周1次）",
+              "AI兵棋推演（每月2次）",
+              "专项研究报告（季度）",
+              "专属客服通道 + 优先响应",
+              "五层分权架构（基础版）",
+            ] 
+          },
         ]
       },
       {
-        name: "专家组 (Expert-Led)",
-        icon: <Brain className="text-[#C9A84C]" size={20} />,
-        desc: "顶级军事战略",
+        name: "🏆 专家级 / 国家级方案",
+        icon: <Brain className="text-[#D4AF37]" size={20} />,
+        desc: "顶级军事战略专家团队 · 国家级/主权级决策支持",
         plans: [
-          { name: "专家战略咨询", period: "单次", price: "68000", unit: "元", features: ["深度战略分析", "专家评估", "建议方案"] },
-          { name: "专家兵棋推演", period: "单次", price: "200000", unit: "元", features: ["完整兵棋推演", "多方案模拟", "详细报告"] },
-          { name: "顶级国防合伙", period: "1 年", price: "2000000", unit: "元", highlight: true, features: ["年度战略护航", "定期推演", "专家陪跑"] }
+          { 
+            name: "专家战略咨询", 
+            period: "单次", 
+            price: "68000", 
+            unit: "元", 
+            features: [
+              "资深军事战略专家深度咨询",
+              "深度战略分析与评估",
+              "专家评估与建议方案",
+              "详细书面报告 + 后续跟踪",
+            ] 
+          },
+          { 
+            name: "专家兵棋推演", 
+            period: "单次", 
+            price: "299999", 
+            unit: "元", 
+            features: [
+              "完整兵棋推演系统实战演练",
+              "多场景模拟对抗",
+              "详细推演报告 + 复盘优化建议",
+            ] 
+          },
+          { 
+            name: "👑 顶级国防合伙", 
+            period: "1 年", 
+            price: "50000000", 
+            unit: "元", 
+            note: "上不封顶，可超 $1亿/年",
+            highlight: true,
+            badge: "终极",
+            features: [
+              "年度全面战略护航",
+              "定期兵棋推演（每月）+ 紧急随时启动",
+              "专项研究课题（定制方向）",
+              "专家团队驻场陪跑",
+              "👨‍💼 Mc&Mamoo创始人直接对接",
+              "🔒 军工级安全保密认证",
+              "🖥️ 物理隔离私有部署",
+              "🌍 主权级决策支持系统",
+              "📜 毛泽东思想万亿级向量库完整访问",
+              "⚖️ 五层分权架构·国家级版本",
+            ] 
+          },
         ]
       }
     ]
@@ -266,7 +346,7 @@ export default function Pricing() {
               全线业务定价体系
             </h1>
             <p className="text-white/50 text-lg max-w-2xl mx-auto">
-              6 大业务板块 × 6 级定价梯度 | 3 AI 方案 + 3 专家方案 | 从 ¥9.8 到 ¥5000 万
+              6 大业务板块 × 6 级定价梯度 | 3 AI 方案 + 3 专家方案 | 从 ¥9.8 到 上不封顶
             </p>
           </div>
 
