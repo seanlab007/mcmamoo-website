@@ -111,3 +111,9 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 .vercel
+<<<<<<< HEAD
+=======
+n8n-deploy/*.railway
+reference-repos/
+n8n-deploy/package-lock.json
+>>>>>>> 9ea237c (feat: Rowboat知识图谱 + 记忆面板 + Token优化 + 毛选语料路由 + maoCorpusRouter)

@@ -19,6 +19,8 @@ export { default as MaoAICustomerService } from "./pages/CustomerService";
 
 // Components
 export { AgentModeSelector } from "./components/AgentModeSelector";
+export { default as KnowledgeGraph } from "./components/KnowledgeGraph";
+export { default as MemoryPanel } from "./components/MemoryPanel";
 
 // Constants
 export {

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 version: '3.8'
 
 services:
@@ -10,16 +11,40 @@ services:
       - "6334:6334"  # gRPC API
     volumes:
       - qdrant_data:/qdrant/storage
+=======
+# ============================================================
+# Rowboat 知识图谱 + 语义记忆 完整服务栈
+# ============================================================
+# 启动: docker-compose -f docker-compose.rowboat.yml up -d
+# 停止: docker-compose -f docker-compose.rowboat.yml down
+# ============================================================
+
+services:
+  # ── Qdrant 向量数据库 ──────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rowboat-qdrant
+    ports:
+      - "6333:6333"   # REST API
+      - "6334:6334"   # gRPC API
+    volumes:
+      - qdrant_storage:/qdrant/storage
+>>>>>>> 9ea237c (feat: Rowboat知识图谱 + 记忆面板 + Token优化 + 毛选语料路由 + maoCorpusRouter)
     environment:
       - QDRANT__SERVICE__GRPC_PORT=6334
       - QDRANT__SERVICE__MAX_REQUEST_SIZE_MB=32
     restart: unless-stopped
     healthcheck:
+<<<<<<< HEAD
       test: ["CMD", "curl", "-f", "http://localhost:6333/readyz"]
+=======
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+>>>>>>> 9ea237c (feat: Rowboat知识图谱 + 记忆面板 + Token优化 + 毛选语料路由 + maoCorpusRouter)
       interval: 10s
       timeout: 5s
       retries: 5
 
+<<<<<<< HEAD
   # Rowboat API 服务（可选独立部署）
   rowboat-api:
     build:
@@ -40,8 +65,37 @@ services:
 
 volumes:
   qdrant_data:
+=======
+  # ── Rowboat Core API（可选独立部署）────────────────────────
+  # 与 mcmamoo-website 主服务共用同一端口时不需要
+  # 如需独立部署，启用此服务并配置反向代理
+  # rowboat-api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.rowboat
+  #   container_name: rowboat-api
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - QDRANT_URL=http://qdrant:6333
+  #     - QDRANT_API_KEY=${QDRANT_API_KEY}
+  #     - SUPABASE_URL=${SUPABASE_URL}
+  #     - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+  #   depends_on:
+  #     qdrant:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+volumes:
+  qdrant_storage:
+>>>>>>> 9ea237c (feat: Rowboat知识图谱 + 记忆面板 + Token优化 + 毛选语料路由 + maoCorpusRouter)
     driver: local
 
 networks:
   default:
+<<<<<<< HEAD
     name: maoai-network
+=======
+    name: rowboat-network
+>>>>>>> 9ea237c (feat: Rowboat知识图谱 + 记忆面板 + Token优化 + 毛选语料路由 + maoCorpusRouter)
