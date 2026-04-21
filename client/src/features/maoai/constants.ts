@@ -122,3 +122,13 @@ export const MAOAI_SUPPORTED_FILE_TYPES = [
 ] as const;
 export type MaoAISupportedFileType =
   (typeof MAOAI_SUPPORTED_FILE_TYPES)[number];
+
+// ─── Suggestion Dimensions ──────────────────────────────────────────────────
+
+export const SUGGESTION_DIMENSIONS: Record<string, { label: string; labelEn: string; emoji: string }> = {
+  deep: { label: "深度分析", labelEn: "Deep Dive", emoji: "🔬" },
+  creative: { label: "创意拓展", labelEn: "Creative", emoji: "💡" },
+  practical: { label: "实践应用", labelEn: "Practical", emoji: "🛠️" },
+  comparison: { label: "对比分析", labelEn: "Comparison", emoji: "⚖️" },
+  summary: { label: "总结提炼", labelEn: "Summary", emoji: "📝" },
+};

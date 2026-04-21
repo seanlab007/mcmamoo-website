@@ -108,6 +108,13 @@ export type AgentCategory = {
 // so that `index.tsx` can re-export them from a single `./types` source.
 export type { MaoAIRoute, MaoAIInputMode } from "./constants";
 
+// ─── Suggested Question ──────────────────────────────────────────────────────
+
+export type SuggestedQuestion = {
+  question: string;
+  dimension: string;
+};
+
 // ─── Sales CRM ────────────────────────────────────────────────────────────────
 
 export type LeadStatus =

@@ -46,11 +46,6 @@ const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
   ? "/content"
   : "http://localhost:3001/content";
 
-// 猫眼内容平台跳转地址（本地:3001，云端: mcmamoo.com/content）
-const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
-  ? "/content"
-  : "http://localhost:3001/content";
-
 function Router() {
   return (
     <Switch>
