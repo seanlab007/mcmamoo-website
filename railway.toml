@@ -1,0 +1,33 @@
+# Railway 部署配置
+# 访问 https://railway.app/new 导入此项目
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "node dist/index.js"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
+
+[deploy.env]
+NODE_ENV = "production"
+PORT = "3000"
+
+# 注意：以下敏感环境变量需要在 Railway Dashboard 中设置
+# - DATABASE_URL
+# - SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_KEY
+# - DEEPSEEK_API_KEY / ZHIPU_API_KEY / GROQ_API_KEY / GEMINI_API_KEY
+# - ANTHROPIC_API_KEY / GOOGLE_AI_STUDIO_API_KEY
+# - RUNPOD_API_KEY
+# - WORKBUDDY_API_KEY
+# - JWT_SECRET / SESSION_SECRET
+# - GITHUB_TOKEN (用于 github_push 工具)
+
+# Ollama 本地模型配置（云端不需要，仅本地开发使用）
+# OLLAMA_BASE_URL=http://localhost:11434
+# OLLAMA_ENABLED=true
+# OLLAMA_EMBEDDING_MODEL=nomic-embed-text:latest
+# OLLAMA_EMBEDDING_DIMENSIONS=768
