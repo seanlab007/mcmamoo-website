@@ -15,6 +15,7 @@
 
 import { Router, Request, Response } from "express";
 import { AGENTS, getAgent, getAgentSystemPrompt, AGENTS_BY_CATEGORY, CATEGORY_INFO } from "./agents";
+import { countMessagesTokens, truncateByTokenBudget, getInputBudget } from "./tokenCounter";
 
 export const chatRouter = Router();
 
@@ -340,9 +341,14 @@ chatRouter.post("/send", async (req: Request, res: Response) => {
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...history.slice(-18),
+      ...history,
       { role: "user", content: message },
     ];
+
+    // Token 感知的消息截断：根据模型上下文窗口动态裁剪历史消息
+    const modelCfg_pre = MODEL_MAP[model] || MODEL_MAP[DEFAULT_MODEL];
+    const inputBudget = getInputBudget(model, modelCfg_pre.maxTokens);
+    const finalMessages = truncateByTokenBudget(messages, inputBudget, model);
 
     // 5. 查找模型配置，按 provider 路由
     const modelCfg = MODEL_MAP[model] || MODEL_MAP[DEFAULT_MODEL];
@@ -424,7 +430,7 @@ chatRouter.post("/send", async (req: Request, res: Response) => {
       },
       body: JSON.stringify({
         model: modelCfg.apiModel,
-        messages,
+        messages: finalMessages,
         stream: true,
         temperature: 0.7,
         max_tokens: modelCfg.maxTokens,

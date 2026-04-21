@@ -21,6 +21,7 @@ import { registerMaoRagRouter } from "../maoRagServer";
 import { setupTriadLoopWS } from "../triadLoopWS";
 import { getMaoAIRouter } from "../hybridTaskRouter";
 import { maoCorpusRouter } from "../maoCorpusRouter";
+import { rowboatRouter } from "../rowboat/rowboat-router";
 
 // ── 内容平台 & 任务调度 ───────────────────────────────────────────────────
 import { contentPlatformRouter, initScheduler } from "../contentPlatform";
@@ -78,6 +79,8 @@ async function startServer() {
   registerMaoRagRouter(app);
   // MaoAI MaoCorpus RAG API (毛泽东思想向量库)
   app.use("/api/mao-corpus", maoCorpusRouter);
+  // Rowboat 知识图谱 + 语义记忆 API
+  app.use("/api/rowboat", rowboatRouter);
 
   // tRPC API
   app.use(
