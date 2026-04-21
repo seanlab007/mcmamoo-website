@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, Zap, Crown, Shield, Target, Lock, ArrowRight, Gift, Star, Infinity } from 'lucide-react';
-import { PLANS, MODEL_POWER, CAPABILITY_COMPARISON, UPGRADE_PROMPTS } from '../../../../shared/plans';
+import { Check, Sparkles, Zap, Crown, Shield, ArrowRight, Gift, Star, Infinity, Brain, Zap as Speed } from 'lucide-react';
+import { PLANS, BRAND_INFO, CAPABILITY_COMPARISON, COST_PER_CALL } from '../../../../shared/plans';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const Pick = ({ cn, en }: { cn: string; en: string }) => {
@@ -18,35 +18,44 @@ export const Pricing: React.FC = () => {
     return { price: displayPrice.toString(), period: isYearly ? '/年' : '/月' };
   };
 
-  const getCallsDisplay = (plan: any) => {
-    if (plan.callsPerDay) return `${plan.callsPerDay}次/天`;
-    return <Infinity className="w-5 h-5 inline" />;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-white">
       {/* Hero Section */}
       <div className="relative overflow-hidden py-16 px-4">
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-red-500/5 to-amber-500/5" />
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-red-500/10 to-amber-500/10" />
         <div className="relative max-w-6xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            {/* 品牌标识 */}
+            <div className="inline-block mb-4 px-4 py-1.5 bg-amber-500/20 rounded-full border border-amber-500/30">
+              <span className="text-amber-400 text-sm font-medium">
+                {BRAND_INFO.name}
+              </span>
+            </div>
+
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <Pick cn="MaoAI 定价方案" en="MaoAI Pricing" />
+              <Pick cn="AI 战略思维定价" en="AI Strategic Pricing" />
             </h1>
-            <p className="text-xl text-gray-400 mb-6">
+            
+            <p className="text-xl text-gray-400 mb-2">
               <Pick 
-                cn="相同强大模型，不同调用次数 · 升级解锁无限可能" 
-                en="Same powerful models, different call limits · Upgrade for unlimited" 
+                cn={BRAND_INFO.tagline} 
+                en="Breakthrough AI Strategic Thinking System" 
+              />
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              <Pick 
+                cn="由 Mc&Mamoo 战略实验室打造" 
+                en="Powered by Mc&Mamoo Strategic Lab" 
               />
             </p>
             
             {/* 核心卖点 */}
             <div className="flex flex-wrap justify-center gap-3 mb-8">
               {[
-                { icon: '🔥', text: '模型相同强大' },
-                { icon: '⏱️', text: '次数限制' },
+                { icon: '🧠', text: '亿级战略智慧' },
+                { icon: '⚖️', text: '五层分权架构' },
+                { icon: '🔄', text: 'TriadLoop博弈' },
                 { icon: '💰', text: '价格以9结尾' },
-                { icon: '💎', text: '升级解锁全部' },
               ].map((item, i) => (
                 <motion.span
                   key={i}
@@ -85,14 +94,14 @@ export const Pricing: React.FC = () => {
         </div>
       </div>
 
-      {/* 重要提示 */}
+      {/* 成本透明说明 */}
       <div className="max-w-4xl mx-auto px-4 mb-8">
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-center">
           <p className="text-amber-400 font-medium">
-            <Gift className="w-4 h-4 inline mr-2" />
+            <Brain className="w-4 h-4 inline mr-2" />
             <Pick 
-              cn="💡 免费版和专业版使用相同的强大模型！区别仅在于调用次数" 
-              en="💡 Free and Pro use the same powerful models! Only call limits differ." 
+              cn={`💡 API成本透明：每次调用成本约 ¥${COST_PER_CALL.toFixed(4)} · 加价率 1000 倍以上` 
+              en={`💡 Transparent API cost: ¥${COST_PER_CALL.toFixed(4)} per call · Markup 1000x+` 
             />
           </p>
         </div>
@@ -159,13 +168,17 @@ export const Pricing: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Model Power - 强调模型相同强大 */}
+                {/* Model & Calls */}
                 <div className={`rounded-lg p-3 mb-4 ${isFree ? 'bg-green-500/10 border border-green-500/30' : 'bg-gray-900/50'}`}>
-                  <div className="text-xs text-center text-gray-400 mb-2">
-                    <Pick cn="🔧 模型能力" en="🔧 Model Power" />
+                  <div className="text-xs text-center text-gray-400 mb-1">
+                    <Pick cn="🔧 模型能力" en="🔧 Model" />
                   </div>
-                  <div className="text-sm text-center font-medium text-white mb-1">
+                  <div className="text-sm text-center font-medium text-white mb-2">
                     {plan.modelDescription}
+                  </div>
+                  <div className="text-xs text-center text-gray-500">
+                    <Speed className="w-3 h-3 inline mr-1" />
+                    {isFree ? '10' : plan.id === 'starter' ? '99' : '∞'} <Pick cn="次/天" en="calls/day" />
                   </div>
                   {isFree && (
                     <div className="text-xs text-center text-green-400 mt-2">
@@ -174,35 +187,17 @@ export const Pricing: React.FC = () => {
                   )}
                 </div>
 
-                {/* 调用次数 */}
-                <div className={`text-center rounded-lg p-3 mb-4 ${isFree ? 'bg-red-500/10' : 'bg-gray-900/30'}`}>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className={`text-xl font-bold ${isFree ? 'text-red-400' : 'text-white'}`}>
-                      {getCallsDisplay(plan)}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {isFree ? (
-                      <Pick cn="📅 今日剩余" en="📅 Today" />
-                    ) : plan.id === 'starter' ? (
-                      <Pick cn="📅 每日" en="📅 Daily" />
-                    ) : (
-                      <Pick cn="📅 无限制" en="📅 Unlimited" />
-                    )}
-                  </div>
-                </div>
-
-                {/* 销售钩子 - 解锁什么 */}
+                {/* 销售钩子 */}
                 {!isStrategic && plan.unlockedPower.length > 0 && (
                   <div className={`rounded-lg p-3 mb-4 ${isHighlight ? 'bg-amber-500/10' : 'bg-gray-900/30'}`}>
                     <div className="text-xs text-center text-amber-400 mb-2 font-medium">
                       {plan.salesHook}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-400 space-y-1">
                       {plan.unlockedPower.slice(0, 3).map((power, i) => (
                         <div key={i} className="flex items-center gap-1">
-                          <ArrowRight className="w-3 h-3 text-amber-400" />
-                          <span>{power}</span>
+                          <ArrowRight className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                          <span className="truncate">{power}</span>
                         </div>
                       ))}
                     </div>
@@ -233,7 +228,7 @@ export const Pricing: React.FC = () => {
         {/* 能力对比表 */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold text-center mb-8">
-            <Pick cn="🚀 模型能力对比" en="🚀 Model Capability Comparison" />
+            <Pick cn="📊 完整能力对比" en="📊 Full Comparison" />
           </h2>
           
           {CAPABILITY_COMPARISON.map((section, sectionIndex) => (
@@ -272,11 +267,14 @@ export const Pricing: React.FC = () => {
           ))}
         </div>
 
-        {/* 战略版特别说明 */}
-        <div className="mt-12 bg-gradient-to-r from-red-900/20 via-amber-900/20 to-red-900/20 rounded-2xl p-8 border border-red-500/20">
+        {/* 品牌介绍 */}
+        <div className="mt-12 bg-gradient-to-r from-amber-900/20 via-red-900/20 to-amber-900/20 rounded-2xl p-8 border border-amber-500/20">
           <h3 className="text-xl font-bold text-center mb-6">
-            <Pick cn="💎 MaoAI 核心差异化" en="💎 MaoAI Core Differentiation" />
+            {BRAND_INFO.name}
           </h3>
+          <p className="text-center text-gray-400 mb-6">
+            {BRAND_INFO.tagline}
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-gray-900/50 rounded-xl">
               <div className="text-4xl mb-3">🧠</div>
@@ -309,7 +307,7 @@ export const Pricing: React.FC = () => {
               </h4>
               <p className="text-sm text-gray-400">
                 <Pick 
-                  cn="5轮博弈推理，Coder→Reviewer→Validator评分机制" 
+                  cn="5轮博弈推理，Coder→Reviewer→Validator评分" 
                   en="5-round game reasoning, Coder→Reviewer→Validator" 
                 />
               </p>
@@ -317,55 +315,15 @@ export const Pricing: React.FC = () => {
           </div>
         </div>
 
-        {/* FAQ / 销售话术 */}
-        <div className="mt-12 max-w-3xl mx-auto">
-          <h3 className="text-xl font-bold text-center mb-6">
-            <Pick cn="❓ 常见问题" en="❓ FAQ" />
-          </h3>
-          <div className="space-y-4">
-            {[
-              {
-                q: <Pick cn="免费版和专业版有什么区别？" en="What's the difference between Free and Pro?" />,
-                a: <Pick 
-                    cn="模型能力完全相同！免费版每天10次调用，专业版无限次。升级后您将体验到完全无限制的强大AI能力。" 
-                    en="Model capabilities are identical! Free gives 10 calls/day, Pro gives unlimited. Upgrade to enjoy full unrestricted AI power." 
-                  />,
-              },
-              {
-                q: <Pick cn="为什么免费版要限制次数？" en="Why limit calls for free tier?" />,
-                a: <Pick 
-                    cn="我们希望提供公平的AI服务。通过限制次数，您可以体验完整能力后再决定是否升级。免费版已包含全部高级功能！" 
-                    en="We aim to provide fair AI service. By limiting calls, you can experience full capabilities before deciding to upgrade. Free tier already includes all advanced features!" 
-                  />,
-              },
-              {
-                q: <Pick cn="毛泽东战略AI和其他AI有什么不同？" en="How is Mao Strategic AI different?" />,
-                a: <Pick 
-                    cn="我们融合了毛泽东思想的历史智慧、五层分权决策架构和TriadLoop博弈推理，为您提供独特的战略级AI决策支持。" 
-                    en="We integrate Mao Zedong Thought wisdom, five-layer architecture, and TriadLoop reasoning for unique strategic AI decision support." 
-                  />,
-              },
-            ].map((item, i) => (
-              <div key={i} className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-                <h4 className="font-medium text-amber-400 mb-2">{item.q}</h4>
-                <p className="text-sm text-gray-400">{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom Note */}
+        {/* Footer */}
         <div className="mt-12 text-center text-sm text-gray-500">
-          <p>
-            <Pick 
-              cn="所有价格均以9结尾 · 加价率1000倍以上 · 利润允许超过1000倍" 
-              en="All prices end in 9 · Markup 1000x+ · Profit allowed to exceed 1000x" 
-            />
+          <p className="font-medium text-amber-400">
+            {BRAND_INFO.footer}
           </p>
           <p className="mt-2">
             <Pick 
-              cn="支持微信、支付宝、银行卡 · 7×24 小时自动发货 · 年付享17%优惠" 
-              en="WeChat Pay, Alipay, Bank Card · 24/7 instant delivery · Yearly save 17%" 
+              cn="所有价格均以9结尾 · 加价率1000倍以上" 
+              en="All prices end in 9 · Markup 1000x+" 
             />
           </p>
         </div>
