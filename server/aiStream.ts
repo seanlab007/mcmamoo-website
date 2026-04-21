@@ -17,6 +17,7 @@ import {
   modelRouter, 
   semanticCache, 
   streamingOptimizer,
+  StreamingOptimizer,
   dataFlywheel,
   TokenTimer 
 } from "./industrial-ai";
@@ -317,13 +318,24 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
       ? lastUserMsg.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
       : "";
 
+  // ── Vision auto-routing: if any message contains image_url, switch to vision model ──
+  const hasImage = Array.isArray(messages) && messages.some((m: any) =>
+    Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url")
+  );
+  if (hasImage && !useLocal && !String(model).startsWith("local:")) {
+    const currentCfg = MODEL_CONFIGS[model];
+    if (!currentCfg?.supportsVision) {
+      model = "glm-5v-turbo"; // auto-switch to GLM-5V-Turbo (newest vision model)
+    }
+  }
+
   if (userText.trim() && !hasImage) {
     // 语义缓存命中检查
     const cacheResult = semanticCache.get(userText);
     if (cacheResult.hit) {
       console.log(`[IndustrialAI] Cache HIT for session ${sessionId}`);
-      streamingOptimizer.sendChunk(res, cacheResult.response!);
-      streamingOptimizer.sendDone(res, {
+      StreamingOptimizer.sendChunk(res, cacheResult.response!);
+      StreamingOptimizer.sendDone(res, {
         totalTokens: Math.ceil(cacheResult.response!.length / 4),
         latencyMs: Date.now() - (req.body._startTime || Date.now()),
         model: "CACHE",
@@ -335,18 +347,7 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
     const routing = modelRouter.route(userText, model);
     if (routing.modelKey && !model.startsWith("local:")) {
       console.log(`[IndustrialAI] Routed: "${userText.slice(0, 30)}..." -> ${routing.modelKey} (${routing.modelTier})`);
-      streamingOptimizer.sendChunk(res, `<!-- routed:${routing.modelKey}:${routing.modelTier} -->`);
-    }
-  }
-
-  // ── Vision auto-routing: if any message contains image_url, switch to vision model ──
-  const hasImage = Array.isArray(messages) && messages.some((m: any) =>
-    Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url")
-  );
-  if (hasImage && !useLocal && !String(model).startsWith("local:")) {
-    const currentCfg = MODEL_CONFIGS[model];
-    if (!currentCfg?.supportsVision) {
-      model = "glm-5v-turbo"; // auto-switch to GLM-5V-Turbo (newest vision model)
+      StreamingOptimizer.sendChunk(res, `<!-- routed:${routing.modelKey}:${routing.modelTier} -->`);
     }
   }
 
