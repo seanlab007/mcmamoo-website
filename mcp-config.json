@@ -1,27 +1,16 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema.json",
   "_comment": "MCP Server 统一配置 - 用于 MaoAI (mcmamoo-website) 和外部 MCP 客户端共享",
-<<<<<<< HEAD
-  "_version": "2026-04-19",
-  "mcp_servers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/daiyan/Desktop/mcmamoo-website"],
-=======
+  "_version": "2026-04-22",
   "mcp_servers": {
     "filesystem": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/mac/Desktop/mcmamoo-website"],
->>>>>>> feat/maoai-latest
       "description": "文件系统操作 - 读写、列表、搜索文件"
     },
     "git": {
       "command": "uvx",
-<<<<<<< HEAD
-      "args": ["mcp-server-git", "--repository", "/Users/daiyan/Desktop/mcmamoo-website"],
-=======
       "args": ["mcp-server-git", "--repository", "/Users/mac/Desktop/mcmamoo-website"],
->>>>>>> feat/maoai-latest
       "description": "Git 操作 - status, commit, branch, diff"
     },
     "fetch": {
