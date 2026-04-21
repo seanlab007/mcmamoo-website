@@ -1,0 +1,31 @@
+{
+  "appId": "com.mcmamoo.growth",
+  "appName": "猫眼增长引擎",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "originalUrl": "http://localhost:3000"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0A0A0A",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0A0A0A"
+    }
+  },
+  "android": {
+    "minSdk": 24,
+    "targetSdk": 34,
+    "compileSdk": 34,
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": false,
+    "backgroundColor": "#0A0A0A",
+    "overrideUserAgent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36 McmamooGrowth/1.0",
+    "appendUserAgent": "McmamooGrowth/1.0"
+  }
+}
