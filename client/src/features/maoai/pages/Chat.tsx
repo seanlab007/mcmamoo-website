@@ -405,29 +405,6 @@ export default function MaoAIChat() {
     return 1; // 默认低成本
   };
 
-  // ── 模型成本分层（按费用从低到高排序）──────────────────────────────────────
-  // 免费: Ollama 本地模型（零成本）
-  // 低成本: GLM-4-Flash, Gemini-2.5-Flash
-  // 中成本: DeepSeek-Chat, Claude-Haiku
-  // 高成本: DeepSeek-Reasoner, Claude-Sonnet, Gemini-2.5-Pro, Claude-Opus
-  const MODEL_COST_TIER: Record<string, number> = {
-    // 免费（本地）
-    "ollama-gemma3-4b": 0, "ollama-qwen2.5-3b": 0, "ollama-qwen2.5-7b": 0,
-    // 低成本
-    "glm-4-flash": 1, "gemma2-9b": 1, "llama-3.1-8b": 1,
-    // 中成本
-    "deepseek-chat": 2, "gemini-2.5-flash": 2, "claude-haiku-4": 2,
-    "gemma-3n-e2b-it": 2, "gemma-3n-e4b-it": 2,
-    // 高成本
-    "deepseek-reasoner": 3, "gemini-2.5-pro": 3, "claude-sonnet-4-5": 3,
-    "glm-4-plus": 3, "gemma-4-26b-a4b-it": 3, "gemma-4-31b-it": 3,
-    // 旗舰
-    "claude-opus-4-5": 4,
-  };
-
-  // 获取模型成本层级（数字越小越便宜）
-  const getModelCostTier = (modelId: string): number => MODEL_COST_TIER[modelId] ?? 2;
-
   const { data: conversations = [], isLoading: loadingConvs } = trpc.conversations.list.useQuery(
     undefined,
     { enabled: !!user }

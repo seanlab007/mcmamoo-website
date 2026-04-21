@@ -7,8 +7,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Plus, Trash2, MessageSquare, Search, Image, Download,
-  ChevronDown, Send, Loader2, Globe, Bot, RefreshCw, Edit2, Check, X
+  Plus, Trash2, MessageSquare, Image, Download,
+  ChevronDown, Send, Loader2, Globe, Bot, Edit2, Check, X, Paperclip
 } from "lucide-react";
 
 // ─── 类型定义 ─────────────────────────────────────────────────────────────────
@@ -29,33 +29,16 @@ interface Message {
   created_at: string;
 }
 
-// ─── 模型列表 ─────────────────────────────────────────────────────────────────
+// ─── 模型列表（从服务端动态获取）────────────────────────────────────────────
 
-const MODELS = [
-  // DeepSeek
-  { id: "deepseek-chat",     label: "DeepSeek Chat",      desc: "主力 · 推荐",    group: "DeepSeek" },
-  { id: "deepseek-reasoner", label: "DeepSeek Reasoner",  desc: "深度推理",       group: "DeepSeek" },
-  // Anthropic Claude
-  { id: "claude-opus-4-5",   label: "Claude Opus 4.5",    desc: "Anthropic · 最强", group: "Claude" },
-  { id: "claude-sonnet-4-5", label: "Claude Sonnet 4.5",  desc: "Anthropic · 均衡", group: "Claude" },
-  { id: "claude-haiku-4",    label: "Claude Haiku 4",     desc: "Anthropic · 极速", group: "Claude" },
-  // Groq（极速）
-  { id: "llama-3.3-70b",    label: "Llama 3.3 70B",      desc: "Groq 极速",     group: "Groq" },
-  { id: "llama-3.1-8b",     label: "Llama 3.1 8B",       desc: "Groq 轻量",     group: "Groq" },
-  { id: "gemma2-9b",        label: "Gemma2 9B",          desc: "Groq · Google", group: "Groq" },
-  // 智谱 GLM
-  { id: "glm-4-flash",      label: "GLM-4 Flash",        desc: "免费额度",       group: "智谱" },
-  { id: "glm-4-plus",       label: "GLM-4 Plus",         desc: "均衡",           group: "智谱" },
-  { id: "glm-z1-flash",     label: "GLM-Z1 Flash",       desc: "推理轻量",       group: "智谱" },
-  // Gemini
-  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash",   desc: "Google · 极速",   group: "Gemini" },
-  { id: "gemini-2.5-pro",   label: "Gemini 2.5 Pro",     desc: "Google · 专业",   group: "Gemini" },
-  // Google AI Studio (Gemma 4)
-  { id: "gemma-4-e2b-it",   label: "Gemma 4 E2B",        desc: "Google AI Studio · 移动端", group: "Google AI" },
-  { id: "gemma-4-e4b-it",   label: "Gemma 4 E4B",        desc: "Google AI Studio · 边缘设备", group: "Google AI" },
-  { id: "gemma-4-26b-it",   label: "Gemma 4 26B",        desc: "Google AI Studio · MoE架构", group: "Google AI" },
-  { id: "gemma-4-31b-it",   label: "Gemma 4 31B",        desc: "Google AI Studio · 最强性能", group: "Google AI" },
-];
+interface ModelInfo {
+  id: string;
+  name: string;
+  badge: string;
+  provider: string;
+  supportsVision: boolean;
+  available: boolean;
+}
 
 const DEFAULT_MODEL = "deepseek-chat";
 
@@ -114,9 +97,12 @@ export default function Chat() {
   const [useSearch, setUseSearch] = useState(false);
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [models, setModels] = useState<ModelInfo[]>([]);
   const [imagePrompt, setImagePrompt] = useState("");
   const [showImageInput, setShowImageInput] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -140,6 +126,23 @@ export default function Chat() {
   }, [activeId]);
 
   useEffect(() => { loadConversations(); }, []);
+
+  // ── 加载模型列表（从服务端动态获取）────────────────────────────────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/trpc/ai.models");
+        // tRPC batch response format
+        const data = await res.json();
+        const modelList: ModelInfo[] = data?.result?.data ?? [];
+        if (modelList.length > 0) {
+          setModels(modelList.filter(m => m.available && !m.id.includes("embed")));
+        }
+      } catch (e) {
+        console.error("加载模型列表失败", e);
+      }
+    })();
+  }, []);
 
   // ── 加载消息 ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -202,9 +205,9 @@ export default function Chat() {
     setEditingId(null);
   };
 
-  // ── 发送消息（SSE 流式）────────────────────────────────────────────────────
+  // ── 发送消息（SSE 流式 → /api/ai/chat/stream）────────────────────────────
   const sendMessage = async () => {
-    if (!input.trim() || streaming) return;
+    if ((!input.trim() && !pendingImage) || streaming) return;
     let convId = activeId;
 
     // 没有活跃对话则自动新建
@@ -221,10 +224,20 @@ export default function Chat() {
       } catch { return; }
     }
 
+    // 构造用户消息（支持图片附件）
+    const userText = input.trim();
+    const userMsgContent = pendingImage
+      ? [
+          { type: "text", text: userText || "请描述这张图片" },
+          { type: "image_url", image_url: { url: pendingImage } },
+        ]
+      : userText;
+
     const userMsg: Message = {
       id: `tmp-${Date.now()}`,
       role: "user",
-      content: input.trim(),
+      content: userText,
+      metadata: pendingImage ? { type: "image", imageUrl: pendingImage } : undefined,
       created_at: new Date().toISOString(),
     };
     const assistantMsg: Message = {
@@ -236,57 +249,78 @@ export default function Chat() {
 
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setInput("");
+    setPendingImage(null);
     setStreaming(true);
     streamingContentRef.current = "";
 
+    // 构造 messages 数组（历史 + 当前）
+    const historyForApi = messages
+      .filter(m => m.role !== "system")
+      .slice(-18)
+      .map(m => ({ role: m.role, content: m.content }));
+
+    const apiMessages = [
+      ...historyForApi,
+      { role: "user" as const, content: userMsgContent },
+    ];
+
     try {
-      const res = await fetch("/api/chat/send", {
+      const res = await fetch("/api/ai/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId: convId, message: userMsg.content, model, useSearch }),
+        body: JSON.stringify({ model, messages: apiMessages }),
       });
 
       if (!res.body) throw new Error("No stream body");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const text = decoder.decode(value);
-        const lines = text.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const ev = JSON.parse(line.slice(6));
-            if (ev.text !== undefined) {
-              // 找前一行的 event:
-              const eventLine = lines[lines.indexOf(line) - 1] || "";
-              const eventType = eventLine.startsWith("event: ") ? eventLine.slice(7).trim() : "";
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === "data: [DONE]") continue;
+          if (!trimmed.startsWith("data: ")) continue;
 
-              if (eventType === "delta") {
-                streamingContentRef.current += ev.text;
-                setMessages(prev => prev.map(m =>
-                  m.id === assistantMsg.id
-                    ? { ...m, content: streamingContentRef.current }
-                    : m
-                ));
-              } else if (eventType === "title") {
-                setConversations(prev =>
-                  prev.map(c => c.id === convId ? { ...c, title: ev.text } : c)
-                );
-              }
+          try {
+            const ev = JSON.parse(trimmed.slice(6));
+
+            // 流式文本内容
+            if (ev.content !== undefined && ev.content !== null) {
+              streamingContentRef.current += ev.content;
+              setMessages(prev => prev.map(m =>
+                m.id === assistantMsg.id
+                  ? { ...m, content: streamingContentRef.current }
+                  : m
+              ));
             }
-          } catch { /* skip */ }
+
+            // 模型路由信息（静默处理）
+            if (ev.nodeInfo) {
+              // 服务端自动选择了模型，可在 UI 上显示
+            }
+
+            // 错误
+            if (ev.error) {
+              setMessages(prev => prev.map(m =>
+                m.id === assistantMsg.id ? { ...m, content: `错误：${ev.error}` } : m
+              ));
+            }
+          } catch { /* skip malformed JSON */ }
         }
       }
 
-      // 刷新消息（用数据库中真实 ID 替换临时 ID）
-      const reloadRes = await apiFetch(`/conversations/${convId}/messages`);
-      const reloaded: Message[] = await reloadRes.json();
-      setMessages(reloaded);
+      // 保存对话到服务端（通过 chat API 保存消息）
+      try {
+        await apiFetch(`/conversations/${convId}/messages`, { method: "GET" });
+      } catch { /* non-critical */ }
 
     } catch (e: any) {
       setMessages(prev => prev.map(m =>
@@ -328,6 +362,23 @@ export default function Chat() {
     } finally {
       setGeneratingImage(false);
     }
+  };
+
+  // ── 图片附件上传 ─────────────────────────────────────────────────────────
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert("图片不能超过 10MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPendingImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    // 清空 input 以便再次选择同一文件
+    e.target.value = "";
   };
 
   // ── 导出对话 ────────────────────────────────────────────────────────────────
@@ -505,18 +556,22 @@ export default function Chat() {
                 }}
               >
                 <Bot size={12} />
-                {MODELS.find(m => m.id === model)?.label || model}
+                {models.find(m => m.id === model)?.name || model}
                 <ChevronDown size={10} />
               </button>
               {showModelMenu && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50,
                   background: "#111118", border: "1px solid rgba(255,255,255,0.1)",
-                  minWidth: 200,
+                  minWidth: 220, maxHeight: 400, overflowY: "auto",
                 }}>
-                  {["DeepSeek", "Groq", "智谱"].map(group => {
-                    const groupModels = MODELS.filter(m => m.group === group);
-                    return (
+                  {(() => {
+                    const groups: Record<string, ModelInfo[]> = {};
+                    for (const m of models) {
+                      const g = m.provider || "其他";
+                      (groups[g] ??= []).push(m);
+                    }
+                    return Object.entries(groups).map(([group, groupModels]) => (
                       <div key={group}>
                         <div style={{ padding: "6px 12px 4px", fontSize: "0.55rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                           {group}
@@ -532,13 +587,21 @@ export default function Chat() {
                               display: "flex", justifyContent: "space-between", alignItems: "center",
                             }}
                           >
-                            <span>{m.label}</span>
-                            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.55rem" }}>{m.desc}</span>
+                            <span>{m.name}</span>
+                            <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                              {m.supportsVision && <span style={{ color: "rgba(100,200,255,0.6)", fontSize: "0.5rem" }} title="支持图片输入">👁</span>}
+                              <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.5rem" }}>{m.badge}</span>
+                            </span>
                           </div>
                         ))}
                       </div>
-                    );
-                  })}
+                    ));
+                  })()}
+                  {models.length === 0 && (
+                    <div style={{ padding: "12px", color: "rgba(255,255,255,0.2)", fontSize: "0.6rem", textAlign: "center" }}>
+                      加载中...
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -681,7 +744,40 @@ export default function Chat() {
               联网搜索已开启 — AI 将实时搜索相关信息
             </div>
           )}
+
+          {/* 图片附件预览 */}
+          {pendingImage && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "6px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)" }}>
+              <img src={pendingImage} alt="preview" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 4 }} />
+              <span style={{ flex: 1, fontSize: "0.6rem", color: "rgba(255,255,255,0.5)" }}>已添加图片（将自动切换视觉模型）</span>
+              <button onClick={() => setPendingImage(null)} style={{ background: "none", border: "none", color: "rgba(255,100,100,0.6)", cursor: "pointer", padding: 2 }}>
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+            {/* 图片附件按钮 */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: "none" }}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              title="添加图片附件"
+              style={{
+                width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center",
+                background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
+                color: pendingImage ? "#C9A84C" : "rgba(255,255,255,0.3)",
+                cursor: "pointer", flexShrink: 0, transition: "all 0.15s",
+              }}
+            >
+              <Paperclip size={16} />
+            </button>
+
             <textarea
               ref={inputRef}
               value={input}
@@ -718,7 +814,7 @@ export default function Chat() {
             </button>
           </div>
           <div style={{ marginTop: 6, color: "rgba(255,255,255,0.15)", fontSize: "0.55rem", textAlign: "right" }}>
-            {MODELS.find(m => m.id === model)?.label} · MaoAI v1.0
+            {models.find(m => m.id === model)?.name || model} · MaoAI v2.0
           </div>
         </div>
       </div>
