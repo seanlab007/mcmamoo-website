@@ -231,8 +231,8 @@ export default function MaoAIPricing() {
           <p className="mx-auto max-w-2xl text-base leading-relaxed text-white/35">
             {pickText(
               isChinese,
-              "基于 API 成本的透明定价 · 1000 倍加价率 · 从免费体验到专业创作",
-              "Transparent pricing based on API costs · 1000x markup · From free trial to professional creation"
+              "基于 API 成本的 1000 倍加价率定价",
+              "1000x Markup Pricing · Based on API Costs"
             )}
           </p>
           {user && currentTier && (

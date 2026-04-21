@@ -1,72 +1,49 @@
 /**
- * MaoAI Plan Definitions v3 — 基于 API 成本的 1000x 加价率定价体系
+ * MaoAI Plan Definitions v4 — 1000 倍加价率定价体系
  *
  * 设计原则：
- *   1. 去掉了「终身买断」，改为「年付优惠」+「超大 Token 包」
- *   2. 定价基于实际 API 成本，确保 1000 倍加价率
- *   3. Token 包设计：用户容易理解「能用多少次」
- *   4. 年付享 17-20% 优惠，锁定长期用户
+ *   成本 ¥1 → 收费 ¥1,000（1000 倍加价率）
  *
- * 成本基准（每月）：
- *   · 入门版：5万 tokens，约 ¥0.15 成本
- *   · 专业版：50万 tokens，约 ¥1.5 成本
- *   · 旗舰版：500万 tokens，约 ¥12 成本
- *   · 大师版：2000万 tokens，约 ¥40 成本
+ * API 成本基准（每百万 tokens）：
+ *   · GLM-4 Flash:    输入 ¥0.4 / 输出 ¥1.6
+ *   · DeepSeek Chat:  输入 ¥1.8 / 输出 ¥7.2
+ *   · DeepSeek R1:    输入 ¥4 / 输出 ¥16
+ *   · Groq Llama:     输入 ¥1.2 / 输出 ¥1.2
  *
- * 加价率：99x ~ 2330x
+ * 平均：约 ¥3/百万 tokens（输入+输出 混合）
  */
 
 export type PlanTier = "free" | "starter" | "pro" | "flagship";
 export type Currency = "CNY" | "USD";
 export type BillingCycle = "monthly" | "biannual" | "annual";
 
-// ─── 每日消息限制（新版核心单位）───────────────────────────────
+// ─── 档位限制 ───────────────────────────────────────────────────
 
 export interface PlanLimits {
-  /** 每日对话消息数（-1 = unlimited） */
   dailyChatMessages: number;
-  /** 每月可用 tokens（-1 = unlimited） */
   monthlyTokens: number;
-  /** 每日图片生成数 */
   dailyImageGenerations: number;
-  /** 每月内容生产配额（篇数） */
   monthlyContentQuota: number;
-  /** 最大存储对话数 */
   maxConversations: number;
-  /** 是否可使用高级模型（R1/Claude/Gemini Pro） */
   premiumModels: boolean;
-  /** 是否可使用图片生成 */
   imageGeneration: boolean;
-  /** 优先响应队列 */
   priorityQueue: boolean;
-  /** 文件上传与分析 */
   fileUpload: boolean;
-  /** 品牌战略 AI 报告 */
   brandStrategy: boolean;
-  /** 专属客户经理 */
   accountManager: boolean;
-  /** 自定义 AI 人设 */
   customPersona: boolean;
-  /** API 接入权限 */
   apiAccess: boolean;
-  /** 团队席位数量 */
   teamSeats: number;
-  /** 内容平台访问 */
   contentPlatform: boolean;
-  /** 定时发布策略 */
   contentSchedule: boolean;
-  /** 支持的内容发布平台 */
   contentPlatforms: string[];
-  /** 视频生成额度（秒/月） */
   monthlyVideoSeconds: number;
 }
-
-// ─── 各档位限制 ─────────────────────────────────────────────────
 
 export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
     dailyChatMessages: 20,
-    monthlyTokens: 10000,           // 1万 tokens
+    monthlyTokens: 10000,
     dailyImageGenerations: 0,
     monthlyContentQuota: 0,
     maxConversations: 10,
@@ -87,11 +64,11 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
 
   starter: {
     dailyChatMessages: 100,
-    monthlyTokens: 50000,           // 5万 tokens
+    monthlyTokens: 50000,           // 5万 tokens ≈ ¥0.15 成本
     dailyImageGenerations: 5,
     monthlyContentQuota: 0,
     maxConversations: 50,
-    premiumModels: false,            // 基础模型（GLM-4 Flash + Groq Llama）
+    premiumModels: false,
     imageGeneration: true,
     priorityQueue: false,
     fileUpload: false,
@@ -108,11 +85,11 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
 
   pro: {
     dailyChatMessages: 500,
-    monthlyTokens: 500000,          // 50万 tokens
+    monthlyTokens: 500000,           // 50万 tokens ≈ ¥1.5 成本
     dailyImageGenerations: 50,
-    monthlyContentQuota: 30,        // 每月 30 篇内容
+    monthlyContentQuota: 30,
     maxConversations: -1,
-    premiumModels: true,            // 全部模型（DeepSeek R1 + Gemini + Claude）
+    premiumModels: true,
     imageGeneration: true,
     priorityQueue: true,
     fileUpload: true,
@@ -124,14 +101,14 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     contentPlatform: true,
     contentSchedule: false,
     contentPlatforms: ["xiaohongshu", "weibo"],
-    monthlyVideoSeconds: 30,        // 30秒视频/月
+    monthlyVideoSeconds: 30,
   },
 
   flagship: {
-    dailyChatMessages: -1,          // 无限制
-    monthlyTokens: 2000000,         // 200万 tokens
+    dailyChatMessages: -1,
+    monthlyTokens: 2000000,          // 200万 tokens ≈ ¥6 成本
     dailyImageGenerations: -1,
-    monthlyContentQuota: 200,       // 每月 200 篇内容
+    monthlyContentQuota: 200,
     maxConversations: -1,
     premiumModels: true,
     imageGeneration: true,
@@ -145,90 +122,78 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     contentPlatform: true,
     contentSchedule: true,
     contentPlatforms: ["xiaohongshu", "douyin", "weibo", "wechat"],
-    monthlyVideoSeconds: 180,       // 3分钟视频/月
+    monthlyVideoSeconds: 180,
   },
 };
 
-// ─── 成本估算（元/月）─────────────────────────────────────────────
-// 基于平均使用：用户每天 10-50 条消息，每条 800 input + 400 output tokens
-
-const COST_ESTIMATE = {
-  free:     0.02,   // 几乎免费
-  starter:  0.15,   // 5万 tokens
-  pro:      1.5,    // 50万 tokens
-  flagship: 12,     // 200万 tokens
-};
-
-// ─── 定价配置 ─────────────────────────────────────────────────────
+// ─── 定价（1000 倍加价率：成本 ¥1 → 收费 ¥1,000）────────────────────
 
 export interface CyclePricing {
-  total: number;       // 总价
-  perMonth: number;    // 月均成本（用于对比显示）
-  months: number;      // 月数（0 = 终身）
-  savingPct: number;   // 节省百分比
-  costPrice: number;   // 成本价（用于计算加价率）
-  markupRatio: number; // 加价倍数
+  total: number;
+  perMonth: number;
+  months: number;
+  savingPct: number;
+  costPrice: number;      // API 成本
+  markupRatio: number;    // 加价倍数
 }
 
 export const PLAN_PRICES: Record<PlanTier, Record<Currency, Record<BillingCycle, CyclePricing>>> = {
   // ── 免费版 ─────────────────────────────────────────────────────
   free: {
     CNY: {
-      monthly:  { total: 0,    perMonth: 0,    months: 0,  savingPct: 0,   costPrice: 0.02,    markupRatio: 0   },
-      biannual:{ total: 0,    perMonth: 0,    months: 0,  savingPct: 0,   costPrice: 0.02,    markupRatio: 0   },
-      annual:  { total: 0,    perMonth: 0,    months: 0,  savingPct: 0,   costPrice: 0.02,    markupRatio: 0   },
+      monthly:  { total: 0,    perMonth: 0,    months: 1,  savingPct: 0,  costPrice: 0.03,  markupRatio: 0   },
+      biannual: { total: 0,    perMonth: 0,    months: 6,  savingPct: 0,  costPrice: 0.18,  markupRatio: 0   },
+      annual:   { total: 0,    perMonth: 0,    months: 12, savingPct: 0,  costPrice: 0.36,  markupRatio: 0   },
     },
     USD: {
-      monthly:  { total: 0,    perMonth: 0,    months: 0,  savingPct: 0,   costPrice: 0.01,    markupRatio: 0   },
-      biannual:{ total: 0,    perMonth: 0,    months: 0,  savingPct: 0,   costPrice: 0.01,    markupRatio: 0   },
-      annual:  { total: 0,    perMonth: 0,    months: 0,  savingPct: 0,   costPrice: 0.01,    markupRatio: 0   },
+      monthly:  { total: 0,    perMonth: 0,    months: 1,  savingPct: 0,  costPrice: 0.01,  markupRatio: 0   },
+      biannual: { total: 0,    perMonth: 0,    months: 6,  savingPct: 0,  costPrice: 0.06,  markupRatio: 0   },
+      annual:   { total: 0,    perMonth: 0,    months: 12, savingPct: 0,  costPrice: 0.12,  markupRatio: 0   },
     },
   },
 
-  // ── 入门版 ¥29/月 ─────────────────────────────────────────────
-  // 成本：约 ¥0.15/月 → 加价率：193x
+  // ── 入门版 ¥150/月 ──────────────────────────────────────────────
+  // 成本：5万 tokens ≈ ¥0.15 → 定价 ¥150 → 加价率 1000x
   starter: {
     CNY: {
-      monthly:  { total: 29,   perMonth: 29,   months: 1,  savingPct: 0,   costPrice: 0.15,    markupRatio: 193 },
-      biannual: { total: 168,  perMonth: 28,   months: 6,  savingPct: 3,   costPrice: 0.9,    markupRatio: 186 },
-      annual:   { total: 288,  perMonth: 24,   months: 12, savingPct: 17,  costPrice: 1.8,    markupRatio: 160 },
+      monthly:  { total: 150,   perMonth: 150,  months: 1,  savingPct: 0,   costPrice: 0.15,  markupRatio: 1000 },
+      biannual: { total: 900,   perMonth: 150,  months: 6,  savingPct: 0,   costPrice: 0.9,   markupRatio: 1000 },
+      annual:   { total: 1500,  perMonth: 125,  months: 12, savingPct: 17,  costPrice: 1.8,   markupRatio: 833  },
     },
     USD: {
-      monthly:  { total: 3.99, perMonth: 3.99, months: 1,  savingPct: 0,   costPrice: 0.02,   markupRatio: 200 },
-      biannual: { total: 22.99, perMonth: 3.83, months: 6, savingPct: 4,   costPrice: 0.12,   markupRatio: 192 },
-      annual:   { total: 39.99, perMonth: 3.33, months: 12, savingPct: 17,  costPrice: 0.24,   markupRatio: 167 },
+      monthly:  { total: 21.99, perMonth: 21.99, months: 1,  savingPct: 0,   costPrice: 0.02,  markupRatio: 1100 },
+      biannual: { total: 129.99, perMonth: 21.67, months: 6, savingPct: 3,   costPrice: 0.12,  markupRatio: 1083 },
+      annual:   { total: 219.99, perMonth: 18.33, months: 12, savingPct: 17,  costPrice: 0.24,  markupRatio: 917  },
     },
   },
 
-  // ── 专业版 ¥199/月 ─────────────────────────────────────────────
-  // 成本：约 ¥1.5/月 → 加价率：1327x
-  // 包含：50万 tokens/月 + 内容平台 30篇/月 + 高级模型
+  // ── 专业版 ¥1,500/月 ────────────────────────────────────────────
+  // 成本：50万 tokens ≈ ¥1.5 → 定价 ¥1,500 → 加价率 1000x
   pro: {
     CNY: {
-      monthly:  { total: 199,  perMonth: 199,  months: 1,  savingPct: 0,   costPrice: 1.5,    markupRatio: 133 },
-      biannual: { total: 1148, perMonth: 191,  months: 6,  savingPct: 4,   costPrice: 9,      markupRatio: 127 },
-      annual:   { total: 1980, perMonth: 165,  months: 12, savingPct: 17,  costPrice: 18,     markupRatio: 110 },
+      monthly:  { total: 1500,  perMonth: 1500, months: 1,  savingPct: 0,   costPrice: 1.5,    markupRatio: 1000 },
+      biannual: { total: 9000,  perMonth: 1500, months: 6,  savingPct: 0,   costPrice: 9,     markupRatio: 1000 },
+      annual:   { total: 15000, perMonth: 1250, months: 12, savingPct: 17,  costPrice: 18,    markupRatio: 833  },
     },
     USD: {
-      monthly:  { total: 27.99, perMonth: 27.99, months: 1,  savingPct: 0,   costPrice: 0.2,   markupRatio: 140 },
-      biannual: { total: 159.99, perMonth: 26.67, months: 6, savingPct: 5,   costPrice: 1.2,   markupRatio: 133 },
-      annual:   { total: 279.99, perMonth: 23.33, months: 12, savingPct: 17,  costPrice: 2.4,   markupRatio: 117 },
+      monthly:  { total: 219.99, perMonth: 219.99, months: 1,  savingPct: 0,   costPrice: 0.2,   markupRatio: 1100 },
+      biannual: { total: 1299.99, perMonth: 216.67, months: 6, savingPct: 3,   costPrice: 1.2,   markupRatio: 1083 },
+      annual:   { total: 2199.99, perMonth: 183.33, months: 12, savingPct: 17,  costPrice: 2.4,   markupRatio: 917  },
     },
   },
 
-  // ── 旗舰版 ¥699/月 ─────────────────────────────────────────────
-  // 成本：约 ¥12/月 → 加价率：5825x
-  // 包含：200万 tokens/月 + 内容平台 200篇/月 + 视频 180秒/月 + 品牌服务
+  // ── 旗舰版 ¥6,000/月 ────────────────────────────────────────────
+  // 成本：200万 tokens ≈ ¥6 → 定价 ¥6,000 → 加价率 1000x
   flagship: {
     CNY: {
-      monthly:  { total: 699,  perMonth: 699,  months: 1,  savingPct: 0,   costPrice: 12,    markupRatio: 58  },
-      biannual: { total: 3988, perMonth: 665,  months: 6,  savingPct: 5,   costPrice: 72,     markupRatio: 55  },
-      annual:   { total: 6988, perMonth: 582,  months: 12, savingPct: 17,  costPrice: 144,    markupRatio: 49  },
+      monthly:  { total: 6000,  perMonth: 6000, months: 1,  savingPct: 0,   costPrice: 6,     markupRatio: 1000 },
+      biannual: { total: 36000, perMonth: 6000, months: 6,  savingPct: 0,   costPrice: 36,    markupRatio: 1000 },
+      annual:   { total: 60000, perMonth: 5000, months: 12, savingPct: 17,  costPrice: 72,    markupRatio: 833  },
     },
     USD: {
-      monthly:  { total: 97.99, perMonth: 97.99, months: 1,  savingPct: 0,   costPrice: 1.6,   markupRatio: 61  },
-      biannual: { total: 559.99, perMonth: 93.33, months: 6, savingPct: 5,   costPrice: 9.6,   markupRatio: 58  },
-      annual:   { total: 979.99, perMonth: 81.67, months: 12, savingPct: 17,  costPrice: 19.2,  markupRatio: 51  },
+      monthly:  { total: 899.99, perMonth: 899.99, months: 1,  savingPct: 0,   costPrice: 0.8,   markupRatio: 1125 },
+      biannual: { total: 5399.99, perMonth: 899.99, months: 6, savingPct: 2,   costPrice: 4.8,   markupRatio: 1125 },
+      annual:   { total: 8999.99, perMonth: 750,    months: 12, savingPct: 17,  costPrice: 9.6,   markupRatio: 937  },
     },
   },
 };
@@ -244,15 +209,11 @@ export interface PlanMeta {
   accentColor: string;
   accentBg: string;
   accentBorder: string;
-  /** 成本估算（元/月） */
-  costEstimate: string;
-  /** 加价倍数 */
-  markupDisplay: string;
 }
 
 export const PLAN_META: Record<PlanTier, PlanMeta> = {
   free: {
-    name:    { zh: "免费版",    en: "Free" },
+    name:    { zh: "免费版", en: "Free" },
     tagline: { zh: "体验 AI 对话", en: "Start with AI" },
     badge:   "🌱",
     highlighted: false,
@@ -260,11 +221,9 @@ export const PLAN_META: Record<PlanTier, PlanMeta> = {
     accentColor:  "text-gray-400",
     accentBg:     "bg-gray-400/10",
     accentBorder: "border-gray-400/30",
-    costEstimate: "¥0.02/月",
-    markupDisplay: "免费",
   },
   starter: {
-    name:    { zh: "入门版",    en: "Starter" },
+    name:    { zh: "入门版", en: "Starter" },
     tagline: { zh: "适合个人创作者", en: "For individual creators" },
     badge:   "⚡",
     highlighted: true,
@@ -272,11 +231,9 @@ export const PLAN_META: Record<PlanTier, PlanMeta> = {
     accentColor:  "text-emerald-400",
     accentBg:     "bg-emerald-400/10",
     accentBorder: "border-emerald-400/30",
-    costEstimate: "¥0.15/月",
-    markupDisplay: "193x 加价",
   },
   pro: {
-    name:    { zh: "专业版",    en: "Pro" },
+    name:    { zh: "专业版", en: "Pro" },
     tagline: { zh: "高频使用 · 全模型解锁", en: "High frequency · All models" },
     badge:   "🚀",
     highlighted: true,
@@ -284,11 +241,9 @@ export const PLAN_META: Record<PlanTier, PlanMeta> = {
     accentColor:  "text-[#C9A84C]",
     accentBg:     "bg-[#C9A84C]/10",
     accentBorder: "border-[#C9A84C]/40",
-    costEstimate: "¥1.5/月",
-    markupDisplay: "133x 加价",
   },
   flagship: {
-    name:    { zh: "旗舰版",    en: "Flagship" },
+    name:    { zh: "旗舰版", en: "Flagship" },
     tagline: { zh: "无限使用 · 品牌战略 · 专属顾问", en: "Unlimited · Brand strategy · VIP" },
     badge:   "👑",
     highlighted: true,
@@ -296,8 +251,6 @@ export const PLAN_META: Record<PlanTier, PlanMeta> = {
     accentColor:  "text-purple-400",
     accentBg:     "bg-purple-500/10",
     accentBorder: "border-purple-500/40",
-    costEstimate: "¥12/月",
-    markupDisplay: "58x 加价",
   },
 };
 
@@ -327,12 +280,12 @@ export const FEATURE_ROWS: FeatureRow[] = [
   },
   {
     key: "basic_models", category: "AI 对话",
-    label: { zh: "基础模型（GLM-4 Flash、Groq Llama）", en: "Basic models" },
+    label: { zh: "基础模型", en: "Basic models" },
     free: true, starter: true, pro: true, flagship: true,
   },
   {
     key: "premium_models", category: "AI 对话",
-    label: { zh: "高级模型（DeepSeek R1、Claude、Gemini Pro）", en: "Premium models" },
+    label: { zh: "高级模型（R1、Claude）", en: "Premium models (R1, Claude)" },
     free: false, starter: false, pro: true, flagship: true,
   },
   {
@@ -450,51 +403,29 @@ export const PAYMENT_PROVIDERS: PaymentProviderMeta[] = [
   { id: "stripe",    name: { zh: "Stripe",   en: "Stripe"       }, currencies: ["USD"],      available: false, color: "text-violet-400" },
 ];
 
-// ─── 成本计算工具函数 ─────────────────────────────────────────────
+// ─── 模型成本参考 ─────────────────────────────────────────────────
 
-/**
- * 计算指定档位的加价倍数
- */
-export function calculateMarkup(tier: PlanTier, cycle: BillingCycle): number {
-  const pricing = PLAN_PRICES[tier]?.CNY?.[cycle];
-  if (!pricing || pricing.costPrice === 0) return 0;
-  return Math.round(pricing.total / pricing.costPrice);
-}
-
-/**
- * 估算月均 token 消耗（基于每日消息数和模型分布）
- */
-export function estimateMonthlyTokens(dailyMessages: number, premiumRatio: number = 0): number {
-  // 假设每条消息平均 800 input + 400 output = 1200 tokens
-  const tokensPerMessage = 1200;
-  const daysPerMonth = 30;
-  return dailyMessages * daysPerMonth * tokensPerMessage;
-}
-
-/**
- * 成本估算（基于实际 API 定价）
- */
 export const MODEL_COSTS = {
   // 输入成本（元/百万 tokens）
   input: {
-    "glm-4-flash":     0.4,
-    "deepseek-chat":   1.8,
+    "glm-4-flash":      0.4,
+    "deepseek-chat":    1.8,
     "deepseek-reasoner": 4,
-    "glm-4-plus":      7,
-    "groq-llama-3.3":  1.2,
+    "glm-4-plus":       7,
+    "groq-llama-3.3":   1.2,
     "gemini-2.5-flash": 0.5,
-    "claude-haiku":    5.8,
-    "claude-sonnet":   22,
+    "claude-haiku":     5.8,
+    "claude-sonnet":    22,
   },
   // 输出成本（元/百万 tokens）
   output: {
-    "glm-4-flash":     1.6,
-    "deepseek-chat":   7.2,
+    "glm-4-flash":      1.6,
+    "deepseek-chat":    7.2,
     "deepseek-reasoner": 16,
-    "glm-4-plus":      14,
-    "groq-llama-3.3":  1.2,
+    "glm-4-plus":       14,
+    "groq-llama-3.3":   1.2,
     "gemini-2.5-flash": 2,
-    "claude-haiku":    23,
-    "claude-sonnet":   65,
+    "claude-haiku":     23,
+    "claude-sonnet":    65,
   },
 } as const;
