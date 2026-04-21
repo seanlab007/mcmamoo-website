@@ -1,79 +1,89 @@
-# Railway 部署指南
+# Railway 云端部署指南
 
-## AutoClip 后端服务部署
+## 快速部署步骤
 
-### 步骤 1: 创建 Railway 项目
+### 1. 访问 Railway 控制台
+打开 https://railway.app/new
 
-1. 访问 https://railway.app 并登录
-2. 点击 "New Project" → "Deploy from GitHub repo"
-3. 选择仓库: `seanlab007/mcmamoo-autoclip`
-4. Railway 会自动检测 Dockerfile
+### 2. 导入项目
+- 选择 "Deploy from GitHub repo"
+- 选择 `seanlab007/mcmamoo-website` 仓库
+- 选择 `main` 分支
 
-### 步骤 2: 添加数据库
+### 3. 配置环境变量
+在 Railway Dashboard → Variables 中设置以下变量：
 
-在 Railway 项目中添加:
-
-1. **PostgreSQL** (用于存储数据)
-   - 点击 "Add Plugin" → "PostgreSQL"
-   - Railway 会自动设置 `DATABASE_URL` 环境变量
-
-2. **Redis** (用于任务队列)
-   - 点击 "Add Plugin" → "Redis"
-   - Railway 会自动设置 `REDIS_URL` 环境变量
-
-### 步骤 3: 添加环境变量
-
-在 Railway Dashboard 的 Variables 标签添加:
-
+#### 数据库
 ```
-# 必需的环境变量
-API_DASHSCOPE_API_KEY=你的通义千问API密钥
-# 获取地址: https://dashscope.console.aliyun.com/
-
-# 可选配置
-DEBUG=false
-LOG_LEVEL=INFO
-ENVIRONMENT=production
+DATABASE_URL=postgresql://postgres:xxx@xxx.railway.app:5432/railway
 ```
 
-### 步骤 4: 获取通义千问 API Key
+#### Supabase
+```
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_KEY=your-service-key
+```
 
-1. 访问 https://dashscope.console.aliyun.com/
-2. 注册/登录阿里云账号
-3. 创建 API Key
-4. 将 API Key 添加到 Railway 环境变量
+#### AI API Keys
+```
+DEEPSEEK_API_KEY=sk-your-deepseek-key
+ZHIPU_API_KEY=your-zhipu-key
+GROQ_API_KEY=your-groq-key
+GEMINI_API_KEY=your-gemini-key
+ANTHROPIC_API_KEY=your-anthropic-key
+GOOGLE_AI_STUDIO_API_KEY=your-google-ai-studio-key
+RUNPOD_API_KEY=your-runpod-key
+```
 
-### 步骤 5: 部署
+#### 安全密钥
+```
+JWT_SECRET=your-jwt-secret
+SESSION_SECRET=your-session-secret
+WORKBUDDY_API_KEY=your-workbuddy-key
+```
 
-1. 点击 "Deploy" 开始部署
-2. 等待部署完成
-3. 点击生成的域名查看 API 文档
+#### GitHub Token (用于 github_push 工具)
+```
+GITHUB_TOKEN=ghp_xxx
+```
 
-### 步骤 6: 配置前端
+### 4. 部署
+点击 "Deploy" 按钮，Railway 会自动：
+1. 构建 Docker 镜像
+2. 部署到云端
+3. 分配域名（如 `mcmamoo-website-production.up.railway.app`）
 
-部署完成后:
+### 5. 验证部署
+```bash
+curl https://your-app.up.railway.app/api/health
+```
 
-1. 复制 AutoClip API URL (例如: `https://your-app.railway.app`)
-2. 在 mcmamoo-website 的 Cloudflare Pages 设置中添加:
-   - 变量名: `VITE_AUTOCLIP_API_URL`
-   - 值: 你的 AutoClip API URL
+## 注意事项
 
-### API 文档
+### Ollama 本地模型
+**云端无法运行 Ollama 本地模型**（需要本地 GPU/CPU）。云端部署时：
+- 使用云端 AI API（DeepSeek、Zhipu、Groq、Gemini 等）
+- 嵌入模型使用云端替代方案（如 OpenAI text-embedding-3-small）
 
-部署完成后访问: `https://your-app.railway.app/docs`
+### 数据库
+Railway 提供 PostgreSQL 插件，可在 Dashboard 中一键添加。
 
----
+### 自动部署
+每次推送到 `main` 分支，Railway 会自动重新部署。
 
 ## 故障排除
 
-### 视频下载失败
-- 确保 `yt-dlp` 已正确安装
-- 检查视频URL是否支持
+### 构建失败
+检查 Dockerfile 和 railway.toml 配置
 
-### AI 分析失败
-- 确认 `API_DASHSCOPE_API_KEY` 正确
-- 检查 API 配额是否用完
+### 启动失败
+查看 Railway Dashboard → Deployments → Logs
 
-### 数据库连接失败
-- 确认 PostgreSQL 插件已添加
-- 检查 `DATABASE_URL` 环境变量
+### 环境变量问题
+确保所有必需的环境变量都已设置
+
+## 成本
+- Railway 免费额度：$5/月
+- 超出后按使用量计费
+- 或升级到 Hobby 计划 ($5/月固定)
