@@ -9,7 +9,6 @@ import mammoth from "mammoth";
 import { TOOL_DEFINITIONS, ADMIN_TOOL_DEFINITIONS, executeTool } from "./tools";
 import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
-<<<<<<< HEAD
 import { searchCorpus, formatForPrompt } from "./maoRagServer";
 import { TokenOptimizationPipeline } from "./token-optimization";
 
@@ -22,9 +21,6 @@ import {
   dataFlywheel,
   TokenTimer 
 } from "./industrial-ai";
-=======
-import { StreamTokenCounter, countTokens } from "./tokenCounter";
->>>>>>> 9ea237c (feat: Rowboat知识图谱 + 记忆面板 + Token优化 + 毛选语料路由 + maoCorpusRouter)
 
 const aiStreamRouter = Router();
 
@@ -763,7 +759,6 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         })}\n\n`);
 
         // Add tool result to conversation
-<<<<<<< HEAD
         // ── Token Optimization: 工具输出压缩 ──────────────────────────────
         // 对 CLI/code 工具的输出进行压缩，减少上下文 token 消耗
         let toolOutput = result.success ? result.output : `工具执行失败: ${result.error}`;
@@ -786,30 +781,11 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
         if (toolOutput.length > 8000) {
           toolOutput = toolOutput.slice(0, 8000);
         }
-=======
-        // Token 感知截断：约 2000 tokens ≈ 8000 中文字符，但对英文更精准
-        const toolOutput = result.success
-          ? result.output.length > 8000
-            ? (() => {
-                // 从尾部截断到约 2000 tokens
-                let cut = result.output;
-                while (cut.length > 1000 && countTokens(cut) > 2000) {
-                  cut = cut.slice(0, Math.floor(cut.length * 0.8));
-                }
-                return cut + "\n\n[...内容已截断以控制上下文大小]";
-              })()
-            : result.output
-          : `工具执行失败: ${result.error}`;
->>>>>>> 9ea237c (feat: Rowboat知识图谱 + 记忆面板 + Token优化 + 毛选语料路由 + maoCorpusRouter)
 
         conversationMessages.push({
           role: "tool",
           tool_call_id: tc.id,
-<<<<<<< HEAD
           content: toolOutput,
-=======
-          content: toolOutput
->>>>>>> 9ea237c (feat: Rowboat知识图谱 + 记忆面板 + Token优化 + 毛选语料路由 + maoCorpusRouter)
         } as any);
       }
 

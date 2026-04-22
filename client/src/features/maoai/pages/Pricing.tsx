@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Sparkles, Zap, Shield, ArrowRight, Gift, Star, Crown, Coins } from 'lucide-react';
-import { PLANS, CREDIT_PACKS, CREDIT_NAME, CREDIT_SYMBOL, BRAND_INFO, CAPABILITY_COMPARISON } from '../../../../shared/plans';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { PLANS, CREDIT_PACKS, CREDIT_NAME, CREDIT_SYMBOL, BRAND_INFO, CAPABILITY_COMPARISON } from '@shared/plans';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Pick = ({ cn, en }: { cn: string; en: string }) => {
   const { language } = useLanguage();
@@ -183,3 +183,4 @@ export const Pricing: React.FC = () => {
     </div>
   );
 };
+export default Pricing;

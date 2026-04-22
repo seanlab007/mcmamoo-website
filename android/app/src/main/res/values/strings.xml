@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MaoAI</string>
+    <string name="title_activity_main">MaoAI</string>
+    <string name="package_name">com.mcmamoo.maoai</string>
+    <string name="custom_url_scheme">com.mcmamoo.maoai</string>
+</resources>
