@@ -1,11 +1,12 @@
 {
-  "appId": "com.mcmamoo.growth",
-  "appName": "猫眼增长引擎",
-  "webDir": "dist",
+  "appId": "com.mcmamoo.maoai",
+  "appName": "MaoAI",
+  "webDir": "dist/public",
   "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https",
-    "originalUrl": "http://localhost:3000"
+    "hostname": "maoai.app",
+    "url": "https://maoai.mcmamoo.com"
   },
   "plugins": {
     "SplashScreen": {
