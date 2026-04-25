@@ -22,6 +22,7 @@ import { setupTriadLoopWS } from "../triadLoopWS";
 import { getMaoAIRouter } from "../hybridTaskRouter";
 import { maoCorpusRouter } from "../maoCorpusRouter";
 import { rowboatRouter } from "../rowboat/rowboat-router";
+import zizhitongjianRagRouter from "../zizhitongjianRagApi";
 
 // ── 内容平台 & 任务调度 ───────────────────────────────────────────────────
 import { contentPlatformRouter, initScheduler } from "../contentPlatform";
@@ -81,6 +82,8 @@ async function startServer() {
   app.use("/api/mao-corpus", maoCorpusRouter);
   // Rowboat 知识图谱 + 语义记忆 API
   app.use("/api/rowboat", rowboatRouter);
+  // 资治通鉴 RAG 知识库
+  app.use("/api/zizhitongjian", zizhitongjianRagRouter);
 
   // tRPC API
   app.use(

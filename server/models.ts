@@ -24,6 +24,94 @@ export interface ModelConfig {
   isEmbedding?: boolean;
 }
 
+// ─── Ollama 本地模型动态发现 ──────────────────────────────────────────────────
+
+interface OllamaModel {
+  name: string;
+  model: string;
+  size: number;
+  details: {
+    format: string;
+    family: string;
+    families: string[];
+    parameter_size: string;
+    quantization_level: string;
+  };
+}
+
+/** 缓存 Ollama 模型列表，避免频繁请求（5秒 TTL） */
+let ollamaCache: { models: OllamaModel[]; ts: number } | null = null;
+const OLLAMA_CACHE_TTL = 5000;
+
+/**
+ * 从本地 Ollama 实例动态获取已安装的模型列表
+ * 支持自动发现新安装/删除的模型
+ */
+export async function discoverOllamaModels(): Promise<OllamaModel[]> {
+  const baseUrl = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+
+  // 检查缓存
+  if (ollamaCache && Date.now() - ollamaCache.ts < OLLAMA_CACHE_TTL) {
+    return ollamaCache.models;
+  }
+
+  try {
+    const res = await fetch(`${baseUrl}/api/tags`, {
+      signal: AbortSignal.timeout(3000), // 3秒超时
+    });
+    if (!res.ok) throw new Error(`Ollama responded ${res.status}`);
+    const data = await res.json() as { models: OllamaModel[] };
+    const models = data.models || [];
+
+    // 更新缓存
+    ollamaCache = { models, ts: Date.now() };
+    return models;
+  } catch {
+    // Ollama 不可用，返回空列表
+    return [];
+  }
+}
+
+/**
+ * 将 Ollama 动态发现的模型转换为 ModelConfig 格式
+ * 与 MODEL_CONFIGS 中已有的配置合并，动态发现的模型会覆盖静态配置
+ */
+export function ollamaModelToConfig(ollama: OllamaModel): ModelConfig {
+  const modelName = ollama.name;
+  const family = ollama.details.family;
+  const paramSize = ollama.details.parameter_size;
+  const quant = ollama.details.quantization_level;
+  const isEmbedding = family === "bert" || family === "nomic-bert";
+  const supportsVision = ollama.details.families?.some(f =>
+    ["gemma3", "llava", "llama3.2-vision", "minicpm-v", "qwen2.5-vl"].includes(f)
+  ) ?? false;
+
+  // 智能生成模型显示名
+  let displayName: string;
+  if (isEmbedding) {
+    displayName = `${modelName.split(":")[0]} (Embed)`;
+  } else {
+    const shortName = modelName.split(":")[0];
+    displayName = `${shortName} ${paramSize}`;
+  }
+
+  const badge = isEmbedding ? "EMBED"
+    : supportsVision ? "LOCAL👁"
+    : "LOCAL";
+
+  return {
+    name: displayName,
+    badge,
+    provider: "ollama",
+    model: modelName,
+    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    get apiKey() { return ""; },
+    maxTokens: isEmbedding ? 512 : 32768,
+    supportsVision,
+    isEmbedding,
+  };
+}
+
 // ─── Provider Base URLs ───────────────────────────────────────────────────────
 
 const ZHIPU_BASE    = "https://open.bigmodel.cn/api/paas/v4";

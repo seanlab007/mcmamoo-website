@@ -40,6 +40,7 @@ import AdminNodes from "./pages/AdminNodes";
 import AdminRouting from "./pages/AdminRouting";
 import MaoIndustry from "./components/sections/MaoIndustry";
 import FaceFusion from "./pages/FaceFusion";
+import MaoYanBasicLaw from "./pages/MaoYanBasicLaw";
 
 // 猫眼内容平台跳转地址（本地:3001，云端: mcmamoo.com/content）
 const CONTENT_PLATFORM_URL = process.env.NODE_ENV === "production"
@@ -110,6 +111,9 @@ function Router() {
       <Route path={"/admin/millennium-clock"} component={AdminMillenniumClock} />
       <Route path={"/admin/nodes"} component={AdminNodes} />
       <Route path={"/admin/routing"} component={AdminRouting} />
+      
+      {/* 猫眼基本法 */}
+      <Route path={"/mao-yan-basic-law"} component={MaoYanBasicLaw} />
       
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

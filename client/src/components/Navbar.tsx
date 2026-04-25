@@ -23,6 +23,7 @@ const secondaryLinks = [
   { name: "Consulting", href: "/pricing" },
   { name: "Press", href: "/press" },
   { name: "毛智库", href: "/mao-think-tank" },
+  { name: "基本法", href: "/mao-yan-basic-law" },
 ];
 
 export default function Navbar() {

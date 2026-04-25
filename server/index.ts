@@ -9,6 +9,8 @@ import { registerOAuthRoutes } from "./_core/oauth";
 import { registerSupabaseAuthRoutes } from "./_core/supabaseAuth";
 import { mcpServerRouter } from "./mcp-server";
 import { notesRouter } from "./notes";
+import zizhitongjianRagRouter from "./zizhitongjianRagApi";
+import princeRagRouter from "./princeRagApi";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,6 +34,10 @@ async function startServer() {
   app.use("/api/mcp", mcpServerRouter);
   // 私密云笔记 API（管理员专属）
   app.use("/api/notes", notesRouter);
+  // 资治通鉴知识库 RAG API
+  app.use("/api/zizhitongjian", zizhitongjianRagRouter);
+  // 《君主论》(The Prince) 知识库 RAG API
+  app.use("/api/prince", princeRagRouter);
 
   // Serve static files from dist/public in production
   const staticPath =

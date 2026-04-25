@@ -38,6 +38,8 @@ interface ModelInfo {
   provider: string;
   supportsVision: boolean;
   available: boolean;
+  isLocal?: boolean;
+  isEmbedding?: boolean;
 }
 
 const DEFAULT_MODEL = "deepseek-chat";
@@ -136,7 +138,8 @@ export default function Chat() {
         const data = await res.json();
         const modelList: ModelInfo[] = data?.result?.data ?? [];
         if (modelList.length > 0) {
-          setModels(modelList.filter(m => m.available && !m.id.includes("embed")));
+          // 过滤掉嵌入模型和不可用的模型
+          setModels(modelList.filter(m => m.available && !m.isEmbedding));
         }
       } catch (e) {
         console.error("加载模型列表失败", e);
@@ -563,17 +566,41 @@ export default function Chat() {
                 <div style={{
                   position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50,
                   background: "#111118", border: "1px solid rgba(255,255,255,0.1)",
-                  minWidth: 220, maxHeight: 400, overflowY: "auto",
+                  minWidth: 240, maxHeight: 480, overflowY: "auto",
                 }}>
                   {(() => {
+                    // 按 provider 分组，本地 Ollama 排最前
                     const groups: Record<string, ModelInfo[]> = {};
                     for (const m of models) {
-                      const g = m.provider || "其他";
+                      const g = m.isLocal ? "🟢 本地 Ollama" : (m.provider || "其他");
                       (groups[g] ??= []).push(m);
                     }
-                    return Object.entries(groups).map(([group, groupModels]) => (
+                    // 排序：本地组优先
+                    const sortedGroups = Object.entries(groups).sort(([a], [b]) => {
+                      if (a.startsWith("🟢")) return -1;
+                      if (b.startsWith("🟢")) return 1;
+                      return a.localeCompare(b);
+                    });
+                    // provider 显示名映射
+                    const providerLabels: Record<string, string> = {
+                      "deepseek": "DeepSeek",
+                      "zhipu": "智谱 GLM",
+                      "groq": "Groq 极速",
+                      "gemini": "Google Gemini",
+                      "google-ai-studio": "Google AI Studio",
+                      "zai": "Z.ai",
+                      "anthropic": "Anthropic Claude",
+                      "ollama": "Ollama 本地",
+                    };
+                    return sortedGroups.map(([group, groupModels]) => (
                       <div key={group}>
-                        <div style={{ padding: "6px 12px 4px", fontSize: "0.55rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div style={{
+                          padding: "6px 12px 4px", fontSize: "0.55rem",
+                          color: group.startsWith("🟢") ? "rgba(100,220,100,0.6)" : "rgba(255,255,255,0.25)",
+                          letterSpacing: "0.1em",
+                          borderTop: "1px solid rgba(255,255,255,0.05)",
+                          fontWeight: group.startsWith("🟢") ? 600 : 400,
+                        }}>
                           {group}
                         </div>
                         {groupModels.map(m => (
@@ -587,10 +614,22 @@ export default function Chat() {
                               display: "flex", justifyContent: "space-between", alignItems: "center",
                             }}
                           >
-                            <span>{m.name}</span>
+                            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              {m.isLocal && (
+                                <span style={{
+                                  display: "inline-block", width: 5, height: 5, borderRadius: "50%",
+                                  background: m.available ? "#4ade80" : "#666",
+                                  boxShadow: m.available ? "0 0 4px #4ade80" : "none",
+                                }} />
+                              )}
+                              {m.name}
+                            </span>
                             <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
                               {m.supportsVision && <span style={{ color: "rgba(100,200,255,0.6)", fontSize: "0.5rem" }} title="支持图片输入">👁</span>}
-                              <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.5rem" }}>{m.badge}</span>
+                              <span style={{
+                                color: m.isLocal ? "rgba(100,220,100,0.4)" : "rgba(255,255,255,0.25)",
+                                fontSize: "0.5rem",
+                              }}>{m.badge}</span>
                             </span>
                           </div>
                         ))}

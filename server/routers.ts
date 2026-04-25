@@ -29,7 +29,7 @@ import {
   createNodeLog,
 } from "./db";
 import { dbFetch } from "./aiNodes";
-import { MODEL_CONFIGS } from "./models";
+import { MODEL_CONFIGS, discoverOllamaModels, ollamaModelToConfig } from "./models";
 import { z } from "zod";
 import { sendBulkEmails, generateNewsletterHtml, sendEmail, generateContactConfirmationHtml, generateContactAdminHtml } from "./email";
 import { reportMcmamooOrder } from "./_core/maoyan-rewards";
@@ -299,18 +299,72 @@ export const appRouter = router({
   // ─── AI 模型 / 状态 / 预设 ────────────────────────────────────────────────
   ai: router({
     models: publicProcedure.query(async () => {
-      return Object.entries(MODEL_CONFIGS).map(([id, cfg]) => ({
+      // 1. 获取静态配置的模型
+      const staticModels = Object.entries(MODEL_CONFIGS).map(([id, cfg]) => ({
         id,
         name: cfg.name,
         badge: cfg.badge,
         provider: cfg.provider,
         supportsVision: cfg.supportsVision ?? false,
         configured: !!cfg.apiKey,
-        // Ollama 本地模型不需要 API Key，但需要检测服务是否在线
-        // 对于本地模型，available 取决于 isLocal (provider === "ollama")
         available: cfg.provider === "ollama" ? true : !!cfg.apiKey,
         isLocal: cfg.provider === "ollama",
+        isEmbedding: cfg.isEmbedding ?? false,
       }));
+
+      // 2. 动态发现本地 Ollama 实际安装的模型
+      let ollamaOnline = false;
+      try {
+        const ollamaModels = await discoverOllamaModels();
+        ollamaOnline = ollamaModels.length > 0;
+
+        // 获取 Ollama 模型名称集合，用于匹配静态配置
+        const ollamaModelNames = new Set(ollamaModels.map(m => m.name));
+
+        // 2a. 更新静态 Ollama 模型的在线状态
+        for (const sm of staticModels) {
+          if (sm.provider === "ollama") {
+            const cfg = MODEL_CONFIGS[sm.id];
+            if (cfg) {
+              sm.available = ollamaModelNames.has(cfg.model);
+            }
+          }
+        }
+
+        // 2b. 添加 Ollama 上存在但静态配置中没有的模型
+        const staticOllamaModelIds = new Set(
+          Object.entries(MODEL_CONFIGS)
+            .filter(([, cfg]) => cfg.provider === "ollama")
+            .map(([, cfg]) => cfg.model)
+        );
+
+        for (const om of ollamaModels) {
+          if (!staticOllamaModelIds.has(om.name)) {
+            const cfg = ollamaModelToConfig(om);
+            const dynamicId = `ollama-dynamic-${om.name.replace(/[^a-zA-Z0-9]/g, "-")}`;
+            staticModels.push({
+              id: dynamicId,
+              name: cfg.name,
+              badge: cfg.badge,
+              provider: "ollama",
+              supportsVision: cfg.supportsVision ?? false,
+              configured: true,
+              available: true,
+              isLocal: true,
+              isEmbedding: cfg.isEmbedding ?? false,
+            });
+          }
+        }
+      } catch {
+        // Ollama 不可用，静态 Ollama 模型标记为不可用
+        for (const sm of staticModels) {
+          if (sm.provider === "ollama" && !sm.isEmbedding) {
+            sm.available = false;
+          }
+        }
+      }
+
+      return staticModels;
     }),
     status: publicProcedure.query(async () => {
       const nodes = await getAiNodes();
