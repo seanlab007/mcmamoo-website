@@ -573,7 +573,13 @@ export default function Chat() {
                     }
                     return Object.entries(groups).map(([group, groupModels]) => (
                       <div key={group}>
-                        <div style={{ padding: "6px 12px 4px", fontSize: "0.55rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div style={{
+                          padding: "6px 12px 4px", fontSize: "0.55rem",
+                          color: group.startsWith("🟢") ? "rgba(100,220,100,0.6)" : "rgba(255,255,255,0.25)",
+                          letterSpacing: "0.1em",
+                          borderTop: "1px solid rgba(255,255,255,0.05)",
+                          fontWeight: group.startsWith("🟢") ? 600 : 400,
+                        }}>
                           {group}
                         </div>
                         {groupModels.map(m => (
