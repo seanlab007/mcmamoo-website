@@ -124,11 +124,15 @@ export type MaoAISupportedFileType =
   (typeof MAOAI_SUPPORTED_FILE_TYPES)[number];
 
 // ─── Suggestion Dimensions ──────────────────────────────────────────────────
-
+// 通用维度
 export const SUGGESTION_DIMENSIONS: Record<string, { label: string; labelEn: string; emoji: string }> = {
   deep: { label: "深度分析", labelEn: "Deep Dive", emoji: "🔬" },
   creative: { label: "创意拓展", labelEn: "Creative", emoji: "💡" },
   practical: { label: "实践应用", labelEn: "Practical", emoji: "🛠️" },
   comparison: { label: "对比分析", labelEn: "Comparison", emoji: "⚖️" },
   summary: { label: "总结提炼", labelEn: "Summary", emoji: "📝" },
+  // TriadLoop 追问引擎专用维度（任务完成后生成）
+  immediate: { label: "下一步", labelEn: "Next Step", emoji: "⚡" },
+  risk: { label: "潜在风险", labelEn: "Risk Check", emoji: "⚠️" },
+  strategic: { label: "战略视角", labelEn: "Strategic", emoji: "🔭" },
 };

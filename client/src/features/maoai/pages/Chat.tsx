@@ -297,6 +297,12 @@ export default function MaoAIChat() {
   // 推荐追问状态
   const [suggestions, setSuggestions] = useState<SuggestedQuestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  // TriadLoop 追问来源元数据
+  const [followUpSource, setFollowUpSource] = useState<"general" | "triad">("general");
+  const [followUpTaskName, setFollowUpTaskName] = useState<string | undefined>(undefined);
+  const [followUpScore, setFollowUpScore] = useState<number | undefined>(undefined);
+  // TriadLoop 追问接收标记 ref（避免闭包问题）
+  const triadFollowUpReceivedRef = useRef(false);
   // Token Optimization 统计
   const [tokenOptStats, setTokenOptStats] = useState<{
     savedTokens: number;
@@ -968,6 +974,10 @@ export default function MaoAIChat() {
 
     // 清除之前的推荐追问
     setSuggestions([]);
+    setFollowUpSource("general");
+    setFollowUpTaskName(undefined);
+    setFollowUpScore(undefined);
+    triadFollowUpReceivedRef.current = false;
 
     // Build document context system prompt from pending files
     let docSystemPrompt = "";
@@ -1153,6 +1163,21 @@ export default function MaoAIChat() {
               } else if (chunk.agentLog) {
                 // Agent 推理日志（Manus Max 流式可视化）
                 setAgentLogs(prev => [...prev, chunk.agentLog]);
+              } else if (chunk.triadFollowUp) {
+                // TriadLoop 任务完成后的追问数据（来自 follow_up_engine.py）
+                const fu = chunk.triadFollowUp;
+                if (fu.questions && Array.isArray(fu.questions)) {
+                  const triadSuggestions: SuggestedQuestion[] = fu.questions.map((q: any) => ({
+                    question: q.question,
+                    dimension: q.level || "immediate",
+                    suggestedAction: q.suggested_action,
+                  }));
+                  setSuggestions(triadSuggestions);
+                  setFollowUpSource("triad");
+                  setFollowUpTaskName(fu.task_summary?.replace(/^[✅🔄][^：：:]*[：：:]\s*/, ""));
+                  setFollowUpScore(fu.completion_score);
+                  triadFollowUpReceivedRef.current = true;
+                }
               } else if (chunk.tokenOptimization) {
                 // Token Optimization 统计
                 const opt = chunk.tokenOptimization;
@@ -1210,9 +1235,15 @@ export default function MaoAIChat() {
       setAgentLogs([]);
       abortRef.current = null;
       
-      // 生成推荐追问
+      // 生成推荐追问（仅当未收到 TriadLoop 专项追问时才生成通用追问）
       if (fullContent && fullContent.trim().length >= 50) {
-        generateSuggestions([...newMessages, { role: "assistant" as const, content: fullContent }], fullContent);
+        // 检查是否已收到 triad follow_up（通过 source 状态）
+        // 用 ref 避免闭包问题
+        if (!triadFollowUpReceivedRef.current) {
+          setFollowUpSource("general");
+          generateSuggestions([...newMessages, { role: "assistant" as const, content: fullContent }], fullContent);
+        }
+        triadFollowUpReceivedRef.current = false; // 重置
       }
     }
   };
@@ -1809,6 +1840,9 @@ export default function MaoAIChat() {
                     }}
                     isLoading={isLoadingSuggestions}
                     disabled={isBusy}
+                    source={followUpSource}
+                    taskName={followUpTaskName}
+                    completionScore={followUpScore}
                   />
                 </div>
               </div>
