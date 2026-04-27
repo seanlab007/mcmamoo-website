@@ -41,6 +41,17 @@ export interface TriadFollowUpEvent {
   }>;
 }
 
+export interface RoundFollowUpEvent {
+  type: "roundFollowUp";
+  round: number;
+  score: number;
+  questions: Array<{
+    level: string;
+    question: string;
+    suggested_action: string;
+  }>;
+}
+
 export interface ProtocolProgressEvent {
   type: "progress";
   phase: "init" | "running" | "completed" | "failed";
@@ -53,6 +64,7 @@ export interface ProtocolProgressEvent {
 export type ProtocolEvent =
   | ExecutionPlanEvent
   | TriadFollowUpEvent
+  | RoundFollowUpEvent
   | ProtocolProgressEvent;
 
 // 配置选项
@@ -154,6 +166,11 @@ export async function* runMaoTaskProtocol(
               type: "triadFollowUp",
               ...event.triadFollowUp,
             } as TriadFollowUpEvent;
+          } else if (event.roundFollowUp) {
+            yield {
+              type: "roundFollowUp",
+              ...event.roundFollowUp,
+            } as RoundFollowUpEvent;
           } else if (event.progress) {
             yield {
               type: "progress",
@@ -232,6 +249,14 @@ export function adaptProtocolEventToSSE(
         triadFollowUp: {
           task_summary: event.task_summary,
           completion_score: event.completion_score,
+          questions: event.questions,
+        },
+      };
+    case "roundFollowUp":
+      return {
+        roundFollowUp: {
+          round: event.round,
+          score: event.score,
           questions: event.questions,
         },
       };

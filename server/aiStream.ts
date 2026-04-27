@@ -11,6 +11,7 @@ import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
 import { searchCorpus, formatForPrompt } from "./maoRagServer";
 import { TokenOptimizationPipeline } from "./token-optimization";
+import { runMaoTaskProtocol, adaptProtocolEventToSSE } from "./maoTaskProtocol";
 
 // ─── Industrial AI Modules ────────────────────────────────────────────────────
 import { 
@@ -291,8 +292,86 @@ async function matchSkillForMessage(userMessage: string): Promise<{
 // model: cloud model ID (e.g. "deepseek-chat") or "local:<nodeId>" for local node
 // useLocal: true = admin-only, force local node routing
 // agent: Agent ID to load specialized system prompt
+// useTriadLoop: true = 启用 TriadLoop 博弈循环（MaoTaskProtocol）
 aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
-  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId, agent: agentId } = req.body;
+  let { model = "deepseek-chat", messages, systemPrompt, preferPaid, useLocal, nodeId: requestedNodeId, agent: agentId, useTriadLoop } = req.body;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Q1: TriadLoop 模式 - 启用 MaoTaskProtocol 博弈循环
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (useTriadLoop) {
+    const lastUserMsg = [...(messages ?? [])].reverse().find((m: any) => m.role === "user");
+    const userText = typeof lastUserMsg?.content === "string"
+      ? lastUserMsg.content
+      : Array.isArray(lastUserMsg?.content)
+        ? lastUserMsg.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
+        : "";
+
+    if (!userText.trim()) {
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.write(`data: ${JSON.stringify({ error: "TriadLoop 模式需要用户输入内容" })}
+
+`);
+      res.end();
+      return;
+    }
+
+    // 设置 SSE 头
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
+
+    // 通知前端：启用 TriadLoop 模式
+    res.write(`data: ${JSON.stringify({ triadMode: { enabled: true, task: userText.slice(0, 100) } })}
+
+`);
+
+    try {
+      // 运行 MaoTaskProtocol
+      const protocol = runMaoTaskProtocol({
+        task: userText,
+        task_type: "engineering", // 可根据内容自动检测
+        enable_cognitive_bus: true,
+        enable_strategic_review: true,
+        enable_follow_up: true,
+        enable_execution_plan: true,
+        require_approval: false, // 简化版：不等待批准
+        anthropic_api_key: process.env.ANTHROPIC_API_KEY,
+        coder_api_key: process.env.ANTHROPIC_API_KEY,
+        reviewer_api_key: process.env.OPENAI_API_KEY,
+        max_iterations: 5,
+      });
+
+      // 转发所有事件到前端
+      for await (const event of protocol) {
+        const sseData = adaptProtocolEventToSSE(event);
+        if (sseData) {
+          res.write(`data: ${JSON.stringify(sseData)}
+
+`);
+        }
+      }
+
+      res.write("data: [DONE]
+
+");
+      res.end();
+    } catch (err: any) {
+      console.error("[TriadLoop] Error:", err);
+      res.write(`data: ${JSON.stringify({ error: `TriadLoop 执行失败: ${err.message}` })}
+
+`);
+      res.write("data: [DONE]
+
+");
+      res.end();
+    }
+    return;
+  }
 
   // 如果指定了 agent，加载对应的系统提示词
   if (agentId && !systemPrompt) {
