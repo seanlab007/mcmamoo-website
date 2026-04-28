@@ -11,7 +11,7 @@ import { checkSkillPermission } from "./contentPlatform";
 import { getAgentSystemPrompt } from "./agents";
 import { searchCorpus, formatForPrompt } from "./maoRagServer";
 import { TokenOptimizationPipeline } from "./token-optimization";
-import { runMaoTaskProtocol, adaptProtocolEventToSSE } from "./maoTaskProtocol";
+import { runMaoTaskProtocol, adaptProtocolEventToSSE, detectTaskType } from "./maoTaskProtocol";
 
 // ─── Industrial AI Modules ────────────────────────────────────────────────────
 import { 
@@ -331,10 +331,14 @@ aiStreamRouter.post("/chat/stream", async (req: Request, res: Response) => {
 `);
 
     try {
+      // 自动检测任务类型
+      const detectedTaskType = detectTaskType(userText);
+      console.log(`[TriadLoop] task_type detected: ${detectedTaskType} for task: "${userText.slice(0, 60)}"`);
+
       // 运行 MaoTaskProtocol
       const protocol = runMaoTaskProtocol({
         task: userText,
-        task_type: "engineering", // 可根据内容自动检测
+        task_type: detectedTaskType,
         enable_cognitive_bus: true,
         enable_strategic_review: true,
         enable_follow_up: true,

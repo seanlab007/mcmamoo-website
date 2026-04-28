@@ -86,13 +86,64 @@ export interface MaoTaskProtocolOptions {
 }
 
 /**
+ * 自动检测任务类型
+ *
+ * 根据任务文本的关键词判断最匹配的 TaskType，
+ * 对应 Python 侧 triad_loop.py 的 TaskType 枚举：
+ *   engineering / strategic / debugging / refactoring / analysis / unknown
+ *
+ * 优先级：debugging > refactoring > analysis > strategic > engineering > unknown
+ */
+export function detectTaskType(text: string): string {
+  const t = text.toLowerCase();
+
+  // 1. debugging: 修复/报错/bug
+  const debuggingKw = [
+    "bug", "fix", "修复", "报错", "error", "exception", "crash", "排查",
+    "不工作", "不生效", "失败", "failed", "broken", "故障", "调试", "debug",
+  ];
+  if (debuggingKw.some((kw) => t.includes(kw))) return "debugging";
+
+  // 2. refactoring: 重构/优化/整理
+  const refactoringKw = [
+    "重构", "refactor", "优化", "optimize", "整理", "清理", "cleanup",
+    "重写", "rewrite", "迁移", "migrate", "抽象", "abstract",
+  ];
+  if (refactoringKw.some((kw) => t.includes(kw))) return "refactoring";
+
+  // 3. analysis: 分析/评估/对比
+  const analysisKw = [
+    "分析", "analyze", "analyse", "评估", "evaluate", "对比", "compare",
+    "调研", "research", "报告", "report", "统计", "数据", "总结", "review",
+  ];
+  if (analysisKw.some((kw) => t.includes(kw))) return "analysis";
+
+  // 4. strategic: 战略/规划/方案/设计
+  const strategicKw = [
+    "战略", "策略", "strategy", "规划", "plan", "方案", "设计架构",
+    "路线图", "roadmap", "决策", "decision", "目标", "okr", "产品",
+  ];
+  if (strategicKw.some((kw) => t.includes(kw))) return "strategic";
+
+  // 5. engineering: 实现/开发/功能/接口/代码
+  const engineeringKw = [
+    "实现", "开发", "implement", "develop", "build", "create", "写",
+    "代码", "code", "功能", "feature", "接口", "api", "组件", "component",
+    "模块", "module", "系统", "system", "部署", "deploy",
+  ];
+  if (engineeringKw.some((kw) => t.includes(kw))) return "engineering";
+
+  return "unknown";
+}
+
+/**
  * 运行 MaoTaskProtocol 并返回事件流
  *
  * 使用方式：
  * ```typescript
  * const protocol = runMaoTaskProtocol({
  *   task: "实现用户登录功能",
- *   task_type: "engineering",
+ *   task_type: "engineering",           // 可省略，会自动检测
  * });
  *
  * for await (const event of protocol) {

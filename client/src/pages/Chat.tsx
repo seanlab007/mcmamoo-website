@@ -29,6 +29,29 @@ interface Message {
   created_at: string;
 }
 
+// TriadLoop 事件（由后端 SSE 推送）
+type TriadEventType = "executionPlan" | "roundFollowUp" | "triadFollowUp" | "progress" | "triadMode";
+
+interface TriadQuestion {
+  level: string;
+  question: string;
+  suggested_action: string;
+}
+
+interface TriadEvent {
+  type: TriadEventType;
+  round?: number;
+  score?: number;
+  phase?: string;
+  message?: string;
+  task?: string;
+  questions?: TriadQuestion[];
+  plan?: string;
+  enabled?: boolean;
+  task_summary?: string;
+  completion_score?: number;
+}
+
 // ─── 模型列表（从服务端动态获取）────────────────────────────────────────────
 
 interface ModelInfo {
@@ -106,6 +129,10 @@ export default function Chat() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // ── TriadLoop 状态 ──────────────────────────────────────────────────────────
+  const [useTriadLoop, setUseTriadLoop] = useState(false);
+  const [triadEvents, setTriadEvents] = useState<TriadEvent[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -268,13 +295,16 @@ export default function Chat() {
       const res = await fetch("/api/ai/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages: apiMessages }),
+        body: JSON.stringify({ model, messages: apiMessages, useTriadLoop }),
       });
 
       if (!res.body) throw new Error("No stream body");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+
+      // 清空本轮 TriadLoop 事件
+      if (useTriadLoop) setTriadEvents([]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -291,6 +321,65 @@ export default function Chat() {
 
           try {
             const ev = JSON.parse(trimmed.slice(6));
+
+            // ── TriadLoop 特有事件 ────────────────────────────────────────
+            if (ev.triadMode) {
+              setTriadEvents(prev => [...prev, { type: "triadMode", enabled: true, task: ev.triadMode.task }]);
+              // 在助手消息中显示启动通知
+              streamingContentRef.current = `🤖 **TriadLoop 已启动**\n\n任务：${ev.triadMode.task}\n\n> 正在进行多轮博弈循环，请稍候...\n\n`;
+              setMessages(prev => prev.map(m =>
+                m.id === assistantMsg.id ? { ...m, content: streamingContentRef.current } : m
+              ));
+            }
+            if (ev.progress) {
+              setTriadEvents(prev => [...prev, { type: "progress", phase: ev.progress.phase, message: ev.progress.message }]);
+              // 追加进度到助手消息
+              const progressLine = `\n\n⚙️ **[${ev.progress.phase}]** ${ev.progress.message}`;
+              streamingContentRef.current += progressLine;
+              setMessages(prev => prev.map(m =>
+                m.id === assistantMsg.id ? { ...m, content: streamingContentRef.current } : m
+              ));
+            }
+            if (ev.executionPlan) {
+              setTriadEvents(prev => [...prev, { type: "executionPlan", plan: ev.executionPlan.plan, task: ev.executionPlan.task }]);
+              streamingContentRef.current += `\n\n📋 **执行计划**\n\n${ev.executionPlan.plan}`;
+              setMessages(prev => prev.map(m =>
+                m.id === assistantMsg.id ? { ...m, content: streamingContentRef.current } : m
+              ));
+            }
+            if (ev.roundFollowUp) {
+              const rfEvent: TriadEvent = {
+                type: "roundFollowUp",
+                round: ev.roundFollowUp.round,
+                score: ev.roundFollowUp.score,
+                questions: ev.roundFollowUp.questions,
+              };
+              setTriadEvents(prev => [...prev, rfEvent]);
+              // 追加每轮追问到助手消息
+              const qs = (ev.roundFollowUp.questions ?? []).map((q: TriadQuestion, i: number) =>
+                `${i + 1}. **[${q.level}]** ${q.question}`
+              ).join("\n");
+              streamingContentRef.current += `\n\n💬 **第 ${ev.roundFollowUp.round} 轮追问** (得分: ${(ev.roundFollowUp.score * 100).toFixed(0)}%)\n\n${qs}`;
+              setMessages(prev => prev.map(m =>
+                m.id === assistantMsg.id ? { ...m, content: streamingContentRef.current } : m
+              ));
+            }
+            if (ev.triadFollowUp) {
+              const tfEvent: TriadEvent = {
+                type: "triadFollowUp",
+                task_summary: ev.triadFollowUp.task_summary,
+                completion_score: ev.triadFollowUp.completion_score,
+                questions: ev.triadFollowUp.questions,
+              };
+              setTriadEvents(prev => [...prev, tfEvent]);
+              const qs = (ev.triadFollowUp.questions ?? []).map((q: TriadQuestion, i: number) =>
+                `${i + 1}. **[${q.level}]** ${q.question}\n   → ${q.suggested_action}`
+              ).join("\n\n");
+              streamingContentRef.current += `\n\n✅ **任务完成 · 最终追问** (完成度: ${(ev.triadFollowUp.completion_score * 100).toFixed(0)}%)\n\n${qs}`;
+              setMessages(prev => prev.map(m =>
+                m.id === assistantMsg.id ? { ...m, content: streamingContentRef.current } : m
+              ));
+            }
 
             // 流式文本内容
             if (ev.content !== undefined && ev.content !== null) {
@@ -528,6 +617,23 @@ export default function Chat() {
               联网
             </button>
 
+            {/* TriadLoop 博弈循环 */}
+            <button
+              onClick={() => setUseTriadLoop(v => !v)}
+              title={useTriadLoop ? "关闭 TriadLoop 博弈循环" : "开启 TriadLoop 博弈循环（多轮自我博弈）"}
+              style={{
+                display: "flex", alignItems: "center", gap: 5,
+                padding: "4px 10px", fontSize: "0.6rem", cursor: "pointer",
+                background: useTriadLoop ? "rgba(120,80,220,0.18)" : "transparent",
+                border: `1px solid ${useTriadLoop ? "rgba(120,80,220,0.6)" : "rgba(255,255,255,0.1)"}`,
+                color: useTriadLoop ? "#a78bfa" : "rgba(255,255,255,0.3)",
+                transition: "all 0.15s",
+              }}
+            >
+              <Bot size={12} />
+              博弈
+            </button>
+
             {/* 图片生成 */}
             <button
               onClick={() => setShowImageInput(v => !v)}
@@ -748,6 +854,18 @@ export default function Chat() {
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, color: "rgba(201,168,76,0.6)", fontSize: "0.6rem" }}>
               <Globe size={10} />
               联网搜索已开启 — AI 将实时搜索相关信息
+            </div>
+          )}
+
+          {useTriadLoop && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6, marginBottom: 8,
+              color: "rgba(167,139,250,0.8)", fontSize: "0.6rem",
+              padding: "5px 10px", background: "rgba(120,80,220,0.07)",
+              borderRadius: 4, border: "1px solid rgba(120,80,220,0.2)",
+            }}>
+              <Bot size={10} />
+              TriadLoop 博弈循环已开启 — 将启用多轮自我博弈验证（任务复杂度越高效果越明显）
             </div>
           )}
 
