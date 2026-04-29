@@ -31,6 +31,11 @@ from typing import Optional, List, Dict, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 
+# 导入原子化修改工具
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from utils.patch_utils import PatchApplier, diff_text, compute_similarity
+from utils.search_code import CodeSearcher
+
 
 # ─── 日志工具 ────────────────────────────────────────────────────────────────
 
@@ -56,6 +61,12 @@ class GenerationMode(Enum):
     TEST = "test"           # 生成测试
 
 
+class OutputMode(Enum):
+    """输出模式"""
+    FULL = "full"           # 输出完整代码
+    ATOMIC = "atomic"       # 输出原子化 Patch
+
+
 @dataclass
 class CodeContext:
     """代码上下文"""
@@ -78,6 +89,9 @@ class GenerationResult:
     explanation: str = ""
     warnings: List[str] = field(default_factory=list)
     generation_time: float = 0.0
+    output_mode: str = "full"  # "full" 或 "atomic"
+    applied: bool = False  # Patch 是否已应用
+    similarity: float = 0.0  # 与上一轮的相似度
 
 
 # ─── Coder Agent ─────────────────────────────────────────────────────────────
@@ -91,6 +105,7 @@ class CoderAgent:
       2. 反馈驱动修复：根据 Reviewer 意见精准修改
       3. Patch 生成：生成标准的 unified diff 格式
       4. 上下文感知：理解项目结构和依赖关系
+      5. 原子化修改：只输出 diff，支持自动应用（Phase 5 核心能力）
     """
 
     def __init__(
@@ -99,7 +114,9 @@ class CoderAgent:
         model: str = "gpt-4o",
         workspace: str = None,
         language: str = "typescript",
-        enable_thought_tracking: bool = True
+        enable_thought_tracking: bool = True,
+        enable_atomic_mode: bool = True,
+        auto_apply_patch: bool = True
     ):
         """
         初始化编码员
@@ -110,23 +127,33 @@ class CoderAgent:
             workspace: 工作目录
             language: 主要编程语言
             enable_thought_tracking: 启用思维链追踪（CoT）
+            enable_atomic_mode: 启用原子化修改模式（只输出 diff）
+            auto_apply_patch: 是否自动应用 Patch
         """
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
         self.workspace = workspace or os.getcwd()
         self.language = language
         self.enable_thought_tracking = enable_thought_tracking
+        self.enable_atomic_mode = enable_atomic_mode
+        self.auto_apply_patch = auto_apply_patch
         self.generation_history: List[GenerationResult] = []
+        self._previous_code: Dict[str, str] = {}  # 记录上轮代码，用于计算相似度
 
         # 动态工具发现：已知库的文档缓存
         self._doc_cache: Dict[str, str] = {}
+
+        # 原子化修改工具
+        self._patch_applier = PatchApplier(workspace=self.workspace)
+        self._code_searcher = CodeSearcher(workspace=self.workspace)
 
     def generate(
         self,
         task: str,
         context: Dict = None,
         mode: GenerationMode = GenerationMode.INITIAL,
-        reviewer_feedback: str = ""
+        reviewer_feedback: str = "",
+        output_mode: OutputMode = OutputMode.FULL
     ) -> GenerationResult:
         """
         生成或修复代码
@@ -136,17 +163,29 @@ class CoderAgent:
             context: 上下文信息
             mode: 生成模式
             reviewer_feedback: Reviewer 的反馈（用于修复模式）
+            output_mode: 输出模式（FULL: 完整代码, ATOMIC: 原子化 diff）
 
         Returns:
             GenerationResult: 生成结果
         """
         start_time = time.time()
+        context = context or {}
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # Phase 5: 原子化修改模式
+        # ═══════════════════════════════════════════════════════════════════════
+        if self.enable_atomic_mode:
+            return self._generate_atomic(task, context, mode, reviewer_feedback)
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # 传统模式：完整代码生成
+        # ═══════════════════════════════════════════════════════════════════════
 
         # 构建上下文
         code_context = self._build_context(task, context, mode, reviewer_feedback)
 
         # 读取相关文件（如果需要）
-        if context and context.get("file_path"):
+        if context.get("file_path"):
             original_code = self._read_file(context["file_path"])
         else:
             original_code = ""
@@ -159,6 +198,15 @@ class CoderAgent:
             generated = self._generate_with_llm(code_context, original_code, mode, reviewer_feedback)
         else:
             generated = self._generate_mock(code_context, original_code, mode)
+
+        # 计算相似度
+        similarity = 0.0
+        if context.get("file_path") and context["file_path"] in self._previous_code:
+            similarity = compute_similarity(self._previous_code[context["file_path"]], generated)
+
+        # 记录当前代码
+        if context.get("file_path"):
+            self._previous_code[context["file_path"]] = generated
 
         # 生成 patch
         if original_code and generated:
@@ -173,7 +221,9 @@ class CoderAgent:
             patch=patch,
             diff_lines=len(patch.splitlines()) if patch else 0,
             explanation=f"{mode.value} 完成",
-            generation_time=time.time() - start_time
+            generation_time=time.time() - start_time,
+            output_mode=output_mode.value,
+            similarity=similarity
         )
 
         self.generation_history.append(result)
@@ -185,6 +235,193 @@ class CoderAgent:
                 time=f"{result.generation_time:.2f}s")
 
         return result
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Phase 5: 原子化修改模式核心实现
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def _generate_atomic(
+        self,
+        task: str,
+        context: Dict,
+        mode: GenerationMode,
+        reviewer_feedback: str
+    ) -> GenerationResult:
+        """
+        原子化代码生成 - 只输出 diff，不输出完整代码
+
+        Phase 5 核心能力：
+        - 极致节省 Token：只传输修改的几行
+        - 极速响应：无需生成完整文件
+        - 安全保障：失败自动回滚
+        """
+        start_time = time.time()
+        file_path = context.get("file_path", "")
+
+        log_step("atomic_start", f"原子化模式: {task[:50]}...",
+                file=file_path, mode=mode.value)
+
+        # 读取原文件
+        original_code = self._read_file(file_path) if file_path else ""
+        if not original_code:
+            log_step("error", "原子化模式需要提供 file_path")
+            return GenerationResult(
+                success=False,
+                explanation="原子化模式需要提供 file_path",
+                generation_time=time.time() - start_time,
+                output_mode="atomic"
+            )
+
+        # 计算与上轮代码的相似度
+        similarity = 0.0
+        if file_path in self._previous_code:
+            similarity = compute_similarity(self._previous_code[file_path], original_code)
+            log_step("patch_similarity", f"与上轮代码相似度: {similarity:.2%}",
+                    previous_hash=hash(self._previous_code.get(file_path, "")) % 10000)
+
+        # 构建上下文
+        code_context = self._build_context(task, context, mode, reviewer_feedback)
+
+        # 强制原子化提示
+        atomic_instruction = """
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                           ⚡ 原子化修改模式 ⚡                                 ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  你只需要输出 Unified Diff 格式的修改，不要输出完整代码！                       ║
+║                                                                              ║
+║  格式要求：                                                                   ║
+║  ```diff                                                                      ║
+║  --- a/src/Login.tsx                                                          ║
+║  +++ b/src/Login.tsx                                                          ║
+║  @@ -10,5 +10,5 @@                                                            ║
+║  - old_line                                                                   ║
+║  + new_line                                                                   ║
+║  ```                                                                            ║
+║                                                                              ║
+║  优势：                                                                       ║
+║  • 只传输修改的几行，Token 消耗降低 90%+                                       ║
+║  • 无需重写完整文件，避免意外覆盖                                               ║
+║  • 响应速度提升 10 倍以上                                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
+        code_context += atomic_instruction
+
+        # ═══════════════════════════════════════════════════════════════════
+        # 调用 LLM 生成 Diff
+        # ═══════════════════════════════════════════════════════════════════
+        if self.api_key:
+            llm_response = self._call_llm(code_context)
+            patch = self._extract_diff_from_response(llm_response)
+        else:
+            # Mock 模式
+            patch = self._generate_mock_patch(original_code, task, file_path)
+
+        if not patch:
+            log_step("error", "未能生成有效 Patch")
+            return GenerationResult(
+                success=False,
+                explanation="未能生成有效 Patch",
+                generation_time=time.time() - start_time,
+                output_mode="atomic"
+            )
+
+        # ═══════════════════════════════════════════════════════════════════
+        # 应用 Patch（可选）
+        # ═══════════════════════════════════════════════════════════════════
+        applied = False
+        if self.auto_apply_patch:
+            result = self._patch_applier.apply(file_path, patch)
+            applied = result.success
+
+            if result.success:
+                log_step("patch_applied", f"Patch 应用成功",
+                        file=file_path, applied_lines=result.applied_lines)
+            else:
+                log_step("patch_failed", f"Patch 应用失败: {result.message}",
+                        file=file_path, error=result.error_details)
+
+        # 统计
+        patch_lines = len(patch.splitlines())
+        estimated_token_save = (len(original_code) - patch_lines * 50) / 4
+        if estimated_token_save < 0:
+            estimated_token_save = 0
+
+        # 记录当前代码
+        if applied:
+            self._previous_code[file_path] = self._read_file(file_path)
+        else:
+            self._previous_code[file_path] = original_code
+
+        result_obj = GenerationResult(
+            success=True,
+            code="",  # 原子化模式不返回完整代码
+            patch=patch,
+            diff_lines=patch_lines,
+            explanation=f"原子化修改完成，节省约 {estimated_token_save:.0f} tokens",
+            generation_time=time.time() - start_time,
+            output_mode="atomic",
+            applied=applied,
+            similarity=similarity
+        )
+
+        self.generation_history.append(result_obj)
+
+        log_step("atomic_complete", f"原子化修改完成",
+                diff_lines=patch_lines,
+                applied=applied,
+                token_saved=f"~{estimated_token_save:.0f}",
+                time=f"{result_obj.generation_time:.2f}s")
+
+        return result_obj
+
+    def _extract_diff_from_response(self, response: str) -> str:
+        """从 LLM 响应中提取 Diff"""
+        # 尝试匹配 ```diff ... ``` 块
+        diff_pattern = r'```diff\s*([\s\S]*?)```'
+        match = re.search(diff_pattern, response)
+        if match:
+            return match.group(1).strip()
+
+        # 尝试匹配 ```diff ... ``` (无语言标识)
+        bare_diff_pattern = r'```\s*([\s\S]*?)```'
+        for m in re.finditer(bare_diff_pattern, response):
+            content = m.group(1).strip()
+            if '---' in content and '+++' in content:
+                return content
+
+        # 尝试直接匹配 diff 格式
+        if '---' in response and '+++' in response:
+            lines = response.splitlines()
+            start_idx = 0
+            end_idx = len(lines)
+
+            for i, line in enumerate(lines):
+                if line.startswith('---'):
+                    start_idx = i
+                if line.startswith('@@'):
+                    end_idx = i + 20  # 取 20 行
+
+            return '\n'.join(lines[start_idx:min(end_idx, len(lines))])
+
+        return ""
+
+    def _generate_mock_patch(
+        self,
+        original: str,
+        task: str,
+        file_path: str
+    ) -> str:
+        """生成 Mock Patch"""
+        return f"""--- a/{file_path}
++++ b/{file_path}
+@@ -10,3 +10,7 @@
+ // TODO: Implement {task}
+
++export function newFeature() {{
++  // Placeholder for {task[:30]}
++  return null;
++}}
+"""
 
     def _build_context(
         self,
@@ -207,6 +444,44 @@ class CoderAgent:
                 ctx += f"\n框架：{context['framework']}"
             if context.get("constraints"):
                 ctx += f"\n约束条件：{', '.join(context['constraints'])}"
+
+            # ═══════════════════════════════════════════════════════════════════════
+            # C. 项目全景感知：注入相关组件上下文
+            # ═══════════════════════════════════════════════════════════════════════
+            if context.get("knowledge_graph"):
+                kg = context["knowledge_graph"]
+                related = kg.get("related_components", [])
+                deps = kg.get("dependency_files", [])
+
+                if related:
+                    ctx += "\n\n" + "═" * 60
+                    ctx += "\n📦 项目全景感知 - 相关组件："
+                    ctx += "\n" + "─" * 60
+                    for comp in related[:5]:
+                        if isinstance(comp, dict):
+                            name = comp.get("name", "unknown")
+                            file_path = comp.get("file_path", "")
+                            node = comp.get("node", {})
+                            if isinstance(node, dict):
+                                signature = node.get("signature", "")
+                                docstring = node.get("docstring", "")[:100]
+                                ctx += f"\n• {name}"
+                                if signature:
+                                    ctx += f"\n  签名: {signature}"
+                                if docstring:
+                                    ctx += f"\n  说明: {docstring}..."
+                        elif isinstance(comp, str):
+                            ctx += f"\n• {comp}"
+                    ctx += "\n" + "═" * 60
+
+                if deps:
+                    ctx += "\n\n" + "─" * 60
+                    ctx += "\n🔗 依赖文件："
+                    for dep in deps[:3]:
+                        name = dep.get("name", "unknown")
+                        fp = dep.get("file_path", "")
+                        ctx += f"\n• {name} ({fp})"
+                    ctx += "\n" + "─" * 60
 
         if mode == GenerationMode.REVISION and feedback:
             ctx += f"""

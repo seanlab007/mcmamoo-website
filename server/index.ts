@@ -5,10 +5,14 @@ import { fileURLToPath } from "url";
 import aiStreamRouter from "./aiStream";
 import { chatRouter } from "./chat";
 import { contentPlatformRouter, initScheduler } from "./contentPlatform";
+import { videoProcessingRouter } from "./videoProcessing";
+import videoEditorRouter from "./hyperagents/nodes/videoEditor";
+import digitalHumanRouter from "./hyperagents/nodes/digitalHuman";
 import { registerOAuthRoutes } from "./_core/oauth";
 import { registerSupabaseAuthRoutes } from "./_core/supabaseAuth";
 import { mcpServerRouter } from "./mcp-server";
 import { notesRouter } from "./notes";
+import { strategicAnalysisRouter } from "./strategicAnalysis";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,10 +32,18 @@ async function startServer() {
   app.use("/api/chat", chatRouter);
   // 猫眼内容平台协调 API
   app.use("/api/content", contentPlatformRouter);
+  // 猫眼视频处理工具 API（代理到 FastAPI 微服务）
+  app.use("/api/video", videoProcessingRouter);
+  // 猫眼 AI 视频剪辑 API (ShortGPT 集成)
+  app.use("/api/maoyan/video", videoEditorRouter);
+  // 猫眼数字人 API (LivePortrait/Duix/Streamer-Sales 集成)
+  app.use("/api/maoyan/avatar", digitalHumanRouter);
   // MaoAI MCP Server — 允许外部 AI Agent 通过 MCP 协议调用 MaoAI 工具
   app.use("/api/mcp", mcpServerRouter);
   // 私密云笔记 API（管理员专属）
   app.use("/api/notes", notesRouter);
+  // MaoAI 战略分析 API（毛战略决策部）
+  app.use("/api/strategy", strategicAnalysisRouter);
 
   // Serve static files from dist/public in production
   const staticPath =

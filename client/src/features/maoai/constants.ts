@@ -73,7 +73,74 @@ export const MAOAI_CLOUD_MODELS = [
     available: false,
     isLocal: false as const,
   },
+  {
+    id: "maoai-core-2",
+    name: "MaoAI Core 2.0",
+    badge: "手脑合一",
+    description: "毛泽东战略思想 + 马斯克第一性原理 + 三权分立执行",
+    supportsVision: false,
+    available: true,
+    isLocal: false as const,
+    isStrategicMode: true,
+  },
 ] as const;
+
+/** MaoAI Core 2.0 战略模式配置（Phase 6 完整版） */
+export const MAOAI_CORE_2_CONFIG = {
+  // ── WebSocket（TriadLoop 实时推送）────────────────────────────────────────
+  /** WS 端点：ws_server.py /ws/triad-loop */
+  websocketUrl:
+    (import.meta.env.VITE_WS_SERVER_URL as string | undefined) ||
+    "ws://localhost:8765/ws/triad-loop",
+
+  // ── REST（RAG 状态 + 健康检查）────────────────────────────────────────────
+  /** RAG 索引状态接口 */
+  ragStatusUrl:
+    (import.meta.env.VITE_WS_SERVER_HTTP as string | undefined) ||
+    "http://localhost:8765/api/chat/rag/status",
+  /** Ollama 连接健康检查 */
+  ragHealthUrl:
+    (import.meta.env.VITE_WS_SERVER_HTTP as string | undefined) ||
+    "http://localhost:8765/api/chat/rag/health",
+  /** WS 服务健康检查 */
+  serverHealthUrl:
+    (import.meta.env.VITE_WS_SERVER_HTTP as string | undefined) ||
+    "http://localhost:8765/health",
+
+  // ── 三权分立开关 ─────────────────────────────────────────────────────────
+  triadLoopEnabled: true,
+  codersEnabled: true,
+  reviewerEnabled: true,
+  validatorEnabled: true,
+  strategistEnabled: true,
+
+  // ── Phase 6：异构模型博弈（Claude 写 + GLM-4 审）─────────────────────────
+  /** 默认开启异构博弈模式 */
+  heterogeneousDefault: true,
+  /** Reviewer 提供商："glm" | "openai" */
+  reviewerProvider: "glm" as "glm" | "openai",
+  /** GLM-4 默认模型 */
+  glmModel: "glm-4-plus",
+  /** 是否使用 Claude Code Local（有 Agentic 工具链） */
+  claudeLocal: false,
+  /** 是否开启红蓝对抗模式 */
+  redBlueAdversarial: true,
+
+  // ── 阶段展示配置 ─────────────────────────────────────────────────────────
+  phases: {
+    strategist: { name: "战略分析", icon: "🎯", color: "text-red-400" },
+    coders:     { name: "代码生成", icon: "⚙️", color: "text-blue-400" },
+    reviewer:   { name: "GLM-4 审查", icon: "🔍", color: "text-amber-400" },
+    validator:  { name: "验证测试", icon: "✅", color: "text-emerald-400" },
+    redBlue:    { name: "红蓝对抗", icon: "⚔️", color: "text-rose-400" },
+  },
+
+  // ── 重连策略 ─────────────────────────────────────────────────────────────
+  reconnect: {
+    maxAttempts: 5,
+    intervalMs: 2000,
+  },
+} as const;
 
 // ─── Tool Display ─────────────────────────────────────────────────────────────
 

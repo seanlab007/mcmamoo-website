@@ -34,6 +34,30 @@ from .adversarial_loop import (
     create_adversarial_loop
 )
 
+# ─── Phase 6: 异构模型博弈适配器 ─────────────────────────────────────────────
+# GLM-4 (Reviewer/Validator) + Claude Code Local (Coder)
+try:
+    from .glm_adapter import (
+        glm_review,
+        glm_generate_test_cases,
+        glm_validate,
+        is_glm_available,
+    )
+    _HAS_GLM = True
+except ImportError:
+    _HAS_GLM = False
+
+try:
+    from .claude_code_adapter import (
+        claude_generate,
+        claude_code_local,
+        claude_code_api,
+        is_claude_available,
+    )
+    _HAS_CLAUDE_CODE = True
+except ImportError:
+    _HAS_CLAUDE_CODE = False
+
 __all__ = [
     # Swarm 模块
     "BaseAgent",
@@ -64,5 +88,14 @@ __all__ = [
     "LoopResult",
     "LoopStatus",
     "IterationResult",
-    "create_adversarial_loop"
+    "create_adversarial_loop",
+    # Phase 6: 异构模型博弈
+    "glm_review",
+    "glm_generate_test_cases",
+    "glm_validate",
+    "is_glm_available",
+    "claude_generate",
+    "claude_code_local",
+    "claude_code_api",
+    "is_claude_available",
 ]

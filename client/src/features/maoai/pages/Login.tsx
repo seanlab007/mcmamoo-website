@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Shield, Sparkles, User, ArrowRight, Bot, Cpu, Network, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getLoginUrl } from "@/const";
@@ -16,8 +15,6 @@ const BACKEND_URL = MAOAI_BACKEND_URL;
  * - 支持 ?redirect= 参数指定登录后跳转页面
  */
 export default function MaoAILogin() {
-  const { t } = useTranslation();
-  const login = t("maoai.login", { returnObjects: true }) as any;
   const [location] = useLocation();
   const [hoveredCard, setHoveredCard] = useState<"user" | "admin" | null>(null);
 
@@ -63,12 +60,12 @@ export default function MaoAILogin() {
           localStorage.setItem('maoai_session_token', data.sessionToken);
         }
         // 优先使用登录页传入的 redirect 参数，否则用 API 返回的
-        window.location.href = loginDest !== MAOAI_ROUTES.CHAT ? loginDest : (data.redirectTo ?? MAOAI_ROUTES.CHAT);
+        window.location.href = loginDest !== MAOAI_ROUTES.CHAT ? loginDest : (data.redirectTo ?? "/admin/nodes");
       } else {
-        setLoginError(data.error ?? login.invalidCredentials);
+        setLoginError(data.error ?? "邮箱或密码错误");
       }
     } catch {
-      setLoginError(login.networkError);
+      setLoginError("网络错误，请稍后重试");
     } finally {
       setIsLoading(false);
     }
@@ -96,11 +93,11 @@ export default function MaoAILogin() {
           </div>
           <div>
             <span className="text-white font-bold text-lg tracking-tight">MaoAI</span>
-            <span className="text-[#C9A84C]/60 text-xs block leading-none">{login.headerSubtitle}</span>
+            <span className="text-[#C9A84C]/60 text-xs block leading-none">统一控制中心</span>
           </div>
         </a>
         <a href="/" className="text-white/40 hover:text-white/70 text-sm transition-colors">
-          {login.backToSite}
+          返回官网 →
         </a>
       </header>
 
@@ -110,13 +107,13 @@ export default function MaoAILogin() {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-[#C9A84C]/10 border border-[#C9A84C]/20 rounded-full px-4 py-1.5 mb-6">
             <Network className="size-3.5 text-[#C9A84C]" />
-            <span className="text-[#C9A84C] text-xs font-medium">{login.systemBadge}</span>
+            <span className="text-[#C9A84C] text-xs font-medium">多节点 AI 智能路由系统</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
-            {login.title}
+            选择登录方式
           </h1>
           <p className="text-white/40 text-lg max-w-md mx-auto">
-            {login.description}
+            普通用户直接开始 AI 对话，管理员输入账号密码进入控制台
           </p>
         </div>
 
@@ -137,12 +134,12 @@ export default function MaoAILogin() {
               <div className="size-14 rounded-2xl bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center mb-6">
                 <User className="size-7 text-[#C9A84C]" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">{login.userTitle}</h2>
+              <h2 className="text-xl font-bold text-white mb-2">普通用户</h2>
               <p className="text-white/50 text-sm mb-6 flex-1">
-                {login.userDescription}
+                登录后直接使用 AI 聊天功能，支持 DeepSeek、智谱 GLM、Groq 等多模型切换
               </p>
               <ul className="space-y-2 mb-8">
-                {login.userFeatures.map((f: string) => (
+                {["AI 多模型对话", "会话历史保存", "代码高亮渲染", "系统提示预设"].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm text-white/40">
                     <Bot className="size-3.5 text-[#C9A84C]/60 flex-shrink-0" />
                     {f}
@@ -153,7 +150,7 @@ export default function MaoAILogin() {
                 className="w-full bg-[#C9A84C] hover:bg-[#B8973B] text-black font-semibold"
                 size="lg"
               >
-                {login.userButton}
+                用户登录
                 <ArrowRight className="size-4 ml-2" />
               </Button>
             </div>
@@ -173,9 +170,9 @@ export default function MaoAILogin() {
               <div className="size-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-5">
                 <Shield className="size-7 text-blue-400" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-1">{login.adminTitle}</h2>
+              <h2 className="text-xl font-bold text-white mb-1">管理员登录</h2>
               <p className="text-white/50 text-sm mb-5">
-                {login.adminDescription}
+                输入管理员账号密码，进入节点控制台
               </p>
 
               {/* Login form */}
@@ -183,7 +180,7 @@ export default function MaoAILogin() {
                 <div>
                   <Input
                     type="email"
-                    placeholder={login.adminEmailPlaceholder}
+                    placeholder="管理员邮箱"
                     value={adminEmail}
                     onChange={e => setAdminEmail(e.target.value)}
                     required
@@ -194,7 +191,7 @@ export default function MaoAILogin() {
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder={login.passwordPlaceholder}
+                    placeholder="密码"
                     value={adminPassword}
                     onChange={e => setAdminPassword(e.target.value)}
                     required
@@ -204,7 +201,6 @@ export default function MaoAILogin() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? login.hidePassword : login.showPassword}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
                   >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -219,7 +215,7 @@ export default function MaoAILogin() {
 
                 <div className="mt-auto pt-2">
                   <ul className="space-y-1.5 mb-4">
-                    {login.adminFeatures.map((f: string) => (
+                    {["AI 节点管理", "智能路由配置", "调用日志监控", "多机分工协作"].map(f => (
                       <li key={f} className="flex items-center gap-2 text-xs text-white/35">
                         <Cpu className="size-3 text-blue-400/50 flex-shrink-0" />
                         {f}
@@ -236,11 +232,11 @@ export default function MaoAILogin() {
                     {isLoading ? (
                       <>
                         <Loader2 className="size-4 mr-2 animate-spin" />
-                        {login.adminLoading}
+                        登录中...
                       </>
                     ) : (
                       <>
-                        {login.adminButton}
+                        进入控制台
                         <Shield className="size-4 ml-2" />
                       </>
                     )}
@@ -251,14 +247,18 @@ export default function MaoAILogin() {
 
             {/* Admin badge */}
             <div className="absolute top-4 right-4 bg-blue-500/20 border border-blue-500/30 rounded-full px-2.5 py-0.5">
-              <span className="text-blue-400 text-xs font-medium">{login.adminBadge}</span>
+              <span className="text-blue-400 text-xs font-medium">仅限授权</span>
             </div>
           </div>
         </div>
 
         {/* Stats */}
         <div className="flex items-center gap-8 mt-12 text-center">
-          {login.stats.map((stat: { value: string; label: string }) => (
+          {[
+            { value: "5+", label: "AI 模型" },
+            { value: "24/7", label: "多机协作" },
+            { value: "∞", label: "会话历史" },
+          ].map(stat => (
             <div key={stat.label}>
               <div className="text-2xl font-bold text-[#C9A84C]">{stat.value}</div>
               <div className="text-white/30 text-xs mt-0.5">{stat.label}</div>

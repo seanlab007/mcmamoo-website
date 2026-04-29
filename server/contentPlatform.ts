@@ -14,6 +14,7 @@ import { Router, Request, Response } from "express";
 import { dbFetch } from "./aiNodes";
 import { sdk } from "./_core/sdk";
 import cron, { type ScheduledTask } from "node-cron";
+import { executeTriadLoop, type TriadTaskResult } from "./triadLoopIntegration";
 
 const contentPlatformRouter = Router();
 
@@ -481,9 +482,49 @@ const activeCronJobs = new Map<number, ScheduledTask>();
 
 async function invokeSkillAsync(
   taskId: number,
-  skill: { skillId?: string; nodeId?: number; invokeMode?: string; inputSchema?: any },
+  skill: { skillId?: string; nodeId?: number; invokeMode?: string; inputSchema?: any; useTriadLoop?: boolean },
   params: Record<string, unknown>
 ) {
+  // ── TriadLoop 模式：内容生成任务走三权分立博弈 ──────────────────────────────
+  if (skill.useTriadLoop || skill.invokeMode === "triad_loop") {
+    console.log(`[ContentTask] Task #${taskId} using TriadLoop mode`);
+
+    const taskDesc = params.task || params.description ||
+      `Execute skill: ${skill.skillId} with params: ${JSON.stringify(params).substring(0, 200)}`;
+
+    try {
+      const result = await executeTriadLoop({
+        taskId,
+        task: taskDesc,
+        language: (params.language as string) || "python",
+        mode: (params.mode as "fix" | "generate") || "generate",
+        context: { skillId: skill.skillId, params, taskId },
+      });
+
+      if (result.success) {
+        await updateContentTask(taskId, {
+          status: "success",
+          result: {
+            triadResult: result,
+            mode: "triad_loop",
+          },
+        });
+      } else {
+        await updateContentTask(taskId, {
+          status: "failed",
+          errorMessage: result.errorMessage || "TriadLoop execution failed",
+        });
+      }
+    } catch (err: any) {
+      await updateContentTask(taskId, {
+        status: "failed",
+        errorMessage: err?.message ?? String(err),
+      });
+    }
+    return;
+  }
+
+  // ── 标准模式：转发到节点执行 ──────────────────────────────────────────────────
   try {
     // 获取节点信息
     const nodeRes = await dbFetch(`/ai_nodes?id=eq.${skill.nodeId}&select=baseUrl,token&limit=1`);

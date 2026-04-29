@@ -66,11 +66,11 @@ class ReviewIssue:
     dimension: ReviewDimension
     severity: str  # critical, major, minor
     location: str   # 文件:行号
+    description: str
+    suggestion: str
     line_number: int = 0  # 新增：具体行号
     column_start: int = 0  # 新增：列起始位置
     column_end: int = 0  # 新增：列结束位置
-    description: str
-    suggestion: str
     code_snippet: str = ""
 
 
@@ -706,7 +706,8 @@ class ReviewerAgent:
         self,
         task: str,
         code: str,
-        language: str = "typescript"
+        language: str = "typescript",
+        issues: List["ReviewIssue"] = None  # 新增：传入已发现的 issues
     ) -> Dict[str, Any]:
         """
         生成针对代码问题的测试用例
@@ -718,6 +719,7 @@ class ReviewerAgent:
             task: 任务描述
             code: 待测试的代码
             language: 编程语言
+            issues: 已发现的问题列表（用于生成针对性的 Bug 复现测试）
 
         Returns:
             {
@@ -728,7 +730,16 @@ class ReviewerAgent:
         """
         log_step("thought", "Reviewer 正在生成测试用例...", agent="reviewer")
 
-        prompt = f"""作为代码审查员，请为以下代码生成验证测试用例：
+        # 构建问题列表上下文
+        issues_context = ""
+        if issues:
+            issues_context = "\n已发现的问题（必须为每个问题生成复现测试）：\n"
+            for i, issue in enumerate(issues[:5], 1):
+                issues_context += f"{i}. [{issue.severity}] {issue.description}\n"
+                if issue.location:
+                    issues_context += f"   位置: {issue.location}\n"
+
+        prompt = f"""作为代码审查员，请为以下代码生成验证测试用例。
 
 任务：{task}
 
@@ -736,30 +747,46 @@ class ReviewerAgent:
 ```
 {code[:2000]}
 ```
+{issues_context}
 
-请生成 2-3 个测试用例，用于：
-1. **复现测试**：能证明当前代码存在问题的测试（修复前应失败）
-2. **边界测试**：边界条件和异常输入的测试
-3. **回归测试**：确保修复后不会引入新问题的测试
+请生成 3-5 个测试用例，必须包含以下类型：
+
+1. **Bug 复现测试**（必须）：为每个已发现的问题生成一个能复现该 Bug 的测试。
+   - 命名格式: test_reproduce_bug_{{序号}}
+   - 必须设置 should_fail_before_fix: true
+   - 测试代码要能实际执行并失败（证明 Bug 存在）
+
+2. **边界测试**：边界条件和异常输入的测试。
+
+3. **回归测试**：确保修复后不会引入新问题的测试。
 
 输出格式（严格 JSON）：
 ```json
 {{
   "test_cases": [
     {{
-      "name": "test_xxx",
-      "description": "测试描述",
+      "name": "test_reproduce_bug_1",
+      "description": "复现 Bug #1: [问题描述]",
       "code": "实际可执行的测试代码",
       "expected": "期望结果",
-      "should_fail_before_fix": true
+      "should_fail_before_fix": true,
+      "bug_id": 1
+    }},
+    {{
+      "name": "test_edge_case",
+      "description": "边界测试",
+      "code": "实际可执行的测试代码",
+      "expected": "期望结果",
+      "should_fail_before_fix": false
     }}
   ]
 }}
 ```
 
-注意：
-- 测试代码必须可执行
-- 大部分测试 should_fail_before_fix 应为 true（证明问题存在）"""
+关键要求：
+- Bug 复现测试必须能实际执行
+- should_fail_before_fix 必须为 true
+- 测试代码简洁明了，能直接定位问题"""
 
         try:
             response = self._call_llm(prompt)
